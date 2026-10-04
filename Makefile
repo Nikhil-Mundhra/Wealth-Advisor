@@ -11,7 +11,7 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo
 
 help:  ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -68,6 +68,9 @@ db-indexes:  ## Apply collection validators and indexes to MONGODB_URI (deploy s
 
 jwt-keys:  ## Print a new Ed25519 key pair as env lines
 	npm run keys:generate -w backend
+
+seed-demo:  ## Create the local demo account testing@example.com / testing (refuses NODE_ENV=production)
+	npm run db:seed-demo -w backend
 
 prod: build  ## Build, then serve frontend + API from one Node process (foreground)
 	PORT=$(BACKEND_PORT) npm start

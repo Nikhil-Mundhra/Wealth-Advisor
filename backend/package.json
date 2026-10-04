@@ -9,7 +9,8 @@
     "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "test:unit": "node --test \"test/unit/**/*.test.ts\"",
     "db:indexes": "node --env-file-if-exists=../.env.local src/scripts/ensure-indexes.ts",
-    "keys:generate": "node src/scripts/generate-jwt-keypair.ts"
+    "keys:generate": "node src/scripts/generate-jwt-keypair.ts",
+    "db:seed-demo": "node --env-file-if-exists=../.env.local src/scripts/seed-demo-user.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.3",

@@ -30,3 +30,6 @@ vercel.json : Vercel Services routing: /api/* → backend, everything else → f
 - `agents/writing_docs.md` : when you are writing documentation (likely a .md file)
 - `agents/implementation_backend.md` : when you are implementing backend code
 - `agents/implementation_frontend.md` : when you are implementing frontend code
+- `agents/sync_docs.md` : when syncing documentation and maps with recent commits
+- `agents/sync_agent.md` : when syncing Agent.md and agents/ maps, guide index and calls with recent commits
+- `docs/shared/apis/index.md` : when you add, change or call an /api route (contract, status, error codes)
