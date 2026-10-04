@@ -1,0 +1,6 @@
+.env
+.env.*
+.run/
+node_modules/
+**/dist/
+infra/
