@@ -1,7 +1,9 @@
+import { CLIENT_TYPES, DISPLAY_NAME_MAX_LENGTH, EMAIL_MAX_LENGTH } from '@wealth-advisor/rules';
 import type { CollectionDefinition } from '#core/persistence/collection-definition.ts';
-import { CLIENT_TYPES, REVOKE_REASONS } from '../../domain/entities/session.entity.ts';
-import { PROVIDER_TYPES, USER_STATUSES } from '../../domain/entities/user.entity.ts';
+import { REVOKE_REASONS } from '../../domain/entities/session.entity.ts';
+import { MAX_PROVIDERS, PROVIDER_TYPES, USER_STATUSES } from '../../domain/entities/user.entity.ts';
 import { ROLES } from '../../domain/value-objects/role.vo.ts';
+import { TOKEN_HASH_PATTERN } from '../../domain/value-objects/token-hash.vo.ts';
 import { USERS_COLLECTION } from './documents/user.document.ts';
 import { SESSIONS_COLLECTION } from './documents/session.document.ts';
 
@@ -24,15 +26,15 @@ const usersCollection: CollectionDefinition = {
       bsonType: 'object',
       required: ['email', 'status', 'roles', 'providers', 'consents', 'createdAt', 'updatedAt'],
       properties: {
-        email: { bsonType: 'string', maxLength: 255 },
+        email: { bsonType: 'string', maxLength: EMAIL_MAX_LENGTH },
         emailVerifiedAt: nullable('date'),
         passwordHash: nullable('string'),
-        displayName: nullable('string'),
+        displayName: { bsonType: ['string', 'null'], maxLength: DISPLAY_NAME_MAX_LENGTH },
         status: { enum: [...USER_STATUSES] },
         roles: { bsonType: 'array', minItems: 1, items: { enum: [...ROLES] } },
         providers: {
           bsonType: 'array',
-          maxItems: 5,
+          maxItems: MAX_PROVIDERS,
           items: {
             bsonType: 'object',
             required: ['type', 'subject', 'linkedAt'],
@@ -62,7 +64,7 @@ const sessionsCollection: CollectionDefinition = {
       required: ['userId', 'tokenHash', 'familyId', 'clientType', 'rememberMe', 'issuedAt', 'expiresAt', 'purgeAt', 'createdAt'],
       properties: {
         userId: { bsonType: 'objectId' },
-        tokenHash: { bsonType: 'string', pattern: '^[0-9a-f]{64}$' },
+        tokenHash: { bsonType: 'string', pattern: TOKEN_HASH_PATTERN.source },
         familyId: { bsonType: 'objectId' },
         replacedBy: nullable('objectId'),
         clientType: { enum: [...CLIENT_TYPES] },

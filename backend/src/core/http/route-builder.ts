@@ -2,7 +2,7 @@ import type { Context, Hono, MiddlewareHandler } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { z } from 'zod';
 import { AppError } from '#core/errors/app-error.ts';
-import { CoreErrorCodes } from '#core/errors/error-codes.ts';
+import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { readJsonBody } from '#core/http/read-json-body.ts';
 import { parseContract } from '#core/http/validate-contract.ts';
 
@@ -104,5 +104,5 @@ function parseResponse(schema: z.ZodType, out: unknown): unknown {
   const result = schema.safeParse(out);
   if (result.success) return result.data;
   console.error('[route-builder] response violated its contract', result.error.issues);
-  throw new AppError(500, CoreErrorCodes.internal, 'internal error');
+  throw new AppError(500, CORE_ERROR_CODES.internal, 'internal error');
 }

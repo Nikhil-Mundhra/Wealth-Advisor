@@ -1,9 +1,10 @@
+import type { ClientType } from '@wealth-advisor/rules';
 import { BaseEntity, type EntityProps } from '#core/domain/base-entity.ts';
+import { invariant } from '#core/domain/invariant.ts';
 import { AuthErrors } from '../errors/auth-errors.ts';
 import type { TokenHash } from '../value-objects/token-hash.vo.ts';
 
-export const CLIENT_TYPES = ['WEB', 'IOS', 'ANDROID'] as const;
-export type ClientType = (typeof CLIENT_TYPES)[number];
+export type { ClientType };
 
 export const REVOKE_REASONS = ['ROTATED', 'LOGOUT', 'LOGOUT_ALL', 'REUSE_DETECTED', 'PASSWORD_CHANGED', 'USER_WITHDRAWN'] as const;
 export type RevokeReason = (typeof REVOKE_REASONS)[number];
@@ -71,13 +72,10 @@ export class Session extends BaseEntity<SessionProps> {
 
   protected override postInit(): void {
     const { issuedAt, expiresAt, revokedAt, revokeReason, replacedBy } = this.props;
-    if (expiresAt <= issuedAt) throw AuthErrors.invariantViolated('a session must expire after it is issued');
-    if ((revokedAt === null) !== (revokeReason === null)) {
-      throw AuthErrors.invariantViolated('revokedAt and revokeReason are set together');
-    }
-    if (replacedBy !== null && revokeReason !== 'ROTATED') {
-      throw AuthErrors.invariantViolated('only a rotated session has a replacement');
-    }
+    const violated = (detail: string) => () => AuthErrors.invariantViolated(detail);
+    invariant(expiresAt > issuedAt, violated('a session must expire after it is issued'));
+    invariant((revokedAt === null) === (revokeReason === null), violated('revokedAt and revokeReason are set together'));
+    invariant(replacedBy === null || revokeReason === 'ROTATED', violated('only a rotated session has a replacement'));
   }
 
   get userId(): string {
@@ -137,6 +135,7 @@ export class Session extends BaseEntity<SessionProps> {
     this.props.replacedBy = child.id;
     this.props.lastUsedAt = input.now;
     this.revoke('ROTATED', input.now);
+    this.assertInvariants();
     return child;
   }
 
@@ -146,6 +145,7 @@ export class Session extends BaseEntity<SessionProps> {
     this.props.revokedAt = now;
     this.props.revokeReason = reason;
     this.props.updatedAt = now;
+    this.assertInvariants();
     return true;
   }
 

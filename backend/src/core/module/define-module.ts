@@ -9,10 +9,12 @@ export interface ModuleManifest {
   readonly routes: readonly RouteDefinition[];
   readonly collections: readonly CollectionDefinition[];
   readonly subscriptions: readonly EventSubscription[];
+  // The module's error codes and their HTTP statuses, all under one prefix (see core/errors/error-catalog.ts).
+  readonly errors?: { readonly prefix: string; readonly statuses: Readonly<Record<string, number>> };
 }
 
 type ModuleInput = Pick<ModuleManifest, 'name' | 'basePath' | 'routes'> &
-  Partial<Pick<ModuleManifest, 'collections' | 'subscriptions'>>;
+  Partial<Pick<ModuleManifest, 'collections' | 'subscriptions' | 'errors'>>;
 
 const BASE_PATH = /^\/[a-z0-9-]+$/;
 

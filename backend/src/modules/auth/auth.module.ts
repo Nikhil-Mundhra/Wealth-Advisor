@@ -1,3 +1,4 @@
+import { ERROR_CODE_PREFIXES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
@@ -15,6 +16,7 @@ import { type SessionDocument, SESSIONS_COLLECTION } from './infrastructure/pers
 import { type UserDocument, USERS_COLLECTION } from './infrastructure/persistence/documents/user.document.ts';
 import { MongoSessionRepository } from './infrastructure/persistence/mongo-session.repository.ts';
 import { MongoUserRepository } from './infrastructure/persistence/mongo-user.repository.ts';
+import { AUTH_ERROR_STATUSES } from './presentation/auth-error-statuses.ts';
 import { authRoutes } from './presentation/routes/auth.routes.ts';
 import { meRoutes } from './presentation/routes/me.routes.ts';
 
@@ -48,6 +50,7 @@ export function createAuthModule(context: ModuleContext): ModuleManifest {
     name: 'auth',
     basePath: '/auth',
     collections: authCollections,
+    errors: { prefix: ERROR_CODE_PREFIXES.auth, statuses: AUTH_ERROR_STATUSES },
     routes: [
       ...authRoutes({
         signup: new SignupUseCase({ users, hasher, ids, clock, events }),

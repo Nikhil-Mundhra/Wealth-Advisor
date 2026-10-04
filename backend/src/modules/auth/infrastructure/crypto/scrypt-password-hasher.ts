@@ -1,4 +1,5 @@
 import { randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from 'node:crypto';
+import { PASSWORD_MAX_LENGTH } from '@wealth-advisor/rules';
 import type { PasswordHasherPort } from '../../application/ports/password-hasher.port.ts';
 
 // scrypt from Node's standard library: no native addon to bundle, so it behaves the same locally and on Vercel.
@@ -27,6 +28,7 @@ export class ScryptPasswordHasher implements PasswordHasherPort {
   }
 
   async verify(passwordHash: string, password: string): Promise<boolean> {
+    if (password.length > PASSWORD_MAX_LENGTH) return false; // bounds scrypt work for any caller, not only HTTP
     const [prefix, n, r, p, saltB64, keyB64] = passwordHash.split('$');
     if (prefix !== PREFIX || !saltB64 || !keyB64) return false; // a malformed stored hash fails closed
     const expected = Buffer.from(keyB64, 'base64');

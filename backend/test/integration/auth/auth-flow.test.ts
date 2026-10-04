@@ -38,7 +38,12 @@ describe('signup', () => {
   it('rejects an invalid body against the contract', async () => {
     const response = await postJson(t.app, '/api/auth/signup', { email: 'nope', password: 'short' });
     assert.equal(response.status, 400);
-    assert.equal((await json(response)).code, 'CORE_VALIDATION_FAILED');
+    const body = await json(response);
+    assert.equal(body.code, 'CORE_VALIDATION_FAILED');
+    assert.deepEqual(body.issues, [
+      { path: ['email'], code: 'email.invalid' },
+      { path: ['password'], code: 'password.too_short' },
+    ]);
   });
 });
 
@@ -117,6 +122,12 @@ describe('refresh rotation', () => {
     const refreshed = await t.app.request('/api/auth/refresh', { method: 'POST', headers: { cookie } });
     assert.equal(refreshed.status, 200);
     assert.match(refreshed.headers.get('set-cookie') ?? '', /^refresh_token=/);
+  });
+
+  it('rejects a malformed refresh token before touching the database', async () => {
+    const response = await postJson(t.app, '/api/auth/refresh', { refreshToken: 'not-a-token' });
+    assert.equal(response.status, 400);
+    assert.deepEqual((await json(response)).issues, [{ path: ['refreshToken'], code: 'refresh_token.invalid' }]);
   });
 
   it('rejects an expired refresh token', async () => {

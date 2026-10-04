@@ -1,16 +1,15 @@
-import { AppError } from '#core/errors/app-error.ts';
-import { ERROR_CODE_PREFIXES } from '#core/errors/error-codes.ts';
+import { AUTH_ERROR_CODES as C } from '@wealth-advisor/rules';
+import { DomainError } from '#core/domain/domain-error.ts';
 
-const code = (number: number): string => `${ERROR_CODE_PREFIXES.auth}_${number}`;
-
-// Every error the auth module can return; codes are part of the API and never reused.
+// Every error the auth module raises. Messages are developer text; statuses live in presentation/auth-error-statuses.ts.
 export const AuthErrors = {
-  emailTaken: () => new AppError(409, code(1001), 'an account with this email already exists'),
-  invalidCredentials: () => new AppError(401, code(1002), 'invalid email or password'),
-  invalidRefreshToken: () => new AppError(401, code(1003), 'refresh token is invalid or expired'),
-  alreadyRotated: () => new AppError(409, code(1004), 'refresh token was already rotated; use the latest token'),
-  unauthenticated: () => new AppError(401, code(1005), 'missing or invalid access token'),
-  invalidEmail: () => new AppError(400, code(1006), 'email address is invalid'),
-  signingKeysMissing: () => new AppError(503, code(1901), 'token signing keys are not configured'),
-  invariantViolated: (detail: string) => new AppError(500, code(1900), `auth invariant violated: ${detail}`),
+  emailTaken: () => new DomainError(C.emailTaken, 'an account with this email already exists'),
+  invalidCredentials: () => new DomainError(C.invalidCredentials, 'invalid email or password'),
+  invalidRefreshToken: () => new DomainError(C.invalidRefreshToken, 'refresh token is invalid or expired'),
+  alreadyRotated: () => new DomainError(C.alreadyRotated, 'refresh token was already rotated; use the latest token'),
+  unauthenticated: () => new DomainError(C.unauthenticated, 'missing or invalid access token'),
+  invalidEmail: () => new DomainError(C.invalidEmail, 'email address is invalid'),
+  weakPassword: () => new DomainError(C.weakPassword, 'password does not meet the password policy'),
+  signingKeysMissing: () => new DomainError(C.signingKeysMissing, 'token signing keys are not configured'),
+  invariantViolated: (detail: string) => new DomainError(C.invariantViolated, `auth invariant violated: ${detail}`),
 };

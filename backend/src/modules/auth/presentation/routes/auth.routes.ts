@@ -1,4 +1,6 @@
 import { LoginRequest, LogoutRequest, RefreshRequest, SignupRequest, SignupResponse, TokenPairResponse } from '@wealth-advisor/contracts';
+import { isRefreshToken } from '@wealth-advisor/rules';
+import type { Context } from 'hono';
 import { RouteBuilder, type RouteDefinition } from '#core/http/route-builder.ts';
 import type { AccessTokenSignerPort } from '../../application/ports/access-token-signer.port.ts';
 import type { LoginUseCase } from '../../application/use-cases/login.use-case.ts';
@@ -39,7 +41,7 @@ export function authRoutes(deps: AuthRouteDeps): RouteDefinition[] {
       .body(RefreshRequest)
       .responds(TokenPairResponse)
       .handle(async ({ c, body }) => {
-        const refreshToken = readRefreshCookie(c) ?? body.refreshToken;
+        const refreshToken = resolveRefreshToken(c, body.refreshToken);
         if (!refreshToken) throw AuthErrors.invalidRefreshToken();
         return deliverTokens(c, await deps.refresh.execute({ refreshToken }));
       }),
@@ -48,7 +50,7 @@ export function authRoutes(deps: AuthRouteDeps): RouteDefinition[] {
       .use(authenticated)
       .body(LogoutRequest)
       .handle(async ({ c, body }) => {
-        const refreshToken = readRefreshCookie(c) ?? body.refreshToken;
+        const refreshToken = resolveRefreshToken(c, body.refreshToken);
         if (refreshToken) await deps.logout.execute({ kind: 'SESSION', userId: getPrincipal(c).userId, refreshToken });
         clearRefreshCookie(c);
       }),
@@ -60,4 +62,11 @@ export function authRoutes(deps: AuthRouteDeps): RouteDefinition[] {
         clearRefreshCookie(c);
       }),
   ];
+}
+
+// The cookie wins over the body, as in cochika. The cookie is not covered by the body contract, so it is
+// format-checked here; a malformed token is treated as absent.
+function resolveRefreshToken(c: Context, fromBody: string | undefined): string | undefined {
+  const token = readRefreshCookie(c) ?? fromBody;
+  return token && isRefreshToken(token) ? token : undefined;
 }

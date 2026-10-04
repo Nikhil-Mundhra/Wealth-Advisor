@@ -1,11 +1,11 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { AppError } from '#core/errors/app-error.ts';
+import { DomainError } from '#core/domain/domain-error.ts';
 import { Session } from '#modules/auth/domain/entities/session.entity.ts';
 import { Email } from '#modules/auth/domain/value-objects/email.vo.ts';
 import { T0, activeSession, hashOf, secondsAfter } from '../../support/auth-fixtures.ts';
 
-const isInvariantViolation = (error: unknown): boolean => error instanceof AppError && error.code === 'AU_1900';
+const isInvariantViolation = (error: unknown): boolean => error instanceof DomainError && error.code === 'AU_1900';
 
 describe('Session', () => {
   it('rotation revokes the parent and keeps the family on the child with a fresh expiry', () => {
@@ -54,6 +54,6 @@ describe('Email', () => {
   });
 
   it('rejects malformed input', () => {
-    assert.throws(() => Email.of('not-an-email'), (error: unknown) => error instanceof AppError && error.code === 'AU_1006');
+    assert.throws(() => Email.of('not-an-email'), (error: unknown) => error instanceof DomainError && error.code === 'AU_1006');
   });
 });

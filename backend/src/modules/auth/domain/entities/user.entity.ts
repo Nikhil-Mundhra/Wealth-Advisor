@@ -1,4 +1,6 @@
+import { DISPLAY_NAME_MAX_LENGTH } from '@wealth-advisor/rules';
 import { BaseEntity, type EntityProps } from '#core/domain/base-entity.ts';
+import { invariant } from '#core/domain/invariant.ts';
 import { AuthErrors } from '../errors/auth-errors.ts';
 import type { Email } from '../value-objects/email.vo.ts';
 import { DEFAULT_ROLES, type Role } from '../value-objects/role.vo.ts';
@@ -9,7 +11,7 @@ export type ProviderType = (typeof PROVIDER_TYPES)[number];
 export const USER_STATUSES = ['ACTIVE', 'WITHDRAWN'] as const;
 export type UserStatus = (typeof USER_STATUSES)[number];
 
-const MAX_PROVIDERS = 5;
+export const MAX_PROVIDERS = 5;
 
 export interface LinkedProvider {
   type: ProviderType;
@@ -78,16 +80,15 @@ export class User extends BaseEntity<UserProps> {
   }
 
   protected override postInit(): void {
-    const { roles, providers, status, withdrawal, passwordHash } = this.props;
-    if (!roles.includes('USER')) throw AuthErrors.invariantViolated('every user holds the USER role');
-    if (providers.length > MAX_PROVIDERS) throw AuthErrors.invariantViolated(`at most ${MAX_PROVIDERS} providers`);
-    if (status === 'ACTIVE' && providers.length === 0) throw AuthErrors.invariantViolated('an active user needs a provider');
-    if (status === 'WITHDRAWN' && !withdrawal) throw AuthErrors.invariantViolated('a withdrawn user needs a withdrawal record');
-    const keys = new Set(providers.map((provider) => `${provider.type}:${provider.subject}`));
-    if (keys.size !== providers.length) throw AuthErrors.invariantViolated('duplicate provider link');
-    if (providers.some((provider) => provider.type === 'EMAIL') && !passwordHash) {
-      throw AuthErrors.invariantViolated('an EMAIL provider requires a password hash');
-    }
+    const { roles, providers, status, withdrawal, passwordHash, displayName } = this.props;
+    const violated = (detail: string) => () => AuthErrors.invariantViolated(detail);
+    invariant(roles.includes('USER'), violated('every user holds the USER role'));
+    invariant(providers.length <= MAX_PROVIDERS, violated(`at most ${MAX_PROVIDERS} providers`));
+    invariant(status !== 'ACTIVE' || providers.length > 0, violated('an active user needs a provider'));
+    invariant(status !== 'WITHDRAWN' || withdrawal !== null, violated('a withdrawn user needs a withdrawal record'));
+    invariant(new Set(providers.map((p) => `${p.type}:${p.subject}`)).size === providers.length, violated('duplicate provider link'));
+    invariant(!providers.some((p) => p.type === 'EMAIL') || passwordHash !== null, violated('an EMAIL provider requires a password hash'));
+    invariant(displayName === null || (displayName.length > 0 && displayName.length <= DISPLAY_NAME_MAX_LENGTH), violated('display name length'));
   }
 
   get email(): Email {
@@ -115,6 +116,7 @@ export class User extends BaseEntity<UserProps> {
     if (!provider) throw AuthErrors.invariantViolated(`user has no ${type} provider`);
     provider.lastLoginAt = now;
     this.props.updatedAt = now;
+    this.assertInvariants();
   }
 
   // Full state for the persistence mapper; a copy, so callers cannot mutate the entity through it.
