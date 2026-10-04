@@ -11,7 +11,7 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo docs-lint
 
 help:  ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -74,6 +74,9 @@ seed-demo:  ## Create the local demo account testing@example.com / testing (refu
 
 prod: build  ## Build, then serve frontend + API from one Node process (foreground)
 	PORT=$(BACKEND_PORT) npm start
+
+docs-lint:  ## Check agent guides and docs: links, file maps, reachability
+	node scripts/docs-lint.mjs
 
 $(RUN_DIR):
 	@mkdir -p $(RUN_DIR)
