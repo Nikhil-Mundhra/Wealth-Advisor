@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Checks the agent-guide and docs graph: one-way edges, one owner per mapped path, no dangling paths,
 // an index.md in every docs folder, and every guide or doc reachable from the entry point.
+import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -103,19 +104,27 @@ for (const file of docFiles) {
     });
 }
 
-// (b) a source path appears in at most one guide map
+// (b) a source path appears in at most one guide map; (f) map lines are sorted by path
 const owners = new Map();
 for (const file of agentFiles) {
   const map = sections(read(file))['File structure'];
   if (!map) continue;
-  for (const line of fencedLines(map)) {
-    const path = mapPath(line);
-    if (!path) continue;
+  const paths = fencedLines(map).map(mapPath).filter(Boolean);
+  paths.forEach((path, i) => {
+    if (i > 0 && paths[i - 1] > path) fail('[unsorted map]', file, `${path} after ${paths[i - 1]}`);
     owners.set(path, [...(owners.get(path) ?? []), file]);
-  }
+  });
 }
 for (const [path, files] of owners) {
   if (files.length > 1) fail('[two maps]', path, files.join(', '));
+}
+
+// (g) every tracked or new source file has an owning map; .md files are inventoried by indexes and routes
+const sourceFiles = execSync('git ls-files --cached --others --exclude-standard', { cwd: ROOT, encoding: 'utf8' })
+  .split('\n')
+  .filter((path) => path && exists(path) && !path.endsWith('.md') && path !== 'package-lock.json');
+for (const path of sourceFiles) {
+  if (!owners.has(path)) fail('[unmapped]', path, 'no guide `## File structure` lists it');
 }
 
 // (c) every referenced repo path exists
@@ -147,7 +156,7 @@ function edges(file) {
     return fencedLines(text).map(mapPath).filter(Boolean);
   }
   const parts = sections(text);
-  return backticked(`${parts.Route ?? ''}\n${parts.Calls ?? ''}`).filter((token) => token.endsWith('.md'));
+  return backticked([parts.Route, parts.Axes, parts.Calls].join('\n')).filter((token) => token.endsWith('.md'));
 }
 const reached = new Set();
 const queue = [ENTRY];
@@ -158,7 +167,7 @@ while (queue.length > 0) {
   queue.push(...edges(file).filter((path) => path.endsWith('.md')));
 }
 for (const file of [...agentFiles, ...docFiles]) {
-  if (!reached.has(file)) fail('[unreachable]', file, `no Route, Calls or index edge from ${ENTRY}`);
+  if (!reached.has(file)) fail('[unreachable]', file, `no Route, Axes, Calls or index edge from ${ENTRY}`);
 }
 
 if (errors.length > 0) {

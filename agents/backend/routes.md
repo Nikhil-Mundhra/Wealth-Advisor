@@ -1,19 +1,13 @@
 # Backend: routes and use cases
 
 ## Calls
-- `agents/shared/contracts.md` : adding or changing a contract
-- `docs/shared/apis/index.md` : route docs; update the route's doc in the same change
-- `agents/backend/errors.md` : when a route needs a new error code
-- `agents/backend/testing.md` : integration tests
+- `docs/shared/apis/index.md` : route docs
 
 ## Rules
-- Declare routes with `RouteBuilder` only; it validates the body and the response against their contracts.
-- A handler only maps contract → command → use case → result → contract.
-- One use case per class, one `execute(command)`; ports for any new I/O.
+- Handlers only map contract → command → use case → result → contract; `RouteBuilder` validates both ends.
 
 ## Workflow
-- add a route: contract in `contracts/src` → `RouteBuilder` route in `presentation/routes` → use case → port + adapter if new I/O → integration test → route doc in `docs/shared/apis` (error ids only) → map line
-- add a use case: command/result DTOs → `use-cases/<name>.use-case.ts` → wire in `<module>.module.ts` → test → map line
+- add a route: contract first → route → use case → integration test → route doc (error ids only) in the same change
 
 ## File structure
 

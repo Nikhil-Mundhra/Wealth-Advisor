@@ -1,16 +1,14 @@
 # Backend: persistence
 
 ## Calls
-- `docs/backend/collections.md` : current collections, indexes, validators, TTL
-- `docs/infra/env.md` : `MONGODB_URI` and database name
+- `docs/backend/collections.md` : collections, indexes, TTL
 
 ## Rules
 - Writes that must not race use conditional filters (compare-and-set), never read-then-write.
-- Indexes and validators live in `<module>/infrastructure/persistence/*.indexes.ts`, applied by `make db-indexes`, never per request.
-- Repositories extend `BaseRepository` and implement an application port; documents and entities convert only through a mapper.
+- Indexes and validators are applied by `make db-indexes`, never per request.
 
 ## Workflow
-- add a collection or index: document + mapper + repository → entry in `<module>.indexes.ts` → listed in the manifest's `collections` → `make db-indexes` → `docs/backend/collections.md`
+- collection or index change: `<module>.indexes.ts` → manifest `collections` → `make db-indexes` → `docs/backend/collections.md`
 
 ## File structure
 

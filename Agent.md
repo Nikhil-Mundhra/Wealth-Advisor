@@ -5,21 +5,20 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 ## Route
 - frontend code → `agents/frontend/index.md`
 - backend code → `agents/backend/index.md`
-- ports, containers, Vercel routing and deploy → `agents/infra/index.md`
-- request and response contracts → `agents/shared/contracts.md`
-- writing or changing any .md → `agents/docs/writing.md`
-- writing code comments → `agents/docs/comments.md`
+- shared packages and dependency direction between workspaces → `agents/shared/index.md`
+- ports, routing, containers, Vercel deploy → `agents/infra/index.md`
+- code style for any code: imports, syntax, naming, exports, constants, comments → `agents/code.md`
+- docs, guides and file maps: writing or changing any .md → `agents/docs/writing.md`
 - syncing file maps and docs after commits → `agents/docs/sync-docs.md`
 - syncing routes and guides after commits → `agents/docs/sync-agent.md`
 - judging the project against the hackathon brief → `agents/meta/review.md`
 - understanding the system: architecture, API routes, error codes, environment, ports; choosing what to refactor → `docs/index.md`
 
 ## Rules
-- One file, one responsibility; update the owning map in the same change.
-- Grep a symbol or path before deleting or renaming it; remove its references first.
-- `make test` green before committing; never commit `.env*`, `.vercel/`, `dist/`.
-- Commit messages carry no AI attribution lines.
-- `make seed-demo` is local only.
+- change: one file, one responsibility; update the owning map in the same change.
+- delete/rename: grep the symbol or path, remove its references first, re-grep returns nothing.
+- commit: `make test` green; never commit `.env*`, `.vercel/`, `dist/`; no AI attribution lines.
+- data: `make seed-demo` is local only.
 
 ## File structure
 

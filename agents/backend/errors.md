@@ -2,17 +2,14 @@
 
 ## Calls
 - `docs/shared/errors.md` : prefixes, number bands, code → status → meaning
-- `agents/frontend/forms.md` : user-facing text for a code
 
 ## Rules
-- Domain code throws `DomainError(code, message)` from the module's errors object and never knows HTTP statuses.
-- `AppError(status, code, message)` is only for failures at the HTTP edge (bad JSON, failed contract, missing database); an unknown error reaches the client as `CORE_INTERNAL`.
-- Codes live in `rules/src/error-codes.ts`; a module's statuses live in `<module>/presentation/<module>-error-statuses.ts`, typed as a full record so a code without a status fails typecheck.
-- Codes are part of the API: never reuse or renumber one.
+- Domain code throws through a factory in `<module>/domain/errors/<module>-errors.ts`, never `new DomainError` directly, and never knows HTTP statuses.
+- `AppError` is only for failures at the HTTP edge (bad JSON, failed contract, missing database).
 
 ## Workflow
-- add an error code: code in `rules/src/error-codes.ts` with the next free number in its band → factory in `<module>/domain/errors/<module>-errors.ts` → status in `<module>/presentation/<module>-error-statuses.ts` → row in `docs/shared/errors.md` → the route docs list the id → user-facing text in the frontend error map
-- errors for a new module: prefix in `ERROR_CODE_PREFIXES` and a codes object in `rules/src/error-codes.ts` → statuses file → manifest `errors: { prefix, statuses }` → prefix row in `docs/shared/errors.md`
+- new code: `rules/src/error-codes.ts` → factory → `<module>/presentation/<module>-error-statuses.ts` → `docs/shared/errors.md` → route docs → frontend error map if user-facing
+- new module: prefix in `ERROR_CODE_PREFIXES` → manifest `errors: { prefix, statuses }`
 
 ## File structure
 
