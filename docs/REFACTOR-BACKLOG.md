@@ -58,7 +58,7 @@ dropped 2026-10-04 — base-class API the user asked for; ValueObject.equals pin
 dropped 2026-10-04 — deliberate seam for a later outbox (documented in file map); 0 subscribers today. Re-check when a second module exists.
 
 ### R11 · Speculative generality · backend/src/modules/auth/application/ports/* · 4 single-implementation ports
-dropped 2026-10-04 — user-approved architecture; dependency rule documented in docs/architecture/auth.md
+dropped 2026-10-04 — user-approved architecture; dependency rule documented in docs/architecture/c3-backend.md (Components, Depends on)
 
 ### R12 · Speculative generality · backend/src/core/persistence/base-repository.ts:42-90 · static onInsert/onUpdate hook registry
 dropped 2026-10-04 — user explicitly requested attachable static hooks (builder pattern)
@@ -70,6 +70,6 @@ dropped 2026-10-04 — keeps the domain off the database id type (reason stated 
 dropped 2026-10-04 — one-class-per-use-case is the approved layout
 
 ### R15 · Feature envy · backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts:12 · decideRotation
-dropped 2026-10-04 — extracted on purpose as a pure policy (docs/architecture/auth.md); table-tested in test/unit/auth/refresh-rotation.policy.test.ts; handles a null session
+dropped 2026-10-04 — extracted on purpose as a pure policy (backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts); table-tested in test/unit/auth/refresh-rotation.policy.test.ts; handles a null session
 
 ## Refused
