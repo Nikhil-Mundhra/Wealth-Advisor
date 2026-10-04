@@ -1,18 +1,20 @@
 # Frontend
 
 ## Route
-- UI primitives, layout, design tokens → `agents/frontend/ui.md`
-- forms, validation, API error messages → `agents/frontend/forms.md`
-- pages, router, route guards, adding a feature → `agents/frontend/pages.md`
-- calling an endpoint, query and mutation hooks, API client → `agents/frontend/data.md`
-- session state, access token, refresh → `agents/frontend/session.md`
+- styling, accessibility: UI primitives, layout, tokens → `agents/frontend/ui.md`
+- forms, validation, error text → `agents/frontend/forms.md`
+- access: pages, router, guards → `agents/frontend/pages.md`
+- server state: endpoint calls, query and mutation hooks → `agents/frontend/data.md`
+- session and token security → `agents/frontend/session.md`
 - component boundaries → `docs/architecture/c3-frontend.md`
 
+## Axes
+- contract shapes → `agents/shared/index.md`
+
 ## Rules
-- Layers: `app` → `features` → `components` → `lib`; features never import each other; only `app/` composes features.
-- Request and response shapes come only from `@wealth-advisor/contracts`.
-- Tests sit next to the file (`*.test.tsx`); a test creates one `QueryClient` per test, outside render.
-- delete: grep → unlink → delete → re-grep → `npm test -w frontend` → remove the map line.
+- layers: `app` → `features` → `components` → `lib`; features never import each other; only `app/` composes features; `lib/` never imports `features/` outside tests.
+- imports: no path aliases; relative paths.
+- testing: tests sit next to the file; one `QueryClient` per test, created outside render.
 
 ## File structure
 

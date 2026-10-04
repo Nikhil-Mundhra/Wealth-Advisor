@@ -1,21 +1,17 @@
-# Frontend: forms, validation and error messages
+# Frontend: forms, validation and error text
 
 ## Calls
-- `agents/frontend/ui.md` : `FormField` and controls
-- `agents/frontend/data.md` : the mutation hook a form submits through
 - `docs/shared/apis/index.md` : error ids each route returns
-- `docs/shared/errors.md` : what each error code means
+- `docs/shared/errors.md` : what each code means
 
 ## Rules
-- Forms use `useContractForm` with the contract schema; no hand-written field validation and no direct `useForm`.
-- Every control sits in a `FormField`; its error text comes from `fieldError`.
-- Field validation text lives only in `lib/validation/validation-messages.ts`, keyed by validation key.
-- Error text for a feature's codes lives only in `features/<name>/errors/<name>-error-messages.ts`, with the field it belongs under; codes any feature can hit live in `lib/errors/shared-error-messages.ts`.
+- Forms use `useContractForm` with the contract schema; never `useForm` directly or hand-written field validation.
+- Every control sits in a `FormField`.
+- Validation text lives only in `lib/validation/validation-messages.ts`.
+- Error text: a feature's own codes in `features/<name>/errors/<name>-error-messages.ts`; codes any feature can hit in `lib/errors/shared-error-messages.ts`.
 
 ## Workflow
-- add a form: contract schema → `features/<name>/components/<name>-form.tsx` with `useContractForm(schema, { defaultValues, messages })` → submit through the feature's mutation hook → test (validation, success, mapped error) → map line
-- new user-facing error code: entry in the feature's error-messages map, or in the shared map if any feature can hit it
-- new validation key: text in `lib/validation/validation-messages.ts` (typecheck fails until it exists)
+- new user-facing error code → the feature's error-messages map, or the shared map
 
 ## File structure
 

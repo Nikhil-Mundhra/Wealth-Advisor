@@ -2,17 +2,15 @@
 
 ## Calls
 - `docs/backend/auth-token.md` : token model, rotation outcomes, delivery and cookie attributes
-- `docs/frontend/session-flow.md` : the client side of refresh and logout
-- `docs/infra/env.md` : `AUTH_*` variables and signing keys
+- `docs/infra/env.md` : signing keys and TTLs
 
 ## Rules
-- Rotation decisions come only from `decideRotation` (pure, time passed in); the use case applies and persists them.
-- Only the SHA-256 hash of a refresh token is stored.
-- Cookie attributes are set only in `presentation/cookies/refresh-cookie.ts`; cookie-or-body delivery is decided only in `presentation/delivery/token-delivery.ts`.
+- Rotation decisions come only from `decideRotation` (pure, time passed in).
+- Cookie attributes are set only in `refresh-cookie.ts`; cookie-or-body delivery is decided only in `token-delivery.ts`.
+- `make jwt-keys` output goes to the environment, never into a committed file.
 
 ## Workflow
-- change token, session or cookie behaviour: policy or entity → use case → unit tests (`refresh-rotation.policy.test.ts`, `session.entity.test.ts`) + integration tests (`auth-flow.test.ts`, `refresh-race.test.ts`) → `docs/backend/auth-token.md` → route docs if error ids change → `docs/frontend/session-flow.md` if the client is affected
-- new signing keys: `make jwt-keys` → set them in the environment, never in a committed file
+- behaviour change → policy/entity unit tests + `auth-flow`/`refresh-race` → `docs/backend/auth-token.md` → `docs/frontend/session-flow.md` if the client is affected
 
 ## File structure
 

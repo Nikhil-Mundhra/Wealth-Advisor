@@ -1,17 +1,15 @@
 # Frontend: UI primitives and layout
 
 ## Calls
-- `docs/frontend/design-tokens.md` : token names before styling
+- `docs/frontend/design-tokens.md` : token names
 
 ## Rules
-- `components/` knows nothing about features.
-- Colors, radius and fonts come only from tokens in `styles/globals.css`.
-- Variants use `cva`; class names merge through `cn`.
+- Theme colors, field radius and font come from tokens; no raw hex values.
+- Variants use `cva`.
 - Every control has a label (`FormField`); errors link via `aria-describedby`; icon-only buttons take `label`; focus stays visible.
 
 ## Workflow
-- add a UI primitive: `components/ui/<name>.tsx` (cva for variants) + test next to it → map line
-- add or change a token: `@theme` in `styles/globals.css` → `docs/frontend/design-tokens.md`
+- token change → `docs/frontend/design-tokens.md`
 
 ## File structure
 

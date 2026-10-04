@@ -1,20 +1,15 @@
-# Contracts
+# Shared: contracts
 
 ## Calls
 - `docs/shared/apis/index.md` : which route uses which contract
-- `docs/shared/errors.md` : the error envelope and the codes it carries
 
 ## Rules
-- Every request and response shape is a zod schema here; the schema and its `z.infer` type share one name.
-- Reusable field schemas live in `contracts/src/fields`; limits, patterns and validation keys come from `@wealth-advisor/rules`, never literals.
-- A field fails with a validation key as its message, so clients map it to text.
-- Consumers import only `@wealth-advisor/contracts` (the barrel `contracts/src/index.ts`); no deep imports.
-- No build step and no runtime logic beyond schemas.
+- A schema and its `z.infer` type share one name.
+- Fields take limits, patterns and validation keys from `@wealth-advisor/rules`, and fail with a validation key as the message.
+- No runtime logic beyond schemas.
 
 ## Workflow
-- add a contract: `contracts/src/<module>/<name>.contract.ts` built from field schemas → export from `contracts/src/index.ts` → the route doc names it → map line
-- add a field: limits and validation keys in `rules/` → `contracts/src/fields/<name>.field.ts` → export from `contracts/src/index.ts` → frontend validation text
-- change a contract: grep its name in `backend/` and `frontend/` → update every caller in the same change → `npm run typecheck` → route doc
+- contract change → `npm run typecheck` → route doc in the same change
 
 ## File structure
 

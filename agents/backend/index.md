@@ -1,22 +1,26 @@
 # Backend
 
 ## Route
-- adding a module → `agents/backend/modules.md`
-- adding or changing a route or use case → `agents/backend/routes.md`
-- adding an error code → `agents/backend/errors.md`
-- collections, indexes, repositories → `agents/backend/persistence.md`
-- tokens, sessions, refresh cookie → `agents/backend/auth-token.md`
-- writing tests → `agents/backend/testing.md`
+- HTTP edge: routes, handlers, use cases → `agents/backend/routes.md`
+- errors: codes, statuses → `agents/backend/errors.md`
+- persistence and concurrency: collections, indexes, repositories → `agents/backend/persistence.md`
+- auth security: tokens, sessions, refresh cookie → `agents/backend/auth-token.md`
+- testing → `agents/backend/testing.md`
+- module manifest and mounting → `docs/backend/module-contract.md`
 - component boundaries → `docs/architecture/c3-backend.md`
 
+## Axes
+- contract shapes, dependency direction between workspaces → `agents/shared/index.md`
+
 ## Rules
-- Layers: presentation → application → domain ← infrastructure; all may use `core/`; `core/` never imports `modules/`.
-- Only presentation imports `@wealth-advisor/contracts`, plus `core/http` and `core/errors` for error-envelope types; only `<module>.module.ts` constructs concrete classes.
-- Any layer may import `@wealth-advisor/rules` (constants and pure functions shared with contracts and frontend).
-- File suffix names the layer: `.routes` `.use-case` `.command` `.result` `.port` `.entity` `.vo` `.policy` `.document` `.mapper` `.repository`.
-- Entities and value objects are built by static factories that call `finalize()` → `postInit()`; never call `postInit()` from a constructor.
-- Node strips types at runtime: no decorators, `enum`, parameter properties or namespaces; imports use `.ts` and the `#core/` `#modules/` aliases.
-- delete: grep → unlink callers → delete → re-grep → `make test` → remove the map line.
+- layers: presentation → application → domain ← infrastructure; presentation may throw domain errors; all may use `core/`; `core/` never imports `modules/`.
+- contracts: imported only by presentation, plus error-envelope types in `core/http` and `core/errors`.
+- composition: only `<module>.module.ts` constructs concrete classes; `modules/index.ts` lists modules by static import (Vercel bundles only what is imported).
+- construction: entities and value objects are built through `finalize()`; never call `postInit()` from a constructor.
+- imports: `#core/` for core; `#modules/` only from outside `modules/`; relative inside a module.
+
+## Workflow
+- add a module: `<name>.module.ts` → one line in `modules/index.ts` → error prefix and statuses (`agents/backend/errors.md`) → row in `docs/architecture/c3-backend.md`
 
 ## File structure
 
@@ -54,6 +58,8 @@ backend/src/core/persistence/mongo-errors.ts : detects duplicate-key (unique ind
 backend/src/core/persistence/object-id-generator.ts : IdGenerator backed by ObjectId hex strings
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/clock.ts : Clock interface and system clock
+backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
+backend/src/modules/index.ts : explicit list of modules (static imports so Vercel can bundle them)
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 ```

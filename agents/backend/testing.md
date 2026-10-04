@@ -1,12 +1,9 @@
 # Backend: tests
 
 ## Rules
-- Tests that need a database boot a throwaway in-memory mongod through `startTestApp()`; never use `MONGODB_URI`'s database.
-- Integration tests drive the real app through `app.request`; unit tests run without a database.
+- Tests live under `backend/test/`, never next to the source.
+- Database tests boot an in-memory mongod through `startTestApp()`; never use `MONGODB_URI`'s database.
 - Time moves only through `FakeClock`; never sleep.
-
-## Workflow
-- add a test: pure domain → `backend/test/unit/<module>/<name>.test.ts`; HTTP flow → `backend/test/integration/<module>/` via `startTestApp()`; shared helpers → `backend/test/support/` → map line
 
 ## File structure
 

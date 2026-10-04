@@ -3,7 +3,6 @@
 Any route can also return `CORE_INTERNAL` (unhandled error or response-contract violation). Error statuses: `docs/shared/errors.md`.
 
 ## GET /api/health
-- nested route / query: none
 - responsibility: liveness check; touches no database
 - contract: request none, response none (`{ status: 'ok' }`) 200, errors none; auth none
 

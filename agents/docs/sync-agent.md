@@ -1,12 +1,20 @@
 # Sync agent
 
-last synced: 1c46d5b
+last synced: 489f881
 
 ## Calls
-- `agents/docs/sync-docs.md` : unchecked changes, owning map, format, report and the `last synced:` update; use this file's `last synced:`
+- `agents/docs/sync-docs.md` : unchecked changes, owning map, report; use this file's `last synced:`
 
 ## Rules
-- Scope: `Agent.md` and `agents/**/*.md`: `## Route`, `## Calls`, `## File structure`.
+- Scope: `Agent.md` and `agents/**/*.md`: `## Route`, `## Axes`, `## Calls`, `## File structure`.
+
+## Workflow
+1. Changed source files: fix their lines in the owning map.
+2. New component in an area: guide + `## Route` line in `agents/<area>/index.md`; new area: `agents/<area>/index.md` + `## Route` line in `Agent.md`.
+3. Added, removed or renamed guide: its `## Route` line and every `## Calls` or `## Axes` line naming it.
+4. `make docs-lint`, report, set `last synced:` per `agents/docs/sync-docs.md`.
+
+## File structure`.
 - Each source file appears in exactly one map, the owning map; no map lists a path missing from `git ls-files` or the working tree.
 - Every path in a `## Route` or `## Calls` list exists.
 

@@ -2,15 +2,14 @@
 
 ## Calls
 - `docs/frontend/session-flow.md` : load, call, refresh and logout sequence
-- `docs/backend/auth-token.md` : token model and refresh cookie
 
 ## Rules
-- The access token lives only in memory (`session-store.ts`); never in localStorage or any storage JS can read later.
+- The access token lives only in memory (`session-store.ts`); never in any storage JS can read later.
 - Refresh is single-flight: only `refreshSession()` calls the refresh endpoint.
-- Components read status through `use-session.ts`; logout always clears the local session and the query cache.
+- Logout always clears the local session and the query cache.
 
 ## Workflow
-- change session behaviour: `session-store.ts` → `session-provider.tsx` if wiring changes → `docs/frontend/session-flow.md`
+- behaviour change → `docs/frontend/session-flow.md`
 
 ## File structure
 
