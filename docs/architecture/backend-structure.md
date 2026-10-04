@@ -79,6 +79,7 @@ backend/src/modules/index.ts : explicit list of modules (static imports so Verce
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/src/scripts/ensure-indexes.ts : applies every module's collection definitions (deploy step)
 backend/src/scripts/generate-jwt-keypair.ts : prints a new Ed25519 key pair as env lines
+backend/src/scripts/seed-demo-user.ts : creates the local demo account (refuses NODE_ENV=production)
 backend/test/integration/auth/auth-flow.test.ts : signup, login, me, refresh, reuse detection, logout
 backend/test/integration/auth/refresh-race.test.ts : concurrent refreshes; exactly one wins
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
@@ -86,5 +87,6 @@ backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/test-app.ts : boots the real app against a throwaway mongod
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
+backend/test/unit/core/route-builder.test.ts : response contract check returns 500 on violation
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 ```

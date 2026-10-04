@@ -1,0 +1,17 @@
+import { useNavigate } from 'react-router';
+import { SplitLayout } from '../../components/layout/split-layout.tsx';
+import { AuthHeader } from '../../features/auth/components/auth-header.tsx';
+import { AuthSwitchLink } from '../../features/auth/components/auth-switch-link.tsx';
+import { SignupForm } from '../../features/auth/components/signup-form.tsx';
+import { HighlightPanel } from '../../features/marketing/components/highlight-panel.tsx';
+
+export function SignupPage() {
+  const navigate = useNavigate();
+  return (
+    <SplitLayout aside={<HighlightPanel />}>
+      <AuthHeader title="Hi, welcome" subtitle="Join now and start managing your money across borders." />
+      <SignupForm onSuccess={() => navigate('/', { replace: true })} />
+      <AuthSwitchLink prompt="Already have an account?" to="/login" label="Sign in" />
+    </SplitLayout>
+  );
+}

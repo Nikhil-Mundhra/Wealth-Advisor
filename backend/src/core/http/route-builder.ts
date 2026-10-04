@@ -1,6 +1,8 @@
 import type { Context, Hono, MiddlewareHandler } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { z } from 'zod';
+import { AppError } from '#core/errors/app-error.ts';
+import { CoreErrorCodes } from '#core/errors/error-codes.ts';
 import { readJsonBody } from '#core/http/read-json-body.ts';
 import { parseContract } from '#core/http/validate-contract.ts';
 
@@ -84,7 +86,7 @@ export class RouteBuilder<Body = undefined, Out = void> {
         const body = bodySchema ? parseContract(bodySchema, await readJsonBody(c)) : undefined;
         const out = await handler({ c, body: body as Body });
         if (!responseSchema) return c.body(null, 204);
-        return c.json(parseContract(responseSchema, out), successStatus);
+        return c.json(parseResponse(responseSchema, out), successStatus);
       },
     };
   }
@@ -95,4 +97,12 @@ export function mountRoutes(router: Hono, routes: readonly RouteDefinition[]): v
     // The variadic-handler overload of on() takes the path list form.
     router.on(route.method.toUpperCase(), [route.path], ...route.middlewares, route.handler);
   }
+}
+
+// A response that breaks its own contract is a server bug: 500, with the details logged rather than sent.
+function parseResponse(schema: z.ZodType, out: unknown): unknown {
+  const result = schema.safeParse(out);
+  if (result.success) return result.data;
+  console.error('[route-builder] response violated its contract', result.error.issues);
+  throw new AppError(500, CoreErrorCodes.internal, 'internal error');
 }
