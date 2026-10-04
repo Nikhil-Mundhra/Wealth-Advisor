@@ -56,13 +56,8 @@ export class LoginUseCase implements UseCase<LoginCommand, TokenPairResult> {
   }
 
   private async findUser(rawEmail: string): Promise<User | null> {
-    let email: Email;
-    try {
-      email = Email.of(rawEmail);
-    } catch {
-      return null; // a malformed email is just another failed login
-    }
-    return this.deps.users.findActiveByProvider('EMAIL', email.value);
+    const email = Email.tryParse(rawEmail); // a malformed email is just another failed login
+    return email ? this.deps.users.findActiveByProvider('EMAIL', email.value) : null;
   }
 
   private getDummyHash(): Promise<string> {

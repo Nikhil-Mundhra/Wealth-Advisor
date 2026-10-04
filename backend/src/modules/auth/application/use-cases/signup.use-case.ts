@@ -5,6 +5,7 @@ import type { Clock } from '#core/time/clock.ts';
 import { User } from '../../domain/entities/user.entity.ts';
 import { AuthErrors } from '../../domain/errors/auth-errors.ts';
 import { userSignedUp } from '../../domain/events/user-signed-up.event.ts';
+import { assertPasswordAllowed } from '../../domain/policies/password.policy.ts';
 import { Email } from '../../domain/value-objects/email.vo.ts';
 import type { SignupCommand } from '../dto/signup.command.ts';
 import type { SignupResult } from '../dto/signup.result.ts';
@@ -31,6 +32,7 @@ export class SignupUseCase implements UseCase<SignupCommand, SignupResult> {
   async execute(command: SignupCommand): Promise<SignupResult> {
     const { users, hasher, ids, clock, events } = this.deps;
     const email = Email.of(command.email);
+    assertPasswordAllowed(command.password);
     if (await users.findActiveByProvider('EMAIL', email.value)) throw AuthErrors.emailTaken();
 
     const now = clock.now();

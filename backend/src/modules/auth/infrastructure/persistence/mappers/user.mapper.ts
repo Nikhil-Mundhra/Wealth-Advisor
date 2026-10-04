@@ -1,9 +1,14 @@
 import { ObjectId } from 'mongodb';
+import { parseMember } from '#core/domain/parse-member.ts';
 import type { Mapper } from '#core/persistence/mapper.ts';
-import { type ProviderType, User, type UserStatus } from '../../../domain/entities/user.entity.ts';
+import { PROVIDER_TYPES, User, USER_STATUSES } from '../../../domain/entities/user.entity.ts';
+import { AuthErrors } from '../../../domain/errors/auth-errors.ts';
 import { Email } from '../../../domain/value-objects/email.vo.ts';
-import { isRole } from '../../../domain/value-objects/role.vo.ts';
+import { ROLES } from '../../../domain/value-objects/role.vo.ts';
 import type { UserDocument } from '../documents/user.document.ts';
+
+// Stored values outside the known lists are corruption (500), never silently dropped or cast.
+const corrupt = (field: string) => () => AuthErrors.invariantViolated(`stored user has an unknown ${field}`);
 
 export const userMapper: Mapper<User, UserDocument> = {
   toEntity(document) {
@@ -11,13 +16,13 @@ export const userMapper: Mapper<User, UserDocument> = {
       id: document._id.toHexString(),
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
-      email: Email.of(document.email),
+      email: Email.restore(document.email),
       emailVerifiedAt: document.emailVerifiedAt,
       passwordHash: document.passwordHash,
       displayName: document.displayName,
-      status: document.status as UserStatus,
-      roles: document.roles.filter(isRole),
-      providers: document.providers.map((provider) => ({ ...provider, type: provider.type as ProviderType })),
+      status: parseMember(USER_STATUSES, document.status, corrupt('status')),
+      roles: document.roles.map((role) => parseMember(ROLES, role, corrupt('role'))),
+      providers: document.providers.map((provider) => ({ ...provider, type: parseMember(PROVIDER_TYPES, provider.type, corrupt('provider type')) })),
       consents: document.consents.map((consent) => ({ ...consent })),
       withdrawal: document.withdrawal ? { ...document.withdrawal } : null,
     });

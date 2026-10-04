@@ -29,6 +29,14 @@ describe('SignupForm', () => {
   it('shows the contract messages on submit and calls nothing', async () => {
     render(<SignupForm onSuccess={vi.fn()} />, { wrapper });
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(await screen.findByText('Enter your email address.')).toBeInTheDocument();
+    expect(screen.getByText('Enter your password.')).toBeInTheDocument();
+    expect(authApi.signup).not.toHaveBeenCalled();
+  });
+
+  it('checks the format and length with the shared rules', async () => {
+    render(<SignupForm onSuccess={vi.fn()} />, { wrapper });
+    await fillAndSubmit('june@example', 'short');
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
     expect(screen.getByText('Use at least 8 characters.')).toBeInTheDocument();
     expect(authApi.signup).not.toHaveBeenCalled();
@@ -40,8 +48,27 @@ describe('SignupForm', () => {
     const onSuccess = vi.fn();
     render(<SignupForm onSuccess={onSuccess} />, { wrapper });
     await fillAndSubmit('june@example.com', 'correct-horse');
-    await vi.waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(onSuccess).toHaveBeenCalledWith('signed-in'));
     expect(authApi.login).toHaveBeenCalledWith({ email: 'june@example.com', password: 'correct-horse', clientType: 'WEB', rememberMe: false });
+  });
+
+  it('reports "created" when signup works but the follow-up login fails', async () => {
+    vi.mocked(authApi.signup).mockResolvedValue({ userId: 'u1' });
+    vi.mocked(authApi.login).mockRejectedValue(new ApiError(503, 'CORE_DB_UNCONFIGURED', 'down'));
+    const onSuccess = vi.fn();
+    render(<SignupForm onSuccess={onSuccess} />, { wrapper });
+    await fillAndSubmit('june@example.com', 'correct-horse');
+    await vi.waitFor(() => expect(onSuccess).toHaveBeenCalledWith('created'));
+  });
+
+  it('shows server field issues under their fields', async () => {
+    vi.mocked(authApi.signup).mockRejectedValue(
+      new ApiError(400, 'CORE_VALIDATION_FAILED', 'x', [{ path: ['password'], code: 'password.too_short' }]),
+    );
+    render(<SignupForm onSuccess={vi.fn()} />, { wrapper });
+    await fillAndSubmit('june@example.com', 'correct-horse');
+    expect(await screen.findByText('Use at least 8 characters.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('puts a taken email under the email field', async () => {

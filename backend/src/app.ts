@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { CoreErrorCodes } from '#core/errors/error-codes.ts';
+import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { InProcessEventBus } from '#core/events/event-bus.ts';
-import { errorHandler } from '#core/http/error-handler.ts';
+import { createErrorHandler } from '#core/http/error-handler.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
 import { getDb } from '#core/persistence/mongo-client.ts';
@@ -15,6 +15,7 @@ export function createApp(context: ModuleContext): Hono {
   const registry = new ModuleRegistry();
   for (const manifest of buildModules(context)) registry.register(manifest);
   registry.subscribe(context.events);
+  const errorHandler = createErrorHandler(registry.errorCatalog());
 
   const api = new Hono();
   api.onError(errorHandler);
@@ -23,7 +24,7 @@ export function createApp(context: ModuleContext): Hono {
   api.all('/ai', (c) => c.json({ message: 'oops no ai yet bitch' }, 501));
   registry.mount(api);
   // Unmatched /api/* gets the error contract instead of falling through to the SPA.
-  api.all('*', (c) => c.json({ code: CoreErrorCodes.notFound, message: 'not found' }, 404));
+  api.all('*', (c) => c.json({ code: CORE_ERROR_CODES.notFound, message: 'not found' }, 404));
 
   const app = new Hono();
   app.use(logger());

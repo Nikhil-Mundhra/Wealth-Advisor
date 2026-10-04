@@ -1,3 +1,4 @@
+import { REFRESH_TOKEN_BYTES } from '@wealth-advisor/rules';
 import { generateOpaqueToken } from '#core/crypto/random-token.ts';
 import { sha256Hex } from '#core/crypto/sha256.ts';
 import type { Session } from '../../domain/entities/session.entity.ts';
@@ -27,7 +28,7 @@ export class TokenPairIssuer {
 
   // The raw value goes to the client once; only its hash is ever stored.
   static newRefreshToken(): NewRefreshToken {
-    const raw = generateOpaqueToken();
+    const raw = generateOpaqueToken(REFRESH_TOKEN_BYTES);
     return { raw, hash: TokenHash.of(sha256Hex(raw)) };
   }
 

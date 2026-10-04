@@ -10,7 +10,7 @@ export function SignupPage() {
   return (
     <SplitLayout aside={<HighlightPanel />}>
       <AuthHeader title="Hi, welcome" subtitle="Join now and start managing your money across borders." />
-      <SignupForm onSuccess={() => navigate('/', { replace: true })} />
+      <SignupForm onSuccess={(outcome) => navigate(outcome === 'signed-in' ? '/' : '/login?created=1', { replace: true })} />
       <AuthSwitchLink prompt="Already have an account?" to="/login" label="Sign in" />
     </SplitLayout>
   );

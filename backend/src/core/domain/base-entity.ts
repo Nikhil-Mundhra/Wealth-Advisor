@@ -21,6 +21,11 @@ export abstract class BaseEntity<P extends EntityProps> {
   // Override to enforce invariants; throw to reject the instance.
   protected postInit(): void {}
 
+  // Mutators call this after changing state, so an invariant can never be broken after construction.
+  protected assertInvariants(): void {
+    this.postInit();
+  }
+
   get id(): string {
     return this.props.id;
   }

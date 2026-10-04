@@ -2,12 +2,13 @@ import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { errorHandler } from '#core/http/error-handler.ts';
+import { ErrorCatalog } from '#core/errors/error-catalog.ts';
+import { createErrorHandler } from '#core/http/error-handler.ts';
 import { RouteBuilder, mountRoutes } from '#core/http/route-builder.ts';
 
 function appWith(handler: () => Promise<unknown>) {
   const app = new Hono();
-  app.onError(errorHandler);
+  app.onError(createErrorHandler(new ErrorCatalog()));
   mountRoutes(app, [RouteBuilder.get('/x').responds(z.object({ ok: z.boolean() })).handle(handler as () => Promise<{ ok: boolean }>)]);
   return app;
 }

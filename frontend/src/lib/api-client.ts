@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { ApiError, NETWORK_ERROR_CODE } from './api-error.ts';
+import { ApiError, CLIENT_ERROR_CODES } from './api-error.ts';
 
 export interface AuthHandlers {
   getAccessToken(): string | null;
@@ -29,7 +29,15 @@ export async function apiRequest(path: string, options: RequestOptions & { respo
     response = await send(path, options);
   }
   if (!response.ok) throw await ApiError.fromResponse(response);
-  return options.response ? options.response.parse(await response.json()) : undefined;
+  return options.response ? parseResponse(options.response, response) : undefined;
+}
+
+// A response that breaks its contract means client and server are out of step: a distinct, non-retried error.
+async function parseResponse(schema: z.ZodType, response: Response): Promise<unknown> {
+  const result = schema.safeParse(await response.json().catch(() => undefined));
+  if (result.success) return result.data;
+  console.error('[api-client] response violated its contract', response.url, result.error.issues);
+  throw new ApiError(response.status, CLIENT_ERROR_CODES.contractMismatch, 'response did not match its contract');
 }
 
 async function send(path: string, options: RequestOptions): Promise<Response> {
@@ -45,6 +53,6 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   } catch {
-    throw new ApiError(0, NETWORK_ERROR_CODE, "can't reach the server");
+    throw new ApiError(0, CLIENT_ERROR_CODES.network, "can't reach the server");
   }
 }

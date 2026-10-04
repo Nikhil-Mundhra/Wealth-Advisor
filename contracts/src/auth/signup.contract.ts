@@ -1,9 +1,12 @@
 import { z } from 'zod';
+import { DisplayNameField } from '../fields/display-name.field.ts';
+import { EmailField } from '../fields/email.field.ts';
+import { NewPasswordField } from '../fields/password.field.ts';
 
 export const SignupRequest = z.object({
-  email: z.email({ error: 'Enter a valid email address.' }).max(255, { error: 'Email must be 255 characters or fewer.' }),
-  password: z.string().min(8, { error: 'Use at least 8 characters.' }).max(128, { error: 'Use 128 characters or fewer.' }),
-  displayName: z.string().trim().min(1).max(64, { error: 'Use 64 characters or fewer.' }).optional(),
+  email: EmailField,
+  password: NewPasswordField,
+  displayName: DisplayNameField.optional(),
 });
 export type SignupRequest = z.infer<typeof SignupRequest>;
 

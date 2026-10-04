@@ -1,7 +1,7 @@
 import { MongoClient, type Db } from 'mongodb';
 import { env } from '#core/config/env.ts';
 import { AppError } from '#core/errors/app-error.ts';
-import { CoreErrorCodes } from '#core/errors/error-codes.ts';
+import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 
 // One client per runtime instance. Serverless instances are reused across requests, so caching on
 // globalThis avoids opening a new connection pool on every invocation.
@@ -11,7 +11,7 @@ export function getMongoClient(): Promise<MongoClient> {
   if (!holder.__mongoClientPromise) {
     const uri = env().MONGODB_URI;
     if (!uri) {
-      return Promise.reject(new AppError(503, CoreErrorCodes.databaseUnconfigured, 'database is not configured'));
+      return Promise.reject(new AppError(503, CORE_ERROR_CODES.databaseUnconfigured, 'database is not configured'));
     }
     holder.__mongoClientPromise = new MongoClient(uri, { maxPoolSize: 10 }).connect().catch((error: unknown) => {
       holder.__mongoClientPromise = undefined; // let the next request retry instead of caching the failure
