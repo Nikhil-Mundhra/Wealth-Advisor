@@ -2,8 +2,7 @@
 
 ## Calls
 - `README.md` : concept and research question
-- `docs/plan/brief.md` : rubric and the features each pillar expects
-- `docs/plan/roadmap.md` : what was planned per phase
+- `docs/implementation-plan.md` : rubric, planned features, roadmap
 - `docs/architecture/index.md` : what is built
 - `docs/shared/apis/index.md` : what the API offers
 
