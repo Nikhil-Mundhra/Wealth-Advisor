@@ -207,6 +207,23 @@ flowchart TD
   4. **Advisory Copilot** (`/advisory`)
   * Top navigation header houses the Organization/Tenant selector, Dark/Light mode toggle, Language selector (`en`/`zh`/`de`), and Avatar menu (linking to `/settings/security`, `/evidence`, and `/admin`).
 
+### Detailed Route Specifications:
+| Route | Access | Component / Page | Key Features |
+|---|---|---|---|
+| `/login` | Guest | `LoginPage` | Passkey 1-click biometric sign-in (TouchID/FaceID), email/password fallback, demo persona quick-fill. |
+| `/signup` | Guest | `SignupPage` | Expat onboarding, currency selection, automatic Passkey registration prompt. |
+| `/share/:token` | Public | `SharedPlanPage` | Read-only strategy viewer, privacy balance toggle, three-pillar explainability, interactive stress simulation. Fully responsive on mobile. |
+| `/` | Expat | `DashboardPage` | Net worth in base currency, individual vs family household toggle, multi-currency donut, runway health gauge. Responsive single-column mobile layout. |
+| `/portfolio` | Expat | `PortfolioPage` | Asset holdings (Equities, Bonds, MMF, Hedges), rebalancing visualizer, "Create Share Link" button. |
+| `/cashflow` | Expat | `CashflowPage` | Multi-currency bank balances, household pooled cash flow, Asian remittance corridor planner. |
+| `/advisory` | Expat | `AdvisoryPage` | Conversational wealth copilot (i18n), tool execution stream, three-pillar explainability drawer, Tier 3 Passkey execution approval modal, touch-optimized mobile chat drawer. |
+| `/evidence` | Expat / Judge | `EvidencePage` | Immutable sandbox ledger table, before/after portfolio state diffs, Passkey signature proofs, SHA-256 verification, JSON export. |
+| `/settings/security` | Expat | `SecuritySettingsPage` | Register/manage Passkeys (TouchID/FaceID), view active sessions, inspect permission tiers. |
+| `/admin` | Admin / Judge | `AdminDashboardPage` | Platform overview, active tenants, aggregate token usage, system health diagnostics. |
+| `/admin/tenants` | Admin | `AdminTenantsPage` | Provision institutional tenants, configure member limits, allowed remittance corridors, risk policies. |
+| `/admin/api-keys` | Admin | `AdminApiKeysPage` | Issue scoped API keys with permission tiers, inspect usage logs, revoke keys immediately. |
+| `/admin/models` | Admin / Judge | `AdminModelsPage` | Runtime LLM switcher (Gemini 2.5 / Claude 3.5 / OpenAI GPT-4o / Deterministic Mock), latency graphs, demo scenario reset. |
+
 ---
 
 ## 5. Showcase Persona & Journey: Elena
