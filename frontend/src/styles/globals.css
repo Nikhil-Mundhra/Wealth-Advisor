@@ -1,27 +1,134 @@
 @import 'tailwindcss';
 
+/* Class-driven dark mode: ThemeToggle flips .dark on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Design tokens: every color, radius and font used by components comes from here. */
 @theme {
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
 
-  --color-brand-50: #eef0ff;
-  --color-brand-100: #e0e3ff;
-  --color-brand-600: #4338ca;
-  --color-brand-700: #3730a3;
-  --color-brand-900: #1e1b4b;
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-600: #0b6b4a;
+  --color-brand-700: #085c3f;
+  --color-brand-900: #06281c;
+  --color-brand-950: #06281c;
 
-  --color-ink: #111827;
-  --color-muted: #374151;
-  /* #6b7280 on white is 4.8:1, above WCAG AA for placeholder and helper text. */
-  --color-subtle: #6b7280;
-  --color-line: #e5e7eb;
+  --color-gold: #755d15;
+  --color-gold-subtle: #f3eee2;
+
+  --color-ink: #1c1917;
+  --color-muted: #44403c;
+  --color-subtle: #6f6963;
+  --color-line: #e7e0d2;
   --color-danger: #b91c1c;
 
+  --color-surface: #faf7f0;
+  --color-surface-subtle: #f3eee2;
+
+  --color-chart-1: #0b6b4a;
+  --color-chart-2: #8a6d1b;
+  --color-chart-3: #2563eb;
+  --color-chart-4: #db2777;
+  --color-chart-5: #7c3aed;
+
   --radius-field: 0.5rem;
+
+  --animate-fade-up: fade-up 0.4s ease both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark palette: near-black green-tinted page, elevated cards, champagne gold accents. */
+.dark {
+  --color-brand-50: #06281c;
+  --color-brand-100: #0b3d2c;
+  --color-brand-600: #10b981;
+  --color-brand-700: #34d399;
+  --color-brand-900: #a7f3d0;
+  --color-brand-950: #06281c;
+
+  --color-gold: #d4af37;
+  --color-gold-subtle: #2a332c;
+
+  --color-ink: #f5f1e6;
+  --color-muted: #d6d0bd;
+  --color-subtle: #a8b0a0;
+  --color-line: #2a332c;
+  --color-danger: #f87171;
+
+  --color-surface: #0c0f0e;
+  --color-surface-subtle: #141817;
+
+  --color-chart-1: #10b981;
+  --color-chart-2: #d4af37;
+  --color-chart-3: #60a5fa;
+  --color-chart-4: #f472b6;
+  --color-chart-5: #a78bfa;
+
+  color-scheme: dark;
 }
 
 @layer base {
   html {
-    @apply bg-white font-sans text-ink antialiased;
+    @apply bg-surface font-sans text-ink antialiased;
   }
+}
+
+/* Circular wipe for theme flips, originating at the toggle. Skipped when the
+   browser lacks View Transitions or the user prefers reduced motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: theme-wipe 0.45s ease;
+}
+
+@keyframes theme-wipe {
+  from {
+    clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--theme-x, 50%) var(--theme-y, 50%));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Spotlight hover: a soft brand glow tracking the cursor. Positions come from
+   onMouseMove setting --mx/--my; without JS it degrades to a plain card. */
+.spotlight {
+  position: relative;
+}
+
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--color-brand-600)/12, transparent 70%);
+}
+
+.spotlight:hover::before {
+  opacity: 1;
 }
