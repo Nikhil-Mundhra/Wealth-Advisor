@@ -16,5 +16,6 @@ Backend variables are validated once, on first use, by `backend/src/core/config/
 | `AUTH_ACCESS_TOKEN_TTL_SECONDS` | `900` (15 min) | no | access token lifetime |
 | `AUTH_REFRESH_TOKEN_TTL_SECONDS` | `1209600` (14 d) | no | refresh session lifetime |
 | `AUTH_REFRESH_REUSE_GRACE_SECONDS` | `5` | no | window in which a rotated token counts as a retry |
+| `MARKETSTACK_ACCESS_KEY` | none | no; no code reads it yet | Marketstack API key for the planned market-data adapter |
 | `PORT` | backend port (`docs/infra/ports.md`) | no | listen port of `backend/src/node-server.ts`; set by `make backend` and `make prod` |
 | `PROXY_PORT` | proxy port (`docs/infra/ports.md`) | no | nginx host port in `infra/docker-compose.yml`; set by `make proxy` |
