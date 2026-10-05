@@ -15,7 +15,6 @@ backend/test/integration/auth/refresh-race.test.ts : concurrent refreshes; exact
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
 backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/test-app.ts : boots the real app on a throwaway mongod or the memory store
-backend/test/unit/auth/document-validators.test.ts : DB validators require and type exactly the fields the mappers write
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts
