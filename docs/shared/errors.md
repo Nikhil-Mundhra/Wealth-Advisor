@@ -18,8 +18,6 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `<PREFIX>_1001`–`<PREFIX>_1899` | client error |
 | `<PREFIX>_1900`–`<PREFIX>_1999` | server error |
 
-Codes are part of the API: never reused or renumbered.
-
 ## Catalogue
 | Code | Status | Meaning |
 |---|---|---|

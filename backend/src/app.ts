@@ -1,12 +1,14 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
+import { env } from '#core/config/env.ts';
+import { checkDatabase } from '#core/db/connection/database-health.ts';
 import { InProcessEventBus } from '#core/events/event-bus.ts';
 import { createErrorHandler } from '#core/http/error-handler.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
-import { getDb } from '#core/persistence/mongo-client.ts';
-import { objectIdGenerator } from '#core/persistence/object-id-generator.ts';
+import { getDb } from '#core/db/connection/mongo-client.ts';
+import { objectIdGenerator } from '#core/db/ids/object-id-generator.ts';
 import { systemClock } from '#core/time/clock.ts';
 import { buildModules } from '#modules/index.ts';
 
@@ -19,7 +21,7 @@ export function createApp(context: ModuleContext): Hono {
 
   const api = new Hono();
   api.onError(errorHandler);
-  api.get('/health', (c) => c.json({ status: 'ok' }));
+  api.get('/health', async (c) => c.json({ status: 'ok', database: await checkDatabase(env()) }));
   // Placeholder until an AI feature exists.
   api.all('/ai', (c) => c.json({ message: 'oops no ai yet bitch' }, 501));
   registry.mount(api);

@@ -1,5 +1,5 @@
 import type { Db } from 'mongodb';
-import type { CollectionDefinition } from '#core/persistence/collection-definition.ts';
+import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
 
 // Creates missing collections, (re)applies $jsonSchema validators, and ensures indexes. Safe to run repeatedly.
 export async function applyCollectionDefinitions(db: Db, definitions: readonly CollectionDefinition[]): Promise<void> {

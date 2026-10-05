@@ -1,11 +1,11 @@
 import { ObjectId } from 'mongodb';
 import type { Clock } from '#core/time/clock.ts';
-import { BaseRepository, type CollectionProvider } from '#core/persistence/base-repository.ts';
-import { isDuplicateKeyError } from '#core/persistence/mongo-errors.ts';
-import type { ProviderType, User } from '../../domain/entities/user.entity.ts';
-import type { InsertUserOutcome, UserRepositoryPort } from '../../application/ports/user-repository.port.ts';
-import type { UserDocument } from './documents/user.document.ts';
-import { userMapper } from './mappers/user.mapper.ts';
+import { BaseRepository, type CollectionProvider } from '#core/db/repository/base-repository.ts';
+import { classifyDbError } from '#core/db/errors/classify-db-error.ts';
+import type { ProviderType, User } from '../../../domain/entities/user.entity.ts';
+import type { InsertUserOutcome, UserRepositoryPort } from '../../../application/ports/user-repository.port.ts';
+import type { UserDocument } from '../documents/user.document.ts';
+import { userMapper } from '../mappers/user.mapper.ts';
 
 export class MongoUserRepository extends BaseRepository<UserDocument> implements UserRepositoryPort {
   constructor(collection: CollectionProvider<UserDocument>, clock: Clock) {
@@ -17,7 +17,7 @@ export class MongoUserRepository extends BaseRepository<UserDocument> implements
       await this.insertDocument(userMapper.toDocument(user));
       return 'INSERTED';
     } catch (error) {
-      if (isDuplicateKeyError(error)) return 'DUPLICATE_PROVIDER'; // uk_users_active_provider
+      if (classifyDbError(error) === 'duplicate-key') return 'DUPLICATE_PROVIDER'; // uk_users_active_provider
       throw error;
     }
   }
