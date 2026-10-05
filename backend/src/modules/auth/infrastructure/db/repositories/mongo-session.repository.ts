@@ -1,11 +1,11 @@
 import { ObjectId } from 'mongodb';
 import type { Clock } from '#core/time/clock.ts';
-import { BaseRepository, type CollectionProvider } from '#core/persistence/base-repository.ts';
-import type { RevokeReason, Session } from '../../domain/entities/session.entity.ts';
-import type { TokenHash } from '../../domain/value-objects/token-hash.vo.ts';
-import type { SessionRepositoryPort } from '../../application/ports/session-repository.port.ts';
-import type { SessionDocument } from './documents/session.document.ts';
-import { sessionMapper } from './mappers/session.mapper.ts';
+import { BaseRepository, type CollectionProvider } from '#core/db/repository/base-repository.ts';
+import type { RevokeReason, Session } from '../../../domain/entities/session.entity.ts';
+import type { TokenHash } from '../../../domain/value-objects/token-hash.vo.ts';
+import type { SessionRepositoryPort } from '../../../application/ports/session-repository.port.ts';
+import type { SessionDocument } from '../documents/session.document.ts';
+import { sessionMapper } from '../mappers/session.mapper.ts';
 
 // Conditional single-document updates instead of row locks (SELECT ... FOR UPDATE): the filter
 // { revokedAt: null } makes each write a compare-and-set, so concurrent requests cannot both win.
