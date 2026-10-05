@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { HOUSEHOLD_MODES, RUNWAY_HEALTHY_MONTHS, type AssetClass, type HouseholdMode, type RunwayBand, runwayBand } from '@wealth-advisor/rules';
 import { Button } from '../../components/ui/button.tsx';
 import { AreaChart } from '../../components/ui/area-chart.tsx';
+import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { DEMO_BASELINE, DEMO_HOUSEHOLD, DEMO_NET_WORTH_EUR, DEMO_NET_WORTH_SERIES, DEMO_RUNWAY_MONTHS, DEMO_TARGET_WEIGHTS } from '../../lib/demo-data.ts';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
@@ -19,14 +20,6 @@ const BAND_TONE: Record<RunwayBand, string> = {
   critical: 'text-danger',
   warning: 'text-brand-700 dark:text-brand-900',
   healthy: 'text-ink',
-};
-
-const CLASS_CHART: Record<AssetClass, string> = {
-  EQUITY_GLOBAL: 'bg-chart-5',
-  EQUITY_US: 'bg-chart-3',
-  FIXED_INCOME_GOV: 'bg-chart-1',
-  MONEY_MARKET: 'bg-chart-2',
-  FX_HEDGE: 'bg-chart-4',
 };
 
 // Net worth hero, runway gauge, rebalance CTA, trail chart, and target allocation.
