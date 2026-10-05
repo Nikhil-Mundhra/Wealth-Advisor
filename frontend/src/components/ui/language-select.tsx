@@ -22,7 +22,7 @@ export function LanguageSelect() {
         // The DOM only offers our own options, but a tampered value must not poison the store.
         if (isLocale(event.target.value)) setLocale(event.target.value);
       }}
-      className="h-11 rounded-field border border-line bg-surface px-3 text-sm text-ink"
+      className="h-11 rounded-field border border-line bg-surface py-2 pl-3 pr-8 text-sm text-ink"
     >
       {LOCALES.map((option) => (
         <option key={option} value={option}>
