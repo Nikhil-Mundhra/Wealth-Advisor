@@ -1,6 +1,6 @@
 # Auth tokens
 
-Email signup/login with cochika-auth's token model, on Hono + MongoDB.
+Email signup/login token model, on Hono + MongoDB.
 
 ## Token model
 | | Rule |

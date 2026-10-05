@@ -98,7 +98,7 @@ export abstract class BaseRepository<D extends TimestampedDocument> {
   }
 }
 
-// Every document gets timestamps without each repository repeating it (cochika's BaseCreateEntity/BaseUpdateEntity).
+// Every document gets timestamps without each repository repeating it.
 BaseRepository.onInsert((document, now) => {
   document.createdAt ??= now;
   document.updatedAt = now;

@@ -25,7 +25,7 @@ backend/src/modules/auth/application/use-cases/refresh-tokens.use-case.ts : appl
 backend/src/modules/auth/domain/entities/session.entity.ts : refresh session: start family, rotate, revoke
 backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts : ROTATE | ALREADY_ROTATED | REUSE_DETECTED | INVALID
 backend/src/modules/auth/domain/value-objects/token-hash.vo.ts : SHA-256 hex of a refresh token
-backend/src/modules/auth/infrastructure/crypto/ed25519-jwt-signer.ts : EdDSA access tokens with cochika's claim set
+backend/src/modules/auth/infrastructure/crypto/ed25519-jwt-signer.ts : EdDSA access tokens: iss, aud, sub, iat, exp, jti, token_use, roles
 backend/src/modules/auth/infrastructure/crypto/jwt-key-loader.ts : loads PEM keys, or an ephemeral pair in dev
 backend/src/modules/auth/infrastructure/crypto/scrypt-password-hasher.ts : scrypt (node:crypto) password hashing
 backend/src/modules/auth/presentation/cookies/refresh-cookie.ts : set/read/clear the refresh_token cookie

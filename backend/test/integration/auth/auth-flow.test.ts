@@ -71,7 +71,7 @@ describe('login', () => {
     assert.match(cookie, /Expires=/);
   });
 
-  it('access token has the cochika claim set and opens /me', async () => {
+  it('access token has the expected claim set and opens /me', async () => {
     const login = await json(await postJson(t.app, '/api/auth/login', { email: EMAIL, password: PASSWORD, clientType: 'IOS' }));
     const [header, payload] = String(login.accessToken)
       .split('.')

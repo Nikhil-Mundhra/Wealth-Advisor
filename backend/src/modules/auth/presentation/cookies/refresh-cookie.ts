@@ -10,7 +10,7 @@ interface RefreshCookieOptions {
 }
 
 // Without rememberMe the cookie is a session cookie (gone when the browser closes); the server-side
-// session still lives 14 days either way, as in cochika.
+// session still lives 14 days either way.
 export function setRefreshCookie(c: Context, token: string, options: RefreshCookieOptions): void {
   setCookie(c, NAME, token, {
     httpOnly: true,

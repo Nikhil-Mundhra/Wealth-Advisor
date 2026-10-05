@@ -17,7 +17,7 @@ export interface Ed25519JwtSignerConfig {
   readonly clock: Clock;
 }
 
-// Access tokens with cochika's claim set: iss, aud, sub, iat, exp, jti, token_use, roles.
+// Access tokens with the claim set: iss, aud, sub, iat, exp, jti, token_use, roles.
 export class Ed25519JwtSigner implements AccessTokenSignerPort {
   private readonly config: Ed25519JwtSignerConfig;
   private keys: Promise<SigningKeys> | undefined;
