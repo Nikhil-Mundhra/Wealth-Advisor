@@ -14,6 +14,8 @@
 ## File structure
 
 ```
+frontend/src/components/layout/app-shell.test.tsx : page body with sidebar and bottom-tab links
+frontend/src/components/layout/app-shell.tsx : signed-in frame: header, desktop sidebar, mobile bottom tabs
 frontend/src/components/layout/split-layout.tsx : two-pane page: media aside (desktop) + centered content
 frontend/src/components/ui/alert.tsx : form-level message (role=alert), error/info tones
 frontend/src/components/ui/button.test.tsx : Button type default and loading state
@@ -34,6 +36,8 @@ frontend/src/components/ui/text-link.tsx : router-aware inline link
 frontend/src/components/ui/theme-toggle.test.tsx : flips the dark class and announces the next mode
 frontend/src/components/ui/theme-toggle.tsx : header control flipping .dark on <html>
 frontend/src/lib/cn.ts : className merge helper
+frontend/src/lib/dictionaries.test.ts : every locale carries exactly the English keys
+frontend/src/lib/dictionaries.ts : UI copy per locale with a locale-reading hook
 frontend/src/lib/locale-store.ts : active locale, localStorage, <html lang> applier
 frontend/src/lib/theme-store.ts : light/dark choice, localStorage, .dark applier
 frontend/src/styles/globals.css : Tailwind import and design tokens
