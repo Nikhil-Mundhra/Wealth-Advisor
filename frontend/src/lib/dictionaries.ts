@@ -43,6 +43,18 @@ const en = {
   'security.tiers': 'Permission tiers',
   'security.passkeys': 'Passkeys',
   'security.nopasskeys': 'No passkeys yet — enrollment arrives with the backend passkey module.',
+  'share.amounts': 'Show amounts',
+  'share.masked': 'Mask amounts',
+  'evidence.ledger': 'Sandbox ledger',
+  'evidence.action': 'Action',
+  'evidence.tier': 'Tier',
+  'evidence.digest': 'Digest',
+  'admin.overview': 'Overview',
+  'admin.tenants': 'Tenants',
+  'admin.apikeys': 'API keys',
+  'admin.models': 'Models',
+  'admin.active': 'Active',
+  'admin.none': 'Nothing here yet — connect the backend module.',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -87,6 +99,18 @@ const de: Record<StringKey, string> = {
   'security.tiers': 'Berechtigungsstufen',
   'security.passkeys': 'Passkeys',
   'security.nopasskeys': 'Noch keine Passkeys – die Registrierung folgt mit dem Backend-Passkey-Modul.',
+  'share.amounts': 'Beträge zeigen',
+  'share.masked': 'Beträge verbergen',
+  'evidence.ledger': 'Sandbox-Ledger',
+  'evidence.action': 'Aktion',
+  'evidence.tier': 'Stufe',
+  'evidence.digest': 'Digest',
+  'admin.overview': 'Übersicht',
+  'admin.tenants': 'Mandanten',
+  'admin.apikeys': 'API-Schlüssel',
+  'admin.models': 'Modelle',
+  'admin.active': 'Aktiv',
+  'admin.none': 'Noch nichts hier – Backend-Modul anbinden.',
 };
 
 const zhCn: Record<StringKey, string> = {
@@ -128,6 +152,18 @@ const zhCn: Record<StringKey, string> = {
   'security.tiers': '权限等级',
   'security.passkeys': '通行密钥',
   'security.nopasskeys': '暂无通行密钥——注册功能随后端通行密钥模块上线。',
+  'share.amounts': '显示金额',
+  'share.masked': '隐藏金额',
+  'evidence.ledger': '沙盒账本',
+  'evidence.action': '操作',
+  'evidence.tier': '等级',
+  'evidence.digest': '摘要',
+  'admin.overview': '总览',
+  'admin.tenants': '租户',
+  'admin.apikeys': 'API 密钥',
+  'admin.models': '模型',
+  'admin.active': '启用中',
+  'admin.none': '暂无内容——请接入后端模块。',
 };
 
 const zhHk: Record<StringKey, string> = {
@@ -169,6 +205,18 @@ const zhHk: Record<StringKey, string> = {
   'security.tiers': '權限等級',
   'security.passkeys': '通行密鑰',
   'security.nopasskeys': '暫無通行密鑰——註冊功能隨後端通行密鑰模組上線。',
+  'share.amounts': '顯示金額',
+  'share.masked': '隱藏金額',
+  'evidence.ledger': '沙盒賬本',
+  'evidence.action': '操作',
+  'evidence.tier': '等級',
+  'evidence.digest': '摘要',
+  'admin.overview': '總覽',
+  'admin.tenants': '租戶',
+  'admin.apikeys': 'API 金鑰',
+  'admin.models': '模型',
+  'admin.active': '啟用中',
+  'admin.none': '暫無內容——請接後端模組。',
 };
 
 export const STRINGS: Record<Locale, Record<StringKey, string>> = { en, de, 'zh-CN': zhCn, 'zh-HK': zhHk };

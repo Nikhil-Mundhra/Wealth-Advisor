@@ -1,4 +1,4 @@
-import type { AssetClass, Currency, HouseholdMode } from '@wealth-advisor/rules';
+import type { AssetClass, Currency, HouseholdMode, PermissionTier } from '@wealth-advisor/rules';
 
 // Elena's fixture standing in for the Phase 2 finance/wealth endpoints; replaced by API hooks once they land.
 export interface DemoAccount {
@@ -50,4 +50,17 @@ export const DEMO_TARGET_WEIGHTS: Record<AssetClass, number> = {
 export const DEMO_REMITTANCES: DemoRemittance[] = [
   { corridor: 'EUR → CNY', amount: '¥25,000', note: 'Monthly family support' },
   { corridor: 'GBP → SGD', amount: 'S$4,800', note: 'Joint reserve top-up' },
+];
+
+export interface DemoLedgerEntry {
+  digest: string;
+  action: string;
+  tier: PermissionTier;
+  at: string;
+}
+
+// Sandbox executions; the real digest formula lives in the Phase 2 ledger module.
+export const DEMO_LEDGER: DemoLedgerEntry[] = [
+  { digest: '9f2c41ab…e7', action: 'Rebalance 20% US equities → money market', tier: 'TIER_3_EXECUTE', at: '2026-09-30 18:42 UTC' },
+  { digest: '41bd09cc…12', action: 'Simulate −5% EUR shock', tier: 'TIER_2_SIMULATE', at: '2026-09-30 18:15 UTC' },
 ];
