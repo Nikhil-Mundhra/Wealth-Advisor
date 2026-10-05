@@ -49,7 +49,15 @@ export function DashboardPage() {
           <p className={`mt-1 text-sm font-medium ${BAND_TONE[band]}`}>
             {DEMO_RUNWAY_MONTHS} {strings['dashboard.months']} · {strings[BAND_KEY[band]]}
           </p>
-          <div role="progressbar" aria-valuenow={DEMO_RUNWAY_MONTHS} aria-valuemin={0} aria-valuemax={RUNWAY_HEALTHY_MONTHS} className="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle">
+          <div
+            role="progressbar"
+            aria-label={strings['dashboard.runway']}
+            aria-valuenow={DEMO_RUNWAY_MONTHS}
+            aria-valuemin={0}
+            aria-valuemax={RUNWAY_HEALTHY_MONTHS}
+            aria-valuetext={`${DEMO_RUNWAY_MONTHS} ${strings['dashboard.months']}`}
+            className="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle"
+          >
             <div className={`h-full rounded-full ${band === 'critical' ? 'bg-danger' : 'bg-brand-600'}`} style={{ width: `${Math.min((DEMO_RUNWAY_MONTHS / RUNWAY_HEALTHY_MONTHS) * 100, 100)}%` }} />
           </div>
         </section>
@@ -60,7 +68,8 @@ export function DashboardPage() {
             {DEMO_RUNWAY_MONTHS} <span className="text-lg">{strings['dashboard.months']}</span>
           </p>
           <p className="mt-1 text-sm text-subtle">
-            6 {strings['dashboard.months']} · {strings['household.family']}
+            {household === 'INDIVIDUAL' ? 3 : 6} {strings['dashboard.months']} ·{' '}
+            {strings[household === 'INDIVIDUAL' ? 'household.individual' : 'household.family']}
           </p>
         </section>
 

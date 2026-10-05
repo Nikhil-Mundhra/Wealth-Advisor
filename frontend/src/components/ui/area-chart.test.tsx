@@ -5,6 +5,8 @@ import { AreaChart } from './area-chart.tsx';
 describe('AreaChart', () => {
   it('renders the series as an accessible image with an endpoint dot', () => {
     render(<AreaChart points={[1, 2, 3]} label="Net worth trail" />);
-    expect(screen.getByRole('img', { name: 'Net worth trail' })).toBeVisible();
+    const image = screen.getByRole('img', { name: 'Net worth trail' });
+    expect(image).toBeVisible();
+    expect(image.querySelector('circle')).toBeInTheDocument();
   });
 });

@@ -1,31 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { useStrings } from '../../lib/dictionaries.ts';
+import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
 
 interface Message {
   role: 'user' | 'assistant';
+  // Seeded copy stays keyed so it follows locale switches; typed text is fixed.
+  key: StringKey | null;
   text: string;
 }
+
+const SEED: { role: Message['role']; key: StringKey }[] = [
+  { role: 'user', key: 'advisory.q1' },
+  { role: 'assistant', key: 'advisory.a1' },
+];
 
 // Copilot thread with the rebalance action card and the Tier 3 biometric step-up gate.
 export function AdvisoryPage() {
   const strings = useStrings();
-  const [messages, setMessages] = useState<Message[]>(() => [
-    { role: 'user', text: strings['advisory.q1'] },
-    { role: 'assistant', text: strings['advisory.a1'] },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => SEED.map(({ role, key }) => ({ role, key, text: '' })));
   const [draft, setDraft] = useState('');
   const [stepUp, setStepUp] = useState(false);
   const [pending, setPending] = useState(false);
   const dialogTitleRef = useRef<HTMLHeadingElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const approveButtonRef = useRef<HTMLButtonElement>(null);
 
   function send(event: React.FormEvent): void {
     event.preventDefault();
     const text = draft.trim();
     if (!text) return;
     // Demo mode: the canned reply stands in for the Phase 2.5 LLM gateway.
-    setMessages((all) => [...all, { role: 'user', text }, { role: 'assistant', text: strings['advisory.a1'] }]);
+    setMessages((all) => [...all, { role: 'user', key: null, text }, { role: 'assistant', key: 'advisory.a1', text: '' }]);
     setDraft('');
   }
 
@@ -45,11 +51,27 @@ export function AdvisoryPage() {
   useEffect(() => {
     if (!stepUp) return;
     dialogTitleRef.current?.focus();
-    const close = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') setStepUp(false);
+    // Tab cycles inside the dialog; Escape and close return focus to Approve.
+    const guard = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        closeStepUp();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button');
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
+    window.addEventListener('keydown', guard);
+    return () => window.removeEventListener('keydown', guard);
   }, [stepUp]);
 
   function openStepUp(): void {
@@ -60,6 +82,7 @@ export function AdvisoryPage() {
   function closeStepUp(): void {
     setPending(false);
     setStepUp(false);
+    approveButtonRef.current?.focus();
   }
 
   return (
@@ -72,14 +95,14 @@ export function AdvisoryPage() {
             key={index}
             className={`max-w-[85%] rounded-field px-4 py-3 text-sm motion-safe:animate-fade-up ${message.role === 'user' ? 'self-end bg-brand-600 text-white dark:text-brand-950' : 'self-start border border-line bg-surface'}`}
           >
-            {message.text}
+            {message.key ? strings[message.key] : message.text}
           </li>
         ))}
       </ol>
 
       <section aria-label={strings['advisory.approve']} onMouseMove={trackSpotlight} className="spotlight rounded-field border border-line bg-surface p-5">
         <p className="text-sm text-subtle">{strings['advisory.proposal']}</p>
-        <Button className="mt-3" onClick={openStepUp}>
+        <Button ref={approveButtonRef} className="mt-3" onClick={openStepUp}>
           {strings['advisory.approve']}
         </Button>
       </section>
@@ -99,7 +122,7 @@ export function AdvisoryPage() {
       {stepUp && (
         <div className="fixed inset-0 z-20 flex items-end justify-center sm:items-center">
           <div aria-hidden="true" className="absolute inset-0 bg-black/50" onClick={closeStepUp} />
-          <div role="dialog" aria-modal="true" aria-label={strings['advisory.stepup.title']} className="relative w-full max-w-md rounded-t-field border border-line bg-surface p-6 pb-[env(safe-area-inset-bottom)] sm:rounded-field sm:pb-6">
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={strings['advisory.stepup.title']} className="relative w-full max-w-md rounded-t-field border border-line bg-surface p-6 pb-[env(safe-area-inset-bottom)] sm:rounded-field sm:pb-6">
             <h2 ref={dialogTitleRef} tabIndex={-1} className="text-lg font-semibold">{strings['advisory.stepup.title']}</h2>
             <p className="mt-2 text-sm text-subtle">{strings['advisory.stepup.body']}</p>
             {pending && (
