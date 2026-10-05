@@ -23,7 +23,7 @@ safety   SAFE · verify: tsc, npm test
 blocked  none
 first seen 2026-10-04
 
-### R3 · Long parameter list (boolean mode flag) · backend/src/core/persistence/base-repository.ts:61 · setFields({ many })
+### R3 · Long parameter list (boolean mode flag) · backend/src/core/db/repository/base-repository.ts · setFields({ many })
 status   planned
 evidence `many` switches updateOne/updateMany; 2 callers pass many:true (mongo-session.repository.ts:50,54), 4 use the default
 remedy   Replace Parameter with Explicit Methods (setOne / setMany) -> refactor-simplifying-method
@@ -36,7 +36,7 @@ first seen 2026-10-04
 
 ## Dropped
 
-### R4 · Primitive obsession · backend/src/modules/auth/infrastructure/persistence/* · id string <-> ObjectId
+### R4 · Primitive obsession · backend/src/modules/auth/infrastructure/db/* · id string <-> ObjectId
 dropped 2026-10-04 — 7 `new ObjectId(s)` sites are plain library use, not repeated knowledge; a 1:1 wrapper adds a file hop (KISS). Revisit if id validation is needed at more than findActiveById.
 
 ### R5 · Long parameter list · backend/src/modules/auth/infrastructure/crypto/scrypt-password-hasher.ts:14 · derive
@@ -60,7 +60,7 @@ dropped 2026-10-04 — deliberate seam for a later outbox (documented in file ma
 ### R11 · Speculative generality · backend/src/modules/auth/application/ports/* · 4 single-implementation ports
 dropped 2026-10-04 — user-approved architecture; dependency rule documented in docs/architecture/c3-backend.md (Components, Depends on)
 
-### R12 · Speculative generality · backend/src/core/persistence/base-repository.ts:42-90 · static onInsert/onUpdate hook registry
+### R12 · Speculative generality · backend/src/core/db/repository/lifecycle-hooks.ts · static onInsert/onUpdate hook registry
 dropped 2026-10-04 — user explicitly requested attachable static hooks (builder pattern)
 
 ### R13 · Speculative generality · backend/src/core/domain/id-generator.ts · IdGenerator

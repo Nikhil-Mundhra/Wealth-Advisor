@@ -1,1 +1,24 @@
-@AGENTS.md
+# Agent
+
+Entry point. Pick the route for the task, read that file, follow its `## Calls`.
+
+## Route
+- frontend code → `agents/frontend/index.md`
+- backend code → `agents/backend/index.md`
+- shared packages and dependency direction between workspaces → `agents/shared/index.md`
+- ports, routing, containers, Vercel deploy → `agents/infra/index.md`
+- code style for any code: imports, syntax, naming, exports, constants, comments → `agents/code.md`
+- docs, guides and file maps: writing or changing any .md → `agents/docs/writing.md`
+- syncing file maps and docs after commits → `agents/docs/sync-docs.md`
+- syncing routes and guides after commits → `agents/docs/sync-agent.md`
+- judging the project against the hackathon brief → `agents/meta/review.md`
+- understanding the system: architecture, API routes, error codes, environment, ports; choosing what to refactor → `docs/index.md`
+
+## Rules
+- change: one file, one responsibility; update the owning map in the same change.
+- delete/rename: grep the symbol or path, remove its references first, re-grep returns nothing.
+- commit: `make test` green; never commit `.env`, `.env.local`, `.vercel/`, `dist/`; no AI attribution lines.
+- commands: `make help` lists every task (dev, build, test, db, deploy).
+- data: `make seed-demo` is local only.
+- docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
+- entry: `CLAUDE.md` is a byte copy of `AGENTS.md`; edit `AGENTS.md`, then `cp AGENTS.md CLAUDE.md`.
