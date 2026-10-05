@@ -34,6 +34,19 @@
   --color-chart-5: #7c3aed;
 
   --radius-field: 0.5rem;
+
+  --animate-fade-up: fade-up 0.4s ease both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Dark palette: near-black green-tinted page, elevated cards, champagne gold accents. */
@@ -97,4 +110,25 @@
   ::view-transition-new(root) {
     animation: none;
   }
+}
+
+/* Spotlight hover: a soft brand glow tracking the cursor. Positions come from
+   onMouseMove setting --mx/--my; without JS it degrades to a plain card. */
+.spotlight {
+  position: relative;
+}
+
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--color-brand-600)/12, transparent 70%);
+}
+
+.spotlight:hover::before {
+  opacity: 1;
 }

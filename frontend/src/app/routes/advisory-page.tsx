@@ -29,6 +29,13 @@ export function AdvisoryPage() {
     setDraft('');
   }
 
+  function trackSpotlight(event: React.MouseEvent<HTMLElement>): void {
+    const node = event.currentTarget;
+    const box = node.getBoundingClientRect();
+    node.style.setProperty('--mx', `${event.clientX - box.left}px`);
+    node.style.setProperty('--my', `${event.clientY - box.top}px`);
+  }
+
   // No registered platform credential exists yet, so the gate names its blocker instead of failing silently.
   // Phase 2.1 replaces this with a real navigator.credentials.get challenge.
   function sign() {
@@ -63,14 +70,14 @@ export function AdvisoryPage() {
         {messages.map((message, index) => (
           <li
             key={index}
-            className={`max-w-[85%] rounded-field px-4 py-3 text-sm ${message.role === 'user' ? 'self-end bg-brand-600 text-white dark:text-brand-950' : 'self-start border border-line bg-surface'}`}
+            className={`max-w-[85%] rounded-field px-4 py-3 text-sm motion-safe:animate-fade-up ${message.role === 'user' ? 'self-end bg-brand-600 text-white dark:text-brand-950' : 'self-start border border-line bg-surface'}`}
           >
             {message.text}
           </li>
         ))}
       </ol>
 
-      <section aria-label={strings['advisory.approve']} className="rounded-field border border-line bg-surface p-5">
+      <section aria-label={strings['advisory.approve']} onMouseMove={trackSpotlight} className="spotlight rounded-field border border-line bg-surface p-5">
         <p className="text-sm text-subtle">{strings['advisory.proposal']}</p>
         <Button className="mt-3" onClick={openStepUp}>
           {strings['advisory.approve']}
