@@ -17,7 +17,7 @@ function linkClass({ isActive }: { isActive: boolean }): string {
 }
 
 function tabClass({ isActive }: { isActive: boolean }): string {
-  return cn('flex min-h-11 flex-col items-center justify-center gap-1 text-xs', isActive ? 'text-brand-600 dark:text-brand-100' : 'text-subtle');
+  return cn('flex min-h-11 flex-col items-center justify-center gap-1 text-xs', isActive ? 'text-brand-600 dark:text-brand-700' : 'text-subtle');
 }
 
 // Signed-in frame: top header on every viewport, sidebar on desktop, bottom tabs on mobile.

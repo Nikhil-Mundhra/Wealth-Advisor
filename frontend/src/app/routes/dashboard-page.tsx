@@ -13,7 +13,7 @@ const BAND_KEY: Record<RunwayBand, StringKey> = {
 
 const BAND_TONE: Record<RunwayBand, string> = {
   critical: 'text-danger',
-  warning: 'text-brand-700 dark:text-brand-100',
+  warning: 'text-brand-700 dark:text-brand-900',
   healthy: 'text-ink',
 };
 

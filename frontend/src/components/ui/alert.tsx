@@ -6,7 +6,7 @@ const alertVariants = cva('rounded-field border px-4 py-3 text-sm', {
   variants: {
     tone: {
       error: 'border-red-200 bg-red-50 text-danger dark:border-red-900 dark:bg-red-950/50',
-      info: 'border-brand-100 bg-brand-50 text-brand-700 dark:border-brand-900 dark:bg-brand-900/40 dark:text-brand-100',
+      info: 'border-brand-100 bg-brand-50 text-brand-700 dark:border-brand-100 dark:bg-brand-100/20 dark:text-brand-900',
     },
   },
   defaultVariants: { tone: 'error' },

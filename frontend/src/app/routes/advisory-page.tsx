@@ -63,7 +63,7 @@ export function AdvisoryPage() {
         {messages.map((message, index) => (
           <li
             key={index}
-            className={`max-w-[85%] rounded-field px-4 py-3 text-sm ${message.role === 'user' ? 'self-end bg-brand-600 text-white' : 'self-start border border-line bg-surface'}`}
+            className={`max-w-[85%] rounded-field px-4 py-3 text-sm ${message.role === 'user' ? 'self-end bg-brand-600 text-white dark:text-brand-950' : 'self-start border border-line bg-surface'}`}
           >
             {message.text}
           </li>
