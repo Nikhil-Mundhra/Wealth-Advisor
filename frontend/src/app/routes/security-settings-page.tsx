@@ -1,6 +1,8 @@
 import { PERMISSION_TIERS } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
+import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { useLogout } from '../../features/auth/api/use-logout.ts';
 import { useMe } from '../../features/auth/api/use-me.ts';
@@ -13,9 +15,9 @@ export function SecuritySettingsPage() {
   const logout = useLogout();
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{strings['header.settings']}</h1>
+      <PageTitle>{strings['header.settings']}</PageTitle>
 
-      <section aria-label={strings['security.session']} className="rounded-field border border-line bg-surface p-5">
+      <Card aria-label={strings['security.session']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.session']}</h2>
         {me.isPending && <Spinner label={strings['security.loading']} />}
         {me.isError && <Alert>{strings['security.loaderror']}</Alert>}
@@ -27,9 +29,9 @@ export function SecuritySettingsPage() {
             <dd>{me.data.roles.join(', ')}</dd>
           </dl>
         )}
-      </section>
+      </Card>
 
-      <section aria-label={strings['security.tiers']} className="rounded-field border border-line bg-surface p-5">
+      <Card aria-label={strings['security.tiers']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.tiers']}</h2>
         <ol className="mt-3 flex flex-col gap-2 text-sm">
           {PERMISSION_TIERS.map((tier) => (
@@ -39,12 +41,12 @@ export function SecuritySettingsPage() {
             </li>
           ))}
         </ol>
-      </section>
+      </Card>
 
-      <section aria-label={strings['security.passkeys']} className="rounded-field border border-line bg-surface p-5">
+      <Card aria-label={strings['security.passkeys']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.passkeys']}</h2>
         <p className="mt-3 text-sm text-subtle">{strings['security.nopasskeys']}</p>
-      </section>
+      </Card>
 
       <div>
         <Button variant="outline" loading={logout.isPending} onClick={() => logout.mutate()}>

@@ -29,6 +29,6 @@ export function GuestRoute() {
 export function AdminRoute() {
   const me = useMe();
   if (me.isPending) return <FullPageSpinner />;
-  if (me.isError || !me.data?.roles.includes('admin')) return <Navigate to="/" replace />;
+  if (me.isError || !me.data?.roles.includes('ADMIN')) return <Navigate to="/" replace />;
   return <Outlet />;
 }
