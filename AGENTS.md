@@ -12,6 +12,7 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 - syncing file maps and docs after commits → `agents/docs/sync-docs.md`
 - syncing routes and guides after commits → `agents/docs/sync-agent.md`
 - judging the project against the hackathon brief → `agents/meta/review.md`
+- product scope, planned features, roadmap → `docs/plan/index.md`
 - understanding the system: architecture, API routes, error codes, environment, ports; choosing what to refactor → `docs/index.md`
 
 ## Rules
@@ -20,4 +21,5 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 - commit: `make test` green; never commit `.env`, `.env.local`, `.vercel/`, `dist/`; no AI attribution lines.
 - commands: `make help` lists every task (dev, build, test, db, deploy).
 - data: `make seed-demo` is local only.
-- docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
+- docs: kebab-case `.md` names (`docs/plan/security-model.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
+- entry: `CLAUDE.md` is a byte copy of `AGENTS.md`; edit `AGENTS.md`, then `cp AGENTS.md CLAUDE.md`.
