@@ -8,7 +8,7 @@ last synced: d68fbba
 ## Rules
 - Owning map: the guide whose `## File structure` holds the path's prefix; a conventional root file (`CONVENTIONAL` in `scripts/docs-lint.mjs`) needs no map, any other root file goes in its area's guide; a new area gets a guide (`agents/docs/sync-agent.md`).
 - Keep each file's existing sections; add none.
-- Report aggregated responsibilities, contradicted rules and writing violations; do not fix them.
+- Report contradicted rules and writing violations; do not fix them.
 - Report scope: files changed in the range only.
 
 ## Workflow
@@ -22,10 +22,8 @@ last synced: d68fbba
 ## Report
 
 ```
-<path> : <current responsibility> : <jobs it combines>
 rule <guide>:<line> : contradicted by <path>
 writing <path> : <violation>
 ```
 
-- Aggregated: the responsibility needs "and", or lists several jobs.
 - Empty report: `no findings`.
