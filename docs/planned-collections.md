@@ -27,7 +27,7 @@ erDiagram
 interface PasskeyCredential {
   credentialId: string; // base64url
   publicKey: string; // base64url
-  counter: number; // clone/replay detection
+  counter: number; // signature counter
   deviceType: 'SINGLE_DEVICE' | 'MULTI_DEVICE';
   backedUp: boolean;
   transports: Array<'USB' | 'NFC' | 'BLE' | 'INTERNAL' | 'HYBRID'>;
@@ -70,7 +70,7 @@ interface ApiKeyDocument {
   _id: ObjectId;
   tenantId: ObjectId;
   name: string;
-  keyPrefix: string; // stored unhashed, for identification
+  keyPrefix: string; // unhashed
   keyHash: string; // SHA-256 of the full secret
   permissions: Array<'read:analytics' | 'advisory:recommend' | 'simulate:stress-test' | 'execute:sandbox'>;
   rateLimitPerMinute: number;

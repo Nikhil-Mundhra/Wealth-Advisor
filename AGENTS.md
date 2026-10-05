@@ -21,3 +21,4 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 - commands: `make help` lists every task (dev, build, test, db, deploy).
 - data: `make seed-demo` is local only.
 - docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
+- entry: `CLAUDE.md` is a byte copy of `AGENTS.md`; edit `AGENTS.md`, then `cp AGENTS.md CLAUDE.md`.

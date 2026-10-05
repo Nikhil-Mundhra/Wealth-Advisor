@@ -20,7 +20,7 @@ frontend/src/features/auth/components/login-form.tsx : login form validated by L
 frontend/src/features/auth/components/signup-form.test.tsx : contract messages, shared-rule checks, signup then login, server field issues
 frontend/src/features/auth/components/signup-form.tsx : signup form validated by SignupRequest
 frontend/src/features/auth/errors/auth-error-messages.ts : text and target field for auth error codes
-frontend/src/lib/errors/resolve-error.test.ts : lookup order and text for every code and validation key
+frontend/src/lib/errors/resolve-error.test.ts : lookup order: feature map, shared map, fallback; validation key to text
 frontend/src/lib/errors/resolve-error.ts : error → message: feature map, then shared map, then fallback
 frontend/src/lib/errors/shared-error-messages.ts : text for core and client error codes; generic fallback
 frontend/src/lib/forms/apply-server-error.ts : places a failed submit: field issues under fields, else field or form message

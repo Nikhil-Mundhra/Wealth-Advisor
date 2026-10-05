@@ -1,6 +1,6 @@
 import type { EventSubscription } from '#core/events/event-bus.ts';
 import type { RouteDefinition } from '#core/http/route-builder.ts';
-import type { CollectionDefinition } from '#core/persistence/collection-definition.ts';
+import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
 
 // Everything a module contributes to the app, declared in one object.
 export interface ModuleManifest {
