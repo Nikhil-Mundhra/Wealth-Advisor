@@ -55,6 +55,16 @@ const en = {
   'admin.models': 'Models',
   'admin.active': 'Active',
   'admin.none': 'Nothing here yet — connect the backend module.',
+  'household.group': 'Household',
+  'header.language': 'Language',
+  'header.nav.mobile': 'Quick tabs',
+  'theme.light': 'Switch to light mode',
+  'theme.dark': 'Switch to dark mode',
+  'security.email': 'Email',
+  'security.roles': 'Roles',
+  'security.loading': 'Loading your profile',
+  'security.loaderror': 'Could not load your profile.',
+  'advisory.proposal': 'US Tech Equities 60% → 40% · Money Market 15% → 25% · FX Hedge 0% → 10%',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -111,6 +121,16 @@ const de: Record<StringKey, string> = {
   'admin.models': 'Modelle',
   'admin.active': 'Aktiv',
   'admin.none': 'Noch nichts hier – Backend-Modul anbinden.',
+  'household.group': 'Haushalt',
+  'header.language': 'Sprache',
+  'header.nav.mobile': 'Schnellzugriff',
+  'theme.light': 'Zum Hellmodus wechseln',
+  'theme.dark': 'Zum Dunkelmodus wechseln',
+  'security.email': 'E-Mail',
+  'security.roles': 'Rollen',
+  'security.loading': 'Profil wird geladen',
+  'security.loaderror': 'Profil konnte nicht geladen werden.',
+  'advisory.proposal': 'US Tech Equities 60% → 40% · Money Market 15% → 25% · FX Hedge 0% → 10%',
 };
 
 const zhCn: Record<StringKey, string> = {
@@ -164,6 +184,16 @@ const zhCn: Record<StringKey, string> = {
   'admin.models': '模型',
   'admin.active': '启用中',
   'admin.none': '暂无内容——请接入后端模块。',
+  'household.group': '家庭',
+  'header.language': '语言',
+  'header.nav.mobile': '快捷导航',
+  'theme.light': '切换到浅色模式',
+  'theme.dark': '切换到深色模式',
+  'security.email': '电子邮箱',
+  'security.roles': '角色',
+  'security.loading': '正在加载个人资料',
+  'security.loaderror': '无法加载个人资料。',
+  'advisory.proposal': 'US Tech Equities 60% → 40% · Money Market 15% → 25% · FX Hedge 0% → 10%',
 };
 
 const zhHk: Record<StringKey, string> = {
@@ -217,13 +247,19 @@ const zhHk: Record<StringKey, string> = {
   'admin.models': '模型',
   'admin.active': '啟用中',
   'admin.none': '暫無內容——請接後端模組。',
+  'household.group': '家庭',
+  'header.language': '語言',
+  'header.nav.mobile': '快捷導航',
+  'theme.light': '切換到淺色模式',
+  'theme.dark': '切換到深色模式',
+  'security.email': '電子郵箱',
+  'security.roles': '角色',
+  'security.loading': '正在載入個人資料',
+  'security.loaderror': '無法載入個人資料。',
+  'advisory.proposal': 'US Tech Equities 60% → 40% · Money Market 15% → 25% · FX Hedge 0% → 10%',
 };
 
 export const STRINGS: Record<Locale, Record<StringKey, string>> = { en, de, 'zh-CN': zhCn, 'zh-HK': zhHk };
-
-export function getStrings(locale: Locale): Record<StringKey, string> {
-  return STRINGS[locale];
-}
 
 export function useStrings(): Record<StringKey, string> {
   const locale = useSyncExternalStore(subscribeToLocale, getLocale);

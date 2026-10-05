@@ -15,7 +15,7 @@ export function SharedPlanPage() {
       <p className="truncate text-xs text-subtle">/share/{token}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{strings['dashboard.allocation']}</h1>
-        <Button variant="outline" aria-pressed={masked} onClick={() => setMasked((was) => !was)}>
+        <Button variant="outline" aria-pressed={!masked} onClick={() => setMasked((was) => !was)}>
           {masked ? strings['share.amounts'] : strings['share.masked']}
         </Button>
       </div>

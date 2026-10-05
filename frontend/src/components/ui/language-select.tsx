@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
-import { LOCALES, type Locale } from '@wealth-advisor/rules';
+import { LOCALES, type Locale, isLocale } from '@wealth-advisor/rules';
 import { getLocale, setLocale, subscribeToLocale } from '../../lib/locale-store.ts';
+import { useStrings } from '../../lib/dictionaries.ts';
 
 const NATIVE_LABELS: Record<Locale, string> = {
   en: 'English',
@@ -12,11 +13,15 @@ const NATIVE_LABELS: Record<Locale, string> = {
 // Header control: a native select (free keyboard and screen-reader support); the advisory LLM answers in this locale.
 export function LanguageSelect() {
   const locale = useSyncExternalStore(subscribeToLocale, getLocale);
+  const strings = useStrings();
   return (
     <select
-      aria-label="Language"
+      aria-label={strings['header.language']}
       value={locale}
-      onChange={(event) => setLocale(event.target.value as Locale)}
+      onChange={(event) => {
+        // The DOM only offers our own options, but a tampered value must not poison the store.
+        if (isLocale(event.target.value)) setLocale(event.target.value);
+      }}
       className="h-11 rounded-field border border-line bg-surface px-3 text-sm text-ink"
     >
       {LOCALES.map((option) => (

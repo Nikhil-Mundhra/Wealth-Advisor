@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { useStrings } from '../../lib/dictionaries.ts';
@@ -18,6 +18,7 @@ export function AdvisoryPage() {
   const [draft, setDraft] = useState('');
   const [stepUp, setStepUp] = useState(false);
   const [pending, setPending] = useState(false);
+  const dialogTitleRef = useRef<HTMLHeadingElement>(null);
 
   function send(event: React.FormEvent): void {
     event.preventDefault();
@@ -36,12 +37,23 @@ export function AdvisoryPage() {
 
   useEffect(() => {
     if (!stepUp) return;
+    dialogTitleRef.current?.focus();
     const close = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') setStepUp(false);
     };
     window.addEventListener('keydown', close);
     return () => window.removeEventListener('keydown', close);
   }, [stepUp]);
+
+  function openStepUp(): void {
+    setPending(false);
+    setStepUp(true);
+  }
+
+  function closeStepUp(): void {
+    setPending(false);
+    setStepUp(false);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,8 +71,8 @@ export function AdvisoryPage() {
       </ol>
 
       <section aria-label={strings['advisory.approve']} className="rounded-field border border-line bg-surface p-5">
-        <p className="text-sm text-subtle">US Tech Equities 60% → 40% · Money Market 15% → 25% · FX Hedge 0% → 10%</p>
-        <Button className="mt-3" onClick={() => setStepUp(true)}>
+        <p className="text-sm text-subtle">{strings['advisory.proposal']}</p>
+        <Button className="mt-3" onClick={openStepUp}>
           {strings['advisory.approve']}
         </Button>
       </section>
@@ -79,9 +91,9 @@ export function AdvisoryPage() {
 
       {stepUp && (
         <div className="fixed inset-0 z-20 flex items-end justify-center sm:items-center">
-          <div aria-hidden="true" className="absolute inset-0 bg-black/50" onClick={() => setStepUp(false)} />
+          <div aria-hidden="true" className="absolute inset-0 bg-black/50" onClick={closeStepUp} />
           <div role="dialog" aria-modal="true" aria-label={strings['advisory.stepup.title']} className="relative w-full max-w-md rounded-t-field border border-line bg-surface p-6 pb-[env(safe-area-inset-bottom)] sm:rounded-field sm:pb-6">
-            <h2 className="text-lg font-semibold">{strings['advisory.stepup.title']}</h2>
+            <h2 ref={dialogTitleRef} tabIndex={-1} className="text-lg font-semibold">{strings['advisory.stepup.title']}</h2>
             <p className="mt-2 text-sm text-subtle">{strings['advisory.stepup.body']}</p>
             {pending && (
               <div className="mt-3">
@@ -90,7 +102,7 @@ export function AdvisoryPage() {
             )}
             <div className="mt-4 flex gap-2">
               <Button onClick={sign}>{strings['advisory.stepup.sign']}</Button>
-              <Button variant="outline" onClick={() => setStepUp(false)}>
+              <Button variant="outline" onClick={closeStepUp}>
                 {strings['advisory.stepup.cancel']}
               </Button>
             </div>
