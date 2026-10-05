@@ -5,8 +5,10 @@ Backend variables are validated once, on first use, by `backend/src/core/config/
 | Var | Default | Required | Effect |
 |---|---|---|---|
 | `NODE_ENV` | `development` | no | `production` disables the ephemeral JWT key pair and makes `backend/src/node-server.ts` serve `frontend/dist`; `make prod` sets it; tests set `test` |
-| `MONGODB_URI` | none | by every route that touches the database | unset → those routes return `CORE_DB_UNCONFIGURED`; `/api/health`, `/api/ai` and the 404 fallback work without it |
+| `DATA_STORE` | `mongo` when `MONGODB_URI` is set or in production, else `memory` | no | `memory` keeps data in process (lost on restart) and seeds the demo account; `memory` in production fails startup |
+| `MONGODB_URI` | none | in production | unset in production → routes that touch the database return `CORE_DB_UNCONFIGURED`; `/api/health`, `/api/ai` and the 404 fallback work without it |
 | `MONGODB_DB_NAME` | `wealth_advisor` | no | database name |
+| `MONGODB_SERVER_SELECTION_TIMEOUT_MS` | `5000` | no | how long a connect or operation waits for a reachable server |
 | `AUTH_JWT_PRIVATE_KEY`, `AUTH_JWT_PUBLIC_KEY` | none | in production | PEM, `\n` escapes allowed; `make jwt-keys` prints a pair. Neither set outside production → ephemeral pair (tokens die on restart). Only one set, or neither in production → `AU_1901` |
 | `AUTH_JWT_ISSUER` | `wealth-advisor-auth` | no | JWT `iss` |
 | `AUTH_JWT_AUDIENCE` | `wealth-advisor-api` | no | JWT `aud` |

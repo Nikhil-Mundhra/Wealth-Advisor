@@ -3,7 +3,7 @@
 ## Route
 - HTTP edge: routes, handlers, use cases → `agents/backend/routes.md`
 - errors: codes, statuses → `agents/backend/errors.md`
-- persistence and concurrency: collections, indexes, repositories → `agents/backend/persistence.md`
+- db: connection, store, write, retry, schema → `agents/backend/db.md`
 - auth security: tokens, sessions, refresh cookie → `agents/backend/auth-token.md`
 - testing → `agents/backend/testing.md`
 - module manifest and mounting → `docs/backend/module-contract.md`
@@ -49,13 +49,6 @@ backend/src/core/http/validate-contract.ts : runs a contract schema; failures be
 backend/src/core/module/define-module.ts : module manifest (name, basePath, routes, collections, subscriptions, errors)
 backend/src/core/module/module-context.ts : shared dependencies every module receives (db, clock, ids, events)
 backend/src/core/module/module-registry.ts : collects manifests; mounts routes, subscribes events, builds the error catalog, lists collections
-backend/src/core/persistence/apply-collection-definitions.ts : creates collections, validators, indexes (idempotent)
-backend/src/core/persistence/base-repository.ts : collection access + static, inherited lifecycle hooks (timestamps)
-backend/src/core/persistence/collection-definition.ts : type for a module's indexes and $jsonSchema validator
-backend/src/core/persistence/mapper.ts : Mapper<Entity, Document> interface
-backend/src/core/persistence/mongo-client.ts : one MongoClient cached across serverless invocations
-backend/src/core/persistence/mongo-errors.ts : detects duplicate-key (unique index) errors
-backend/src/core/persistence/object-id-generator.ts : IdGenerator backed by ObjectId hex strings
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/clock.ts : Clock interface and system clock
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes

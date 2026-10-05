@@ -3,8 +3,8 @@
 Any route can also return `CORE_INTERNAL` (unhandled error or response-contract violation). Error statuses: `docs/shared/errors.md`.
 
 ## GET /api/health
-- responsibility: liveness check; touches no database
-- contract: request none, response none (`{ status: 'ok' }`) 200, errors none; auth none
+- responsibility: liveness and database status; pings MongoDB only when the store is `mongo`
+- contract: request none, response none (`{ status: 'ok', database: 'up' | 'down' | 'unconfigured' | 'memory' }`) 200, errors none; auth none
 
 ## ALL /api/ai
 - nested route / query: none (any method; sub-paths fall to the 404 fallback)
