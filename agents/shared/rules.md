@@ -24,6 +24,7 @@ rules/src/email.rule.ts : max length, pattern (copied from zod), normalize, isEm
 rules/src/error-codes.ts : module prefixes, CORE and AUTH codes, ErrorCode types
 rules/src/household-mode.rule.ts : HOUSEHOLD_MODES, HouseholdMode, isHouseholdMode
 rules/src/index.ts : public barrel
+rules/src/llm-provider.rule.ts : LLM_PROVIDERS, LlmProvider, isLlmProvider
 rules/src/locale.rule.ts : LOCALES, Locale, DEFAULT_LOCALE, isLocale
 rules/src/password.rule.ts : min/max length, isPasswordLength
 rules/src/permission-tier.rule.ts : PERMISSION_TIERS, PermissionTier, isPermissionTier
