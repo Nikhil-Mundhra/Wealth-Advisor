@@ -27,6 +27,7 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 .vercelignore : keeps env files, build output and infra/ out of Vercel uploads
 Agent.md : agent entry point: routes, global rules, root file map
 CLAUDE.md : Claude Code entry point: imports Agent.md
+IMPLEMENTATION_PLAN.md : phase-wise roadmap for FinTechathon 2026 DEWA agent
 Makefile : start/stop/status for frontend, backend, proxy; build, prod, vercel-dev, test, db-indexes, jwt-keys, seed-demo, docs-lint
 README.md : hackathon project concept
 package.json : npm workspaces root and top-level scripts
