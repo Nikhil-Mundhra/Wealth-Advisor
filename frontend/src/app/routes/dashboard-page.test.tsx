@@ -23,5 +23,6 @@ describe('DashboardPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Individual' }));
     expect(screen.getByRole('button', { name: 'Individual' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Family household' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText(/3 months · Individual/)).toBeVisible();
   });
 });
