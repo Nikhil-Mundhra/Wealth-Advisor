@@ -26,3 +26,31 @@ describe('RouteBuilder responses', () => {
     assert.deepEqual(await response.json(), { code: 'CORE_INTERNAL', message: 'internal error' });
   });
 });
+
+describe('RouteBuilder query', () => {
+  const Query = z.object({ base: z.enum(['EUR', 'USD'], { error: 'currency.invalid' }), limit: z.coerce.number().int().optional() });
+  const app = new Hono();
+  app.onError(createErrorHandler(new ErrorCatalog()));
+  mountRoutes(app, [
+    RouteBuilder.get('/q')
+      .query(Query)
+      .responds(z.object({ base: z.string(), limit: z.number().nullable() }))
+      .handle(async ({ query }) => ({ base: query.base, limit: query.limit ?? null })),
+  ]);
+
+  it('hands the handler the parsed query', async () => {
+    const response = await app.request('/q?base=USD&limit=3');
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { base: 'USD', limit: 3 });
+  });
+
+  it('rejects a missing or invalid parameter with the same 400 as a body, naming each field', async () => {
+    for (const path of ['/q', '/q?base=XXX']) {
+      const response = await app.request(path);
+      assert.equal(response.status, 400);
+      const body = (await response.json()) as { code: string; issues: unknown };
+      assert.equal(body.code, 'CORE_VALIDATION_FAILED');
+      assert.deepEqual(body.issues, [{ path: ['base'], code: 'currency.invalid' }]);
+    }
+  });
+});

@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
 interface Violation {
-  readonly kind: 'non-public' | 'off-graph' | 'outside-module';
+  readonly kind: 'non-public' | 'off-graph' | 'outside-module' | 'core-imports-module';
   readonly where: string;
   readonly from: string;
   readonly to: string;
@@ -51,6 +51,9 @@ const FIXTURE: Record<string, string> = {
     "} from '../market/domain/money.ts';",
   ].join('\n'),
   'backend/src/modules/auth/auth.module.ts': "import { env } from '#core/config/env.ts';\n",
+  'backend/src/core/time/clock.ts': "import type { Db } from 'mongodb';\n",
+  'backend/src/core/http/alias.ts': "import type { Money } from '#modules/market/public.ts';\n",
+  'backend/src/core/http/relative.ts': "\nimport { createMarketModule } from '../../modules/market/market.module.ts';\n",
 };
 
 describe('module-deps', () => {
@@ -76,10 +79,21 @@ describe('module-deps', () => {
     const { violations, cycle } = deps.checkModuleDeps(root);
     assert.equal(cycle, null);
     const found = violations.map(({ kind, where, from, to }) => ({ kind, where, from, to }));
-    assert.deepEqual(found, [
+    assert.deepEqual(found.filter((v) => v.from !== 'core'), [
       { kind: 'non-public', where: 'backend/src/modules/analytics/analytics.api.ts:5', from: 'analytics', to: 'market' },
       { kind: 'off-graph', where: 'backend/src/modules/market/market.api.ts:4', from: 'market', to: 'analytics' },
     ]);
+  });
+
+  it('flags any core import of a module file, by alias or relative path, even public.ts', () => {
+    const found = deps.checkModuleDeps(root).violations.filter((v) => v.from === 'core');
+    assert.deepEqual(
+      found.map(({ kind, where, to }) => ({ kind, where, to })).sort((a, b) => a.where.localeCompare(b.where)),
+      [
+        { kind: 'core-imports-module', where: 'backend/src/core/http/alias.ts:1', to: 'market/public.ts' },
+        { kind: 'core-imports-module', where: 'backend/src/core/http/relative.ts:2', to: 'market/market.module.ts' },
+      ],
+    );
   });
 
   it('finds a cycle in the edge list', () => {

@@ -19,7 +19,7 @@
 - contracts: imported only by presentation, plus error-envelope types in `core/http` and `core/errors`, plus event payload schemas (`contracts/src/events/`) in application.
 - core: mechanisms only (events, http, db, time, crypto); no domain concept (money, price, currency, snapshot, portfolio).
 - module API: new modules build theirs with `create<Name>Api(deps)` in `<name>.api.ts`: one orchestrating function per use case calling standalone step functions in order, dependencies by closure; auth keeps its use-case classes.
-- boundaries: a module imports another only through its `public.ts`, only along an edge in `docs/backend/module-dependencies.md`; `make deps-lint` checks both.
+- boundaries: a module imports another only through its `public.ts`, only along an edge in `docs/backend/module-dependencies.md`; `make deps-lint` checks both, and that `core/` imports no module.
 - events: facts cross modules as `EventEnvelope`s built by `createEnvelope`; questions are synchronous calls through `public.ts`; every handler guards with `markProcessed` and keeps its writes idempotent.
 - outbound http: through `core/http-client`; a metered provider call reserves its `RequestBudget` first.
 - composition: only `<module>.module.ts` constructs concrete classes; `modules/index.ts` lists modules by static import.
@@ -38,6 +38,7 @@ backend/package.json : scripts (dev, start, test, db:indexes, keys:generate, db:
 backend/src/app.ts : createApp(): registers modules, health, error handler; default export is the Vercel entry
 backend/src/core/application/use-case.ts : UseCase<Command, Result> interface
 backend/src/core/config/env.ts : validates environment variables once (zod)
+backend/src/core/crypto/constant-time-equal.ts : string equality in constant time (SHA-256 digests, timingSafeEqual)
 backend/src/core/crypto/random-token.ts : opaque random token of a given byte length → base64url
 backend/src/core/crypto/sha256.ts : SHA-256 → hex
 backend/src/core/domain/base-entity.ts : entity base: id + timestamps, finalize() → postInit()
@@ -63,16 +64,18 @@ backend/src/core/http-client/request-budget.ts : RequestBudget port (reserve pro
 backend/src/core/http-client/request-budgets.schema.ts : request_budgets collection: one counter per provider and month, $jsonSchema
 backend/src/core/http/error-handler.ts : turns AppError, DomainError (status from the catalog) and unknown errors into the error contract
 backend/src/core/http/read-json-body.ts : reads the request body; empty body becomes {}
-backend/src/core/http/route-builder.ts : fluent route declaration: method → body contract → middleware → handler → response contract
+backend/src/core/http/require-bearer-secret.ts : machine-caller middleware: Bearer must equal a shared secret (constant time); unset secret refuses all
+backend/src/core/http/route-builder.ts : fluent route declaration: method → query contract → body contract → middleware → handler → response contract
 backend/src/core/http/validate-contract.ts : runs a contract schema; failures become one 400 with every field issue
 backend/src/core/module/define-module.ts : module manifest (name, basePath, routes, collections, subscriptions, errors)
-backend/src/core/module/module-context.ts : shared dependencies every module receives (db, clock, ids, events)
+backend/src/core/module/module-context.ts : shared dependencies every module receives (db, clock, ids, events, outbound http)
 backend/src/core/module/module-registry.ts : collects manifests; mounts routes, subscribes events, builds the error catalog, lists core and module collections
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
+backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
 backend/src/modules/index.ts : explicit, statically imported module list
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/tsconfig.json : typecheck settings (erasable syntax only)
-scripts/module-deps.mjs : fails on a cross-module import of a file other than public.ts, an import along an edge not in docs/backend/module-dependencies.md, or a cycle in that edge list
+scripts/module-deps.mjs : fails on a cross-module import of a file other than public.ts, an import along an edge not in docs/backend/module-dependencies.md, a cycle in that edge list, or any core import of a module file
 ```

@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Checks backend module boundaries: a module imports another module only through its public.ts and only along an
-// edge listed in docs/backend/module-dependencies.md; the listed edges themselves form no cycle.
+// edge listed in docs/backend/module-dependencies.md; the listed edges themselves form no cycle; core imports no
+// module.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const EDGES_DOC = 'docs/backend/module-dependencies.md';
 const MODULES_DIR = 'backend/src/modules';
+const CORE_DIR = 'backend/src/core';
 const SOURCE = /\.(ts|tsx|mts|js|mjs)$/;
 const PUBLIC_FILE = 'public.ts';
 
@@ -112,13 +114,30 @@ export function checkModuleDeps(root) {
       }
     }
   }
+  violations.push(...coreViolations(root, modulesDir));
   return { edges, cycle: findCycle(edges), violations };
+}
+
+function coreViolations(root, modulesDir) {
+  const coreDir = join(root, CORE_DIR);
+  if (!existsSync(coreDir)) return [];
+  const violations = [];
+  for (const file of sourceFiles(coreDir)) {
+    for (const { specifier, line } of importsOf(readFileSync(file, 'utf8'))) {
+      const target = targetInModules(modulesDir, file, specifier);
+      if (target === null) continue;
+      const where = `${relative(root, file).split(sep).join('/')}:${line}`;
+      violations.push({ kind: 'core-imports-module', where, from: 'core', to: target, specifier });
+    }
+  }
+  return violations;
 }
 
 const MESSAGES = {
   'non-public': (v) => `${v.from} imports ${v.specifier}; import ${v.to}/${PUBLIC_FILE} instead`,
   'off-graph': (v) => `${v.from} → ${v.to} is not an edge in ${EDGES_DOC}`,
   'outside-module': (v) => `${v.from} imports ${v.to}, which belongs to no module`,
+  'core-imports-module': (v) => `core imports ${v.specifier}; core holds mechanisms and never imports modules`,
 };
 
 function main() {

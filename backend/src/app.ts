@@ -4,6 +4,7 @@ import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
 import { checkDatabase } from '#core/db/connection/database-health.ts';
 import { InProcessEventBus } from '#core/events/event-bus.ts';
+import { createHttpClient } from '#core/http-client/http-client.ts';
 import { createErrorHandler } from '#core/http/error-handler.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
@@ -37,6 +38,12 @@ export function createApp(context: ModuleContext): Hono {
 
 // Vercel entrypoint: Vercel imports this default export and runs it as a function.
 // Local Node runs it through node-server.ts instead.
-const app = createApp({ db: getDb, clock: systemClock, ids: objectIdGenerator, events: new InProcessEventBus() });
+const app = createApp({
+  db: getDb,
+  clock: systemClock,
+  ids: objectIdGenerator,
+  events: new InProcessEventBus(),
+  http: createHttpClient(),
+});
 
 export default app;
