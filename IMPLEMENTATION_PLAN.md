@@ -119,6 +119,7 @@ The system supports multi-tenant isolation, allowing institutions (wealth adviso
 ### 3.3 Passkey Authentication & Biometric Step-Up Authorization
 * **FIDO2 / WebAuthn Standard:**
   * Zero-password vulnerability: Public-key cryptography replaces phishable passwords.
+  * **Relying Party (`rpId`) Multi-Environment Mapping:** Configured dynamically via environment: `localhost` during local development and `wealth-advisor.vercel.app` in production deployment.
   * Credential Enrollment: Users register their TouchID / FaceID / hardware security key via `/settings/security` or during onboarding.
   * Seamless Passwordless Sign-In: Instant 1-tap login with biometric verification.
 * **Biometric Step-Up for Tier 3 Execution Gate:**
@@ -159,9 +160,12 @@ The system supports multi-tenant isolation, allowing institutions (wealth adviso
 To provide a native banking app experience beyond mobile web:
 * **Capacitor Integration Shell:** The React 19 + Vite frontend is wrapped via `@capacitor/core`, `@capacitor/ios`, and `@capacitor/android`.
 * **Hardware Biometrics:** Native Passkeys via `@capgo/capacitor-face-id` / native WebAuthn WebView bridge, giving seamless FaceID on iOS and BiometricPrompt on Android.
-* **Native Push Notifications:** Real-time push alerts via APNs (Apple Push Notification service) and FCM (Firebase Cloud Messaging) for FX volatility alerts, critical burn-rate thresholds, and remittance confirmation receipts.
+* **Native Push Notifications via Domain Events:** Real-time push alerts delivered via APNs (Apple Push Notification service) and FCM (Firebase Cloud Messaging). Triggered by domain events published on the backend `InProcessEventBus` (`RunwayThresholdBreached` and `FxVolatilitySpikeDetected`).
 * **iOS Distribution Branch:** Xcode project bundle (`App.xcworkspace`), CocoaPods dependencies, Apple Developer Code Signing, TestFlight distribution pipeline.
 * **Android Distribution Branch:** Android Studio project, Gradle build system, Keystore release signing, Android App Bundle (`.aab`) generation for Google Play Console.
+
+### 3.8 MongoDB Atlas Multi-Tenant Schema Specification
+All persistent data models, partial unique indexes, TTL policies, and shard key considerations are formally defined in [database_scheme.md](database_scheme.md).
 
 ---
 
@@ -310,8 +314,8 @@ sequenceDiagram
 #### 1.3 Deterministic Financial Engines (`backend/src/modules/`)
 - [ ] **`BurnRateCalculator`:** Aggregates multi-currency transactions converted to baseline currency; adapts emergency reserve targets based on Individual vs. Family Household mode.
 - [ ] **`ExpatRiskProfiler`:** Recalibrates base risk score dynamically based on liquidity runway and foreign currency mismatch.
-- [ ] **`PortfolioOptimizer`:** Computes target asset allocation adapting to the effective risk score and ring-fencing scheduled Asian remittance capital.
-- [ ] **Unit Tests:** 100% test coverage for calculations under Elena's family cashflow squeeze scenario.
+- [ ] **`PortfolioOptimizer`:** Computes target asset allocation adapting to the effective risk score and ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) as non-negotiable liquidity carve-outs into matching short-term cash/money-market buckets.
+- [ ] **Unit Tests:** 100% test coverage for calculations under Elena's family cashflow squeeze scenario and student tuition shock tests.
 
 ---
 
