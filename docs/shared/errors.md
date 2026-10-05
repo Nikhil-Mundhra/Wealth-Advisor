@@ -8,7 +8,7 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `CORE_` | backend core | `rules/src/error-codes.ts` (`CORE_ERROR_CODES`) | thrown with the status at the HTTP edge (`AppError`) |
 | `AU_` | auth module | `rules/src/error-codes.ts` (`AUTH_ERROR_CODES`) | `backend/src/modules/auth/presentation/auth-error-statuses.ts` |
 | `MK_` | market module | `rules/src/error-codes.ts` (`MARKET_ERROR_CODES`) | `backend/src/modules/market/presentation/market-error-statuses.ts` |
-| `AN_` | analytics module | `rules/src/error-codes.ts` (`ANALYTICS_ERROR_CODES`) | the analytics module's manifest `errors` (module not built yet) |
+| `AN_` | analytics module | `rules/src/error-codes.ts` (`ANALYTICS_ERROR_CODES`) | `backend/src/modules/analytics/presentation/analytics-error-statuses.ts` |
 
 - Module prefixes are listed in `ERROR_CODE_PREFIXES` (`rules/src/error-codes.ts`); each module registers its prefix and statuses in its manifest's `errors`, collected into the error catalog at startup (`backend/src/core/errors/error-catalog.ts`).
 - A module code outside its prefix, or registered twice, stops the app at startup; an unregistered code is answered as 500.
@@ -42,4 +42,5 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `MK_1901` | 502 | market data provider unavailable, answered an error, or sent data that breaks a market invariant |
 | `MK_1902` | 503 | market data provider's monthly request quota is spent |
 | `MK_1903` | 503 | market data provider is not configured (missing access key) |
-| `AN_1001` | 404 | no market snapshot computed yet |
+| `AN_1001` | 404 | no market snapshot computed yet, or none for the asked `asOf` |
+| `AN_1900` | 500 | analytics invariant violated (a computed or stored snapshot breaks a rule) |
