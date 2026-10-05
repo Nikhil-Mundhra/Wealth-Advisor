@@ -30,6 +30,7 @@ backend/test/support/test-app.ts : boots the real app on a throwaway mongod or t
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts
+backend/test/unit/core/calendar-date.test.ts : isIsoDate refuses impossible dates without throwing; addDays boundaries
 backend/test/unit/core/db/classify-db-error.test.ts : duplicate-key, transient, fatal
 backend/test/unit/core/db/data-store.test.ts : store resolution and health without a database
 backend/test/unit/core/db/with-read-retry.test.ts : retries transient failures only, up to the policy
