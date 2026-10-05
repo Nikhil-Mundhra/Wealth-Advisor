@@ -273,41 +273,96 @@ sequenceDiagram
 ### Phase 2: Backend Modules, Passkeys, Multi-Tenant Engine, Sharing & AI Gateway (Days 4–7)
 **Objective:** Build the Passkey/WebAuthn service, multi-tenant scoping, plan sharing module, API key manager, multi-provider LLM gateway, and auditable sandbox ledger.
 
-#### 2.1 Backend Modules Implementation
-- [ ] **`auth.module.ts` (Passkeys):** WebAuthn registration, login, and step-up challenge verification using `@simplewebauthn/server` or native WebCrypto.
-- [ ] **`tenant.module.ts` & `admin.module.ts`:** Tenant provisioning, multi-tenant query scoping, scoped API key issuance, and runtime LLM provider switcher.
-- [ ] **`finance.module.ts`:** Collections `accounts` and `transactions` with Individual vs. Family mode filtering and Elena demo seeds.
-- [ ] **`wealth.module.ts`:** Collections `portfolios` and `asset_products`.
-- [ ] **`sharing.module.ts`:** Generates secure tokenized read-only links (`POST /api/sharing/create`, `GET /api/sharing/:token`) with optional balance masking.
-- [ ] **`advisory.module.ts`:** Multi-provider LLM gateway (`Gemini`, `Claude`, `OpenAI`, `Mock`) with locale-aware system prompts, tool execution, and Passkey-enforced Tier 3 gatekeeper.
-- [ ] **`sandbox_ledgers`:** Audited immutable transaction collection.
+#### 2.1 Passkey / WebAuthn & Auth Extension (`backend/src/modules/auth`)
+- [ ] Integrate WebAuthn verification adapter (`@simplewebauthn/server` or native WebCrypto).
+- [ ] Extend user entity with embedded Passkey credentials (`credentialId`, `publicKey`, `counter`, `transports`).
+- [ ] Endpoints:
+  - `POST /api/auth/passkey/register-options`
+  - `POST /api/auth/passkey/register-verify`
+  - `POST /api/auth/passkey/login-options`
+  - `POST /api/auth/passkey/login-verify`
+  - `POST /api/auth/passkey/step-up-challenge`
+
+#### 2.2 Multi-Tenant & API Key Module (`backend/src/modules/tenant` & `admin`)
+- [ ] Implement `tenant.module.ts`:
+  - Collections: `tenants` and `api_keys` with partial unique indexes.
+  - Multi-tenant middleware: Scopes database queries to `tenantId` from JWT or API key header (`X-API-Key`).
+  - API Key hashing & verification: Validates key prefix, hash, and permission tier.
+- [ ] Implement `admin.module.ts`:
+  - Routes: `GET /api/admin/tenants`, `POST /api/admin/tenants`, `GET /api/admin/api-keys`, `POST /api/admin/api-keys`, `GET /api/admin/models`, `POST /api/admin/models`.
+
+#### 2.3 Finance & Wealth Modules (`backend/src/modules/finance` & `wealth`)
+- [ ] Implement `finance.module.ts`:
+  - Collections: `accounts`, `transactions` (tenant-scoped).
+  - Support Individual vs. Family Household mode cashflow filtering.
+  - Pre-seeded Elena demo scenario (European income + Asian remittances).
+- [ ] Implement `wealth.module.ts`:
+  - Collections: `portfolios`, `asset_products` (tenant-scoped).
+  - Routes: `GET /api/wealth/portfolio`, `GET /api/wealth/products`, `POST /api/wealth/optimize`.
+
+#### 2.4 Plan Sharing Module (`backend/src/modules/sharing`)
+- [ ] Implement `sharing.module.ts`:
+  - Collection: `shared_plans` (token, planSnapshot, masked, expiresAt).
+  - Endpoints: `POST /api/sharing/create` (generates unguessable token with TTL and privacy masking), `GET /api/sharing/:token` (public read-only strategy presentation).
+
+#### 2.5 Multi-Provider LLM Gateway & Tool-Calling Agent (`backend/src/modules/advisory`)
+- [ ] Implement `LlmGateway` abstraction with concrete adapters:
+  - `GeminiAdapter` (`@google/genai` or direct REST API)
+  - `ClaudeAdapter` (`@anthropic-ai/sdk` or REST)
+  - `OpenAiAdapter` (`openai` or REST)
+  - `MockLlmAdapter` (deterministic offline engine with canned tool calling & explainability)
+- [ ] Registered Agent Tools:
+  1. `get_cashflow_and_runway` (with Individual vs. Family mode)
+  2. `get_currency_exposure`
+  3. `calculate_adaptive_portfolio`
+  4. `simulate_stress_test`
+  5. `create_rebalance_proposal`
+  6. `execute_sandbox_trade` (Requires Passkey verification proof)
+
+#### 2.6 Tier 3 Gatekeeper & Sandbox Audit Ledger
+- [ ] **Passkey-Enforced Execution Gate:** Rejects `execute_sandbox_trade` unless accompanied by a verified Passkey step-up assertion.
+- [ ] **Sandbox Ledger (`sandbox_ledgers` collection):**
+  - Records every simulated execution with:
+    $$\text{Audit Digest} = \text{SHA256}(\text{userId} + \text{tenantId} + \text{timestamp} + \text{passkeySignature} + \text{tradeDiff})$$
+  - Generates immutable operation logs matching FinTechathon submission criteria.
+- [ ] **Three-Pillar Explainability Formatter:**
+  - Formats structured explanations across Personal Finance, Cross-Border FX, and Wealth Strategy in the user's active language (`en`, `zh-CN`, `zh-HK`, `de`).
+  - Automatically appends cross-border compliance disclaimers.
 
 ---
 
 ### Phase 3: Frontend Executive Dashboard, Copilot UX, Theming & i18n (Days 8–11)
-**Objective:** Deliver an intuitive, responsive, and visually compelling user interface with dark mode, multi-language support, public shareable plan views, and Passkey biometric authorization.
+**Objective:** Deliver an intuitive, responsive, and visually compelling user interface with dark mode, multi-language support, public shareable plan views, Passkey biometric authorization, and Admin console.
 
 #### 3.1 Design System, Dark Mode & i18n Foundations
 - [ ] **Dark Mode:** Configure Tailwind v4 `@theme` with CSS variables for dark surface/line/ink tokens. Implement `ThemeToggle` with system preference auto-detection.
 - [ ] **i18n:** Lightweight translation dictionary provider supporting `en`, `zh-CN`, `zh-HK`, `de`. Implement `LanguageSelect` dropdown in navbar.
 
-#### 3.2 Expat Wealth Dashboard & Cashflow Views
+#### 3.2 Passkey Integration & Security Settings (`/settings/security`)
+- [ ] 1-Click Passkey login and enrollment flows using `@simplewebauthn/browser`.
+- [ ] `SecuritySettingsPage` (`/settings/security`): Manage enrolled Passkeys, device names, active sessions, and permission tiers.
+
+#### 3.3 Expat Wealth Dashboard & Cashflow Views (`/`, `/portfolio`, `/cashflow`)
 - [ ] **Dashboard (`/`):** Multi-currency net worth cards, Individual vs. Family Household toggle, burn-rate health gauge, target vs current allocation.
 - [ ] **Portfolio Page (`/portfolio`):** Asset holdings, rebalancing drift visualizer, and "Share Strategy URL" modal with privacy balance masking toggle.
 - [ ] **Cashflow Page (`/cashflow`):** Multi-currency accounts, recurring bills, Asian remittance corridor planner.
 
-#### 3.3 AI Advisory Copilot & Biometric Execution Modal (`/advisory`)
+#### 3.4 AI Advisory Copilot & Biometric Execution Modal (`/advisory`)
 - [ ] **Conversational Interface:** Full-height streaming dialogue panel with chat history and multilingual responses.
 - [ ] **Generative UI Action Cards:** Product Comparison, Dynamic Risk Recalibration, and Rebalance Proposal cards.
 - [ ] **Tier 3 Biometric Step-Up Modal:** Triggers browser Passkey prompt (TouchID/FaceID) to sign transaction before submission.
 
-#### 3.4 Public Shared Plan View (`/share/:token`)
+#### 3.5 Public Shared Plan View (`/share/:token`)
 - [ ] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation.
 - [ ] Privacy toggle: view as exact amounts or relative percentages.
 
-#### 3.5 Evidence Explorer & Admin Console
+#### 3.6 Evidence Explorer & Admin Console (`/evidence`, `/admin/*`)
 - [ ] **Evidence Page (`/evidence`):** Sandbox audit table, before/after diffs, Passkey signature proofs, SHA-256 hashes, JSON download.
-- [ ] **Admin Console (`/admin/*`):** Tenant management, API key manager, runtime LLM selector, and demo scenario reset.
+- [ ] **Admin Console (`/admin`, `/admin/tenants`, `/admin/api-keys`, `/admin/models`):**
+  - Organization and tenant management table.
+  - API key issuance with permission tier checkboxes.
+  - Runtime LLM switcher: Google Gemini $\leftrightarrow$ Claude $\leftrightarrow$ OpenAI $\leftrightarrow$ Deterministic Mock.
+  - System diagnostics and one-click demo data reset button.
 
 ---
 
