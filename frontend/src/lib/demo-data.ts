@@ -26,6 +26,9 @@ export const DEMO_NET_WORTH_EUR = 95000;
 export const DEMO_BASELINE: Currency = 'EUR';
 export const DEMO_RUNWAY_MONTHS = 3.2;
 
+// Six-month net worth trail feeding the dashboard area chart.
+export const DEMO_NET_WORTH_SERIES = [88200, 90100, 89400, 92300, 93100, 95000];
+
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   { id: 'eu-current', label: 'EU Current', currency: 'EUR', balance: 7500 },
   { id: 'uk-current', label: 'UK Current', currency: 'GBP', balance: 3000 },
