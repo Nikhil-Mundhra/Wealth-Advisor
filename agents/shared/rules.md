@@ -20,8 +20,10 @@ rules/src/display-name.rule.ts : max length, normalize, isDisplayName
 rules/src/email.rule.ts : max length, pattern (copied from zod), normalize, isEmail
 rules/src/error-codes.ts : module prefixes, CORE and AUTH codes, ErrorCode types
 rules/src/index.ts : public barrel
+rules/src/locale.rule.ts : LOCALES, Locale, DEFAULT_LOCALE, isLocale
 rules/src/password.rule.ts : min/max length, isPasswordLength
 rules/src/refresh-token.rule.ts : byte count, base64url pattern, isRefreshToken
 rules/src/validation-keys.ts : VALIDATION_KEYS, ValidationKey, isValidationKey
+rules/src/viewport.rule.ts : MIN_TOUCH_TARGET_PX, MOBILE_BREAKPOINT_PX
 rules/tsconfig.json : typecheck settings
 ```
