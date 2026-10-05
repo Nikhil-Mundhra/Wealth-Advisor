@@ -1,0 +1,52 @@
+{
+  "pagination": {
+    "limit": 3,
+    "offset": 3,
+    "count": 2,
+    "total": 5
+  },
+  "data": [
+    {
+      "open": 547.9,
+      "high": 550.6,
+      "low": 544.81,
+      "close": 546.53,
+      "volume": 4170122.0,
+      "adj_high": 550.6,
+      "adj_low": 544.81,
+      "adj_close": 543.63,
+      "adj_open": 547.9,
+      "adj_volume": 4170122.0,
+      "split_factor": 1.0,
+      "dividend": 0.0,
+      "name": "Vanguard S&P 500 ETF",
+      "exchange_code": "NYSE ARCA",
+      "asset_type": "ETF",
+      "price_currency": "usd",
+      "symbol": "VOO",
+      "exchange": "ARCX",
+      "date": "2025-01-06T00:00:00+0000"
+    },
+    {
+      "open": 92.26,
+      "high": 92.5,
+      "low": 92.14,
+      "close": 92.205,
+      "volume": 8215012.0,
+      "adj_high": 92.5,
+      "adj_low": 92.14,
+      "adj_close": null,
+      "adj_open": 92.26,
+      "adj_volume": 8215012.0,
+      "split_factor": 1.0,
+      "dividend": 0.0,
+      "name": "iShares 7-10 Year Treasury Bond ETF",
+      "exchange_code": "NASDAQ",
+      "asset_type": "ETF",
+      "price_currency": "usd",
+      "symbol": "IEF",
+      "exchange": "ARCX",
+      "date": "2025-01-06T00:00:00+0000"
+    }
+  ]
+}

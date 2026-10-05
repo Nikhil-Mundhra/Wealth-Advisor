@@ -1,0 +1,73 @@
+{
+  "pagination": {
+    "limit": 3,
+    "offset": 0,
+    "count": 3,
+    "total": 5
+  },
+  "data": [
+    {
+      "open": 117.6,
+      "high": 118.53,
+      "low": 117.47,
+      "close": 118.36,
+      "volume": 2617406.0,
+      "adj_high": 118.53,
+      "adj_low": 117.47,
+      "adj_close": 117.9,
+      "adj_open": 117.6,
+      "adj_volume": 2617406.0,
+      "split_factor": 1.0,
+      "dividend": 0.0,
+      "name": "Vanguard Total World Stock Index Fund ETF Shares",
+      "exchange_code": "NYSE ARCA",
+      "asset_type": "ETF",
+      "price_currency": "usd",
+      "symbol": "VT",
+      "exchange": "ARCX",
+      "date": "2025-01-03T00:00:00+0000"
+    },
+    {
+      "open": 538.48,
+      "high": 544.31,
+      "low": 537.5,
+      "close": 543.795,
+      "volume": 4834227.0,
+      "adj_high": 544.31,
+      "adj_low": 537.5,
+      "adj_close": 540.91,
+      "adj_open": 538.48,
+      "adj_volume": 4834227.0,
+      "split_factor": 1.0,
+      "dividend": 0.0,
+      "name": "Vanguard S&P 500 ETF",
+      "exchange_code": "NYSE ARCA",
+      "asset_type": "ETF",
+      "price_currency": "usd",
+      "symbol": "VOO",
+      "exchange": "ARCX",
+      "date": "2025-01-03T00:00:00+0000"
+    },
+    {
+      "open": 118.96,
+      "high": 119.68,
+      "low": 118.6,
+      "close": 118.95,
+      "volume": 2105430.0,
+      "adj_high": 119.68,
+      "adj_low": 118.6,
+      "adj_close": 118.49,
+      "adj_open": 118.96,
+      "adj_volume": 2105430.0,
+      "split_factor": 1.0,
+      "dividend": 0.0,
+      "name": "Vanguard Total World Stock Index Fund ETF Shares",
+      "exchange_code": "NYSE ARCA",
+      "asset_type": "ETF",
+      "price_currency": "usd",
+      "symbol": "VT",
+      "exchange": "ARCX",
+      "date": "2025-01-06T00:00:00+0000"
+    }
+  ]
+}

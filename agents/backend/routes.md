@@ -4,7 +4,8 @@
 - `docs/shared/apis/index.md` : route docs
 
 ## Rules
-- Handlers only map contract → command → use case → result → contract; `RouteBuilder` validates both ends.
+- Handlers only map contract → command → use case → result → contract; `RouteBuilder` validates query, body and response.
+- auth: user routes use the module's token middleware; machine callers (cron) use `requireBearerSecret` from `core/http`, never a user-token middleware; proxies (`infra/nginx`, `vercel.json`) only route, never authenticate.
 
 ## Workflow
 - add a route: contract first → route → use case → integration test → route doc (error ids only) in the same change
@@ -31,4 +32,6 @@ backend/src/modules/auth/presentation/mappers/contract-to-command.mapper.ts : re
 backend/src/modules/auth/presentation/mappers/result-to-contract.mapper.ts : result DTO → response contract
 backend/src/modules/auth/presentation/routes/auth.routes.ts : signup, login, refresh, logout, logout-all
 backend/src/modules/auth/presentation/routes/me.routes.ts : GET /me
+backend/src/modules/market/presentation/mappers/result-to-contract.mapper.ts : market api results → quotes, fx-rates and refresh contracts
+backend/src/modules/market/presentation/routes/market.routes.ts : GET quotes, fx (query base, date), refresh (cron bearer)
 ```

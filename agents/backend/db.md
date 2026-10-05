@@ -50,6 +50,18 @@ backend/src/modules/auth/infrastructure/db/schema/auth-collections.ts : the auth
 backend/src/modules/auth/infrastructure/db/schema/sessions.schema.ts : sessions indexes (unique tokenHash, TTL) and $jsonSchema
 backend/src/modules/auth/infrastructure/db/schema/users.schema.ts : users indexes (partial unique provider) and $jsonSchema
 backend/src/modules/auth/infrastructure/db/seed/demo-user.seed.ts : creates the demo account if missing (memory store and seed script)
+backend/src/modules/market/infrastructure/db/documents/fx-rate.document.ts : stored shape of fx_rates
+backend/src/modules/market/infrastructure/db/documents/price.document.ts : stored shape of prices (money as amount + currency)
+backend/src/modules/market/infrastructure/db/mappers/fx-rate.mapper.ts : FxRateDocument ↔ FxRate
+backend/src/modules/market/infrastructure/db/mappers/price.mapper.ts : PriceDocument ↔ Price
+backend/src/modules/market/infrastructure/db/mappers/stored-currency.ts : stored currency code → Currency, or corruption error
+backend/src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts : fx rate repository in memory; first write per (base, quote, date) wins
+backend/src/modules/market/infrastructure/db/memory/memory-price.repository.ts : price repository in memory; first write per (symbol, date) wins
+backend/src/modules/market/infrastructure/db/repositories/mongo-fx-rate.repository.ts : fx rate repository on Mongo; append = $setOnInsert upserts
+backend/src/modules/market/infrastructure/db/repositories/mongo-price.repository.ts : price repository on Mongo; append = $setOnInsert upserts; latest per symbol by aggregation
+backend/src/modules/market/infrastructure/db/schema/fx-rates.schema.ts : fx_rates indexes (unique base+quote+date, date) and $jsonSchema
+backend/src/modules/market/infrastructure/db/schema/market-collections.ts : the market module's collection definitions
+backend/src/modules/market/infrastructure/db/schema/prices.schema.ts : prices indexes (unique symbol+date) and $jsonSchema
 backend/src/scripts/ensure-indexes.ts : applies every module's collection definitions (deploy step)
 backend/src/scripts/seed-demo-user.ts : seeds the demo account into Mongo (refuses NODE_ENV=production)
 ```

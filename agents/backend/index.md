@@ -74,7 +74,25 @@ backend/src/core/registry/strategy-registry.ts : keyed registry for interchangea
 backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
-backend/src/modules/index.ts : explicit, statically imported module list
+backend/src/modules/index.ts : explicit, statically imported module list; builds market first so its api can be handed on
+backend/src/modules/market/application/ports.ts : PriceSource, FxSource, PriceRepository, FxRateRepository (append-only facts)
+backend/src/modules/market/application/publish-refreshed.ts : step: checks the v1 payload, publishes market.data_refreshed
+backend/src/modules/market/application/rate-window.ts : step: stored-rate date window a conversion needs (lookback for weekends and holidays)
+backend/src/modules/market/application/refresh-range.ts : step: refresh range from the oldest last-stored day (one year back when anything is missing); latest date of prices
+backend/src/modules/market/domain/convert.ts : convertBatch: spot, historical, raw; half-to-even to the minor unit; missing rate fails only its item
+backend/src/modules/market/domain/decimal.ts : exact rational arithmetic (bigint) and round half to even
+backend/src/modules/market/domain/fx-rate.vo.ts : FxRate: base, quote, date, rate > 0, source
+backend/src/modules/market/domain/money.vo.ts : Money: integer minor units + currency; provider decimals → minor units
+backend/src/modules/market/domain/price.vo.ts : Price: symbol, date, close, adjusted close, source
+backend/src/modules/market/domain/rate-table.ts : rate lookup on or before a day: direct, inverse, or crossed through a stored base
+backend/src/modules/market/domain/tracked-symbols.ts : tracked ETFs and their asset classes; FX base (EUR) and quote currencies
+backend/src/modules/market/domain/valuation.vo.ts : Valuation: original, converted, rate, rate date, mode (provenance of a conversion)
+backend/src/modules/market/infrastructure/providers/frankfurter-fx-source.ts : FxSource over Frankfurter v1 (ECB) range endpoint
+backend/src/modules/market/infrastructure/providers/marketstack-price-source.ts : PriceSource over Marketstack v2 /eod; one budget reservation per page; missing key → MK_1903
+backend/src/modules/market/infrastructure/providers/provider-call.ts : provider call → parsed body; network, status, error-body, shape and invalid-value failures → MK_1901
+backend/src/modules/market/market.api.ts : createMarketApi: refresh, quotes, history, rates, convert orchestrators
+backend/src/modules/market/market.module.ts : composition root: store-selected repositories, provider adapters, request budget → api, routes, manifest
+backend/src/modules/market/public.ts : the market surface other modules may import (api type, domain types, tracked symbols)
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 scripts/module-deps.mjs : fails on a cross-module import of a file other than public.ts, an import along an edge not in docs/backend/module-dependencies.md, a cycle in that edge list, or any core import of a module file

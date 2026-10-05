@@ -16,4 +16,6 @@
 ```
 backend/src/modules/auth/domain/errors/auth-errors.ts : AU_* DomainError factories
 backend/src/modules/auth/presentation/auth-error-statuses.ts : HTTP status for every AU_* code
+backend/src/modules/market/domain/errors/market-errors.ts : MK_* DomainError factories
+backend/src/modules/market/presentation/market-error-statuses.ts : HTTP status for every MK_* code
 ```
