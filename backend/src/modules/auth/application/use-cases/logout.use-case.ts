@@ -11,7 +11,7 @@ interface LogoutDeps {
 }
 
 // Revokes one session (LOGOUT) or every session of the user (LOGOUT_ALL). Idempotent: an unknown, foreign or
-// already-revoked token is ignored. Access tokens stay valid until they expire, as in cochika.
+// already-revoked token is ignored. Access tokens stay valid until they expire.
 export class LogoutUseCase implements UseCase<LogoutCommand, void> {
   private readonly deps: LogoutDeps;
 

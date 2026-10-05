@@ -22,7 +22,7 @@ export interface AuthRouteDeps {
   readonly signer: AccessTokenSignerPort;
 }
 
-// HTTP surface of the auth module. The cookie is checked before the body, as in cochika.
+// HTTP surface of the auth module. The cookie is checked before the body.
 export function authRoutes(deps: AuthRouteDeps): RouteDefinition[] {
   const authenticated = requireAuth(deps.signer);
 
@@ -64,7 +64,7 @@ export function authRoutes(deps: AuthRouteDeps): RouteDefinition[] {
   ];
 }
 
-// The cookie wins over the body, as in cochika. The cookie is not covered by the body contract, so it is
+// The cookie wins over the body. The cookie is not covered by the body contract, so it is
 // format-checked here; a malformed token is treated as absent.
 function resolveRefreshToken(c: Context, fromBody: string | undefined): string | undefined {
   const token = readRefreshCookie(c) ?? fromBody;

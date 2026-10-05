@@ -7,7 +7,7 @@ import type { SessionRepositoryPort } from '../../application/ports/session-repo
 import type { SessionDocument } from './documents/session.document.ts';
 import { sessionMapper } from './mappers/session.mapper.ts';
 
-// Replaces cochika's SELECT ... FOR UPDATE with conditional single-document updates: the filter
+// Conditional single-document updates instead of row locks (SELECT ... FOR UPDATE): the filter
 // { revokedAt: null } makes each write a compare-and-set, so concurrent requests cannot both win.
 export class MongoSessionRepository extends BaseRepository<SessionDocument> implements SessionRepositoryPort {
   constructor(collection: CollectionProvider<SessionDocument>, clock: Clock) {

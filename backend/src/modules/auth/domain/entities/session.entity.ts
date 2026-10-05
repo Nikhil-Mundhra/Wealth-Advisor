@@ -111,7 +111,7 @@ export class Session extends BaseEntity<SessionProps> {
   }
 
   // Revokes this session as ROTATED and returns its child: same family, client and rememberMe, with a fresh
-  // expiry. The family's lifetime therefore slides with each rotation, exactly as in cochika.
+  // expiry. The family's lifetime therefore slides with each rotation.
   rotate(input: RotateInput): Session {
     if (!this.isActive(input.now)) throw AuthErrors.invariantViolated('only an active session can rotate');
     const child = BaseEntity.finalize(
