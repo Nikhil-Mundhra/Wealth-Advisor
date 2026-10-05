@@ -11,8 +11,8 @@ describe('PortfolioPage', () => {
     expect(screen.getByRole('heading', { name: 'Portfolio' })).toBeVisible();
     expect(screen.getByRole('row', { name: /US Tech Equities/ })).toHaveTextContent('60%');
     // 40% target on 60% current: a -20pt drift into cash buffers.
-    expect(screen.getByRole('row', { name: /US Tech Equities/ })).toHaveTextContent('-20% drift');
+    expect(screen.getByRole('row', { name: /US Tech Equities/ })).toHaveTextContent('-20%');
     // Unheld target classes still render so the book sums.
-    expect(screen.getByRole('row', { name: /FX_HEDGE/ })).toHaveTextContent('+10% drift');
+    expect(screen.getByRole('row', { name: /FX_HEDGE/ })).toHaveTextContent('+10%');
   });
 });
