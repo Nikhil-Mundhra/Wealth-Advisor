@@ -73,8 +73,17 @@ backend/src/core/module/module-registry.ts : collects manifests; mounts routes, 
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
+backend/src/modules/analytics/analytics.api.ts : createAnalyticsApi: onMarketDataRefreshed (at-least-once: work, then mark), latestSnapshot, snapshotAt
+backend/src/modules/analytics/analytics.module.ts : composition root: store-selected snapshot repository, processed events → api, routes, market.data_refreshed subscription, manifest
+backend/src/modules/analytics/application/ports.ts : SnapshotRepository (one snapshot per asOf; upsert replaces)
+backend/src/modules/analytics/application/read-refreshed-event.ts : subscribed event type; step: v1 market.data_refreshed payload checked against its contract, null for another version
+backend/src/modules/analytics/application/snapshot-inputs.ts : step: 365-day window ending at asOf; prices → points (adjusted close, else close)
+backend/src/modules/analytics/domain/covariance.ts : annualized sample covariance of aligned return series; exactly symmetric
+backend/src/modules/analytics/domain/market-snapshot.vo.ts : MarketSnapshot: asOf, symbols, means, volatilities, covariance, window, computedAt; square, symmetric, finite
+backend/src/modules/analytics/domain/measure-snapshot.ts : aligned closes → snapshot, or insufficient below the minimum observations
+backend/src/modules/analytics/domain/returns.ts : alignment on dates every symbol has, daily log returns, annualized mean
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
-backend/src/modules/index.ts : explicit, statically imported module list; builds market first so its api can be handed on
+backend/src/modules/index.ts : explicit, statically imported module list; builds market first and hands its api to analytics
 backend/src/modules/market/application/ports.ts : PriceSource, FxSource, PriceRepository, FxRateRepository (append-only facts)
 backend/src/modules/market/application/publish-refreshed.ts : step: checks the v1 payload, publishes market.data_refreshed
 backend/src/modules/market/application/rate-window.ts : step: stored-rate date window a conversion needs (lookback for weekends and holidays)

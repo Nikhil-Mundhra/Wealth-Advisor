@@ -8,8 +8,9 @@ import { type ProcessedEventDocument, PROCESSED_EVENTS_COLLECTION } from './proc
 export type MarkResult = 'first' | 'duplicate';
 
 // Idempotency guard for event handlers: the first mark of (handler, eventId) wins, every later one is a duplicate.
-// Marking happens before the handler's work, so a handler that fails after marking is not re-run for that event;
-// handlers keep their writes idempotent (upserts keyed by the fact) so a fresh event repairs the gap.
+// Where the handler marks sets its delivery guarantee: before the work → at most once (a failure after the mark is
+// never retried for that event); after a successful write → at least once (a redelivery redoes the work). Either
+// way handler writes stay idempotent (upserts keyed by the fact).
 export interface ProcessedEvents {
   markProcessed(handlerName: string, eventId: string): Promise<MarkResult>;
 }

@@ -14,6 +14,8 @@
 ## File structure
 
 ```
+backend/src/modules/analytics/domain/errors/analytics-errors.ts : AN_* DomainError factories
+backend/src/modules/analytics/presentation/analytics-error-statuses.ts : HTTP status for every AN_* code
 backend/src/modules/auth/domain/errors/auth-errors.ts : AU_* DomainError factories
 backend/src/modules/auth/presentation/auth-error-statuses.ts : HTTP status for every AU_* code
 backend/src/modules/market/domain/errors/market-errors.ts : MK_* DomainError factories

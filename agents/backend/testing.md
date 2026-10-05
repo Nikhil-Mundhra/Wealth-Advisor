@@ -14,6 +14,9 @@ backend/test/fixtures/market/marketstack-eod-page-1.json : Marketstack v2 /eod p
 backend/test/fixtures/market/marketstack-eod-page-2.json : Marketstack v2 /eod page 2 of 2; one row without adj_close
 backend/test/fixtures/market/marketstack-error-invalid-key.json : recorded Marketstack error body (invalid_access_key)
 backend/test/fixtures/market/marketstack-error-usage-limit.json : Marketstack error body (usage_limit_reached)
+backend/test/integration/analytics/analytics-snapshot.memory.test.ts : runs the analytics-snapshot suite on the memory store
+backend/test/integration/analytics/analytics-snapshot.suite.ts : AN_1001 before refresh; cron refresh → event → snapshot route; re-run converges; asOf query
+backend/test/integration/analytics/analytics-snapshot.test.ts : runs the analytics-snapshot suite on mongod
 backend/test/integration/auth/auth-flow.memory.test.ts : runs the auth-flow suite on the memory store
 backend/test/integration/auth/auth-flow.suite.ts : signup, login, me, refresh, reuse detection, logout
 backend/test/integration/auth/auth-flow.test.ts : runs the auth-flow suite on mongod
@@ -25,8 +28,11 @@ backend/test/integration/market/market-routes.suite.ts : quotes, fx (query valid
 backend/test/integration/market/market-routes.test.ts : runs the market-routes suite on mongod
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
 backend/test/support/fake-clock.ts : clock moved by hand
-backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders
+backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders, weekdays, generated Marketstack pages
 backend/test/support/test-app.ts : boots the real app on a throwaway mongod or the memory store; fake clock, env, outbound http (offline by default)
+backend/test/unit/analytics/market-snapshot.test.ts : MarketSnapshot invariants; measureSnapshot threshold and window
+backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns, annualization and covariance against a hand-computed series
+backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts

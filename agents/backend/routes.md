@@ -13,6 +13,8 @@
 ## File structure
 
 ```
+backend/src/modules/analytics/presentation/mappers/result-to-contract.mapper.ts : MarketSnapshot → snapshot contract
+backend/src/modules/analytics/presentation/routes/analytics.routes.ts : GET snapshot (optional asOf)
 backend/src/modules/auth/application/dto/get-me.query.ts : current user id
 backend/src/modules/auth/application/dto/login.command.ts : login input
 backend/src/modules/auth/application/dto/logout.command.ts : one session or all sessions

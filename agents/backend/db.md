@@ -36,6 +36,12 @@ backend/src/core/db/schema/apply-collection-definitions.ts : creates collections
 backend/src/core/db/schema/collection-definition.ts : type for a collection's indexes and $jsonSchema validator
 backend/src/core/db/schema/core-collections.ts : collection definitions owned by core mechanisms (processed events, request budgets)
 backend/src/core/db/schema/nullable.ts : $jsonSchema type that also allows null
+backend/src/modules/analytics/infrastructure/db/documents/market-snapshot.document.ts : stored shape of market_snapshots
+backend/src/modules/analytics/infrastructure/db/mappers/market-snapshot.mapper.ts : MarketSnapshotDocument ↔ MarketSnapshot
+backend/src/modules/analytics/infrastructure/db/memory/memory-market-snapshot.repository.ts : snapshot repository in memory; last write per asOf wins
+backend/src/modules/analytics/infrastructure/db/repositories/mongo-market-snapshot.repository.ts : snapshot repository on Mongo; upsert = replaceOne by asOf; latest by asOf desc
+backend/src/modules/analytics/infrastructure/db/schema/analytics-collections.ts : the analytics module's collection definitions
+backend/src/modules/analytics/infrastructure/db/schema/market-snapshots.schema.ts : market_snapshots index (unique asOf) and $jsonSchema
 backend/src/modules/auth/application/ports/session-repository.port.ts : session persistence contract (compare-and-set)
 backend/src/modules/auth/application/ports/user-repository.port.ts : user persistence contract
 backend/src/modules/auth/infrastructure/db/documents/session.document.ts : stored shape of sessions (incl. purgeAt)

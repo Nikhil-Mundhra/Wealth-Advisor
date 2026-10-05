@@ -1,7 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { beforeEach, describe, it } from 'node:test';
 import type { Currency } from '@wealth-advisor/rules';
-import { addDays } from '#core/time/calendar-date.ts';
 import { InProcessEventBus } from '#core/events/event-bus.ts';
 import type { EventEnvelope } from '#core/events/event-envelope.ts';
 import type { FxSource, PriceSource } from '../../../src/modules/market/application/ports.ts';
@@ -13,7 +12,7 @@ import { MemoryFxRateRepository } from '../../../src/modules/market/infrastructu
 import { MemoryPriceRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-price.repository.ts';
 import { createMarketApi } from '../../../src/modules/market/market.api.ts';
 import { FakeClock } from '../../support/fake-clock.ts';
-import { ecbRate, usdClose } from '../../support/market-fixtures.ts';
+import { ecbRate, usdClose, weekdays } from '../../support/market-fixtures.ts';
 
 interface Call {
   readonly from: string;
@@ -21,14 +20,6 @@ interface Call {
 }
 
 // Fake providers: one close per tracked symbol and one EUR/USD rate per weekday of the asked range.
-function weekdays(from: string, to: string): string[] {
-  const days: string[] = [];
-  for (let day = from; day <= to; day = addDays(day, 1)) {
-    const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
-    if (weekday !== 0 && weekday !== 6) days.push(day);
-  }
-  return days;
-}
 
 function fakePriceSource(): PriceSource & { calls: Call[]; failWith: Error | null } {
   const source = {
