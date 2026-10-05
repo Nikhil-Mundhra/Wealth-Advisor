@@ -7,6 +7,9 @@ flowchart TB
   modidx --> authmod[auth.module.ts · composition root]
   authmod -->|builds every layer| auth
   authmod -->|manifest| module
+  modidx --> marketmod[market.module.ts · composition root]
+  marketmod -->|manifest| module
+  marketmod -.->|outbound JSON, request budget| httpclient
   app --> module
   app --> http
   subgraph auth[modules/auth]
@@ -56,5 +59,12 @@ flowchart TB
 | `backend/src/modules/auth/application/` | use cases, DTOs, ports | domain, `core/*`, rules |
 | `backend/src/modules/auth/domain/` | entities, value objects, policies, errors, events | `core/domain`, rules |
 | `backend/src/modules/auth/infrastructure/` | Mongo and memory repositories, schemas, demo seed, crypto adapters | application ports, domain, `core/domain`, `core/db`, `core/time`, rules |
+| `backend/src/modules/market/market.module.ts` | composition root: store-selected repositories, provider adapters, request budget; returns the manifest and the market api | every market layer, `core/module`, `core/config`, `core/http-client`, rules |
+| `backend/src/modules/market/market.api.ts` | function orchestrators: refresh, quotes, history, rates, convert | application steps and ports, domain, `core/events`, `core/time`, contracts (event payload) |
+| `backend/src/modules/market/public.ts` | the only market file other modules import | api and domain types |
+| `backend/src/modules/market/presentation/` | quotes, fx and cron-guarded refresh routes, contract mappers, error statuses | `market.api.ts`, domain (errors), `core/http`, contracts, rules |
+| `backend/src/modules/market/application/` | ports and refresh / conversion steps | domain, `core/*`, contracts (event payload), rules |
+| `backend/src/modules/market/domain/` | Money, Price, FxRate, Valuation, rate table, convertBatch, tracked symbols, errors | `core/domain`, `core/time`, rules |
+| `backend/src/modules/market/infrastructure/` | Marketstack and Frankfurter adapters, Mongo and memory repositories, schemas | application ports, domain, `core/http-client`, `core/db`, `core/time`, rules |
 
 Module manifest and mounting: `docs/backend/module-contract.md`. Allowed imports between modules: `docs/backend/module-dependencies.md`.
