@@ -15,7 +15,7 @@
 - schema: indexes and validators are applied by `make db-indexes`, never per request.
 
 ## Workflow
-- collection or index change: `<collection>.schema.ts` → `<module>-collections.ts` → `make db-indexes` → `docs/backend/collections.md`
+- collection or index change: `<collection>.schema.ts` → `<module>-collections.ts` (core: `backend/src/core/db/schema/core-collections.ts`) → `make db-indexes` → `docs/backend/collections.md`
 - repository port change: Mongo and memory implementations in the same change; the auth-flow suite runs on both.
 
 ## File structure
@@ -34,6 +34,7 @@ backend/src/core/db/retry/retry-policy.ts : read retry attempts, backoff, retrya
 backend/src/core/db/retry/with-read-retry.ts : runs a read or connect under the retry policy
 backend/src/core/db/schema/apply-collection-definitions.ts : creates collections, validators, indexes (idempotent)
 backend/src/core/db/schema/collection-definition.ts : type for a collection's indexes and $jsonSchema validator
+backend/src/core/db/schema/core-collections.ts : collection definitions owned by core mechanisms (processed events, request budgets)
 backend/src/core/db/schema/nullable.ts : $jsonSchema type that also allows null
 backend/src/modules/auth/application/ports/session-repository.port.ts : session persistence contract (compare-and-set)
 backend/src/modules/auth/application/ports/user-repository.port.ts : user persistence contract
