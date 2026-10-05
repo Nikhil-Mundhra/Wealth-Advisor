@@ -25,15 +25,16 @@ contracts/src/auth/token-pair.contract.ts : token response (refreshToken only fo
 contracts/src/common/error.contract.ts : error response envelope { code, message, issues? }
 contracts/src/events/market-data-refreshed.event.ts : MARKET_DATA_REFRESHED type and version; v1 payload (asOf, symbols, fxBase)
 contracts/src/fields/client-type.field.ts : WEB | IOS | ANDROID
-contracts/src/fields/currency.field.ts : ISO currency from CURRENCIES
+contracts/src/fields/currency.field.ts : ISO currency from CURRENCIES; fails with currency.invalid
 contracts/src/fields/display-name.field.ts : trimmed display name with length limit
 contracts/src/fields/email.field.ts : signup email (normalized, pattern-checked) and login email (presence and length only)
-contracts/src/fields/iso-date.field.ts : calendar date YYYY-MM-DD
+contracts/src/fields/iso-date.field.ts : calendar date YYYY-MM-DD; fails with date.invalid
 contracts/src/fields/money.field.ts : integer amount in minor units with its currency
 contracts/src/fields/password.field.ts : new password (policy length) and login password (presence and upper bound)
 contracts/src/fields/refresh-token.field.ts : refresh token format
 contracts/src/index.ts : public barrel; the only import path consumers use
-contracts/src/market/fx-rates.contract.ts : FX rates response (asOf, base, rates per quote currency)
+contracts/src/market/fx-rates.contract.ts : FX rates query (base, optional date) and response (asOf, base, rates per quote currency)
 contracts/src/market/quotes.contract.ts : latest quotes response (asOf, symbol, asset class, close as money, source)
+contracts/src/market/refresh.contract.ts : refresh response (asOf, prices and rates stored, requested from..to)
 contracts/tsconfig.json : typecheck settings
 ```

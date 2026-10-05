@@ -29,6 +29,7 @@ export const AUTH_ERROR_CODES = {
 
 export const MARKET_ERROR_CODES = {
   cronUnauthorized: 'MK_1001',
+  invariantViolated: 'MK_1900',
   providerUnavailable: 'MK_1901',
   providerQuotaSpent: 'MK_1902',
   providerNotConfigured: 'MK_1903',

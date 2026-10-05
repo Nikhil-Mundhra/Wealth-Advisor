@@ -19,6 +19,8 @@ export const VALIDATION_MESSAGES: Readonly<Record<ValidationKey, string>> = {
   'display_name.too_long': `Use ${DISPLAY_NAME_MAX_LENGTH} characters or fewer.`,
   'client_type.invalid': 'This app version is not supported.',
   'refresh_token.invalid': 'Your session has expired. Please sign in again.',
+  'currency.invalid': 'Choose a supported currency.',
+  'date.invalid': 'Enter a date as YYYY-MM-DD.',
 };
 
 // Field errors hold either a validation key (client or server) or text already resolved from an error code.

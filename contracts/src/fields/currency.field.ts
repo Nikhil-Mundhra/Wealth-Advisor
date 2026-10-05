@@ -1,4 +1,4 @@
 import { z } from 'zod';
-import { CURRENCIES } from '@wealth-advisor/rules';
+import { CURRENCIES, VALIDATION_KEYS as K } from '@wealth-advisor/rules';
 
-export const CurrencyField = z.enum(CURRENCIES);
+export const CurrencyField = z.enum(CURRENCIES, { error: K.currencyInvalid });
