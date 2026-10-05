@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // Checks the agent-guide and docs graph: one-way edges, one owner per mapped path, no dangling paths,
-// an index.md in every docs folder, and every guide or doc reachable from the entry point.
+// an index.md in every docs folder, every guide or doc reachable from the entry point, and CLAUDE.md equal to it.
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ENTRY = 'CLAUDE.md';
+const ENTRY = 'AGENTS.md';
+const ENTRY_COPY = 'CLAUDE.md';
 // A backticked token or map path is checked only when it starts at one of these repo-root entries.
 const ROOTS = new Set([
   'agents', 'docs', 'backend', 'frontend', 'contracts', 'rules', 'infra', 'scripts',
@@ -95,7 +96,7 @@ function asRepoPath(token) {
 
 const agentFiles = ['AGENTS.md', ...(exists('agents') ? walk('agents') : [])];
 const docFiles = exists('docs') ? walk('docs') : [];
-const allMd = [ENTRY, ...agentFiles, ...docFiles];
+const allMd = [...agentFiles, ...docFiles];
 
 // (a) docs never link to agents/
 for (const file of docFiles) {
@@ -152,7 +153,6 @@ if (exists('docs')) {
 // (e) every guide and doc is reachable from the entry point through @imports, Route/Calls lines and index maps
 function edges(file) {
   const text = read(file);
-  if (file === ENTRY) return [...text.matchAll(/^@(\S+)/gm)].map((m) => m[1]);
   if (file.startsWith('docs/')) {
     if (!file.endsWith('/index.md')) return [];
     return fencedLines(text).map(mapPath).filter(Boolean);
@@ -171,6 +171,9 @@ while (queue.length > 0) {
 for (const file of [...agentFiles, ...docFiles]) {
   if (!reached.has(file)) fail('[unreachable]', file, `no Route, Axes, Calls or index edge from ${ENTRY}`);
 }
+
+// (h) the Claude Code entry is a byte copy of AGENTS.md
+if (!exists(ENTRY_COPY) || read(ENTRY_COPY) !== read(ENTRY)) fail('[entry copy]', ENTRY_COPY, `differs from ${ENTRY}; cp ${ENTRY} ${ENTRY_COPY}`);
 
 if (errors.length > 0) {
   console.error(errors.join('\n'));
