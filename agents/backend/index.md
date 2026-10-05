@@ -15,7 +15,7 @@
 ## Rules
 - layers: presentation → application → domain ← infrastructure; presentation may throw domain errors; all may use `core/`; `core/` never imports `modules/`.
 - contracts: imported only by presentation, plus error-envelope types in `core/http` and `core/errors`.
-- composition: only `<module>.module.ts` constructs concrete classes; `modules/index.ts` lists modules by static import (Vercel bundles only what is imported).
+- composition: only `<module>.module.ts` constructs concrete classes; `modules/index.ts` lists modules by static import.
 - construction: entities and value objects are built through `finalize()`; never call `postInit()` from a constructor.
 - imports: `#core/` for core; `#modules/` only from outside `modules/`; relative inside a module.
 
@@ -41,7 +41,7 @@ backend/src/core/domain/value-object.ts : immutable value base: finalize() valid
 backend/src/core/domain/value-rule.ts : normalize/check/reject rule a value object applies to outside input
 backend/src/core/errors/app-error.ts : HTTP-edge error with its status known (bad JSON, failed contract, missing database), optional field issues
 backend/src/core/errors/error-catalog.ts : code → HTTP status registry per module prefix; rejects foreign or duplicate codes; unknown codes → 500
-backend/src/core/events/event-bus.ts : typed in-process publish/subscribe (outbox can replace it later)
+backend/src/core/events/event-bus.ts : typed in-process publish/subscribe
 backend/src/core/http/error-handler.ts : turns AppError, DomainError (status from the catalog) and unknown errors into the error contract
 backend/src/core/http/read-json-body.ts : reads the request body; empty body becomes {}
 backend/src/core/http/route-builder.ts : fluent route declaration: method → body contract → middleware → handler → response contract
@@ -52,7 +52,7 @@ backend/src/core/module/module-registry.ts : collects manifests; mounts routes, 
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/clock.ts : Clock interface and system clock
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
-backend/src/modules/index.ts : explicit list of modules (static imports so Vercel can bundle them)
+backend/src/modules/index.ts : explicit, statically imported module list
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 ```

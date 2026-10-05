@@ -1,11 +1,13 @@
 # Review: hackathon judge
 
-Placeholder.
-
 ## Calls
-- `README.md` : the project concept being judged
-- `docs/architecture/index.md` : what the system is
+- `README.md` : concept and research question
+- `docs/plan/brief.md` : rubric and the features each pillar expects
+- `docs/plan/roadmap.md` : what was planned per phase
+- `docs/architecture/index.md` : what is built
 - `docs/shared/apis/index.md` : what the API offers
 
 ## Rules
-- A hackathon judge skill that looks at all the company and challenge web pages, and gives a critical overview of what we've done correctly and what are the gaps in our implementation.
+- Judge built code against the brief, not the plan's claims; a feature counts only when it runs.
+- Rank gaps by rubric weight; name the pillar each gap costs.
+- Report: done, partial, missing; one line each with the file or route as evidence.

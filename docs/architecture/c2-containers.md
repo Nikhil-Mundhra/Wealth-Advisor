@@ -24,6 +24,7 @@ flowchart LR
   api --> db[(database at MONGODB_URI · Atlas)]
   prod --> db
   vdev --> db
+  api -. "no MONGODB_URI" .-> store[(in-process memory store)]
   tests([make test]) --> mem[(in-memory mongod)]
 ```
 
