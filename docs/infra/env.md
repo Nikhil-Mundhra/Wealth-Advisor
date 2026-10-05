@@ -1,6 +1,6 @@
 # Environment
 
-Backend variables are validated once, on first use, by `backend/src/core/config/env.ts`. Local runs (`make backend`, `make prod`, `make db-indexes`, `make seed-demo`) load `.env.local` at the repo root when present; Vercel takes them from the project settings.
+Backend variables are validated once, on first use, by `backend/src/core/config/env.ts`. Local runs (`make backend`, `make prod`, `make db-indexes`, `make seed-demo`) load `.env.local` then `.env` from the repo root when present; on a variable set in both, `.env` wins. Vercel reads neither file and takes variables from the project settings, per environment (Production, Preview, Development).
 
 | Var | Default | Required | Effect |
 |---|---|---|---|

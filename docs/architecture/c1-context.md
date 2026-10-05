@@ -19,7 +19,7 @@ flowchart TB
 | System | Purpose | Trust |
 |---|---|---|
 | MongoDB Atlas | user and session storage | server-side only; credentials in `MONGODB_URI` |
-| Google Fonts | DM Sans web font | fetched by the browser; receives no application data |
+| Google Fonts | DM Sans and Fraunces web fonts | fetched by the browser; receives no application data |
 
 ## Trust boundaries
 - browser → API: untrusted; every body is validated against `@wealth-advisor/contracts`
