@@ -11,11 +11,13 @@ const ENTRY = 'CLAUDE.md';
 // A backticked token or map path is checked only when it starts at one of these repo-root entries.
 const ROOTS = new Set([
   'agents', 'docs', 'backend', 'frontend', 'contracts', 'rules', 'infra', 'scripts',
-  'AGENTS.md', 'CLAUDE.md', 'README.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json',
+  'AGENTS.md', 'CLAUDE.md', 'README.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json', '.env.example',
   '.gitignore', '.vercelignore',
 ]);
 // Build output and local state: referenced on purpose, absent until something generates them.
 const GENERATED = new Set(['dist', 'node_modules', '.run', '.vercel']);
+// Conventional root files: their role is standard, so no guide map lists them. Any other root file still needs one.
+const CONVENTIONAL = new Set(['.env.example', '.gitignore', '.vercelignore', 'Makefile', 'package.json', 'package-lock.json']);
 
 const errors = [];
 const fail = (check, file, message) => errors.push(`${check} ${file}: ${message}`);
@@ -122,7 +124,7 @@ for (const [path, files] of owners) {
 // (g) every tracked or new source file has an owning map; .md files are inventoried by indexes and routes
 const sourceFiles = execSync('git ls-files --cached --others --exclude-standard', { cwd: ROOT, encoding: 'utf8' })
   .split('\n')
-  .filter((path) => path && exists(path) && !path.endsWith('.md') && path !== 'package-lock.json');
+  .filter((path) => path && exists(path) && !path.endsWith('.md') && !CONVENTIONAL.has(path));
 for (const path of sourceFiles) {
   if (!owners.has(path)) fail('[unmapped]', path, 'no guide `## File structure` lists it');
 }
