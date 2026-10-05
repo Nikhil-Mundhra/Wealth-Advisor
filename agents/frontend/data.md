@@ -5,7 +5,7 @@
 - `docs/frontend/session-flow.md` : how a 401 is refreshed and retried
 
 ## Rules
-- Every call goes through `lib/api-client.ts`; components use the hooks in `features/<name>/api`, never the endpoint calls. Exception: the `home-page.tsx` placeholder fetches `/api/health` and `/api/ai` directly.
+- Every call goes through `lib/api-client.ts`; components use the hooks in `features/<name>/api`, never the endpoint calls.
 - Auth plugs into the client only through `setAuthHandlers`.
 
 ## File structure
