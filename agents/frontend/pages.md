@@ -10,7 +10,8 @@
 ## File structure
 
 ```
-frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status
+frontend/src/app/route-guards.test.tsx : admins pass, other roles redirect home
+frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status; AdminRoute checks the admin role
 frontend/src/app/router.tsx : route table: /signup, /login (guest); / /portfolio /cashflow /advisory /evidence /settings/security /admin* (protected); /share/:token (public)
 frontend/src/app/routes/admin-api-keys-page.tsx : API key issuance placeholder pending the tenant module
 frontend/src/app/routes/admin-models-page.tsx : runtime LLM provider list with the mock active

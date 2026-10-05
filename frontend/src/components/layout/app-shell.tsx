@@ -59,7 +59,7 @@ export function AppShell() {
       </main>
 
       <nav
-        aria-label={strings['nav.main']}
+        aria-label={strings['header.nav.mobile']}
         className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.map(({ to, key, Icon, ...rest }) => (

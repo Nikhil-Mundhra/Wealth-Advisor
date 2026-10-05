@@ -17,13 +17,13 @@ export function SecuritySettingsPage() {
 
       <section aria-label={strings['security.session']} className="rounded-field border border-line bg-surface p-5">
         <h2 className="text-sm font-medium text-subtle">{strings['security.session']}</h2>
-        {me.isPending && <Spinner label="Loading your profile" />}
-        {me.isError && <Alert>Could not load your profile.</Alert>}
+        {me.isPending && <Spinner label={strings['security.loading']} />}
+        {me.isError && <Alert>{strings['security.loaderror']}</Alert>}
         {me.data && (
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="text-subtle">Email</dt>
+            <dt className="text-subtle">{strings['security.email']}</dt>
             <dd>{me.data.email}</dd>
-            <dt className="text-subtle">Roles</dt>
+            <dt className="text-subtle">{strings['security.roles']}</dt>
             <dd>{me.data.roles.join(', ')}</dd>
           </dl>
         )}

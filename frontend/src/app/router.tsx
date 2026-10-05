@@ -1,5 +1,5 @@
 import { Navigate, createBrowserRouter } from 'react-router';
-import { GuestRoute, ProtectedRoute } from './route-guards.tsx';
+import { AdminRoute, GuestRoute, ProtectedRoute } from './route-guards.tsx';
 import { AdminApiKeysPage } from './routes/admin-api-keys-page.tsx';
 import { AdminModelsPage } from './routes/admin-models-page.tsx';
 import { AdminPage } from './routes/admin-page.tsx';
@@ -35,10 +35,15 @@ export const router = createBrowserRouter([
           { path: '/advisory', element: <AdvisoryPage /> },
           { path: '/evidence', element: <EvidencePage /> },
           { path: '/settings/security', element: <SecuritySettingsPage /> },
-          { path: '/admin', element: <AdminPage /> },
-          { path: '/admin/tenants', element: <AdminTenantsPage /> },
-          { path: '/admin/api-keys', element: <AdminApiKeysPage /> },
-          { path: '/admin/models', element: <AdminModelsPage /> },
+          {
+            element: <AdminRoute />,
+            children: [
+              { path: '/admin', element: <AdminPage /> },
+              { path: '/admin/tenants', element: <AdminTenantsPage /> },
+              { path: '/admin/api-keys', element: <AdminApiKeysPage /> },
+              { path: '/admin/models', element: <AdminModelsPage /> },
+            ],
+          },
         ],
       },
     ],

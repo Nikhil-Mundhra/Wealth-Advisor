@@ -1,8 +1,11 @@
+import type { AssetClass } from '@wealth-advisor/rules';
 import { DEMO_BASELINE, DEMO_HOLDINGS, DEMO_TARGET_WEIGHTS } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 
-// Holdings with current vs target weights; the drift column feeds the rebalance proposal.
+const CLASSES = Object.keys(DEMO_TARGET_WEIGHTS) as AssetClass[];
+
+// Every target class renders, even ones with no current holding, so the book always sums.
 export function PortfolioPage() {
   const strings = useStrings();
   return (
@@ -19,16 +22,18 @@ export function PortfolioPage() {
             </tr>
           </thead>
           <tbody>
-            {DEMO_HOLDINGS.map((holding) => {
-              const target = DEMO_TARGET_WEIGHTS[holding.assetClass] ?? 0;
-              const drift = target - holding.weight;
+            {CLASSES.map((assetClass) => {
+              const holding = DEMO_HOLDINGS.find((candidate) => candidate.assetClass === assetClass);
+              const current = holding?.weight ?? 0;
+              const target = DEMO_TARGET_WEIGHTS[assetClass];
+              const drift = target - current;
               return (
-                <tr key={holding.assetClass} className="border-b border-line last:border-0">
+                <tr key={assetClass} className="border-b border-line last:border-0">
                   <th scope="row" className="px-4 py-3 text-left font-normal">
-                    {holding.label}
-                    <span className="block text-xs text-subtle">{formatMoney(holding.valueEur, DEMO_BASELINE)}</span>
+                    {holding?.label ?? assetClass}
+                    {holding && <span className="block text-xs text-subtle">{formatMoney(holding.valueEur, DEMO_BASELINE)}</span>}
                   </th>
-                  <td className="px-4 py-3 text-right">{holding.weight}%</td>
+                  <td className="px-4 py-3 text-right">{current}%</td>
                   <td className="px-4 py-3 text-right">{target}%</td>
                   <td className="px-4 py-3 text-right">{drift > 0 ? `+${drift}` : drift}% {strings['portfolio.drift']}</td>
                 </tr>
