@@ -1,5 +1,7 @@
 import { MongoClient, type Db } from 'mongodb';
 import { env } from '#core/config/env.ts';
+import { withReadRetry } from '#core/db/retry/with-read-retry.ts';
+import { mongoClientOptions } from './connection-options.ts';
 import { AppError } from '#core/errors/app-error.ts';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 
@@ -13,7 +15,7 @@ export function getMongoClient(): Promise<MongoClient> {
     if (!uri) {
       return Promise.reject(new AppError(503, CORE_ERROR_CODES.databaseUnconfigured, 'database is not configured'));
     }
-    holder.__mongoClientPromise = new MongoClient(uri, { maxPoolSize: 10 }).connect().catch((error: unknown) => {
+    holder.__mongoClientPromise = withReadRetry(() => new MongoClient(uri, mongoClientOptions(env())).connect()).catch((error: unknown) => {
       holder.__mongoClientPromise = undefined; // let the next request retry instead of caching the failure
       throw error;
     });

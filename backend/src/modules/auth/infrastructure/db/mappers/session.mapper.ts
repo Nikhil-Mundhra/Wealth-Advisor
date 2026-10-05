@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { CLIENT_TYPES } from '@wealth-advisor/rules';
 import { parseMember } from '#core/domain/parse-member.ts';
-import type { Mapper } from '#core/persistence/mapper.ts';
+import type { Mapper } from '#core/db/mapping/mapper.ts';
 import { REVOKE_REASONS, Session } from '../../../domain/entities/session.entity.ts';
 import { AuthErrors } from '../../../domain/errors/auth-errors.ts';
 import { TokenHash } from '../../../domain/value-objects/token-hash.vo.ts';

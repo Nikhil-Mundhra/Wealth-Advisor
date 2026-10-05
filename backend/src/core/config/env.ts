@@ -3,6 +3,8 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   MONGODB_URI: z.string().min(1).optional(),
+  MONGODB_SERVER_SELECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
+  DATA_STORE: z.enum(['mongo', 'memory']).optional(),
   MONGODB_DB_NAME: z.string().min(1).default('wealth_advisor'),
   AUTH_JWT_ISSUER: z.string().min(1).default('wealth-advisor-auth'),
   AUTH_JWT_AUDIENCE: z.string().min(1).default('wealth-advisor-api'),

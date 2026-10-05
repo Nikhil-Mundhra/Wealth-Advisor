@@ -3,9 +3,9 @@ import { describe, it } from 'node:test';
 import { Session } from '#modules/auth/domain/entities/session.entity.ts';
 import { User } from '#modules/auth/domain/entities/user.entity.ts';
 import { Email } from '#modules/auth/domain/value-objects/email.vo.ts';
-import { authCollections } from '#modules/auth/infrastructure/persistence/auth.indexes.ts';
-import { sessionMapper } from '#modules/auth/infrastructure/persistence/mappers/session.mapper.ts';
-import { userMapper } from '#modules/auth/infrastructure/persistence/mappers/user.mapper.ts';
+import { authCollections } from '#modules/auth/infrastructure/db/schema/auth-collections.ts';
+import { sessionMapper } from '#modules/auth/infrastructure/db/mappers/session.mapper.ts';
+import { userMapper } from '#modules/auth/infrastructure/db/mappers/user.mapper.ts';
 import { T0, hashOf } from '../../support/auth-fixtures.ts';
 
 // The DB validator must enforce exactly the fields the mapper writes; drift on either side fails here.

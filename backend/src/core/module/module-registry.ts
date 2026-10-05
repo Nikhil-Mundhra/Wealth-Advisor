@@ -3,7 +3,7 @@ import { ErrorCatalog } from '#core/errors/error-catalog.ts';
 import type { EventBus } from '#core/events/event-bus.ts';
 import { mountRoutes } from '#core/http/route-builder.ts';
 import type { ModuleManifest } from '#core/module/define-module.ts';
-import type { CollectionDefinition } from '#core/persistence/collection-definition.ts';
+import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
 
 // Collects module manifests and applies them: routes onto the API router, subscriptions onto the event bus.
 export class ModuleRegistry {
