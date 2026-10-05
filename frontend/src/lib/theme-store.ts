@@ -32,12 +32,21 @@ export function getTheme(): Theme {
   return theme;
 }
 
-export function setTheme(next: Theme): void {
+export function setTheme(next: Theme, origin?: { x: number; y: number }): void {
   theme = next;
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(STORAGE_KEY, next);
   }
-  applyTheme(next);
+  // Circular wipe from the toggle; plain swap without View Transitions or with reduced motion.
+  const reduce = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const transition = (document as Document & { startViewTransition?: (fn: () => void) => void }).startViewTransition;
+  if (!reduce && origin && typeof document !== 'undefined' && transition) {
+    document.documentElement.style.setProperty('--theme-x', `${origin.x}px`);
+    document.documentElement.style.setProperty('--theme-y', `${origin.y}px`);
+    transition.call(document, () => applyTheme(next));
+  } else {
+    applyTheme(next);
+  }
   notify();
 }
 

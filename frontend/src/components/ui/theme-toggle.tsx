@@ -10,7 +10,11 @@ export function ThemeToggle() {
   const strings = useStrings();
   const dark = theme === 'dark';
   return (
-    <IconButton label={strings[dark ? 'theme.light' : 'theme.dark']} variant="ghost" onClick={() => setTheme(dark ? 'light' : 'dark')}>
+    <IconButton
+      label={strings[dark ? 'theme.light' : 'theme.dark']}
+      variant="ghost"
+      onClick={(event) => setTheme(dark ? 'light' : 'dark', { x: event.clientX, y: event.clientY })}
+    >
       {dark ? <Sun aria-hidden /> : <Moon aria-hidden />}
     </IconButton>
   );

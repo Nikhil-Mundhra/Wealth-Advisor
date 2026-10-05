@@ -15,7 +15,7 @@ export function AdminPage() {
       <ul className="grid gap-3 sm:grid-cols-3">
         {sections.map((section) => (
           <li key={section.to} className="rounded-field border border-line bg-surface p-5">
-            <Link to={section.to} className="font-medium text-brand-600 hover:underline dark:text-brand-100">
+            <Link to={section.to} className="font-medium text-brand-600 hover:underline dark:text-brand-700">
               {section.label}
             </Link>
           </li>

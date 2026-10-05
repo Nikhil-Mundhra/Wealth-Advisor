@@ -43,5 +43,9 @@ frontend/src/lib/format-money.test.ts : locale currency rendering
 frontend/src/lib/format-money.ts : locale-aware money rendering
 frontend/src/lib/locale-store.ts : active locale, localStorage, <html lang> applier
 frontend/src/lib/theme-store.ts : light/dark choice, localStorage, .dark applier
+frontend/src/lib/use-count-up.test.ts : lands on target, jumps with reduced motion
+frontend/src/lib/use-count-up.ts : eased hero-number count-up
+frontend/src/lib/use-reveal.test.ts : immediate fallback and scroll-in flip
+frontend/src/lib/use-reveal.ts : scroll-in reveal hook
 frontend/src/styles/globals.css : Tailwind import and design tokens
 ```
