@@ -25,6 +25,8 @@ frontend/src/components/ui/form-field.tsx : label + control + hint/error with ac
 frontend/src/components/ui/icon-button.tsx : icon-only Button with required accessible label
 frontend/src/components/ui/input.tsx : text input; invalid style follows aria-invalid
 frontend/src/components/ui/label.tsx : form label
+frontend/src/components/ui/language-select.test.tsx : every locale listed, choice persisted
+frontend/src/components/ui/language-select.tsx : header locale select backed by the locale store
 frontend/src/components/ui/password-input.test.tsx : visibility toggle and aria-pressed
 frontend/src/components/ui/password-input.tsx : Input with show/hide toggle
 frontend/src/components/ui/spinner.tsx : loading indicator, optionally announced
@@ -32,6 +34,7 @@ frontend/src/components/ui/text-link.tsx : router-aware inline link
 frontend/src/components/ui/theme-toggle.test.tsx : flips the dark class and announces the next mode
 frontend/src/components/ui/theme-toggle.tsx : header control flipping .dark on <html>
 frontend/src/lib/cn.ts : className merge helper
+frontend/src/lib/locale-store.ts : active locale, localStorage, <html lang> applier
 frontend/src/lib/theme-store.ts : light/dark choice, localStorage, .dark applier
 frontend/src/styles/globals.css : Tailwind import and design tokens
 ```
