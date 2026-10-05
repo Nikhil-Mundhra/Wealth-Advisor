@@ -6,7 +6,7 @@ last synced: 489f881
 - `agents/docs/writing.md` : map and doc format
 
 ## Rules
-- Owning map: the guide whose `## File structure` holds the path's prefix; a root file belongs to `Agent.md`; a new area gets a guide (`agents/docs/sync-agent.md`).
+- Owning map: the guide whose `## File structure` holds the path's prefix; a root file belongs to `AGENTS.md`; a new area gets a guide (`agents/docs/sync-agent.md`).
 - Keep each file's existing sections; add none.
 - Report aggregated responsibilities; do not fix them.
 
@@ -25,8 +25,8 @@ last synced: 489f881
 - Aggregated: the responsibility needs "and", or lists several jobs.
 - Empty report: `no aggregated responsibilities`.
 
-## File structure` holds the path's prefix; a root file belongs to `Agent.md`. A path under no guide's prefix goes to the guide of the component that owns it; a new area gets its own guide (`agents/docs/sync-agent.md`).
-- Inventory of a `.md`: under `docs/`, its folder `index.md`; a guide, the `## Route` line in its area index or `Agent.md`.
+## File structure` holds the path's prefix; a root file belongs to `AGENTS.md`. A path under no guide's prefix goes to the guide of the component that owns it; a new area gets its own guide (`agents/docs/sync-agent.md`).
+- Inventory of a `.md`: under `docs/`, its folder `index.md`; a guide, the `## Route` line in its area index or `AGENTS.md`.
 - One `path : responsibility` line per file, inside the map's existing code block, in path order.
 - Keep each file's existing sections; add none.
 - Report aggregated responsibilities; do not fix them.
