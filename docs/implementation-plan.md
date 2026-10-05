@@ -165,7 +165,7 @@ To provide a native banking app experience beyond mobile web:
 * **Android Distribution Branch:** Android Studio project, Gradle build system, Keystore release signing, Android App Bundle (`.aab`) generation for Google Play Console.
 
 ### 3.8 MongoDB Atlas Multi-Tenant Schema Specification
-All persistent data models, partial unique indexes, TTL policies, and shard key considerations are formally defined in [database_scheme.md](database_scheme.md).
+All persistent data models, partial unique indexes, TTL policies, and shard key considerations are formally defined in [database-schema.md](database-schema.md).
 
 ---
 
@@ -332,7 +332,7 @@ sequenceDiagram
   - `POST /api/auth/passkey/login-verify`
   - `POST /api/auth/passkey/step-up-challenge`
 
-#### 2.2 Multi-Tenant & API Key Module (`backend/src/modules/tenant` & `admin`)
+#### 2.2 Multi-Tenant & API Key Module (backend/src/modules/tenant & `admin`)
 - [ ] Implement `tenant.module.ts`:
   - Collections: `tenants` and `api_keys` with partial unique indexes.
   - Multi-tenant middleware: Scopes database queries to `tenantId` from JWT or API key header (`X-API-Key`).
@@ -340,7 +340,7 @@ sequenceDiagram
 - [ ] Implement `admin.module.ts`:
   - Routes: `GET /api/admin/tenants`, `POST /api/admin/tenants`, `GET /api/admin/api-keys`, `POST /api/admin/api-keys`, `GET /api/admin/models`, `POST /api/admin/models`.
 
-#### 2.3 Finance & Wealth Modules (`backend/src/modules/finance` & `wealth`)
+#### 2.3 Finance & Wealth Modules (backend/src/modules/finance & `wealth`)
 - [ ] Implement `finance.module.ts`:
   - Collections: `accounts`, `transactions` (tenant-scoped).
   - Support Individual vs. Family Household mode cashflow filtering.
@@ -349,12 +349,12 @@ sequenceDiagram
   - Collections: `portfolios`, `asset_products` (tenant-scoped).
   - Routes: `GET /api/wealth/portfolio`, `GET /api/wealth/products`, `POST /api/wealth/optimize`.
 
-#### 2.4 Plan Sharing Module (`backend/src/modules/sharing`)
+#### 2.4 Plan Sharing Module (backend/src/modules/sharing)
 - [ ] Implement `sharing.module.ts`:
   - Collection: `shared_plans` (token, planSnapshot, masked, expiresAt).
   - Endpoints: `POST /api/sharing/create` (generates unguessable token with TTL and privacy masking), `GET /api/sharing/:token` (public read-only strategy presentation).
 
-#### 2.5 Multi-Provider LLM Gateway & Tool-Calling Agent (`backend/src/modules/advisory`)
+#### 2.5 Multi-Provider LLM Gateway & Tool-Calling Agent (backend/src/modules/advisory)
 - [ ] Implement `LlmGateway` abstraction with concrete adapters:
   - `GeminiAdapter` (`@google/genai` or direct REST API)
   - `ClaudeAdapter` (`@anthropic-ai/sdk` or REST)
@@ -446,11 +446,11 @@ sequenceDiagram
 
 #### 5.1 Competition Submission Checklist Production
 - [ ] **01 Technical Documentation:** Complete `docs/architecture/` with C1–C3 diagrams, algorithm specs, multi-tenancy models, native mobile architecture, and Passkey/permission-tier security design.
-- [ ] **02 Presentation Deck (`docs/submission/presentation-deck.md`):** 10-slide outline structured for the 10-minute presentation: Problem $\to$ DEWA Solution $\to$ Architecture $\to$ 3-Topic Synergy $\to$ Live Demo (Desktop + Mobile) $\to$ Passkey Security & Compliance $\to$ Multi-Tenant Future.
-- [ ] **03 Demo Video Storyboard (`docs/submission/demo-video-script.md`):** Step-by-step 5-minute script featuring Elena's journey (burn rate spike + FX dip $\to$ mobile web / iOS TestFlight alert $\to$ agent consultation $\to$ share link generation $\to$ FaceID Passkey execution in dark mode).
+- [ ] **02 Presentation Deck (docs/submission/presentation-deck.md):** 10-slide outline structured for the 10-minute presentation: Problem $\to$ DEWA Solution $\to$ Architecture $\to$ 3-Topic Synergy $\to$ Live Demo (Desktop + Mobile) $\to$ Passkey Security & Compliance $\to$ Multi-Tenant Future.
+- [ ] **03 Demo Video Storyboard (docs/submission/demo-video-script.md):** Step-by-step 5-minute script featuring Elena's journey (burn rate spike + FX dip $\to$ mobile web / iOS TestFlight alert $\to$ agent consultation $\to$ share link generation $\to$ FaceID Passkey execution in dark mode).
 - [ ] **04 Source Code Cleanliness:** `npm run typecheck` zero errors, `npm test` green, clean deployment on Vercel, reproducible mobile builds.
-- [ ] **05 Security Self-Assessment Report (`docs/submission/security-self-assessment.md`):** Formal permission-tier implementation matrix, WebAuthn cryptographic proof, tokenized sharing privacy controls, and known-risk list.
-- [ ] **06 Execution Evidence Package (`docs/submission/execution-evidence.md`):** Seeded sandbox run logs and sample audit digests.
+- [ ] **05 Security Self-Assessment Report (docs/submission/security-self-assessment.md):** Formal permission-tier implementation matrix, WebAuthn cryptographic proof, tokenized sharing privacy controls, and known-risk list.
+- [ ] **06 Execution Evidence Package (docs/submission/execution-evidence.md):** Seeded sandbox run logs and sample audit digests.
 
 #### 5.2 Deployment & Cloud Verification
 - [ ] Run `make build` and test production bundle.
@@ -465,4 +465,4 @@ sequenceDiagram
 * **Phase 2 Done:** Hono `auth` (with Passkeys), `tenant`, `finance`, `wealth`, `sharing`, `advisory`, and `admin` modules mounted. Multi-tenant scoping and API key hashing verified. Tier 3 execution blocked without valid Passkey signature.
 * **Phase 3 Done:** All routes (`/`, `/portfolio`, `/cashflow`, `/advisory`, `/evidence`, `/share/:token`, `/settings/security`, `/admin/*`) fully rendered with dark mode, i18n, responsive touch mobile layout, and passing tests.
 * **Phase 4 Done:** Capacitor native iOS and Android projects configured, FaceID/BiometricPrompt verified, and release bundles buildable.
-* **Phase 5 Done:** All 6 submission checklist items documented in `docs/submission/`. Vercel deployment and mobile builds verified live.
+* **Phase 5 Done:** All 6 submission checklist items documented in docs/submission/. Vercel deployment and mobile builds verified live.
