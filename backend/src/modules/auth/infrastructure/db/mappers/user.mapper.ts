@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { parseMember } from '#core/domain/parse-member.ts';
-import type { Mapper } from '#core/persistence/mapper.ts';
+import type { Mapper } from '#core/db/mapping/mapper.ts';
 import { PROVIDER_TYPES, User, USER_STATUSES } from '../../../domain/entities/user.entity.ts';
 import { AuthErrors } from '../../../domain/errors/auth-errors.ts';
 import { Email } from '../../../domain/value-objects/email.vo.ts';

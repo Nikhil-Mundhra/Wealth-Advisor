@@ -1,8 +1,8 @@
 import { InProcessEventBus } from '#core/events/event-bus.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
-import { applyCollectionDefinitions } from '#core/persistence/apply-collection-definitions.ts';
-import { closeMongoClient, getDb } from '#core/persistence/mongo-client.ts';
-import { objectIdGenerator } from '#core/persistence/object-id-generator.ts';
+import { applyCollectionDefinitions } from '#core/db/schema/apply-collection-definitions.ts';
+import { closeMongoClient, getDb } from '#core/db/connection/mongo-client.ts';
+import { objectIdGenerator } from '#core/db/ids/object-id-generator.ts';
 import { systemClock } from '#core/time/clock.ts';
 import { buildModules } from '#modules/index.ts';
 
