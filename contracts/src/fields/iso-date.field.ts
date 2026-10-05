@@ -1,0 +1,4 @@
+import { z } from 'zod';
+
+// Calendar date as YYYY-MM-DD; market facts are end-of-day, so they carry no time or zone.
+export const IsoDateField = z.iso.date();

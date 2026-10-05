@@ -21,7 +21,7 @@ rules/src/client-type.rule.ts : CLIENT_TYPES, ClientType, isClientType
 rules/src/currency.rule.ts : CURRENCIES, Currency, isCurrency
 rules/src/display-name.rule.ts : max length, normalize, isDisplayName
 rules/src/email.rule.ts : max length, pattern (copied from zod), normalize, isEmail
-rules/src/error-codes.ts : module prefixes, CORE and AUTH codes, ErrorCode types
+rules/src/error-codes.ts : module prefixes, CORE, AUTH, MARKET and ANALYTICS codes, ErrorCode types
 rules/src/household-mode.rule.ts : HOUSEHOLD_MODES, HouseholdMode, isHouseholdMode
 rules/src/index.ts : public barrel
 rules/src/llm-provider.rule.ts : LLM_PROVIDERS, LlmProvider, isLlmProvider
