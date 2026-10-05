@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Class-driven dark mode: ThemeToggle flips .dark on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Design tokens: every color, radius and font used by components comes from here. */
 @theme {
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
@@ -17,11 +20,28 @@
   --color-line: #e5e7eb;
   --color-danger: #b91c1c;
 
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f3f4f6;
+
   --radius-field: 0.5rem;
+}
+
+/* Dark palette: slate page, elevated cards, softer ink. Utilities read these vars, so dark: classes are rarely needed. */
+.dark {
+  --color-ink: #f3f4f6;
+  --color-muted: #d1d5db;
+  --color-subtle: #9ca3af;
+  --color-line: #1f2937;
+  --color-danger: #f87171;
+
+  --color-surface: #0b0f19;
+  --color-surface-subtle: #111827;
+
+  color-scheme: dark;
 }
 
 @layer base {
   html {
-    @apply bg-white font-sans text-ink antialiased;
+    @apply bg-surface font-sans text-ink antialiased;
   }
 }

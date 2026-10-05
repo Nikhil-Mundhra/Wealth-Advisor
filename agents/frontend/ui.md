@@ -29,6 +29,9 @@ frontend/src/components/ui/password-input.test.tsx : visibility toggle and aria-
 frontend/src/components/ui/password-input.tsx : Input with show/hide toggle
 frontend/src/components/ui/spinner.tsx : loading indicator, optionally announced
 frontend/src/components/ui/text-link.tsx : router-aware inline link
+frontend/src/components/ui/theme-toggle.test.tsx : flips the dark class and announces the next mode
+frontend/src/components/ui/theme-toggle.tsx : header control flipping .dark on <html>
 frontend/src/lib/cn.ts : className merge helper
+frontend/src/lib/theme-store.ts : light/dark choice, localStorage, .dark applier
 frontend/src/styles/globals.css : Tailwind import and design tokens
 ```
