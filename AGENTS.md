@@ -18,18 +18,6 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 - change: one file, one responsibility; update the owning map in the same change.
 - delete/rename: grep the symbol or path, remove its references first, re-grep returns nothing.
 - commit: `make test` green; never commit `.env`, `.env.local`, `.vercel/`, `dist/`; no AI attribution lines.
+- commands: `make help` lists every task (dev, build, test, db, deploy).
 - data: `make seed-demo` is local only.
 - docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
-
-## File structure
-
-```
-.env.example : local env template: MongoDB URI (copy to .env.local)
-.gitignore : keeps node_modules, dist, .env, .env.local, .run, .vercel out of Git
-.vercelignore : keeps env files, build output and infra/ out of Vercel uploads
-AGENTS.md : agent entry point: routes, global rules, root file map
-CLAUDE.md : Claude Code entry point: imports AGENTS.md
-Makefile : start/stop/status for frontend, backend, proxy; build, prod, vercel-dev, test, db-indexes, jwt-keys, seed-demo, docs-lint
-README.md : hackathon project concept
-package.json : npm workspaces root and top-level scripts
-```
