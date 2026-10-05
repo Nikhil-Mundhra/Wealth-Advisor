@@ -10,5 +10,5 @@
 - nested route / query: `base` required, one of `CURRENCIES` (`currency.invalid`); `date` optional `YYYY-MM-DD`, default today in UTC (`date.invalid`)
 
 ## GET /api/market/refresh
-- responsibility: fetch ECB rates (Frankfurter) and end-of-day closes (Marketstack) from the oldest last-stored day, or one year back when anything is missing, through today; append both; publish `market.data_refreshed` (`docs/backend/events.md`). Both fetches finish before any write, so a failure stores nothing
+- responsibility: called by Vercel Cron (`vercel.json` `crons`) once each weekday between 23:00 and 23:59 UTC; fetch ECB rates (Frankfurter) and end-of-day closes (Marketstack) from the oldest last-stored day, or one year back when anything is missing, through today; append both; publish `market.data_refreshed` (`docs/backend/events.md`). Both fetches finish before any write, so a failure stores nothing
 - contract: request none, response `RefreshResponse` 200, errors `MK_1001`, `MK_1903`, `MK_1902`, `MK_1901`, `MK_1900`, `CORE_DB_UNCONFIGURED`; auth machine (Vercel Cron) via `Authorization: Bearer <CRON_SECRET>`, compared in constant time; not a user token; `CRON_SECRET` unset → every call `MK_1001`

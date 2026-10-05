@@ -21,5 +21,5 @@
 .github/workflows/ci.yml : on PRs and main: docs-lint, deps-lint, typecheck, tests, frontend build
 infra/docker-compose.yml : nginx container in front of the host backend; host port from PROXY_PORT
 infra/nginx/default.conf : serves frontend/dist, proxies /api to the host backend, cache and security headers
-vercel.json : Vercel Services: frontend and backend service definitions and top-level rewrites
+vercel.json : Vercel Services: frontend and backend service definitions, top-level rewrites, weekday market refresh cron
 ```
