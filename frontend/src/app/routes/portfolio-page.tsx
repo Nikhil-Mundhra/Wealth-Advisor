@@ -1,6 +1,7 @@
 import type { AssetClass } from '@wealth-advisor/rules';
-import { DEMO_BASELINE, DEMO_HOLDINGS, DEMO_TARGET_WEIGHTS } from '../../lib/demo-data.ts';
+import { PageTitle } from '../../components/ui/page-title.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
+import { DEMO_BASELINE, DEMO_HOLDINGS, DEMO_TARGET_WEIGHTS } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 import { useReveal } from '../../lib/use-reveal.ts';
@@ -13,7 +14,7 @@ export function PortfolioPage() {
   const { ref, visible } = useReveal<HTMLDivElement>();
   return (
     <div ref={ref} className={`flex flex-col gap-6 motion-safe:transition-all motion-safe:duration-500 ${visible ? 'motion-safe:translate-y-0 motion-safe:opacity-100' : 'motion-safe:translate-y-3 motion-safe:opacity-0'}`}>
-      <h1 className="text-2xl font-semibold tracking-tight">{strings['nav.portfolio']}</h1>
+      <PageTitle>{strings['nav.portfolio']}</PageTitle>
       <section aria-label={strings['portfolio.holdings']} className="overflow-hidden rounded-field border border-line bg-surface">
         <table className="w-full text-sm">
           <thead>

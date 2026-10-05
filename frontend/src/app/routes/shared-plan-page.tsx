@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { Button } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
+import { PageTitle } from '../../components/ui/page-title.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { DEMO_BASELINE, DEMO_HOLDINGS } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
@@ -15,12 +17,12 @@ export function SharedPlanPage() {
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-4 py-8">
       <p className="truncate text-xs text-subtle">/share/{token}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{strings['dashboard.allocation']}</h1>
+        <PageTitle>{strings['dashboard.allocation']}</PageTitle>
         <Button variant="outline" aria-pressed={!masked} onClick={() => setMasked((was) => !was)}>
           {masked ? strings['share.amounts'] : strings['share.masked']}
         </Button>
       </div>
-      <section aria-label={strings['dashboard.allocation']} className="rounded-field border border-line bg-surface p-5">
+      <Card aria-label={strings['dashboard.allocation']}>
         <ul className="flex flex-col gap-4">
           {DEMO_HOLDINGS.map((holding) => (
             <li key={holding.assetClass}>
@@ -34,7 +36,7 @@ export function SharedPlanPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </Card>
     </main>
   );
 }

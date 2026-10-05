@@ -30,7 +30,7 @@ describe('AdminRoute', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('lets admins through and sends everyone else home', async () => {
-    renderAdmin(['admin']);
+    renderAdmin(['ADMIN']);
     expect(await screen.findByText('Console')).toBeVisible();
   });
 

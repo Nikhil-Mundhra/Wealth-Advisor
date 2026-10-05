@@ -1,4 +1,6 @@
 import { ArrowLeftRight } from 'lucide-react';
+import { Card } from '../../components/ui/card.tsx';
+import { PageTitle } from '../../components/ui/page-title.tsx';
 import { DEMO_ACCOUNTS, DEMO_REMITTANCES } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
@@ -10,8 +12,8 @@ export function CashflowPage() {
   const { ref, visible } = useReveal<HTMLDivElement>();
   return (
     <div ref={ref} className={`flex flex-col gap-4 motion-safe:transition-all motion-safe:duration-500 ${visible ? 'motion-safe:translate-y-0 motion-safe:opacity-100' : 'motion-safe:translate-y-3 motion-safe:opacity-0'}`}>
-      <h1 className="text-2xl font-semibold tracking-tight">{strings['nav.cashflow']}</h1>
-      <section aria-label={strings['cashflow.accounts']} className="rounded-field border border-line bg-surface p-5">
+      <PageTitle>{strings['nav.cashflow']}</PageTitle>
+      <Card aria-label={strings['cashflow.accounts']}>
         <h2 className="text-sm font-medium text-subtle">{strings['cashflow.accounts']}</h2>
         <dl className="mt-3 grid gap-3 sm:grid-cols-3">
           {DEMO_ACCOUNTS.map((account) => (
@@ -24,8 +26,8 @@ export function CashflowPage() {
             </div>
           ))}
         </dl>
-      </section>
-      <section aria-label={strings['cashflow.remit']} className="rounded-field border border-line bg-surface p-5">
+      </Card>
+      <Card aria-label={strings['cashflow.remit']}>
         <h2 className="text-sm font-medium text-subtle">{strings['cashflow.remit']}</h2>
         <ul className="mt-3 grid gap-3 sm:grid-cols-2">
           {DEMO_REMITTANCES.map((remittance) => (
@@ -41,7 +43,7 @@ export function CashflowPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </Card>
     </div>
   );
 }

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { HOUSEHOLD_MODES, RUNWAY_HEALTHY_MONTHS, type AssetClass, type HouseholdMode, type RunwayBand, runwayBand } from '@wealth-advisor/rules';
-import { Button } from '../../components/ui/button.tsx';
 import { AreaChart } from '../../components/ui/area-chart.tsx';
+import { Button } from '../../components/ui/button.tsx';
+import { Card } from '../../components/ui/card.tsx';
+import { PageTitle } from '../../components/ui/page-title.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { DEMO_BASELINE, DEMO_HOUSEHOLD, DEMO_NET_WORTH_EUR, DEMO_NET_WORTH_SERIES, DEMO_RUNWAY_MONTHS, DEMO_TARGET_WEIGHTS } from '../../lib/demo-data.ts';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
@@ -32,7 +34,7 @@ export function DashboardPage() {
   return (
     <div ref={ref} className={`flex flex-col gap-4 motion-safe:transition-all motion-safe:duration-500 ${visible ? 'motion-safe:translate-y-0 motion-safe:opacity-100' : 'motion-safe:translate-y-3 motion-safe:opacity-0'}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{strings['nav.dashboard']}</h1>
+        <PageTitle>{strings['nav.dashboard']}</PageTitle>
         <div role="group" aria-label={strings['household.group']} className="flex gap-2">
           {HOUSEHOLD_MODES.map((mode) => (
             <Button key={mode} variant={household === mode ? 'primary' : 'outline'} aria-pressed={household === mode} onClick={() => setHousehold(mode)}>
@@ -43,7 +45,7 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <section aria-label={strings['dashboard.networth']} className="rounded-field border border-line bg-surface p-5 sm:col-span-1">
+        <Card aria-label={strings['dashboard.networth']} className="sm:col-span-1">
           <p className="text-sm text-subtle">{strings['dashboard.networth']}</p>
           <p className="mt-1 font-display text-4xl font-semibold tracking-tight">{formatMoney(Math.round(netWorth), DEMO_BASELINE)}</p>
           <p className={`mt-1 text-sm font-medium ${BAND_TONE[band]}`}>
@@ -60,9 +62,9 @@ export function DashboardPage() {
           >
             <div className={`h-full rounded-full ${band === 'critical' ? 'bg-danger' : 'bg-brand-600'}`} style={{ width: `${Math.min((DEMO_RUNWAY_MONTHS / RUNWAY_HEALTHY_MONTHS) * 100, 100)}%` }} />
           </div>
-        </section>
+        </Card>
 
-        <section aria-label={strings['dashboard.runway']} className="rounded-field border border-line bg-surface p-5 sm:col-span-1">
+        <Card aria-label={strings['dashboard.runway']} className="sm:col-span-1">
           <p className="text-sm text-subtle">{strings['dashboard.runway']}</p>
           <p className="mt-1 font-display text-4xl font-semibold tracking-tight">
             {DEMO_RUNWAY_MONTHS} <span className="text-lg">{strings['dashboard.months']}</span>
@@ -71,7 +73,7 @@ export function DashboardPage() {
             {household === 'INDIVIDUAL' ? 3 : 6} {strings['dashboard.months']} ·{' '}
             {strings[household === 'INDIVIDUAL' ? 'household.individual' : 'household.family']}
           </p>
-        </section>
+        </Card>
 
         <Link to="/advisory" className="rounded-field bg-gradient-to-br from-brand-600 to-brand-700 p-5 text-white transition-transform motion-safe:hover:-translate-y-0.5 dark:text-brand-950">
           <p className="text-sm opacity-80">{strings['dashboard.rebalance']}</p>
@@ -81,12 +83,12 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section aria-label={strings['dashboard.trail']} className="rounded-field border border-line bg-surface p-5">
+        <Card aria-label={strings['dashboard.trail']}>
           <p className="text-sm text-subtle">{strings['dashboard.trail']}</p>
           <AreaChart points={DEMO_NET_WORTH_SERIES} label={strings['dashboard.trail']} />
-        </section>
+        </Card>
 
-        <section aria-label={strings['dashboard.allocation']} className="rounded-field border border-line bg-surface p-5">
+        <Card aria-label={strings['dashboard.allocation']}>
           <p className="text-sm text-subtle">{strings['dashboard.allocation']}</p>
           <ul className="mt-3 flex flex-col gap-3 text-sm">
             {(Object.keys(DEMO_TARGET_WEIGHTS) as AssetClass[]).map((assetClass) => (
@@ -101,7 +103,7 @@ export function DashboardPage() {
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       </div>
     </div>
   );
