@@ -12,7 +12,7 @@ const nullable = (bsonType: string) => ({ bsonType: [bsonType, 'null'] });
 const usersCollection: CollectionDefinition = {
   name: USERS_COLLECTION,
   indexes: [
-    // One ACTIVE account per external identity (replaces cochika's active_key generated-column trick).
+    // One ACTIVE account per external identity.
     // Filtered on a status string: partial-index filters support plain equality, not "deletedAt is null".
     {
       key: { 'providers.type': 1, 'providers.subject': 1 },
@@ -24,7 +24,10 @@ const usersCollection: CollectionDefinition = {
   validator: {
     $jsonSchema: {
       bsonType: 'object',
-      required: ['email', 'status', 'roles', 'providers', 'consents', 'createdAt', 'updatedAt'],
+      required: [
+        'email', 'emailVerifiedAt', 'passwordHash', 'displayName', 'status', 'roles',
+        'providers', 'consents', 'withdrawal', 'createdAt', 'updatedAt',
+      ],
       properties: {
         email: { bsonType: 'string', maxLength: EMAIL_MAX_LENGTH },
         emailVerifiedAt: nullable('date'),
@@ -37,11 +40,18 @@ const usersCollection: CollectionDefinition = {
           maxItems: MAX_PROVIDERS,
           items: {
             bsonType: 'object',
-            required: ['type', 'subject', 'linkedAt'],
-            properties: { type: { enum: [...PROVIDER_TYPES] }, subject: { bsonType: 'string' } },
+            required: ['type', 'subject', 'email', 'linkedAt', 'lastLoginAt'],
+            properties: {
+              type: { enum: [...PROVIDER_TYPES] },
+              subject: { bsonType: 'string' },
+              email: nullable('string'),
+              linkedAt: { bsonType: 'date' },
+              lastLoginAt: nullable('date'),
+            },
           },
         },
         consents: { bsonType: 'array' },
+        withdrawal: nullable('object'),
         createdAt: { bsonType: 'date' },
         updatedAt: { bsonType: 'date' },
       },
@@ -61,7 +71,10 @@ const sessionsCollection: CollectionDefinition = {
   validator: {
     $jsonSchema: {
       bsonType: 'object',
-      required: ['userId', 'tokenHash', 'familyId', 'clientType', 'rememberMe', 'issuedAt', 'expiresAt', 'purgeAt', 'createdAt'],
+      required: [
+        'userId', 'tokenHash', 'familyId', 'replacedBy', 'clientType', 'rememberMe', 'issuedAt', 'expiresAt',
+        'lastUsedAt', 'revokedAt', 'revokeReason', 'purgeAt', 'createdAt', 'updatedAt',
+      ],
       properties: {
         userId: { bsonType: 'objectId' },
         tokenHash: { bsonType: 'string', pattern: TOKEN_HASH_PATTERN.source },
@@ -69,10 +82,14 @@ const sessionsCollection: CollectionDefinition = {
         replacedBy: nullable('objectId'),
         clientType: { enum: [...CLIENT_TYPES] },
         rememberMe: { bsonType: 'bool' },
+        issuedAt: { bsonType: 'date' },
         expiresAt: { bsonType: 'date' },
+        lastUsedAt: nullable('date'),
         revokedAt: nullable('date'),
         revokeReason: { enum: [...REVOKE_REASONS, null] },
         purgeAt: { bsonType: 'date' },
+        createdAt: { bsonType: 'date' },
+        updatedAt: { bsonType: 'date' },
       },
     },
   },
