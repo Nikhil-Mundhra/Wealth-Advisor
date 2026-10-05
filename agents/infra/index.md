@@ -7,8 +7,8 @@
 ## Rules
 - ports: the Makefile variable is the source; every file `docs/infra/ports.md` lists for a port changes with it; restart what uses it (`make restart`, `make proxy`).
 - routing: the implementers in `docs/infra/routing.md` change together; check with `make vercel-dev`.
-- secrets: values live in the Vercel project or `.env.local`; never in `vercel.json`, compose files or the Makefile.
-- deploy: `make db-indexes` against the production `MONGODB_URI` when a deploy adds or changes collections or indexes.
+- secrets: values live in Vercel project settings or the repo-root `.env.local` / `.env` (`.env` wins), never committed; never in `vercel.json`, compose files, the Makefile or any .md; local files point at the local Mongo, never the production database.
+- deploy: the production `MONGODB_URI` and the `make jwt-keys` pair go in Vercel Production only, never Preview; `make db-indexes` against the production `MONGODB_URI` on first deploy and when a deploy adds or changes collections or indexes.
 - process control: Makefile start/stop/status act only on processes running inside the repo; new services reuse `start_svc`, `stop_svc`, `status_svc`.
 
 ## Workflow

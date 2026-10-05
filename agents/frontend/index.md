@@ -19,12 +19,12 @@
 ## File structure
 
 ```
-frontend/index.html : SPA shell; DM Sans font
+frontend/index.html : SPA shell; DM Sans and Fraunces fonts
 frontend/package.json : frontend scripts (dev, build, test) and dependencies
 frontend/src/app/app.tsx : providers + router
 frontend/src/app/providers.tsx : QueryClientProvider and SessionProvider
 frontend/src/main.tsx : mounts <App/> and global styles
-frontend/src/test/setup.ts : Vitest setup: jest-dom matchers, cleanup
+frontend/src/test/setup.ts : Vitest setup: jest-dom matchers, cleanup, modal <dialog> stub for jsdom
 frontend/tsconfig.json : typecheck settings
 frontend/vite.config.ts : dev server, /api proxy, Tailwind plugin, Vitest config
 ```

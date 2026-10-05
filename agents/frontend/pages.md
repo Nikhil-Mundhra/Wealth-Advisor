@@ -4,8 +4,8 @@
 - `docs/frontend/session-flow.md` : session status the guards read
 
 ## Rules
-- Signed-out pages sit under `GuestRoute`, signed-in pages under `ProtectedRoute`.
-- Pages get server data from feature hooks.
+- Signed-out pages sit under `GuestRoute`, signed-in pages under `ProtectedRoute`, admin pages under `AdminRoute` inside it; `/share/:token` stays outside every guard.
+- Pages read `frontend/src/lib/demo-data.ts` until the backend endpoint for that data exists, then switch to a feature hook.
 
 ## File structure
 
@@ -22,8 +22,8 @@ frontend/src/app/routes/advisory-page.test.tsx : thread, step-up gate, and no-au
 frontend/src/app/routes/advisory-page.tsx : copilot thread, rebalance card, biometric step-up modal
 frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan render
 frontend/src/app/routes/cashflow-page.tsx : multi-currency balances and remittance corridor plan
-frontend/src/app/routes/dashboard-page.test.tsx : net worth, runway gauge, household toggle
-frontend/src/app/routes/dashboard-page.tsx : net worth card, household toggle, runway gauge
+frontend/src/app/routes/dashboard-page.test.tsx : net worth, runway gauge, trail chart, rebalance link, household toggle
+frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, household toggle, rebalance CTA, trail chart, target allocation
 frontend/src/app/routes/evidence-page.test.tsx : executions with tiers and digests
 frontend/src/app/routes/evidence-page.tsx : sandbox ledger table
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
