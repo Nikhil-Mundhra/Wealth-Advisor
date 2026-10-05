@@ -15,7 +15,7 @@
 
 ```
 contracts/package.json : exports src/index.ts directly (no build step)
-contracts/src/analytics/snapshot.contract.ts : market snapshot response (asOf, symbols, annualized means, volatilities, covariance, window)
+contracts/src/analytics/snapshot.contract.ts : market snapshot query (optional asOf) and response (asOf, symbols, annualized means, volatilities, covariance, window)
 contracts/src/auth/login.contract.ts : login request (email, password, clientType default WEB, rememberMe)
 contracts/src/auth/logout.contract.ts : logout request (body token optional; web uses the cookie)
 contracts/src/auth/me.contract.ts : current-user response

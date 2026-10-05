@@ -15,6 +15,7 @@
 
 ```
 rules/package.json : exports src/index.ts directly; no dependencies
+rules/src/analytics.rule.ts : trading days per year, snapshot window days, minimum snapshot observations
 rules/src/asset-class.rule.ts : ASSET_CLASSES, AssetClass, isAssetClass
 rules/src/burn-rate.rule.ts : RUNWAY_CRITICAL/HEALTHY_MONTHS, RunwayBand, runwayBand
 rules/src/client-type.rule.ts : CLIENT_TYPES, ClientType, isClientType

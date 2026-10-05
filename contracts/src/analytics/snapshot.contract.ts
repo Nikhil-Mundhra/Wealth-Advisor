@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { IsoDateField } from '../fields/iso-date.field.ts';
 
+// asOf: the snapshot computed for that data date; omitted → the latest snapshot.
+export const SnapshotQuery = z.object({
+  asOf: IsoDateField.optional(),
+});
+export type SnapshotQuery = z.infer<typeof SnapshotQuery>;
+
 // means, volatilities and covariance rows/columns follow the order of `symbols`; all annualized from daily log
 // returns. window is the provenance: which price dates fed the numbers and how many return observations.
 export const SnapshotResponse = z.object({

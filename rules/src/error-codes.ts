@@ -37,6 +37,7 @@ export const MARKET_ERROR_CODES = {
 
 export const ANALYTICS_ERROR_CODES = {
   noSnapshot: 'AN_1001',
+  invariantViolated: 'AN_1900',
 } as const;
 
 export type CoreErrorCode = (typeof CORE_ERROR_CODES)[keyof typeof CORE_ERROR_CODES];
