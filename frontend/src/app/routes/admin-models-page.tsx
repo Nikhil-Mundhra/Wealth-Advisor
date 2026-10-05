@@ -10,8 +10,10 @@ export function AdminModelsPage() {
       <ul className="flex flex-col gap-2 rounded-field border border-line bg-surface p-5 text-sm">
         {LLM_PROVIDERS.map((provider) => (
           <li key={provider} className="flex items-center justify-between gap-3">
-            <span>{provider}</span>
-            {provider === 'mock' && <span className="text-xs text-subtle">{strings['admin.active']}</span>}
+            <span className="font-mono text-[13px]">{provider}</span>
+            {provider === 'mock' && (
+              <span className="rounded-full bg-gold-subtle px-2 py-0.5 text-xs font-medium text-gold">{strings['admin.active']}</span>
+            )}
           </li>
         ))}
       </ul>

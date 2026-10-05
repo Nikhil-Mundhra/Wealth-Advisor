@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { Button } from '../../components/ui/button.tsx';
+import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { DEMO_BASELINE, DEMO_HOLDINGS } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
@@ -28,7 +29,7 @@ export function SharedPlanPage() {
                 <p className="font-medium">{masked ? `${holding.weight}%` : formatMoney(holding.valueEur, DEMO_BASELINE)}</p>
               </div>
               <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-subtle">
-                <div className="h-full rounded-full bg-brand-600" style={{ width: `${holding.weight}%` }} />
+                <div className={`h-full rounded-full ${CLASS_CHART[holding.assetClass]}`} style={{ width: `${holding.weight}%` }} />
               </div>
             </li>
           ))}
