@@ -11,7 +11,7 @@ const ENTRY = 'CLAUDE.md';
 // A backticked token or map path is checked only when it starts at one of these repo-root entries.
 const ROOTS = new Set([
   'agents', 'docs', 'backend', 'frontend', 'contracts', 'rules', 'infra', 'scripts',
-  'Agent.md', 'CLAUDE.md', 'README.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json',
+  'AGENTS.md', 'CLAUDE.md', 'README.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json',
   '.gitignore', '.vercelignore',
 ]);
 // Build output and local state: referenced on purpose, absent until something generates them.
@@ -91,7 +91,7 @@ function asRepoPath(token) {
   return path;
 }
 
-const agentFiles = ['Agent.md', ...(exists('agents') ? walk('agents') : [])];
+const agentFiles = ['AGENTS.md', ...(exists('agents') ? walk('agents') : [])];
 const docFiles = exists('docs') ? walk('docs') : [];
 const allMd = [ENTRY, ...agentFiles, ...docFiles];
 
