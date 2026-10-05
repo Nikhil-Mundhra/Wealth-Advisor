@@ -12,8 +12,13 @@
 ```
 frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status
 frontend/src/app/router.tsx : route table: /signup, /login (guest), / (protected)
-frontend/src/app/routes/home-page.tsx : signed-in placeholder: backend status, profile, Ask AI stub, sign out
+frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan render
+frontend/src/app/routes/cashflow-page.tsx : multi-currency balances and remittance corridor plan
+frontend/src/app/routes/dashboard-page.test.tsx : net worth, runway gauge, household toggle
+frontend/src/app/routes/dashboard-page.tsx : net worth card, household toggle, runway gauge
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
+frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
+frontend/src/app/routes/portfolio-page.tsx : holdings table with current vs target drift
 frontend/src/app/routes/signup-page.tsx : signup page: highlight panel + signup form
 frontend/src/assets/auth-hero.jpg : auth panel photo (Unsplash License)
 frontend/src/features/auth/components/auth-header.tsx : page title + subtitle

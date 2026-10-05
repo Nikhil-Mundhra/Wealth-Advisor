@@ -1,7 +1,9 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 import { GuestRoute, ProtectedRoute } from './route-guards.tsx';
-import { HomePage } from './routes/home-page.tsx';
+import { CashflowPage } from './routes/cashflow-page.tsx';
+import { DashboardPage } from './routes/dashboard-page.tsx';
 import { LoginPage } from './routes/login-page.tsx';
+import { PortfolioPage } from './routes/portfolio-page.tsx';
 import { SignupPage } from './routes/signup-page.tsx';
 import { AppShell } from '../components/layout/app-shell.tsx';
 
@@ -18,7 +20,11 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppShell />,
-        children: [{ path: '/', element: <HomePage /> }],
+        children: [
+          { path: '/', element: <DashboardPage /> },
+          { path: '/portfolio', element: <PortfolioPage /> },
+          { path: '/cashflow', element: <CashflowPage /> },
+        ],
       },
     ],
   },
