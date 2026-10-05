@@ -36,8 +36,11 @@ frontend/src/components/ui/text-link.tsx : router-aware inline link
 frontend/src/components/ui/theme-toggle.test.tsx : flips the dark class and announces the next mode
 frontend/src/components/ui/theme-toggle.tsx : header control flipping .dark on <html>
 frontend/src/lib/cn.ts : className merge helper
+frontend/src/lib/demo-data.ts : Elena fixture standing in for the Phase 2 endpoints
 frontend/src/lib/dictionaries.test.ts : every locale carries exactly the English keys
 frontend/src/lib/dictionaries.ts : UI copy per locale with a locale-reading hook
+frontend/src/lib/format-money.test.ts : locale currency rendering
+frontend/src/lib/format-money.ts : locale-aware money rendering
 frontend/src/lib/locale-store.ts : active locale, localStorage, <html lang> applier
 frontend/src/lib/theme-store.ts : light/dark choice, localStorage, .dark applier
 frontend/src/styles/globals.css : Tailwind import and design tokens
