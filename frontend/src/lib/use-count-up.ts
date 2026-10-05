@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 export function useCountUp(target: number, durationMs = 900): number {
   const [value, setValue] = useState(0);
   useEffect(() => {
-    if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const reduce =
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
       setValue(target);
       return;
     }

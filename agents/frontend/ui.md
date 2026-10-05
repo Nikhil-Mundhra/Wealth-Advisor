@@ -18,6 +18,8 @@ frontend/src/components/layout/app-shell.test.tsx : page body with sidebar and b
 frontend/src/components/layout/app-shell.tsx : signed-in frame: header, desktop sidebar, mobile bottom tabs
 frontend/src/components/layout/split-layout.tsx : two-pane page: media aside (desktop) + centered content
 frontend/src/components/ui/alert.tsx : form-level message (role=alert), error/info tones
+frontend/src/components/ui/area-chart.test.tsx : series renders as an accessible image
+frontend/src/components/ui/area-chart.tsx : minimal SVG area chart with gradient fill and endpoint dot
 frontend/src/components/ui/button.test.tsx : Button type default and loading state
 frontend/src/components/ui/button.tsx : Button: primary/outline/ghost/inverse variants, loading state
 frontend/src/components/ui/checkbox.tsx : labelled checkbox
