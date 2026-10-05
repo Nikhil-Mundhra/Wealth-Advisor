@@ -8,3 +8,4 @@ Source: `@theme` in `frontend/src/styles/globals.css`. Each token becomes Tailwi
 | color | `brand-50` `brand-100` `brand-600` `brand-700` `brand-900` `brand-950` (on-brand-fill ink) `gold` `gold-subtle` `ink` `muted` `subtle` `line` `danger` `surface` `surface-subtle` |
 | chart | `chart-1` … `chart-5` (colorblind-safe set, both modes) |
 | radius | `field` |
+| animate | `fade-up` |
