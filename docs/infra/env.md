@@ -1,6 +1,16 @@
 # Environment
 
-Backend variables are validated once, on first use, by `backend/src/core/config/env.ts`. Local runs (`make backend`, `make prod`, `make db-indexes`, `make seed-demo`) load `.env.local` at the repo root when present; Vercel takes them from the project settings.
+Backend variables are validated once, on first use, by `backend/src/core/config/env.ts`. Local runs (`make backend`, `make prod`, `make db-indexes`, `make seed-demo`) load `.env.local` then `.env` at the repo root when present — the later file wins, so **`.env` overrides `.env.local`**. Vercel takes them from the project settings and reads neither file.
+
+Local convention: `.env` points at the local Mongo (`mongodb://127.0.0.1:27017`); Atlas stays out of local files entirely.
+
+Production (deployer checklist): set these in the Vercel project settings, environments Production and Preview:
+- `MONGODB_URI` = the Atlas SRV string, e.g. `mongodb+srv://dewa-api:<password>@cluster0.kz63cnu.mongodb.net/?appName=Cluster0`
+- `MONGODB_DB_NAME` = `wealth_advisor` (optional, this is the default)
+- `AUTH_JWT_PRIVATE_KEY` / `AUTH_JWT_PUBLIC_KEY` = PEM pair from `make jwt-keys` (required in production; `\n` escapes allowed)
+- `NODE_ENV` = `production` (set automatically by Vercel)
+
+Then run `make db-indexes` once against the Atlas URI to apply validators and indexes.
 
 | Var | Default | Required | Effect |
 |---|---|---|---|
