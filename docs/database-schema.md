@@ -379,7 +379,7 @@ npm run db:indexes -w backend
 # Or via Makefile:
 make db-indexes
 ```
-Script located at: [`backend/src/scripts/ensure-indexes.ts`](backend/src/scripts/ensure-indexes.ts).
+Script located at: [`backend/src/scripts/ensure-indexes.ts`](../backend/src/scripts/ensure-indexes.ts).
 
 ### 3.2 Seeding Demo Personas
 To seed the Elena demonstration dataset (European multi-currency income, Asian remittances, TouchID Passkey profile, and multi-asset holdings):

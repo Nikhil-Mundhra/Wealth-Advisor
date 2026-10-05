@@ -1,7 +1,7 @@
 # Writing docs
 
 ## Rules
-- role: guides (`Agent.md`, `agents/`) hold directives; docs (`docs/`) hold facts.
+- role: guides (`AGENTS.md`, `agents/`) hold directives; docs (`docs/`) hold facts.
 - ownership: one fact, one owner; grep for it before writing; elsewhere link.
 - edges: guides → docs → docs; never docs → guides.
 - axes: each rule has one owner. Area index `## Route` lines name the axes each guide owns, `## Axes` names axes owned by another area, and rule lines start with their axis when a file owns several.
@@ -27,14 +27,14 @@
 
 ## Workflow
 - add a section: take the template for the doc type; insert in template order; no prose between sections
-- add a doc: create from its template → one line in the folder `index.md` → if it is a guide, one `## Route` line in its area index or `Agent.md`
+- add a doc: create from its template → one line in the folder `index.md` → if it is a guide, one `## Route` line in its area index or `AGENTS.md`
 - add a component: one guide + one `## Route` line in the area index; plus one doc + one docs-index line only if it brings new facts
 - modify: change only the stale statement; keep heading names, they are link targets
 - delete: grep the path and its headings → remove references (indexes, maps, `## Calls`, `## Route`) → delete the file → re-grep returns nothing
 - finish: `make docs-lint` passes
 
 ## Templates
-- area index guide (`Agent.md`, `agents/<area>/index.md`): `## Route` · `## Rules` · `## File structure`
+- area index guide (`AGENTS.md`, `agents/<area>/index.md`): `## Route` · `## Rules` · `## File structure`
 - component guide (`agents/**/*.md`): `## Calls` · `## Rules` · `## Workflow` · `## File structure`; omit empty sections; guide-specific sections go after `## Workflow`
 - index (`docs/**/index.md`): title + one map code block
 - fact doc: facts only; architecture docs start with `## Diagram` (Mermaid), then tables
