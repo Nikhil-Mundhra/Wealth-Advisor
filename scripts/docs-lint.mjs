@@ -13,7 +13,7 @@ const ENTRY_COPY = 'CLAUDE.md';
 const ROOTS = new Set([
   'agents', 'docs', 'backend', 'frontend', 'contracts', 'rules', 'infra', 'scripts',
   'AGENTS.md', 'CLAUDE.md', 'README.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json', '.env.example',
-  '.gitignore', '.vercelignore',
+  '.gitignore', '.vercelignore', '.github',
 ]);
 // Build output and local state: referenced on purpose, absent until something generates them.
 const GENERATED = new Set(['dist', 'node_modules', '.run', '.vercel']);
