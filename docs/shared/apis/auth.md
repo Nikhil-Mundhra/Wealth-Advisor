@@ -23,3 +23,7 @@
 ## GET /api/auth/me
 - responsibility: return the caller's account
 - contract: request none, response `MeResponse` 200, errors `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## DELETE /api/auth/me
+- responsibility: permanently delete the caller's account and all associated sessions, and clear the refresh cookie
+- contract: request none, response none 204, errors `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer

@@ -86,6 +86,20 @@ export function AreaChart({
     setHoverIndex(null);
   };
 
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touchX = touch.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, touchX / rect.width));
+    const closestIdx = Math.round(ratio * (series.length - 1));
+    setHoverIndex(closestIdx);
+  };
+
+  const handleTouchEnd = () => {
+    setHoverIndex(null);
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
       {/* Chart Header Stats & Timeframe Switcher */}
@@ -140,6 +154,8 @@ export function AreaChart({
           aria-label={label}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className="h-36 w-full cursor-crosshair overflow-visible touch-none"
         >
           <defs>

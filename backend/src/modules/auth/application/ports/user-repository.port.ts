@@ -8,4 +8,5 @@ export interface UserRepositoryPort {
   findActiveByProvider(type: ProviderType, subject: string): Promise<User | null>;
   findActiveById(id: string): Promise<User | null>;
   save(user: User): Promise<void>;
+  deleteById(id: string): Promise<boolean>;
 }

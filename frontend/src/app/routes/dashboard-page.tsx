@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router';
 import {
   COUNTRY_CURRENCY_MAP,
+  DEFAULT_FAMILY_BURN_ESTIMATE,
+  DEFAULT_INDIVIDUAL_BURN_ESTIMATE,
   HOUSEHOLD_MODES,
   RUNWAY_HEALTHY_MONTHS,
   type AssetClass,
@@ -143,7 +145,8 @@ export function DashboardPage() {
   let displayRunwayMonths = DEMO_RUNWAY_MONTHS;
   if (!isDemo) {
     const liquidCash = profile.answers.holdings.cashSavings.amount;
-    const estimatedMonthlyBurn = household === 'INDIVIDUAL' ? 2500 : 5000;
+    const estimatedMonthlyBurn =
+      household === 'INDIVIDUAL' ? DEFAULT_INDIVIDUAL_BURN_ESTIMATE : DEFAULT_FAMILY_BURN_ESTIMATE;
     displayRunwayMonths = Math.round((liquidCash / estimatedMonthlyBurn) * 10) / 10;
   }
   const band = runwayBand(displayRunwayMonths);

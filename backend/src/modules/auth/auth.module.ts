@@ -4,6 +4,7 @@ import { resolveDataStore } from '#core/db/connection/data-store.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import type { TokenConfig } from './application/config/token-config.ts';
+import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case.ts';
 import { GetMeUseCase } from './application/use-cases/get-me.use-case.ts';
 import { TokenPairIssuer } from './application/use-cases/issue-token-pair.ts';
 import { LoginUseCase } from './application/use-cases/login.use-case.ts';
@@ -72,7 +73,11 @@ export function createAuthModule(context: ModuleContext): ModuleManifest {
         logout: new LogoutUseCase({ sessions, clock }),
         signer,
       }),
-      ...meRoutes({ getMe: new GetMeUseCase({ users }), signer }),
+      ...meRoutes({
+        getMe: new GetMeUseCase({ users }),
+        deleteAccount: new DeleteAccountUseCase({ users, sessions }),
+        signer,
+      }),
     ],
   });
 }

@@ -36,6 +36,17 @@ export class MemorySessionRepository implements SessionRepositoryPort {
     return this.revokeWhere((document) => document.userId.toHexString() === userId, reason, now);
   }
 
+  async deleteAllForUser(userId: string): Promise<number> {
+    let count = 0;
+    for (const [id, document] of this.documents.entries()) {
+      if (document.userId.toHexString() === userId) {
+        this.documents.delete(id);
+        count += 1;
+      }
+    }
+    return count;
+  }
+
   private replaceIfUnrevoked(session: Session): boolean {
     const next = sessionMapper.toDocument(session);
     const current = this.documents.get(next._id.toHexString());

@@ -11,4 +11,5 @@ export interface SessionRepositoryPort {
   revokeIfActive(session: Session): Promise<boolean>;
   revokeFamily(familyId: string, reason: RevokeReason, now: Date): Promise<number>;
   revokeAllForUser(userId: string, reason: RevokeReason, now: Date): Promise<number>;
+  deleteAllForUser(userId: string): Promise<number>;
 }

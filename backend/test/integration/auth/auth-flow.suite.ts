@@ -157,4 +157,33 @@ export function runAuthFlowSuite(start: () => Promise<TestApp>): void {
       assert.equal((await postJson(t.app, '/api/auth/refresh', { refreshToken: third.refreshToken })).status, 401);
     });
   });
+
+  describe('delete account', () => {
+    it('deletes user record and sessions, clears cookie, and prevents subsequent authenticated access', async () => {
+      const email = 'wipeout@example.com';
+      await postJson(t.app, '/api/auth/signup', { email, password: PASSWORD, displayName: 'Wipeout' });
+      const login = await postJson(t.app, '/api/auth/login', { email, password: PASSWORD, clientType: 'WEB' });
+      assert.equal(login.status, 200);
+      const loginBody = await json(login);
+      const auth = bearer(String(loginBody.accessToken));
+      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+
+      const deleteRes = await t.app.request('/api/auth/me', { method: 'DELETE', headers: { ...auth, cookie } });
+      assert.equal(deleteRes.status, 204);
+      const clearedCookie = deleteRes.headers.get('set-cookie') ?? '';
+      assert.match(clearedCookie, /refresh_token=;/);
+
+      // /me is no longer accessible
+      const meAfter = await t.app.request('/api/auth/me', { headers: auth });
+      assert.equal(meAfter.status, 401);
+
+      // Session refresh fails
+      const refreshAfter = await t.app.request('/api/auth/refresh', { method: 'POST', headers: { cookie } });
+      assert.equal(refreshAfter.status, 401);
+
+      // Login fails because user is deleted
+      const loginAfter = await postJson(t.app, '/api/auth/login', { email, password: PASSWORD });
+      assert.equal(loginAfter.status, 401);
+    });
+  });
 }

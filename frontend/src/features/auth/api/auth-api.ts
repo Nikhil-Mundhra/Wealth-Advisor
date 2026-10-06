@@ -9,4 +9,5 @@ export const authApi = {
   refresh: () => apiRequest('/auth/refresh', { method: 'POST', response: TokenPairResponse }),
   logout: () => apiRequest('/auth/logout', { method: 'POST', authenticated: true }),
   me: () => apiRequest('/auth/me', { response: MeResponse, authenticated: true }),
+  deleteAccount: () => apiRequest('/auth/me', { method: 'DELETE', authenticated: true }),
 };

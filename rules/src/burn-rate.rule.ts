@@ -4,6 +4,10 @@
 export const RUNWAY_CRITICAL_MONTHS = 3;
 export const RUNWAY_HEALTHY_MONTHS = 6;
 
+// Baseline monthly expenditure estimates (EUR) used when transaction feeds are absent.
+export const DEFAULT_INDIVIDUAL_BURN_ESTIMATE = 2500;
+export const DEFAULT_FAMILY_BURN_ESTIMATE = 5000;
+
 export type RunwayBand = 'critical' | 'warning' | 'healthy';
 
 export function runwayBand(months: number): RunwayBand {

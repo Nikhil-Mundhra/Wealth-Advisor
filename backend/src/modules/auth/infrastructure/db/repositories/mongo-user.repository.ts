@@ -38,4 +38,10 @@ export class MongoUserRepository extends BaseRepository<UserDocument> implements
     const { _id, createdAt, ...mutable } = userMapper.toDocument(user);
     await this.setOne({ _id }, mutable);
   }
+
+  async deleteById(id: string): Promise<boolean> {
+    if (!ObjectId.isValid(id)) return false;
+    const count = await this.deleteOne({ _id: new ObjectId(id) });
+    return count === 1;
+  }
 }

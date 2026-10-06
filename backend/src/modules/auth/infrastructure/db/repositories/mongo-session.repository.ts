@@ -53,4 +53,9 @@ export class MongoSessionRepository extends BaseRepository<SessionDocument> impl
   async revokeAllForUser(userId: string, reason: RevokeReason, now: Date): Promise<number> {
     return this.setMany({ userId: new ObjectId(userId), revokedAt: null }, { revokedAt: now, revokeReason: reason });
   }
+
+  async deleteAllForUser(userId: string): Promise<number> {
+    if (!ObjectId.isValid(userId)) return 0;
+    return this.deleteMany({ userId: new ObjectId(userId) });
+  }
 }

@@ -12,6 +12,7 @@
 
 ```
 frontend/src/features/auth/api/auth-api.ts : auth endpoint calls typed by contracts
+frontend/src/features/auth/api/use-delete-account.ts : delete-account mutation; ends local session and clears query cache
 frontend/src/features/auth/api/use-login.ts : login mutation
 frontend/src/features/auth/api/use-logout.ts : logout mutation; always ends the local session
 frontend/src/features/auth/api/use-me.ts : current-user query

@@ -14,7 +14,7 @@ flowchart LR
     tenant[tenant · absent]
   end
   subgraph personal[2-3 · Position]
-    profile[profiling · absent]
+    profile[profiling · built]
     accounts[accounts, transactions · absent]
     burn[burn rate and runway · absent]
   end
@@ -44,7 +44,7 @@ flowchart LR
 | # | Stage | Input | Output | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | Identity and tenant scope | email, password, API key | user, session, `tenantId` on every query | `backend/src/modules/auth/` built; tenant scoping `absent` | `partial` |
-| 2 | Investor profiling | questionnaire answers | risk profile, liquidity carve-outs | none; contracts listed in `docs/implementation-plan.md` | `absent` |
+| 2 | Investor profiling | questionnaire answers | risk profile, corridor currencies, liquidity carve-outs | `rules/src/profiling.rule.ts`, `frontend/src/features/profiling/` | `built` |
 | 3 | Financial position | accounts, transactions | baseline-currency balances, runway months | none; `MarketApi.convert` (`backend/src/modules/market/domain/convert.ts`) built but unrouted | `absent` |
 | 4 | Market state | provider responses | `prices`, `fx_rates` | `backend/src/modules/market/` | `built` |
 | 5 | Risk measurement | 365 days of closes | annualized mean, volatility, covariance | `backend/src/modules/analytics/` | `built` |

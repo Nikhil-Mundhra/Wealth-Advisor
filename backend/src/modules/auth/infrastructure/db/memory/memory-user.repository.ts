@@ -31,6 +31,10 @@ export class MemoryUserRepository implements UserRepositoryPort {
     this.documents.set(document._id.toHexString(), document);
   }
 
+  async deleteById(id: string): Promise<boolean> {
+    return this.documents.delete(id);
+  }
+
   private findActiveDocument(type: string, subject: string): UserDocument | undefined {
     for (const document of this.documents.values()) {
       if (document.status === 'ACTIVE' && document.providers.some((p) => p.type === type && p.subject === subject)) return document;

@@ -1,20 +1,27 @@
+import { useState } from 'react';
 import { COUNTRY_CURRENCY_MAP, CURRENCIES, PERMISSION_TIERS, type Currency } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
+import { Dialog } from '../../components/ui/dialog.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
+import { useDeleteAccount } from '../../features/auth/api/use-delete-account.ts';
 import { useLogout } from '../../features/auth/api/use-logout.ts';
 import { useMe } from '../../features/auth/api/use-me.ts';
-import { setPreferredCurrency, useProfile } from '../../features/profiling/profile-store.ts';
+import { setPreferredCurrency, useProfile, wipeUserDataFromBrowser } from '../../features/profiling/profile-store.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 
-// Session facts, the tier ladder, passkey enrollment state, reporting currency, and sign out.
+// Session facts, the tier ladder, passkey enrollment state, reporting currency, and account controls.
 export function SecuritySettingsPage() {
   const strings = useStrings();
   const me = useMe();
   const logout = useLogout();
   const profile = useProfile(me.data?.email);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const deleteAccount = useDeleteAccount(() => {
+    wipeUserDataFromBrowser(me.data?.email);
+  });
   return (
     <div className="flex flex-col gap-6">
       <PageTitle>{strings['header.settings']}</PageTitle>
@@ -81,11 +88,49 @@ export function SecuritySettingsPage() {
         </div>
       </Card>
 
-      <div>
+      <div className="flex flex-wrap items-center gap-3">
         <Button variant="outline" loading={logout.isPending} onClick={() => logout.mutate()}>
           {strings['dashboard.signout']}
         </Button>
+        <Button
+          variant="ghost"
+          className="text-danger hover:bg-danger/10 hover:text-danger"
+          onClick={() => setConfirmDeleteOpen(true)}
+        >
+          {strings['security.deleteAccount']}
+        </Button>
       </div>
+
+      <Dialog
+        open={confirmDeleteOpen}
+        onClose={() => !deleteAccount.isPending && setConfirmDeleteOpen(false)}
+        title={strings['security.deleteAccount.confirmTitle']}
+      >
+        <p className="mt-3 text-sm text-subtle">
+          {strings['security.deleteAccount.confirmDescription']}
+        </p>
+        {deleteAccount.isError && (
+          <div className="mt-3">
+            <Alert>{strings['security.deleteAccount.error']}</Alert>
+          </div>
+        )}
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            disabled={deleteAccount.isPending}
+            onClick={() => setConfirmDeleteOpen(false)}
+          >
+            {strings['security.deleteAccount.cancelButton']}
+          </Button>
+          <Button
+            className="bg-danger text-white hover:opacity-90"
+            loading={deleteAccount.isPending}
+            onClick={() => deleteAccount.mutate()}
+          >
+            {strings['security.deleteAccount.confirmButton']}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

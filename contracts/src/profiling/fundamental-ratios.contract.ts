@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BOND_SOLVENCY_GRADES, FUNDAMENTAL_SIGNALS, TACTICAL_TILTS } from '@wealth-advisor/rules';
 
 export const AssetFundamentalMetricsSchema = z.object({
   symbol: z.string().min(1),
@@ -12,10 +13,10 @@ export type AssetFundamentalMetricsContract = z.infer<typeof AssetFundamentalMet
 
 export const FundamentalEvaluationSchema = z.object({
   symbol: z.string().min(1),
-  tacticalTilt: z.enum(['TRIM', 'NEUTRAL', 'ACCUMULATE']),
-  bondGrade: z.enum(['INVESTMENT_GRADE', 'VULNERABLE']).optional(),
+  tacticalTilt: z.enum(TACTICAL_TILTS),
+  bondGrade: z.enum(BOND_SOLVENCY_GRADES).optional(),
   requiresFxHedge: z.boolean(),
-  signal: z.enum(['favorable', 'neutral', 'caution']),
+  signal: z.enum(FUNDAMENTAL_SIGNALS),
   clientSummaryKey: z.string(),
 });
 export type FundamentalEvaluationContract = z.infer<typeof FundamentalEvaluationSchema>;

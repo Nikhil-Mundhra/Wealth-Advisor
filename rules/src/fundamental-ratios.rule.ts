@@ -13,9 +13,14 @@ export const BOND_NET_DEBT_TO_EBITDA_MAX = 3.5;
 export const ASSET_FOREIGN_REVENUE_FX_TRIGGER = 0.30;
 export const FCF_PAYOUT_RATIO_MAX = 0.90;
 
-export type TacticalTilt = 'TRIM' | 'NEUTRAL' | 'ACCUMULATE';
-export type BondSolvencyGrade = 'INVESTMENT_GRADE' | 'VULNERABLE';
-export type FundamentalSignal = 'favorable' | 'neutral' | 'caution';
+export const TACTICAL_TILTS = ['TRIM', 'NEUTRAL', 'ACCUMULATE'] as const;
+export type TacticalTilt = (typeof TACTICAL_TILTS)[number];
+
+export const BOND_SOLVENCY_GRADES = ['INVESTMENT_GRADE', 'VULNERABLE'] as const;
+export type BondSolvencyGrade = (typeof BOND_SOLVENCY_GRADES)[number];
+
+export const FUNDAMENTAL_SIGNALS = ['favorable', 'neutral', 'caution'] as const;
+export type FundamentalSignal = (typeof FUNDAMENTAL_SIGNALS)[number];
 
 export interface AssetFundamentalMetrics {
   symbol: string;

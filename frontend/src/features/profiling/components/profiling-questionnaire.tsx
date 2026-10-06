@@ -486,6 +486,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email }: Profilin
             <textarea
               id="goal-notes"
               rows={2}
+              maxLength={500}
               value={answers.goals.notes}
               onChange={(e) => updateAnswers((prev) => ({ ...prev, goals: { ...prev.goals, notes: e.target.value } }))}
               className="w-full rounded-field border border-line bg-surface p-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand-600"

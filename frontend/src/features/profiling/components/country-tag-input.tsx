@@ -13,35 +13,35 @@ const PRESET_SHORT_NAMES: Record<string, string> = {
   IN: 'India',
 };
 
-interface CountryTagInputProps {
+export type CountryTagInputProps = {
   id?: string;
   label: string;
-  value: string | string[];
-  onChange: (value: any) => void;
-  multiple?: boolean;
   placeholder?: string;
   popularPresets?: string[];
   hint?: string;
-}
+} & (
+  | { multiple?: false; value: string; onChange: (value: string) => void }
+  | { multiple: true; value: string[]; onChange: (value: string[]) => void }
+);
 
-export function CountryTagInput({
-  id,
-  label,
-  value,
-  onChange,
-  multiple = false,
-  placeholder = 'Search country by name or code…',
-  popularPresets = ['DE', 'GB', 'SG', 'US', 'CH', 'AE', 'CN', 'HK', 'IN'],
-  hint,
-}: CountryTagInputProps) {
+export function CountryTagInput(props: CountryTagInputProps) {
+  const {
+    id,
+    label,
+    placeholder = 'Search country by name or code…',
+    popularPresets = ['DE', 'GB', 'SG', 'US', 'CH', 'AE', 'CN', 'HK', 'IN'],
+    hint,
+  } = props;
+  const multiple = props.multiple ?? false;
+
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedCodes: string[] = multiple
-    ? (Array.isArray(value) ? value : value ? [value] : [])
-    : typeof value === 'string' && value
-    ? [value]
+  const selectedCodes: string[] = props.multiple
+    ? (Array.isArray(props.value) ? props.value : [])
+    : typeof props.value === 'string' && props.value
+    ? [props.value]
     : [];
 
   const suggestions = searchCountries(query, 6).filter(
@@ -60,22 +60,22 @@ export function CountryTagInput({
   }, []);
 
   const handleSelectCountry = (code: string) => {
-    if (multiple) {
+    if (props.multiple) {
       if (!selectedCodes.includes(code)) {
-        onChange([...selectedCodes, code]);
+        props.onChange([...selectedCodes, code]);
       }
     } else {
-      onChange(code);
+      props.onChange(code);
     }
     setQuery('');
     setOpen(false);
   };
 
   const handleRemoveCountry = (code: string) => {
-    if (multiple) {
-      onChange(selectedCodes.filter((c) => c !== code));
+    if (props.multiple) {
+      props.onChange(selectedCodes.filter((c) => c !== code));
     } else {
-      onChange('');
+      props.onChange('');
     }
   };
 

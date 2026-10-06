@@ -4,7 +4,7 @@
 // - Grable & Lytton (1999) Financial Risk Tolerance Assessment: Multi-dimensional psychological risk scale.
 // - CFA Institute Standards of Practice Handbook (Wealth Planning): Ability vs willingness to bear risk.
 
-import type { Currency } from './currency.rule.ts';
+import { CURRENCIES, type Currency } from './currency.rule.ts';
 
 export const PROFILING_PSYCHOLOGY_OPTIONS = [
   'PROTECT_CAPITAL',
@@ -39,7 +39,8 @@ export const PROFILING_STRESS_OPTIONS = [
 ] as const;
 export type ProfilingStressOption = (typeof PROFILING_STRESS_OPTIONS)[number];
 
-export type ProfilingRiskBand = 'conservative' | 'moderate' | 'aggressive';
+export const PROFILING_RISK_BANDS = ['conservative', 'moderate', 'aggressive'] as const;
+export type ProfilingRiskBand = (typeof PROFILING_RISK_BANDS)[number];
 
 export interface HoldingBucketInput {
   amount: number;
@@ -188,8 +189,7 @@ export function rankRelevantCurrencies(countries: CorridorCountriesInput): Ranke
   }
 
   // 4. Remaining global currencies
-  const ALL_CURRENCIES: Currency[] = ['EUR', 'GBP', 'USD', 'SGD', 'CNY', 'JPY', 'HKD'];
-  for (const curr of ALL_CURRENCIES) {
+  for (const curr of CURRENCIES) {
     if (!seen.has(curr)) {
       seen.add(curr);
       ranked.push({ currency: curr, reason: 'global' });

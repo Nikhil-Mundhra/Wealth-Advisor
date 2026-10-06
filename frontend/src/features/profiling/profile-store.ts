@@ -304,6 +304,40 @@ export function clearDraft(email?: string | null): void {
   emit();
 }
 
+export function wipeUserDataFromBrowser(email?: string | null): void {
+  try {
+    if (typeof window !== 'undefined') {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
+        if (
+          key &&
+          (key.startsWith('dewa_profile_') ||
+            key.startsWith('dewa_preferred_currency_') ||
+            key === 'dewa_profile_answers_v1')
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+
+      const sessionKeysToRemove: string[] = [];
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const key = window.sessionStorage.key(i);
+        if (key && (key.startsWith('dewa_profile_') || key.startsWith('dewa_draft_'))) {
+          sessionKeysToRemove.push(key);
+        }
+      }
+      sessionKeysToRemove.forEach((key) => window.sessionStorage.removeItem(key));
+
+      stateCache.clear();
+    }
+  } catch {
+    // Continue
+  }
+  emit();
+}
+
 export function useProfile(email?: string | null): ProfileState {
   return useSyncExternalStore(subscribeToProfile, () => getProfileState(email));
 }

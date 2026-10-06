@@ -48,6 +48,20 @@ export abstract class BaseRepository<D extends TimestampedDocument> {
     return result.matchedCount;
   }
 
+  // Returns the number of documents deleted.
+  protected async deleteOne(filter: Filter<D>): Promise<number> {
+    const collection = await this.collection();
+    const result = await collection.deleteOne(filter);
+    return result.deletedCount;
+  }
+
+  // Returns the number of documents deleted.
+  protected async deleteMany(filter: Filter<D>): Promise<number> {
+    const collection = await this.collection();
+    const result = await collection.deleteMany(filter);
+    return result.deletedCount;
+  }
+
   private toSetUpdate(set: Record<string, unknown>): UpdateFilter<D> {
     const now = this.clock.now();
     for (const hook of resolveHooks(this.constructor).update) hook(set, now);

@@ -5,6 +5,7 @@ import {
   PROFILING_MAX_AGE,
   PROFILING_MIN_AGE,
   PROFILING_PSYCHOLOGY_OPTIONS,
+  PROFILING_RISK_BANDS,
   PROFILING_STRESS_OPTIONS,
   VALIDATION_KEYS as K,
 } from '@wealth-advisor/rules';
@@ -60,7 +61,7 @@ export type ProfilingAnswers = z.infer<typeof ProfilingAnswersSchema>;
 
 export const ProfileSummarySchema = z.object({
   baseRiskScore: z.number(),
-  effectiveRiskBand: z.enum(['conservative', 'moderate', 'aggressive']),
+  effectiveRiskBand: z.enum(PROFILING_RISK_BANDS),
   timeHorizonYears: z.number(),
   corridorCurrencies: z.array(CurrencyField),
   completedAt: z.string(),

@@ -52,11 +52,11 @@ blocked  G2
 done when `/cashflow` renders a runway band the backend computed; R19 can be re-checked
 
 ### G4 · Onboarding and profile · module `advisory`
-status   absent
-evidence `SignupRequest` (`contracts/src/auth/signup.contract.ts`) carries email, password and display name only; `UserDocument` (`backend/src/modules/auth/infrastructure/db/documents/user.document.ts`) stores no profiling field; no questionnaire contract is exported from `contracts/src`
-remedy  the seven profiling questions as contracts, a profile collection, and a wizard route that writes the answers before the first chat turn
-blocked  G1
-done when a new user reaches `/advisory` with a stored profile and no chat turn precedes it
+status   built
+evidence contracts in `contracts/src/profiling/profile-answers.contract.ts`; scoring rules in `rules/src/profiling.rule.ts`; wizard route in `frontend/src/app/routes/onboarding-page.tsx` and state in `frontend/src/features/profiling/profile-store.ts`
+remedy  optional backend DB sync; client state persists user profile answers and resumed drafts
+blocked  none
+done when a new user reaches `/dashboard` or `/advisory` with a stored profile and no chat turn precedes it
 
 ### G5 · Expat risk profiler · module `advisory`
 status   absent
