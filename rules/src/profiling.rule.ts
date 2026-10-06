@@ -104,20 +104,100 @@ export function deriveTimeHorizonYears(age: number): number {
 }
 
 // Maps country codes to their default expat operational currency.
-const COUNTRY_CURRENCY_MAP: Record<string, Currency> = {
+export const COUNTRY_CURRENCY_MAP: Record<string, Currency> = {
+  // Eurozone & Europe
+  AT: 'EUR',
+  BE: 'EUR',
+  CH: 'EUR',
+  CY: 'EUR',
   DE: 'EUR',
-  FR: 'EUR',
+  EE: 'EUR',
   ES: 'EUR',
-  NL: 'EUR',
-  IT: 'EUR',
+  FI: 'EUR',
+  FR: 'EUR',
+  GR: 'EUR',
   IE: 'EUR',
+  IT: 'EUR',
+  LT: 'EUR',
+  LU: 'EUR',
+  LV: 'EUR',
+  MT: 'EUR',
+  NL: 'EUR',
+  PT: 'EUR',
+  SK: 'EUR',
+  SI: 'EUR',
+  // UK
   GB: 'GBP',
+  // Americas & Global Dollar Hubs
   US: 'USD',
+  CA: 'USD',
+  AU: 'USD',
+  NZ: 'USD',
+  AE: 'USD',
+  SA: 'USD',
+  QA: 'USD',
+  IN: 'USD',
+  PH: 'USD',
+  MX: 'USD',
+  BR: 'USD',
+  // Asia-Pacific
   SG: 'SGD',
   CN: 'CNY',
   JP: 'JPY',
   HK: 'HKD',
+  TW: 'USD',
+  KR: 'USD',
 };
+
+export interface RankedCurrency {
+  currency: Currency;
+  reason: 'residence' | 'income' | 'remittance' | 'global';
+  sourceCountry?: string;
+}
+
+// Ranks supported currencies with corridors from residence, income, and remittances at the top.
+export function rankRelevantCurrencies(countries: CorridorCountriesInput): RankedCurrency[] {
+  const ranked: RankedCurrency[] = [];
+  const seen = new Set<Currency>();
+
+  // 1. Residence
+  if (countries.residence) {
+    const resCurr = COUNTRY_CURRENCY_MAP[countries.residence.toUpperCase()];
+    if (resCurr && !seen.has(resCurr)) {
+      seen.add(resCurr);
+      ranked.push({ currency: resCurr, reason: 'residence', sourceCountry: countries.residence.toUpperCase() });
+    }
+  }
+
+  // 2. Income sources
+  for (const code of countries.incomeSources) {
+    const incCurr = COUNTRY_CURRENCY_MAP[code.toUpperCase()];
+    if (incCurr && !seen.has(incCurr)) {
+      seen.add(incCurr);
+      ranked.push({ currency: incCurr, reason: 'income', sourceCountry: code.toUpperCase() });
+    }
+  }
+
+  // 3. Remittance destinations
+  for (const code of countries.remittanceDestinations) {
+    const remCurr = COUNTRY_CURRENCY_MAP[code.toUpperCase()];
+    if (remCurr && !seen.has(remCurr)) {
+      seen.add(remCurr);
+      ranked.push({ currency: remCurr, reason: 'remittance', sourceCountry: code.toUpperCase() });
+    }
+  }
+
+  // 4. Remaining global currencies
+  const ALL_CURRENCIES: Currency[] = ['EUR', 'GBP', 'USD', 'SGD', 'CNY', 'JPY', 'HKD'];
+  for (const curr of ALL_CURRENCIES) {
+    if (!seen.has(curr)) {
+      seen.add(curr);
+      ranked.push({ currency: curr, reason: 'global' });
+    }
+  }
+
+  return ranked;
+}
 
 export function deriveCorridorCurrencies(countries: CorridorCountriesInput): Currency[] {
   const allCountryCodes = [

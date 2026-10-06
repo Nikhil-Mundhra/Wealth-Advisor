@@ -1,9 +1,12 @@
 import { useSyncExternalStore } from 'react';
 import {
   calculateBaseRiskScore,
+  COUNTRY_CURRENCY_MAP,
   deriveCorridorCurrencies,
   deriveTimeHorizonYears,
+  isCurrency,
   mapStressAnswerToRiskBand,
+  type Currency,
   type ProfilingAnswersInput,
 } from '@wealth-advisor/rules';
 
@@ -21,6 +24,7 @@ export interface ProfileState {
   draft: ProfilingDraft | null;
   isCompleted: boolean;
   totalHoldings: number;
+  preferredCurrency: Currency;
 }
 
 // Elena's baseline fixture profile used for the local demo / testing account.
@@ -93,16 +97,39 @@ export function getDraftStorageKey(email?: string | null): string {
   return `dewa_profile_draft_${email!.trim().toLowerCase()}`;
 }
 
+export function getPreferredCurrencyStorageKey(email?: string | null): string {
+  if (isDemoEmail(email)) {
+    return 'dewa_preferred_currency_demo';
+  }
+  return `dewa_preferred_currency_${email!.trim().toLowerCase()}`;
+}
+
 function computeProfileState(
   answers: ProfilingAnswersInput,
   draft: ProfilingDraft | null,
   isCompleted: boolean,
+  email?: string | null,
 ): ProfileState {
   const totalHoldings =
     answers.holdings.cashSavings.amount +
     answers.holdings.brokerageStocks.amount +
     answers.holdings.retirementPension.amount +
     answers.holdings.otherAssets.amount;
+
+  let preferredCurrency: Currency;
+  try {
+    const prefKey = getPreferredCurrencyStorageKey(email);
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(prefKey) : null;
+    if (stored && isCurrency(stored)) {
+      preferredCurrency = stored as Currency;
+    } else {
+      const residence = answers.countries.residence?.toUpperCase();
+      preferredCurrency = (residence && COUNTRY_CURRENCY_MAP[residence]) || 'EUR';
+    }
+  } catch {
+    const residence = answers.countries.residence?.toUpperCase();
+    preferredCurrency = (residence && COUNTRY_CURRENCY_MAP[residence]) || 'EUR';
+  }
 
   return {
     answers,
@@ -113,6 +140,7 @@ function computeProfileState(
     draft,
     isCompleted,
     totalHoldings,
+    preferredCurrency,
   };
 }
 
@@ -158,7 +186,7 @@ export function loadStoredState(email?: string | null): ProfileState {
     // Ignore invalid draft
   }
 
-  return computeProfileState(answers, draft, isCompleted);
+  return computeProfileState(answers, draft, isCompleted, email);
 }
 
 const stateCache = new Map<string, ProfileState>();
@@ -207,7 +235,28 @@ export function saveProfile(answers: ProfilingAnswersInput, email?: string | nul
     // Continue even if storage quota fails
   }
 
-  const newState = computeProfileState(answers, null, true);
+  const newState = computeProfileState(answers, null, true, email);
+  stateCache.set(profileKey, newState);
+  emit();
+}
+
+export function setPreferredCurrency(currency: Currency, email?: string | null): void {
+  const prefKey = getPreferredCurrencyStorageKey(email);
+  const profileKey = getProfileStorageKey(email);
+
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(prefKey, currency);
+    }
+  } catch {
+    // Continue even if storage quota fails
+  }
+
+  const prev = getProfileState(email);
+  const newState: ProfileState = {
+    ...prev,
+    preferredCurrency: currency,
+  };
   stateCache.set(profileKey, newState);
   emit();
 }

@@ -40,4 +40,30 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('dialog')).toBeVisible();
     expect(screen.getByText('Investor profile')).toBeVisible();
   });
+
+  it('switches chart timeframe and displays trajectory insights', async () => {
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <DashboardPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    // Initial 6M insight
+    expect(screen.getByText(/Insight:/)).toBeVisible();
+    expect(screen.getByText(/6-Month Growth:/)).toBeVisible();
+
+    // Switch to 1W
+    const oneWeekBtn = screen.getByRole('button', { name: '1W' });
+    await userEvent.click(oneWeekBtn);
+    expect(oneWeekBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/7-Day Baseline:/)).toBeVisible();
+
+    // Switch to 1M
+    const oneMonthBtn = screen.getByRole('button', { name: '1M' });
+    await userEvent.click(oneMonthBtn);
+    expect(oneMonthBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/1-Month Trajectory:/)).toBeVisible();
+  });
 });

@@ -5,6 +5,7 @@ import {
   deriveCorridorCurrencies,
   deriveTimeHorizonYears,
   mapStressAnswerToRiskBand,
+  rankRelevantCurrencies,
   type ProfilingAnswersInput,
 } from '@wealth-advisor/rules';
 
@@ -51,6 +52,24 @@ describe('profiling.rule', () => {
       remittanceDestinations: ['CN', 'SG'],
     });
     assert.deepEqual(currencies.sort(), ['CNY', 'EUR', 'GBP', 'SGD'].sort());
+  });
+
+  it('ranks relevant currencies with residence, income, and remittances on top', () => {
+    const ranked = rankRelevantCurrencies({
+      residence: 'DE',
+      incomeSources: ['GB'],
+      remittanceDestinations: ['CN', 'SG'],
+    });
+    assert.equal(ranked[0].currency, 'EUR');
+    assert.equal(ranked[0].reason, 'residence');
+    assert.equal(ranked[1].currency, 'GBP');
+    assert.equal(ranked[1].reason, 'income');
+    assert.equal(ranked[2].currency, 'CNY');
+    assert.equal(ranked[2].reason, 'remittance');
+    assert.equal(ranked[3].currency, 'SGD');
+    assert.equal(ranked[3].reason, 'remittance');
+    // Global currencies follow
+    assert.ok(ranked.length === 7);
   });
 
   it('calculates expected base risk score and clamps within [1.0, 10.0]', () => {

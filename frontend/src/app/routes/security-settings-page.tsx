@@ -1,4 +1,4 @@
-import { PERMISSION_TIERS } from '@wealth-advisor/rules';
+import { COUNTRY_CURRENCY_MAP, CURRENCIES, PERMISSION_TIERS, type Currency } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
@@ -6,13 +6,15 @@ import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { useLogout } from '../../features/auth/api/use-logout.ts';
 import { useMe } from '../../features/auth/api/use-me.ts';
+import { setPreferredCurrency, useProfile } from '../../features/profiling/profile-store.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 
-// Session facts, the tier ladder, passkey enrollment state, and sign out.
+// Session facts, the tier ladder, passkey enrollment state, reporting currency, and sign out.
 export function SecuritySettingsPage() {
   const strings = useStrings();
   const me = useMe();
   const logout = useLogout();
+  const profile = useProfile(me.data?.email);
   return (
     <div className="flex flex-col gap-6">
       <PageTitle>{strings['header.settings']}</PageTitle>
@@ -46,6 +48,37 @@ export function SecuritySettingsPage() {
       <Card aria-label={strings['security.passkeys']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.passkeys']}</h2>
         <p className="mt-3 text-sm text-subtle">{strings['security.nopasskeys']}</p>
+      </Card>
+
+      <Card aria-label="Reporting currency section">
+        <label htmlFor="reporting-currency-select" className="text-sm font-medium text-subtle block">
+          Reporting currency
+        </label>
+        <p className="mt-1 text-xs text-subtle">
+          Base currency for your portfolio net worth and emergency runway. Defaults to your country of residence (
+          {profile.answers.countries.residence || 'DE'}).
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <select
+            id="reporting-currency-select"
+            value={profile.preferredCurrency}
+            onChange={(e) => setPreferredCurrency(e.target.value as Currency, me.data?.email)}
+            className="rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
+          >
+            {CURRENCIES.map((curr) => {
+              const resCode = profile.answers.countries.residence?.toUpperCase();
+              const isResidence = resCode && COUNTRY_CURRENCY_MAP[resCode] === curr;
+              return (
+                <option key={curr} value={curr}>
+                  {curr} {isResidence ? '(Residence default)' : ''}
+                </option>
+              );
+            })}
+          </select>
+          <span className="text-xs text-subtle">
+            Active reporting: <strong className="text-ink font-medium">{profile.preferredCurrency}</strong>
+          </span>
+        </div>
       </Card>
 
       <div>

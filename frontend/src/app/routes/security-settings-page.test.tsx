@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../../lib/locale-store.ts';
 import { SecuritySettingsPage } from './security-settings-page.tsx';
@@ -34,5 +35,26 @@ describe('SecuritySettingsPage', () => {
     }
     expect(screen.getByText('No passkeys yet — enrollment arrives with the backend passkey module.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible();
+    expect(screen.getByLabelText('Reporting currency')).toBeVisible();
+  });
+
+  it('allows configuring global reporting currency', async () => {
+    setLocale('en');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(me), { status: 200, headers: { 'content-type': 'application/json' } })),
+    );
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <SecuritySettingsPage />
+      </QueryClientProvider>,
+    );
+
+    const currencySelect = screen.getByLabelText('Reporting currency');
+    expect(currencySelect).toBeVisible();
+
+    await userEvent.selectOptions(currencySelect, 'USD');
+    expect(currencySelect).toHaveValue('USD');
+    expect(screen.getByText(/Active reporting:/)).toBeVisible();
   });
 });

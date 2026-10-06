@@ -48,4 +48,32 @@ describe('ProfilingQuestionnaire', () => {
 
     expect(onComplete).toHaveBeenCalled();
   });
+
+  it('renders step 2 with tag inputs and advances with valid residence', async () => {
+    saveDraft(2, DEFAULT_ELENA_PROFILE);
+    const onComplete = vi.fn();
+    render(<ProfilingQuestionnaire onComplete={onComplete} />);
+
+    expect(screen.getByText('Where do you live, earn, and send money?')).toBeVisible();
+    expect(screen.getAllByText('(DE)')[0]).toBeVisible();
+
+    const nextButton = screen.getByRole('button', { name: 'Next' });
+    await userEvent.click(nextButton);
+
+    expect(screen.getByText('Question 3 of 7')).toBeVisible();
+  });
+
+  it('renders step 4 with prioritized currencies banner and allows currency change', async () => {
+    saveDraft(4, DEFAULT_ELENA_PROFILE);
+    const onComplete = vi.fn();
+    render(<ProfilingQuestionnaire onComplete={onComplete} />);
+
+    expect(screen.getByText('Corridor Currencies Prioritized')).toBeVisible();
+    const cashCurrencySelect = screen.getByLabelText('Bank accounts and cash currency');
+    expect(cashCurrencySelect).toBeVisible();
+    expect(cashCurrencySelect).toHaveValue('EUR');
+
+    await userEvent.selectOptions(cashCurrencySelect, 'GBP');
+    expect(cashCurrencySelect).toHaveValue('GBP');
+  });
 });

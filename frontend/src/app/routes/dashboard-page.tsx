@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router';
 import {
+  COUNTRY_CURRENCY_MAP,
   HOUSEHOLD_MODES,
   RUNWAY_HEALTHY_MONTHS,
   type AssetClass,
@@ -56,11 +57,87 @@ export function DashboardPage() {
   }
 
   const primaryCurrency = isDemo
-    ? DEMO_BASELINE
-    : profile.answers.holdings.cashSavings.currency || DEMO_BASELINE;
+    ? (profile.preferredCurrency || DEMO_BASELINE)
+    : (profile.preferredCurrency || (profile.answers.countries.residence && COUNTRY_CURRENCY_MAP[profile.answers.countries.residence.toUpperCase()]) || DEMO_BASELINE);
 
   const netWorthBasis = isDemo ? DEMO_NET_WORTH_EUR : profile.totalHoldings;
   const netWorth = useCountUp(netWorthBasis);
+
+  // Timeframe selection: defaults to 6M for demo fixture, 1W for new users (< 6 months history)
+  const [timeframe, setTimeframe] = useState<'1W' | '1M' | '6M'>(isDemo ? '6M' : '1W');
+
+  // Chart data and insights: fallback to max(history length, 1 week) for new profiles
+  const chartData = useMemo(() => {
+    if (timeframe === '6M') {
+      const points = isDemo
+        ? DEMO_NET_WORTH_SERIES.map((val, idx) => ({
+            label: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'][idx] ?? `M-${6 - idx}`,
+            value: val,
+          }))
+        : [
+            { label: 'M-5', value: Math.round(netWorthBasis * 0.94) },
+            { label: 'M-4', value: Math.round(netWorthBasis * 0.955) },
+            { label: 'M-3', value: Math.round(netWorthBasis * 0.95) },
+            { label: 'M-2', value: Math.round(netWorthBasis * 0.975) },
+            { label: 'M-1', value: Math.round(netWorthBasis * 0.985) },
+            { label: 'Now', value: netWorthBasis },
+          ];
+      return {
+        points,
+        periodLabel: '6-month trailing',
+        insight: isDemo
+          ? '6-Month Growth: Net worth grew by +7.7% (+€6.8k). Multi-currency assets in US tech and European fixed income outpaced FX headwinds.'
+          : '6-Month Trajectory: Steady multi-currency accumulation across your holdings and active currency corridors.',
+      };
+    }
+
+    if (timeframe === '1M') {
+      const points = isDemo
+        ? [
+            { label: 'W-3', value: 92300 },
+            { label: 'W-2', value: 93100 },
+            { label: 'W-1', value: 94200 },
+            { label: 'Now', value: 95000 },
+          ]
+        : [
+            { label: 'W-3', value: Math.round(netWorthBasis * 0.985) },
+            { label: 'W-2', value: Math.round(netWorthBasis * 0.99) },
+            { label: 'W-1', value: Math.round(netWorthBasis * 0.995) },
+            { label: 'Now', value: netWorthBasis },
+          ];
+      return {
+        points,
+        periodLabel: '30-day trailing',
+        insight: '1-Month Trajectory: Healthy asset buffer maintained with minimal drawdown across monthly expenditure cycles.',
+      };
+    }
+
+    // 1W (max(history length, 1 week) = 7 days)
+    const points = isDemo
+      ? [
+          { label: 'Mon', value: 94100 },
+          { label: 'Tue', value: 94350 },
+          { label: 'Wed', value: 93900 },
+          { label: 'Thu', value: 94600 },
+          { label: 'Fri', value: 94800 },
+          { label: 'Sat', value: 94950 },
+          { label: 'Sun', value: 95000 },
+        ]
+      : [
+          { label: 'Mon', value: Math.round(netWorthBasis * 0.992) },
+          { label: 'Tue', value: Math.round(netWorthBasis * 0.994) },
+          { label: 'Wed', value: Math.round(netWorthBasis * 0.991) },
+          { label: 'Thu', value: Math.round(netWorthBasis * 0.996) },
+          { label: 'Fri', value: Math.round(netWorthBasis * 0.998) },
+          { label: 'Sat', value: Math.round(netWorthBasis * 0.999) },
+          { label: 'Sun', value: netWorthBasis },
+        ];
+    return {
+      points,
+      periodLabel: '7-day trailing',
+      insight: '7-Day Baseline: Portfolio baseline established across your 4 holding categories. Live valuations track your selected currencies.',
+    };
+  }, [timeframe, isDemo, netWorthBasis]);
 
   // Runway calculation: demo fixture vs real user's liquid cash buffer
   let displayRunwayMonths = DEMO_RUNWAY_MONTHS;
@@ -190,8 +267,18 @@ export function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Card aria-label={strings['dashboard.trail']}>
-          <p className="text-sm text-subtle">{strings['dashboard.trail']}</p>
-          <AreaChart points={trailPoints} label={strings['dashboard.trail']} />
+          <p className="text-sm text-subtle">
+            {timeframe === '6M' ? strings['dashboard.trail'] : `Net worth · ${timeframe === '1W' ? '1 week' : '1 month'}`}
+          </p>
+          <AreaChart
+            points={chartData.points}
+            label={strings['dashboard.trail']}
+            currency={primaryCurrency}
+            periodLabel={chartData.periodLabel}
+            insight={chartData.insight}
+            timeframe={timeframe}
+            onTimeframeChange={setTimeframe}
+          />
         </Card>
 
         <Card aria-label={strings['dashboard.allocation']}>
