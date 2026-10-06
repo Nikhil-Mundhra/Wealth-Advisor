@@ -26,6 +26,6 @@ jobs:
       - run: npm ci
       - run: make docs-lint
       - run: make deps-lint
-      - run: npm run typecheck
+      - run: make typecheck
       - run: make test
       - run: make build

@@ -10,7 +10,7 @@ Every event is an `EventEnvelope` (`backend/src/core/events/event-envelope.ts`):
 
 ## Idempotency
 - A handler calls `markProcessed(handlerName, eventId)` (`backend/src/core/events/processed-events.ts`); the unique index on `processed_events` (`handler`, `eventId`) decides the race.
-- Marking before the work and stopping on `duplicate` gives at-most-once: a handler that fails after marking is not re-run for that event id. Marking after a successful write gives at-least-once: a redelivery redoes the work, so the write must be an upsert keyed by the fact.
+- Marking before the work and stopping on `duplicate` gives at-most-once: a handler that fails after marking is not re-run for that event id. Marking after a successful write gives at-least-once: a redelivery redoes the work, and an upsert keyed by the fact makes the redo harmless.
 - Delivery today: the in-process bus runs handlers inside the publisher's request, logs a failing handler and never redelivers; a failed handler's work is redone by the next publish of that fact.
 
 | Handler | Marks | On `duplicate` | Write |

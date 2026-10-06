@@ -43,7 +43,7 @@ backend/src/core/crypto/random-token.ts : opaque random token of a given byte le
 backend/src/core/crypto/sha256.ts : SHA-256 → hex
 backend/src/core/domain/base-entity.ts : entity base: id + timestamps, finalize() → postInit()
 backend/src/core/domain/domain-error.ts : rule refused by the domain, named by a stable code; no HTTP status
-backend/src/core/domain/id-generator.ts : port for new ids, so the domain never sees the database id type
+backend/src/core/domain/id-generator.ts : port for new ids; no database id type
 backend/src/core/domain/invariant.ts : throws the given error when an invariant does not hold
 backend/src/core/domain/parse-member.ts : narrows a stored string to a const list member, or throws
 backend/src/core/domain/value-object.ts : immutable value base: finalize() validates then freezes
@@ -73,11 +73,11 @@ backend/src/core/module/module-registry.ts : collects manifests; mounts routes, 
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
-backend/src/modules/analytics/analytics.api.ts : createAnalyticsApi: onMarketDataRefreshed (at-least-once: work, then mark), latestSnapshot, snapshotAt
+backend/src/modules/analytics/analytics.api.ts : createAnalyticsApi: onMarketDataRefreshed (work, then mark), latestSnapshot, snapshotAt
 backend/src/modules/analytics/analytics.module.ts : composition root: store-selected snapshot repository, processed events → api, routes, market.data_refreshed subscription, manifest
 backend/src/modules/analytics/application/ports.ts : SnapshotRepository (one snapshot per asOf; upsert replaces)
 backend/src/modules/analytics/application/read-refreshed-event.ts : subscribed event type; step: v1 market.data_refreshed payload checked against its contract, null for another version
-backend/src/modules/analytics/application/snapshot-inputs.ts : step: 365-day window ending at asOf; prices → points (adjusted close, else close)
+backend/src/modules/analytics/application/snapshot-inputs.ts : step: 365-day window ending at asOf; prices → points (adjusted close only when every close of the symbol has one, else close)
 backend/src/modules/analytics/domain/covariance.ts : annualized sample covariance of aligned return series; exactly symmetric
 backend/src/modules/analytics/domain/market-snapshot.vo.ts : MarketSnapshot: asOf, symbols, means, volatilities, covariance, window, computedAt; square, symmetric, finite
 backend/src/modules/analytics/domain/measure-snapshot.ts : aligned closes → snapshot, or insufficient below the minimum observations
@@ -88,7 +88,7 @@ backend/src/modules/market/application/ports.ts : PriceSource, FxSource, PriceRe
 backend/src/modules/market/application/publish-refreshed.ts : step: checks the v1 payload, publishes market.data_refreshed
 backend/src/modules/market/application/rate-window.ts : step: stored-rate date window a conversion needs (lookback for weekends and holidays)
 backend/src/modules/market/application/refresh-range.ts : step: refresh range from the oldest last-stored day (one year back when anything is missing); latest date of prices
-backend/src/modules/market/domain/convert.ts : convertBatch: spot, historical, raw; half-to-even to the minor unit; missing rate fails only its item
+backend/src/modules/market/domain/convert.ts : convertBatch: spot, historical, raw; half-to-even to the minor unit; a missing rate or out-of-range result fails only its item
 backend/src/modules/market/domain/decimal.ts : exact rational arithmetic (bigint) and round half to even
 backend/src/modules/market/domain/fx-rate.vo.ts : FxRate: base, quote, date, rate > 0, source
 backend/src/modules/market/domain/money.vo.ts : Money: integer minor units + currency; provider decimals → minor units
