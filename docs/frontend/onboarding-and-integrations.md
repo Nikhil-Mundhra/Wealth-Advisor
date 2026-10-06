@@ -87,9 +87,9 @@ Third-party integrations in Wealth Advisor do not require enterprise-tier or pai
 Instead of typing country codes, the UI renders one-tap chips for frequent expatriate migration corridors:
 
 ```
-[ 🇩🇪 Germany (Current) ]  [ 🇨🇭 Switzerland ]  [ 🇬🇧 United Kingdom ]
-[ 🇸🇬 Singapore ]         [ 🇦🇪 UAE ]            [ 🇺🇸 United States ]
-[ 🇨🇳 China ]             [ 🇭🇰 Hong Kong ]      [ + Other Country ]
+[ Germany (Current) ]  [ Switzerland ]  [ United Kingdom ]
+[ Singapore ]         [ UAE ]            [ United States ]
+[ China ]             [ Hong Kong ]      [ + Other Country ]
 ```
 
 ### 2. Holdings Magnitude Brackets

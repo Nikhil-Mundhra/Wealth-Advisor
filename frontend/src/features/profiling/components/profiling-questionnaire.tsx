@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeftRight } from 'lucide-react';
 import {
   rankRelevantCurrencies,
   type CorridorCountriesInput,
@@ -297,7 +298,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email }: Profilin
           {/* Currency Corridor Relevance Callout */}
           <div className="rounded-field border border-brand-200 bg-brand-50/70 p-3 text-xs dark:border-brand-900 dark:bg-brand-950/40">
             <div className="flex items-center gap-2 font-medium text-brand-950 dark:text-brand-100">
-              <span aria-hidden>💱</span>
+              <ArrowLeftRight className="size-4 shrink-0 text-brand-600 dark:text-brand-400" aria-hidden />
               <span>Corridor Currencies Prioritized</span>
             </div>
             <p className="mt-1 text-subtle leading-relaxed">

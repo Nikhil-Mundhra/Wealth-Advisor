@@ -24,7 +24,7 @@ describe('CountryTagInput', () => {
     expect(onChange).toHaveBeenCalledWith('DE');
   });
 
-  it('renders selected tag with flag and allows removal', async () => {
+  it('renders selected tag and allows removal', async () => {
     const onChange = vi.fn();
     render(
       <CountryTagInput

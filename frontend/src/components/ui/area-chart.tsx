@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { TrendingUp } from 'lucide-react';
 import { formatMoney } from '../../lib/format-money.ts';
 import type { Currency } from '@wealth-advisor/rules';
 
@@ -249,9 +250,7 @@ export function AreaChart({
       {/* Trajectory Financial Insight Banner */}
       {insight && (
         <div className="flex items-start gap-2 rounded-field border border-line bg-surface-subtle p-2.5 text-xs">
-          <span className="text-sm select-none" aria-hidden>
-            📊
-          </span>
+          <TrendingUp className="size-4 shrink-0 text-brand-600 dark:text-brand-400 mt-0.5" aria-hidden />
           <p className="text-subtle leading-relaxed">
             <strong className="text-ink font-semibold">Insight: </strong>
             {insight}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Globe, X } from 'lucide-react';
 import { getCountryByCode, searchCountries } from '../lib/countries.ts';
 
 const PRESET_SHORT_NAMES: Record<string, string> = {
@@ -109,7 +110,7 @@ export function CountryTagInput(props: CountryTagInputProps) {
                 key={code}
                 className="inline-flex items-center gap-1.5 rounded-full border border-brand-300 bg-brand-50/80 px-2.5 py-1 text-xs font-medium text-brand-950 transition-all dark:border-brand-800 dark:bg-brand-950/60 dark:text-brand-100"
               >
-                <span aria-hidden>{country?.flag}</span>
+                <Globe className="size-3.5 shrink-0 text-brand-600 dark:text-brand-400" aria-hidden />
                 <span>{country?.name}</span>
                 <span className="font-mono text-[10px] text-subtle uppercase">({code})</span>
                 <button
@@ -118,7 +119,7 @@ export function CountryTagInput(props: CountryTagInputProps) {
                   aria-label={`Remove ${country?.name ?? code}`}
                   className="ml-1 inline-flex size-4 items-center justify-center rounded-full text-subtle transition-colors hover:bg-brand-200/50 hover:text-danger dark:hover:bg-brand-800/50"
                 >
-                  ✕
+                  <X className="size-3" aria-hidden />
                 </button>
               </span>
             );
@@ -160,7 +161,7 @@ export function CountryTagInput(props: CountryTagInputProps) {
                     aria-label={`Select ${item.name}`}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-subtle focus:bg-surface-subtle"
                   >
-                    <span className="text-base" aria-hidden>{item.flag}</span>
+                    <Globe className="size-4 shrink-0 text-subtle" aria-hidden />
                     <span className="font-medium">{item.name}</span>
                     <span className="ml-auto font-mono text-xs text-subtle uppercase">
                       {item.code}
@@ -200,7 +201,7 @@ export function CountryTagInput(props: CountryTagInputProps) {
                     : 'border-line bg-surface text-ink hover:bg-surface-subtle'
                 }`}
               >
-                <span aria-hidden>{country?.flag}</span>
+                <Globe className="size-3 shrink-0 text-subtle" aria-hidden />
                 <span>{shortName}</span>
               </button>
             );
