@@ -9,10 +9,11 @@ export interface ConversionItem {
   readonly date: string; // the day the amount is valued at; historical mode uses the rate on or before it
 }
 
-// A missing rate fails only its own item, so one gap does not void a whole portfolio's valuation.
+// A missing rate or an out-of-range result fails only its own item, so one bad item does not void a whole
+// portfolio's valuation.
 export type ConversionResult =
   | { readonly ok: true; readonly valuation: Valuation }
-  | { readonly ok: false; readonly reason: 'missing-rate'; readonly original: Money; readonly target: Currency; readonly rateDay: string };
+  | { readonly ok: false; readonly reason: 'missing-rate' | 'out-of-range'; readonly original: Money; readonly target: Currency; readonly rateDay: string };
 
 export interface ConvertBatchInput {
   readonly items: readonly ConversionItem[];
@@ -37,7 +38,11 @@ function convertOne(item: ConversionItem, { target, mode, rates, today }: Conver
   const rateDay = mode === 'spot' ? today : item.date;
   const quote = rates.lookup(original.currency, target, rateDay);
   if (!quote) return { ok: false, reason: 'missing-rate', original, target, rateDay };
-  const converted = Money.of(Number(convertMinor(original, quote.rate, target)), target);
+  const minor = convertMinor(original, quote.rate, target);
+  if (minor > BigInt(Number.MAX_SAFE_INTEGER) || minor < BigInt(Number.MIN_SAFE_INTEGER)) {
+    return { ok: false, reason: 'out-of-range', original, target, rateDay };
+  }
+  const converted = Money.of(Number(minor), target);
   return { ok: true, valuation: Valuation.of({ original, converted, rate: toNumber(quote.rate), rateDate: quote.date, mode }) };
 }
 

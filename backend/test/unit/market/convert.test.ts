@@ -113,3 +113,17 @@ describe('Money', () => {
     assert.throws(() => Money.of(1.5, 'USD'), { code: 'MK_1900' });
   });
 });
+
+describe('convertBatch out of range', () => {
+  it('fails only the item whose converted amount leaves the safe integer range', () => {
+    const huge = createRateTable([ecbRate('JPY', '2025-01-06', 1e12)]);
+    const results = convertBatch({
+      items: [{ money: Money.of(Number.MAX_SAFE_INTEGER, 'EUR'), date: '2025-01-06' }, { money: Money.of(1, 'EUR'), date: '2025-01-06' }],
+      target: 'JPY',
+      mode: 'historical',
+      rates: huge,
+      today: TODAY,
+    });
+    assert.deepEqual(results.map((result) => (result.ok ? 'ok' : result.reason)), ['out-of-range', 'ok']);
+  });
+});

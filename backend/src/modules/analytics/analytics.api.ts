@@ -29,9 +29,9 @@ export function createAnalyticsApi(deps: AnalyticsApiDeps) {
   const { market, snapshots, processed, clock } = deps;
 
   return {
-    // At-least-once: the work runs before the mark, so a crash between the upsert and the mark leaves the event
-    // unmarked and a redelivery recomputes it. A redelivered event that was already marked recomputes and upserts
-    // the same asOf, which is harmless; 'duplicate' then only reports it. Too few observations is a final outcome
+    // The in-process bus logs a failing handler and never redelivers, so a failed snapshot waits for the next
+    // refresh. The mark runs after the work so that a redelivering transport (an outbox) gives at-least-once with
+    // no change here; a redelivered event recomputes and upserts the same asOf, and 'duplicate' only reports it. Too few observations is a final outcome
     // for this event (the data behind its asOf grows only through a later refresh, which publishes a new event),
     // so it is marked too.
     async onMarketDataRefreshed(event: EventEnvelope): Promise<RefreshedOutcome> {

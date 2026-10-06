@@ -33,6 +33,7 @@ backend/test/support/test-app.ts : boots the real app on a throwaway mongod or t
 backend/test/unit/analytics/market-snapshot.test.ts : MarketSnapshot invariants; measureSnapshot threshold and window
 backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns, annualization and covariance against a hand-computed series
 backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
+backend/test/unit/analytics/snapshot-inputs.test.ts : one price basis per symbol: adjusted only when every close has one
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts
