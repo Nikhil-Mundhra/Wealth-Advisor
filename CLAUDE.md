@@ -13,6 +13,7 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 - syncing routes and guides after commits → `agents/docs/sync-agent.md`
 - judging the project against the hackathon brief → `agents/meta/review.md`
 - understanding the system: architecture, API routes, error codes, environment, ports; choosing what to refactor → `docs/index.md`
+- how advice is produced: advisory stages, engines, tiers, agent tools; what the advisory domain still lacks → `docs/domain/index.md`
 
 ## Rules
 - change: one file, one responsibility; update the owning map in the same change.
