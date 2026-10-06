@@ -1,140 +1,132 @@
 # Advisory gaps
 
-Surveyed 2026-10-06 · scope advisory capability only · statuses as defined in `docs/domain/advisory-pipeline.md`
-Order is dependency order: a gap's `blocked` column names what must land first. Phase sequencing and day allocation stay in `docs/implementation-plan.md`; code smells stay in `docs/refactor-backlog.md`.
+Surveyed 2026-10-06 · re-verified after `19f4b73` · statuses as defined in `docs/domain/advisory-pipeline.md`
+Order is dependency order: a gap's `blocked` column names what must land first. Gap numbers are stable across surveys so they can be tracked. Phase sequencing and day allocation stay in `docs/implementation-plan.md`; code smells stay in `docs/refactor-backlog.md`.
+
+`19f4b73` closed G2, G3, G6 and most of G15 by adding the finance, wealth, admin and sharing modules. What it did not close is the subject of this survey: the values those modules serve are authored, the identity behind them is hardcoded, and nothing reads any of it.
 
 ## Diagram
 ```mermaid
 flowchart TB
-  g1[G1 tenant scope] --> g2[G2 accounts and transactions]
-  g1 --> g6[G6 portfolios and products]
-  g2 --> g3[G3 burn rate and runway]
-  g2 --> g4[G4 onboarding and profile]
-  g3 --> g5[G5 risk profiler]
-  g4 --> g5
-  g5 --> g7[G7 optimizer]
-  g6 --> g7
-  g7 --> g9[G9 agent tools]
-  g3 --> g9
-  g9 --> g8[G8 llm gateway]
-  g8 --> g12[G12 explainability]
-  g8 --> g13[G13 replace fixtures]
-  g8 --> g10[G10 passkey gate]
-  g10 --> g11[G11 sandbox ledger]
+  g1[G1 tenant identity] --> g10[G10 passkey verification]
+  g1 --> g11[G11 immutable ledger]
+  g2[G2 accounts and transactions] --> g3[G3 cross-currency runway] --> g9[G9 tool registry]
+  g4[G4 persisted profile] --> g5[G5 server-side risk scoring]
+  g3 --> g5
+  g5 --> g7[G7 computed optimizer]
+  g6[G6 portfolios and products] --> g7
+  g7 --> g9
+  g9 --> g8[G8 real llm adapter]
+  g8 --> g12[G12 computed rationale]
+  g9 --> g13[G13 frontend reads]
+  g8 --> g13
   g11 --> g13
-  g13 --> g14[G14 news, reminders, reports]
-  g11 --> g15[G15 plan sharing backend]
+  g15[G15 snapshot and masking] --> g13
 ```
 
 ## Blocking foundations
 
-### G1 · Tenant scope · module `tenant`
-status   built
-evidence `backend/src/modules/admin/` implements multi-tenant foundation, tenants collection, and api-key management; `rules/src/tenant.rule.ts` defines plans and permissions
-remedy  `tenants` and `api_keys` collections per `docs/planned-collections.md`; a `tenantId` predicate on every advisory query; tenant id on the token claims
+### G1 · Tenant identity from the token · `backend/src/modules/auth/`
+status   `partial`
+evidence `admin-collections.ts` declares `tenants` and `api_keys`, and the admin, finance and wealth repositories filter on `tenantId` (`mongo-finance.repository.ts:15`, `mongo-wealth.repository.ts:36`); `AccessTokenClaims` (`backend/src/modules/auth/application/ports/access-token-signer.port.ts:2`) is `subject` and `roles` only, so `finance.routes.ts:15`, `wealth.routes.ts:20`, `advisory.routes.ts:10` and `sharing.routes.ts:14` all pass the literal `'default'`
+remedy  add `tenantId` to the claims and the me contract; resolve it per request; filter the sharing repository on it too (`mongo-sharing.repository.ts:13` filters on `shareToken` alone)
 blocked  none
-done when a user token carries `tenantId` and an advisory collection rejects a document without it
+done when every advisory route derives its tenant from the verified token and no route contains a tenant literal
 
-### G2 · Accounts and transactions · module `finance`
-status   built
-evidence `backend/src/modules/finance/` implements multi-currency accounts and transactions collections, supporting Elena's EUR/GBP/SGD balances and remittance corridors
-remedy  `accounts` and `transactions` collections, tenant-scoped, with household mode on the cashflow read; routes for balances and the remittance corridors in `rules/src/currency.rule.ts`
+### G2 · Accounts and transactions
+status   closed by `19f4b73`
+evidence `finance-collections.ts` declares both; `finance.routes.ts` exposes `GET,POST /accounts`, `GET /transactions`, `GET /cashflow`; covered by `backend/test/unit/finance/finance-api.test.ts`
+blocked  —
+done when closed
+
+### G3 · Cross-currency runway
+status   `partial`
+evidence `burn-rate-calculator.ts` returns reserves, runway months and band, but classifies `INCOME*` transactions without converting them, and substitutes literals of 450000/1050000 inflow and 250000/540000 outflow when a tenant has no transactions (`burn-rate-calculator.ts:43`); `MarketApi.convert` (`backend/src/modules/market/market.api.ts:92`) still has no caller, and the remittance corridors in `finance.api.ts:102` are literals
+remedy  route every transaction amount through `convertBatch` into the tenant baseline currency; derive the corridors from `rules/src/tenant.rule.ts`; delete the no-transaction fallbacks so an empty ledger reads as zero
 blocked  G1
-done when the cashflow view reads balances and corridors from the API instead of `DEMO_ACCOUNTS` and `DEMO_REMITTANCES`
+done when the cashflow response moves when a currency or a transaction changes
 
-## Deterministic engines
+### G4 · Persisted investor profile
+status   `partial`
+evidence `rules/src/profiling.rule.ts` and `contracts/src/profiling/profile-answers.contract.ts` define the seven questions and the scoring, and `frontend/src/features/profiling/profile-store.ts:86` keeps the answers in browser storage keyed by email; `grep -rn profil backend/src` finds no collection, document or route
+remedy  a tenant-scoped profile collection, a write route the questionnaire calls on completion, and reads from it instead of localStorage
+blocked  G1
+done when answers survive a new browser and a signed-in read returns them
 
-### G3 · Burn rate and runway · module `finance`
-status   built
-evidence `backend/src/modules/finance/domain/burn-rate-calculator.ts` computes net burn rate, reserve multipliers, and runway band dynamically
-remedy  aggregate transactions into the baseline currency with `convertBatch`, apply the household reserve multiplier from `rules/src/household-mode.rule.ts`, emit runway months
-blocked  G2
-done when `/cashflow` renders a runway band the backend computed; R19 can be re-checked
-
-### G4 · Onboarding and profile · module `advisory`
-status   built
-evidence contracts in `contracts/src/profiling/profile-answers.contract.ts`; scoring rules in `rules/src/profiling.rule.ts`; wizard route in `frontend/src/app/routes/onboarding-page.tsx` and state in `frontend/src/features/profiling/profile-store.ts`
-remedy  optional backend DB sync; client state persists user profile answers and resumed drafts
-blocked  none
-done when a new user reaches `/dashboard` or `/advisory` with a stored profile and no chat turn precedes it
-
-### G5 · Expat risk profiler · module `advisory`
-status   built
-evidence profiling rules compute base risk scores clamped to [1.0, 10.0] and optimizer dynamically adjusts effective scores based on runway health and family remittance volatility
-remedy  base score from the profile, recalibrated by runway band and currency mismatch against the stored volatilities
+### G5 · Server-side risk scoring
+status   `partial`
+evidence `calculateBaseRiskScore` (`rules/src/profiling.rule.ts:222`) and `mapStressAnswerToRiskBand` are pure and tested, and run in the browser; nothing recomputes a score from the stored runway in `finance.api.ts` or reads one back
+remedy  a scoring service that takes the stored profile plus the finance runway and currency mismatch, and persists the effective score the portfolio optimizer then consumes
 blocked  G3, G4
-done when a stored profile and a stored runway produce a persisted effective score with unit tests over the cashflow-squeeze and tuition-shock scenarios in `docs/implementation-plan.md`
+done when the score a user sees comes from a stored profile and a stored runway
 
-### G6 · Portfolios and asset products · module `wealth`
-status   built
-evidence `backend/src/modules/wealth/` implements `asset_products` and `portfolios` collections, seeded with Elena's multi-asset holdings and UCITS ETFs
-remedy  both collections, `GET /api/wealth/portfolio`, `GET /api/wealth/products`; holdings priced with the stored closes rather than fixed `valueEur`
-blocked  G1
-done when `/portfolio` reads holdings and target weights from the API
+### G6 · Portfolios and asset products
+status   closed by `19f4b73`
+evidence `wealth-collections.ts` declares `asset_products`, `portfolios`, `sandbox_ledgers`; `wealth.routes.ts` exposes `GET /products` and `GET /portfolio`
+blocked  —
+done when closed
 
-### G7 · Portfolio optimizer · module `wealth`
-status   built
-evidence `backend/src/modules/wealth/wealth.api.ts` implements mean-variance optimizer calculating target weights, rebalance actions, and 3-pillar rationales
-remedy  target weights from the effective score and the covariance matrix, with remittance and tuition carve-outs ring-fenced into money-market buckets
-blocked  G5, G6
-done when target weights come from the optimizer and drift is reported, not authored
+### G7 · Computed optimizer
+status   `fixture`
+evidence `wealth.api.ts:137` returns a fixed action list — sell CSPX.LSE, buy IEAC.LSE and XEON.XETRA with hardcoded amounts — and `wealth.api.ts:164` returns three literal rationale strings; only the drift per holding is computed (`wealth.api.ts:134`)
+remedy  target weights from the effective score and the covariance in `market_snapshots`, carve-outs ring-fenced into money-market buckets, actions derived from the difference
+blocked  G5
+done when changing a holding or the risk score changes the returned actions
 
-## Agent and authorisation
-
-### G8 · Multi-provider LLM gateway · module `advisory`
-status   built
-evidence `backend/src/modules/advisory/domain/llm-gateway.ts` implements provider routing across Gemini, Claude, OpenAI, and deterministic mock adapter; routes `/api/ai` and `/api/advisory/chat`
-remedy  a gateway interface with a mock adapter first, then one hosted adapter; provider chosen per tenant setting
+### G8 · Real LLM adapter · `backend/src/modules/advisory/domain/llm-gateway.ts`
+status   `partial`
+evidence `LlmAdapter` and the four provider keys exist, but `llm-gateway.ts:97` binds gemini, claude, openai and mock to the same `MockLlmAdapter`, so the admin model switch cannot change an answer
+remedy  one real hosted adapter behind the existing interface, selected by `admin.api.getActiveProvider()`, with the mock kept as the offline default
 blocked  none
-done when `/api/ai` answers a chat turn through the gateway and the admin model switch changes the adapter
+done when switching provider in `/admin/models` changes the reply and the mock remains reachable
 
-### G9 · Agent tool registry · module `advisory`
-status   built
-evidence calculation shield feeds deterministic finance cashflow and wealth optimizer proposal actions into advisory response generator
-remedy  one tool per engine, each returning a typed result rather than prose, each tagged with the permission tier it is served at
+### G9 · Agent tool registry
+status   `absent`
+evidence `POST /advisory/chat` passes the request straight to the gateway; no tool registry, function-calling schema or dispatch exists in `backend/src`, `contracts/src` or `rules/src`
+remedy  one tool per engine in the table in `docs/domain/advisory-pipeline.md`, each returning a typed result and tagged with the tier it is served at
 blocked  G3, G7
-done when a chat turn resolves at least the cashflow and portfolio tools from stored data
+done when a chat turn resolves the cashflow and portfolio tools from stored data instead of seeded text
 
-### G10 · Passkey step-up gate · `backend/src/modules/auth/`
-status   built
-evidence `backend/src/modules/wealth/wealth.api.ts` enforces FIDO2 passkey assertion proof verification before sandbox rebalance execution
-remedy  registration and assertion routes, credentials on the user, and a guard the execute tool cannot bypass
+### G10 · Passkey verification · `backend/src/modules/auth/`
+status   `partial`
+evidence `contracts/src/auth/passkey.contract.ts` defines the challenge, verify request and response, and `rules/src/error-codes.ts` reserves `AU_1008`, `WL_1003` and `WL_1004`; `wealth.api.ts:177` only asserts that `signature` and `credentialId` are non-empty strings, `users.schema.ts` has no credential field, and the frontend still shows the string in `frontend/src/lib/dictionaries.ts:45` instead of calling `navigator.credentials`
+remedy  registration and assertion routes, a credential per user, and signature verification before the ledger write
 blocked  G1
-done when a `TIER_3_EXECUTE` call without a fresh assertion is refused and the refusal is observable in the evidence view
+done when an assertion with a bad signature is refused and recorded as a refusal
 
-### G11 · Sandbox ledger · module `wealth`
-status   built
-evidence `backend/src/modules/wealth/` implements cryptographic sandbox ledger storing SHA-256 audit digests and transaction hashes behind Passkey proof
-remedy  the collection, the digest over user, tenant, timestamp, signature and trade diff, and immutable rows written only behind G10
+### G11 · Immutable, verified ledger
+status   `partial`
+evidence `wealth.api.ts:187` computes `sha256Hex(userId:tenantId:timestamp:passkeySignature:tradeDiff)`, and `mongo-wealth.repository.ts` appends a row; but the digest is over an unverified signature, `wealth.api.ts:212` mutates the portfolio in the same call, and the evidence page still renders `DEMO_LEDGER`
+remedy  verify before hashing, append only, and have the digest cover the resulting state rather than constant strings
 blocked  G10
-done when `/evidence` lists real rows whose digests recompute from their own fields
+done when `/evidence` lists rows read from the API whose digests recompute from their own fields
 
-### G12 · Explainability formatter · module `advisory`
-status   built
-evidence advisory copilot renders localized three-pillar rationale (personal finance, cross-border FX, wealth strategy) across `en`, `zh-CN`, `zh-HK`, `de` with compliance disclaimers
-remedy  three-pillar output — personal finance, cross-border FX, wealth strategy — in the active locale, with the cross-border disclaimer appended
-blocked  G8
-done when the same proposal is rendered in all four locales from one tool result
+### G12 · Computed rationale
+status   `fixture`
+evidence the three-pillar structure in `contracts/src/advisory/advisory-chat.contract.ts:19` is filled from a per-locale literal record in the mock adapter (`llm-gateway.ts:41`)
+remedy  build each pillar from the tool result that produced it — personal finance from the runway, cross-border from the exposure, strategy from the target weights — so the same numbers cannot be narrated differently
+blocked  G9
+done when a rationale sentence changes when its underlying engine output changes
 
 ## Surfaces
 
-### G13 · Replace the fixture surfaces · `frontend/src/`
-status   fixture
-evidence every advisory figure comes from `frontend/src/lib/demo-data.ts`; `/advisory` replies from the `advisory.a1` dictionary key for any input; `/share/:token` never sends the token
-remedy  one API hook per stage output, then delete the fixture constants
-blocked  G8, G11
+### G13 · Frontend reads the API · `frontend/src/`
+status   `fixture`
+evidence `frontend/src/features/` has `admin` and `auth` only; `/portfolio`, `/cashflow`, `/evidence` and `/share/:token` import `frontend/src/lib/demo-data.ts`, and `/advisory` replies from seeded local state (`frontend/src/app/routes/advisory-page.tsx:17`)
+remedy  one hook per module, then delete the fixture constants and the seeded replies
+blocked  G8, G9, G11
 done when no advisory page imports `demo-data.ts`
 
-### G14 · News, reminders and reports · module `advisory`
-status   absent
-evidence no route, component or collection exists for any of the three
-remedy  a news feed over the existing market stores, deadline reminders derived from transactions, and a ledger export for tax filing
+### G14 · News, reminders and reports
+status   `absent`
+evidence no route, component or collection for any of the three
+remedy  a news feed over the existing market stores, deadline reminders from transaction dates, and a ledger export for filing
 blocked  G13
-done when each tab reads a backend route rather than a plan
+done when each tab reads a backend route
 
-### G15 · Plan sharing backend · module `sharing`
-status   built
-evidence `backend/src/modules/sharing/` implements secure share links with TTL, SHA-256 tokens, privacy masking, and snapshot resolution
-remedy  a sharing rule file in `rules/src/` fixing the token format and TTL, token creation, the snapshot to store, and the public read route with privacy masking
-blocked  G11
-done when a created link resolves server-side and honours the masking toggle
+### G15 · Snapshot content and privacy masking · `backend/src/modules/sharing/`
+status   `partial`
+evidence token creation, `ttlHours` default 72 capped at 720, and expiry on read all work (`sharing.api.ts:36`, `:83`); but the stored plan snapshot is a literal (`sharing.api.ts:47`), `ownerDisplayName` is the literal `'Elena'` (`sharing.api.ts:44`), and `privacyMasked` is stored and echoed back (`sharing.api.ts:45`, `:90`) with no field ever redacted
+remedy  build the snapshot from the portfolio read, take the owner name from the session, and redact holdings and amounts when the flag is set
+blocked  G6
+done when a shared link shows the sharer's real plan and honours the mask toggle

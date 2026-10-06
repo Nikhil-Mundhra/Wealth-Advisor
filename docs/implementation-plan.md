@@ -127,7 +127,7 @@ The system supports multi-tenant isolation, allowing institutions (wealth adviso
   * The user's device requests biometric assertion (`navigator.credentials.get`).
   * Backend verifies the WebAuthn signature against the user's registered public key.
   * The verified signature is embedded directly into the transaction record in `sandbox_ledgers`:
-    $$\text{Audit Digest} = \text{SHA256}(\text{userId} + \text{tenantId} + \text{timestamp} + \text{passkeySignature} + \text{tradeDiff})$$
+    $$\text{Audit Digest} = \text{SHA256}(\text{userId} + ":" + \text{tenantId} + ":" + \text{timestamp} + ":" + \text{passkeySignature} + ":" + \text{tradeDiff})$$
   * This provides unforgeable evidence that an AI agent recommendation was authenticated by an authorized human participant before execution.
 
 ### 3.4 Shareable Advisory Plans via URL (`/share/:shareToken`)
@@ -387,7 +387,7 @@ sequenceDiagram
 - [ ] **Passkey-Enforced Execution Gate:** Rejects `execute_sandbox_trade` unless accompanied by a verified Passkey step-up assertion.
 - [ ] **Sandbox Ledger (`sandbox_ledgers` collection):**
   - Records every simulated execution with:
-    $$\text{Audit Digest} = \text{SHA256}(\text{userId} + \text{tenantId} + \text{timestamp} + \text{passkeySignature} + \text{tradeDiff})$$
+    $$\text{Audit Digest} = \text{SHA256}(\text{userId} + ":" + \text{tenantId} + ":" + \text{timestamp} + ":" + \text{passkeySignature} + ":" + \text{tradeDiff})$$
   - Generates immutable operation logs matching FinTechathon submission criteria.
 - [ ] **Three-Pillar Explainability Formatter:**
   - Formats structured explanations across Personal Finance, Cross-Border FX, and Wealth Strategy in the user's active language (`en`, `zh-CN`, `zh-HK`, `de`).
