@@ -36,5 +36,7 @@ contracts/src/index.ts : public barrel; the only import path consumers use
 contracts/src/market/fx-rates.contract.ts : FX rates query (base, optional date) and response (asOf, base, rates per quote currency)
 contracts/src/market/quotes.contract.ts : latest quotes response (asOf, symbol, asset class, close as money, source)
 contracts/src/market/refresh.contract.ts : refresh response (asOf, prices and rates stored, requested from..to)
+contracts/src/profiling/fundamental-ratios.contract.ts : AssetFundamentalMetricsSchema and FundamentalEvaluationSchema
+contracts/src/profiling/profile-answers.contract.ts : ProfilingAnswersSchema (7 questions) and ProfileSummarySchema
 contracts/tsconfig.json : typecheck settings
 ```

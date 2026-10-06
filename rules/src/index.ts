@@ -14,5 +14,7 @@ export * from './error-codes.ts';
 export * from './locale.rule.ts';
 export * from './market-data.rule.ts';
 export * from './llm-provider.rule.ts';
+export * from './profiling.rule.ts';
+export * from './fundamental-ratios.rule.ts';
 export * from './validation-keys.ts';
 export * from './viewport.rule.ts';

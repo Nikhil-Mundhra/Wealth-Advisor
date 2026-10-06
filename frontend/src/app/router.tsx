@@ -9,6 +9,7 @@ import { CashflowPage } from './routes/cashflow-page.tsx';
 import { DashboardPage } from './routes/dashboard-page.tsx';
 import { EvidencePage } from './routes/evidence-page.tsx';
 import { LoginPage } from './routes/login-page.tsx';
+import { OnboardingPage } from './routes/onboarding-page.tsx';
 import { PortfolioPage } from './routes/portfolio-page.tsx';
 import { SecuritySettingsPage } from './routes/security-settings-page.tsx';
 import { SharedPlanPage } from './routes/shared-plan-page.tsx';
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/onboarding', element: <OnboardingPage /> },
       {
         element: <AppShell />,
         children: [

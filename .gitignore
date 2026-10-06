@@ -5,3 +5,6 @@ dist/
 .run/
 .vercel/
 .superpowers/
+REQS.md
+.agents/
+skills-lock.json

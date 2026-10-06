@@ -1,12 +1,23 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { setLocale } from '../../lib/locale-store.ts';
 import { PortfolioPage } from './portfolio-page.tsx';
 
+let client: QueryClient;
+
 describe('PortfolioPage', () => {
-  it('lists holdings with current, target, and drift weights', () => {
+  beforeEach(() => {
+    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     setLocale('en');
-    render(<PortfolioPage />);
+  });
+
+  it('lists holdings with current, target, and drift weights', () => {
+    render(
+      <QueryClientProvider client={client}>
+        <PortfolioPage />
+      </QueryClientProvider>,
+    );
 
     expect(screen.getByRole('heading', { name: 'Portfolio' })).toBeVisible();
     expect(screen.getByRole('row', { name: /US Tech Equities/ })).toHaveTextContent('60%');

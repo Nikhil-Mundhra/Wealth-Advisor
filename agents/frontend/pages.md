@@ -12,7 +12,7 @@
 ```
 frontend/src/app/route-guards.test.tsx : admins pass, other roles redirect home
 frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status; AdminRoute checks the admin role
-frontend/src/app/router.tsx : route table: /signup, /login (guest); / /portfolio /cashflow /advisory /evidence /settings/security /admin* (protected); /share/:token (public)
+frontend/src/app/router.tsx : route table: /signup, /login (guest); / /onboarding /portfolio /cashflow /advisory /evidence /settings/security /admin* (protected); /share/:token (public)
 frontend/src/app/routes/admin-api-keys-page.tsx : API key issuance placeholder pending the tenant module
 frontend/src/app/routes/admin-models-page.tsx : runtime LLM provider list with the mock active
 frontend/src/app/routes/admin-page.tsx : admin overview linking tenants, API keys, models
@@ -27,6 +27,8 @@ frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, house
 frontend/src/app/routes/evidence-page.test.tsx : executions with tiers and digests
 frontend/src/app/routes/evidence-page.tsx : sandbox ledger table
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
+frontend/src/app/routes/onboarding-page.test.tsx : onboarding questionnaire completes and redirects home
+frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire wizard for first-time signups
 frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
 frontend/src/app/routes/portfolio-page.tsx : holdings table with current vs target drift
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state

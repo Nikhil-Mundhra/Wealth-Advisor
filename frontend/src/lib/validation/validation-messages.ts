@@ -21,6 +21,12 @@ export const VALIDATION_MESSAGES: Readonly<Record<ValidationKey, string>> = {
   'refresh_token.invalid': 'Your session has expired. Please sign in again.',
   'currency.invalid': 'Choose a supported currency.',
   'date.invalid': 'Enter a date as YYYY-MM-DD.',
+  'profiling.age_invalid': 'Enter an age between 18 and 100.',
+  'profiling.residence_required': 'Select your primary country of residence.',
+  'profiling.psychology_required': 'Select at least one risk preference.',
+  'profiling.instruments_required': 'Select at least one investment type.',
+  'profiling.stress_required': 'Select how you would react to a market drop.',
+  'profiling.amount_negative': 'Amount cannot be negative.',
 };
 
 // Field errors hold either a validation key (client or server) or text already resolved from an error code.

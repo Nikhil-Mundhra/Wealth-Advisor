@@ -48,5 +48,7 @@ backend/test/unit/core/route-builder.test.ts : response contract check returns 5
 backend/test/unit/market/convert.test.ts : convertBatch table: spot, historical, weekend gap, inverse, cross, raw, same currency, missing rate, out of range, half to even
 backend/test/unit/market/providers.test.ts : Marketstack and Frankfurter adapters vs fixtures: pagination, budget per page, key handling, error mapping
 backend/test/unit/market/refresh.test.ts : refresh with fake sources: backfill, incremental range, re-run, quota and provider failures write nothing, one event per refresh; quotes and rates
+backend/test/unit/rules/fundamental-ratios.rule.test.ts : valuation tilts, corporate bond solvency, foreign revenue FX triggers, retail signals
+backend/test/unit/rules/profiling.rule.test.ts : stress answer mapping, age horizon derivation, corridor currency extraction, risk scoring bounds
 backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public/off-graph imports on a fixture tree, core importing a module, cycle detection
 ```

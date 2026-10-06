@@ -20,6 +20,11 @@ frontend/src/features/auth/components/login-form.tsx : login form validated by L
 frontend/src/features/auth/components/signup-form.test.tsx : contract messages, shared-rule checks, signup then login, server field issues
 frontend/src/features/auth/components/signup-form.tsx : signup form validated by SignupRequest
 frontend/src/features/auth/errors/auth-error-messages.ts : text and target field for auth error codes
+frontend/src/features/profiling/components/profile-summary-card.tsx : compact risk score and currency corridor card
+frontend/src/features/profiling/components/profiling-modal.tsx : dialog wrapper for the profiling wizard
+frontend/src/features/profiling/components/profiling-questionnaire.test.tsx : wizard navigation, draft auto-saving, and completion
+frontend/src/features/profiling/components/profiling-questionnaire.tsx : 7-step onboarding questionnaire with humanized questions
+frontend/src/features/profiling/profile-store.ts : local and session storage store for resumable profiling answers and base risk scores
 frontend/src/lib/errors/resolve-error.test.ts : lookup order: feature map, shared map, fallback; validation key to text
 frontend/src/lib/errors/resolve-error.ts : error → message: feature map, then shared map, then fallback
 frontend/src/lib/errors/shared-error-messages.ts : text for core and client error codes; generic fallback

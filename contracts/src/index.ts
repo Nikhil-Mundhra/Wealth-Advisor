@@ -19,3 +19,5 @@ export * from './market/quotes.contract.ts';
 export * from './market/fx-rates.contract.ts';
 export * from './market/refresh.contract.ts';
 export * from './analytics/snapshot.contract.ts';
+export * from './profiling/profile-answers.contract.ts';
+export * from './profiling/fundamental-ratios.contract.ts';
