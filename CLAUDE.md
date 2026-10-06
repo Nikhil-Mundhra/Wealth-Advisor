@@ -10,6 +10,7 @@ Entry point. Pick the route for the task, read that file, follow its `## Calls`.
 - code style for any code: imports, syntax, naming, exports, constants, comments → `agents/code.md`
 - docs, guides and file maps: writing or changing any .md → `agents/docs/writing.md`
 - syncing file maps and docs after commits → `agents/docs/sync-docs.md`
+- checking that a commit range updated the docs that own it → `agents/docs/doc-drift.md`
 - syncing routes and guides after commits → `agents/docs/sync-agent.md`
 - judging the project against the hackathon brief → `agents/meta/review.md`
 - understanding the system: architecture, API routes, error codes, environment, ports; choosing what to refactor → `docs/index.md`
