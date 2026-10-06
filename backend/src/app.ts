@@ -23,8 +23,19 @@ export function createApp(context: ModuleContext): Hono {
   const api = new Hono();
   api.onError(errorHandler);
   api.get('/health', async (c) => c.json({ status: 'ok', database: await checkDatabase(env()) }));
-  // Placeholder until an AI feature exists.
-  api.all('/ai', (c) => c.json({ message: 'not yet implemented' }, 501));
+  // Forward /ai to advisory copilot chat through the gateway
+  api.post('/ai', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const message = body.message ?? 'Analyze my portfolio and cross-border cashflow';
+    const locale = body.locale ?? 'en';
+    const householdMode = body.householdMode ?? 'FAMILY_HOUSEHOLD';
+    const res = await api.request('/advisory/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message, locale, householdMode }),
+    });
+    return c.json(await res.json(), res.status as any);
+  });
   registry.mount(api);
   // Unmatched /api/* gets the error contract instead of falling through to the SPA.
   api.all('*', (c) => c.json({ code: CORE_ERROR_CODES.notFound, message: 'not found' }, 404));

@@ -12,7 +12,14 @@ export const DEMO_PASSWORD = 'testing';
 export async function seedDemoUser(users: UserRepositoryPort, hasher: PasswordHasherPort, ids: IdGenerator, clock: Clock): Promise<'created' | 'exists'> {
   const email = Email.of(DEMO_EMAIL);
   if (await users.findActiveByProvider('EMAIL', email.value)) return 'exists';
-  const user = User.registerWithEmail({ id: ids.next(), email, passwordHash: await hasher.hash(DEMO_PASSWORD), displayName: 'Demo', now: clock.now() });
+  const user = User.registerWithEmail({
+    id: ids.next(),
+    email,
+    passwordHash: await hasher.hash(DEMO_PASSWORD),
+    displayName: 'Demo',
+    now: clock.now(),
+    roles: ['USER', 'ADMIN'],
+  });
   await users.insert(user);
   return 'created';
 }

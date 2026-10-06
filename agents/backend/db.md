@@ -36,6 +36,12 @@ backend/src/core/db/schema/apply-collection-definitions.ts : creates collections
 backend/src/core/db/schema/collection-definition.ts : type for a collection's indexes and $jsonSchema validator
 backend/src/core/db/schema/core-collections.ts : collection definitions owned by core mechanisms (processed events, request budgets)
 backend/src/core/db/schema/nullable.ts : $jsonSchema type that also allows null
+backend/src/modules/admin/infrastructure/db/documents/admin-settings.document.ts : stored shape of admin_settings
+backend/src/modules/admin/infrastructure/db/documents/api-key.document.ts : stored shape of api_keys
+backend/src/modules/admin/infrastructure/db/documents/tenant.document.ts : stored shape of tenants
+backend/src/modules/admin/infrastructure/db/memory/memory-admin.repository.ts : tenant, api-key and admin-settings repositories in memory
+backend/src/modules/admin/infrastructure/db/repositories/mongo-admin.repository.ts : tenant, api-key and admin-settings repositories on Mongo
+backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts : the admin module's collection definitions
 backend/src/modules/analytics/infrastructure/db/documents/market-snapshot.document.ts : stored shape of market_snapshots
 backend/src/modules/analytics/infrastructure/db/mappers/market-snapshot.mapper.ts : MarketSnapshotDocument ↔ MarketSnapshot
 backend/src/modules/analytics/infrastructure/db/memory/memory-market-snapshot.repository.ts : snapshot repository in memory; last write per asOf wins
@@ -56,6 +62,11 @@ backend/src/modules/auth/infrastructure/db/schema/auth-collections.ts : the auth
 backend/src/modules/auth/infrastructure/db/schema/sessions.schema.ts : sessions indexes (unique tokenHash, TTL) and $jsonSchema
 backend/src/modules/auth/infrastructure/db/schema/users.schema.ts : users indexes (partial unique provider) and $jsonSchema
 backend/src/modules/auth/infrastructure/db/seed/demo-user.seed.ts : creates the demo account if missing (memory store and seed script)
+backend/src/modules/finance/infrastructure/db/documents/account.document.ts : stored shape of accounts
+backend/src/modules/finance/infrastructure/db/documents/transaction.document.ts : stored shape of transactions
+backend/src/modules/finance/infrastructure/db/memory/memory-finance.repository.ts : account and transaction repositories in memory
+backend/src/modules/finance/infrastructure/db/repositories/mongo-finance.repository.ts : account and transaction repositories on Mongo
+backend/src/modules/finance/infrastructure/db/schema/finance-collections.ts : the finance module's collection definitions
 backend/src/modules/market/infrastructure/db/documents/fx-rate.document.ts : stored shape of fx_rates
 backend/src/modules/market/infrastructure/db/documents/price.document.ts : stored shape of prices (money as amount + currency)
 backend/src/modules/market/infrastructure/db/mappers/fx-rate.mapper.ts : FxRateDocument ↔ FxRate
@@ -68,6 +79,16 @@ backend/src/modules/market/infrastructure/db/repositories/mongo-price.repository
 backend/src/modules/market/infrastructure/db/schema/fx-rates.schema.ts : fx_rates indexes (unique base+quote+date, date) and $jsonSchema
 backend/src/modules/market/infrastructure/db/schema/market-collections.ts : the market module's collection definitions
 backend/src/modules/market/infrastructure/db/schema/prices.schema.ts : prices indexes (unique symbol+date) and $jsonSchema
+backend/src/modules/sharing/infrastructure/db/documents/shared-plan.document.ts : stored shape of shared_plans
+backend/src/modules/sharing/infrastructure/db/memory/memory-sharing.repository.ts : shared plan repository in memory
+backend/src/modules/sharing/infrastructure/db/repositories/mongo-sharing.repository.ts : shared plan repository on Mongo
+backend/src/modules/sharing/infrastructure/db/schema/sharing-collections.ts : the sharing module's collection definitions
+backend/src/modules/wealth/infrastructure/db/documents/asset-product.document.ts : stored shape of asset_products
+backend/src/modules/wealth/infrastructure/db/documents/portfolio.document.ts : stored shape of portfolios
+backend/src/modules/wealth/infrastructure/db/documents/sandbox-ledger.document.ts : stored shape of sandbox_ledgers
+backend/src/modules/wealth/infrastructure/db/memory/memory-wealth.repository.ts : asset-product, portfolio and sandbox-ledger repositories in memory
+backend/src/modules/wealth/infrastructure/db/repositories/mongo-wealth.repository.ts : asset-product, portfolio and sandbox-ledger repositories on Mongo
+backend/src/modules/wealth/infrastructure/db/schema/wealth-collections.ts : the wealth module's collection definitions
 backend/src/scripts/ensure-indexes.ts : applies every module's collection definitions (deploy step)
 backend/src/scripts/seed-demo-user.ts : seeds the demo account into Mongo (refuses NODE_ENV=production)
 ```

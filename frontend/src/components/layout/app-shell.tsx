@@ -1,5 +1,6 @@
-import { ArrowLeftRight, LayoutDashboard, MessagesSquare, Settings, Wallet } from 'lucide-react';
+import { ArrowLeftRight, LayoutDashboard, MessagesSquare, Settings, Shield, Wallet } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
+import { useMe } from '../../features/auth/api/use-me.ts';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { LanguageSelect } from '../ui/language-select.tsx';
@@ -23,6 +24,9 @@ function tabClass({ isActive }: { isActive: boolean }): string {
 // Signed-in frame: top header on every viewport, sidebar on desktop, bottom tabs on mobile.
 export function AppShell() {
   const strings = useStrings();
+  const me = useMe();
+  const isAdmin = Boolean(me.data?.roles.includes('ADMIN'));
+
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface md:flex">
@@ -34,6 +38,12 @@ export function AppShell() {
               {strings[key]}
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink to="/admin" className={linkClass}>
+              <Shield aria-hidden className="size-5 text-gold" />
+              {strings['admin.overview']}
+            </NavLink>
+          )}
         </nav>
       </aside>
 
@@ -43,6 +53,15 @@ export function AppShell() {
           <div className="ml-auto flex items-center gap-2">
             <LanguageSelect />
             <ThemeToggle />
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                aria-label="Admin"
+                className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
+              >
+                <Shield aria-hidden className="size-5 text-gold" />
+              </NavLink>
+            )}
             <NavLink
               to="/settings/security"
               aria-label={strings['header.settings']}

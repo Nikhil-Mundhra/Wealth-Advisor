@@ -52,6 +52,7 @@ interface RegisterWithEmailInput {
   passwordHash: string;
   displayName: string | null;
   now: Date;
+  roles?: Role[];
 }
 
 // The account root. Login methods, roles, consents and withdrawal are embedded, so creating a user is one write.
@@ -67,7 +68,7 @@ export class User extends BaseEntity<UserProps> {
         passwordHash: input.passwordHash,
         displayName: input.displayName,
         status: 'ACTIVE',
-        roles: [...DEFAULT_ROLES],
+        roles: input.roles ? [...input.roles] : [...DEFAULT_ROLES],
         providers: [{ type: 'EMAIL', subject: input.email.value, email: input.email.value, linkedAt: input.now, lastLoginAt: null }],
         consents: [],
         withdrawal: null,

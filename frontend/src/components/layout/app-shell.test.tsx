@@ -3,12 +3,19 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { AppShell } from './app-shell.tsx';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 function renderShell() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [{ element: <AppShell />, children: [{ path: '/', element: <p>Page body</p> }] }],
     { initialEntries: ['/'] },
   );
-  render(<RouterProvider router={router} />);
+  render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe('AppShell', () => {

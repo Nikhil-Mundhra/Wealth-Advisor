@@ -11,6 +11,7 @@
 ## File structure
 
 ```
+frontend/src/features/admin/api/admin-api.ts : admin endpoint calls for tenants, api keys, and model settings
 frontend/src/features/auth/api/auth-api.ts : auth endpoint calls typed by contracts
 frontend/src/features/auth/api/use-delete-account.ts : delete-account mutation; ends local session and clears query cache
 frontend/src/features/auth/api/use-login.ts : login mutation

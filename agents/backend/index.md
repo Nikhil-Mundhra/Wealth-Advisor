@@ -73,6 +73,14 @@ backend/src/core/module/module-registry.ts : collects manifests; mounts routes, 
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
+backend/src/modules/admin/admin.api.ts : createAdminApi: tenants, api keys, model provider settings
+backend/src/modules/admin/admin.module.ts : composition root: store-selected tenant/key repos → api, routes, manifest
+backend/src/modules/admin/application/ports.ts : TenantRepository, ApiKeyRepository, AdminSettingsRepository ports
+backend/src/modules/admin/public.ts : the admin surface other modules may import
+backend/src/modules/advisory/advisory.api.ts : createAdvisoryApi: multilingual copilot chat, proposal cards, calculation shield
+backend/src/modules/advisory/advisory.module.ts : composition root: llm gateway, mock adapter → api, routes, manifest
+backend/src/modules/advisory/domain/llm-gateway.ts : multi-provider LLM gateway and mock deterministic adapter
+backend/src/modules/advisory/public.ts : the advisory surface other modules may import
 backend/src/modules/analytics/analytics.api.ts : createAnalyticsApi: onMarketDataRefreshed (work, then mark), latestSnapshot, snapshotAt
 backend/src/modules/analytics/analytics.module.ts : composition root: store-selected snapshot repository, processed events → api, routes, market.data_refreshed subscription, manifest
 backend/src/modules/analytics/application/ports.ts : SnapshotRepository (one snapshot per asOf; upsert replaces)
@@ -83,6 +91,11 @@ backend/src/modules/analytics/domain/market-snapshot.vo.ts : MarketSnapshot: asO
 backend/src/modules/analytics/domain/measure-snapshot.ts : aligned closes → snapshot, or insufficient below the minimum observations
 backend/src/modules/analytics/domain/returns.ts : alignment on dates every symbol has, daily log returns, annualized mean
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
+backend/src/modules/finance/application/ports.ts : AccountRepository, TransactionRepository ports
+backend/src/modules/finance/domain/burn-rate-calculator.ts : calculateBurnRateRunway with household mode multipliers
+backend/src/modules/finance/finance.api.ts : createFinanceApi: accounts, transactions, burn rate and runway orchestrators
+backend/src/modules/finance/finance.module.ts : composition root: store-selected account and transaction repos → api, routes, manifest
+backend/src/modules/finance/public.ts : the finance surface other modules may import
 backend/src/modules/index.ts : explicit, statically imported module list; builds market first and hands its api to analytics
 backend/src/modules/market/application/ports.ts : PriceSource, FxSource, PriceRepository, FxRateRepository (append-only facts)
 backend/src/modules/market/application/publish-refreshed.ts : step: checks the v1 payload, publishes market.data_refreshed
@@ -102,6 +115,14 @@ backend/src/modules/market/infrastructure/providers/provider-call.ts : provider 
 backend/src/modules/market/market.api.ts : createMarketApi: refresh, quotes, history, rates, convert orchestrators
 backend/src/modules/market/market.module.ts : composition root: store-selected repositories, provider adapters, request budget → api, routes, manifest
 backend/src/modules/market/public.ts : the market surface other modules may import (api type, domain types, tracked symbols)
+backend/src/modules/sharing/application/ports.ts : SharedPlanRepository port
+backend/src/modules/sharing/public.ts : the sharing surface other modules may import
+backend/src/modules/sharing/sharing.api.ts : createSharingApi: share link creation with TTL, masked public plan resolution
+backend/src/modules/sharing/sharing.module.ts : composition root: store-selected shared plan repo → api, routes, manifest
+backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, SandboxLedgerRepository ports
+backend/src/modules/wealth/public.ts : the wealth surface other modules may import
+backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, optimizer, sandbox trade execution, ledger
+backend/src/modules/wealth/wealth.module.ts : composition root: store-selected wealth repos → api, routes, manifest
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 scripts/module-deps.mjs : fails on a cross-module import of a file other than public.ts, an import along an edge not in docs/backend/module-dependencies.md, a cycle in that edge list, or any core import of a module file

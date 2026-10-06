@@ -9,6 +9,7 @@ export const AUTH_ERROR_STATUSES: Readonly<Record<AuthErrorCode, number>> = {
   [C.unauthenticated]: 401,
   [C.invalidEmail]: 400,
   [C.weakPassword]: 400,
+  [C.passkeyFailed]: 401,
   [C.invariantViolated]: 500,
   [C.signingKeysMissing]: 503,
 };

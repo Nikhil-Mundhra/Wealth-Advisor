@@ -33,6 +33,7 @@ rules/src/password.rule.ts : min/max length, isPasswordLength
 rules/src/permission-tier.rule.ts : PERMISSION_TIERS, PermissionTier, isPermissionTier
 rules/src/profiling.rule.ts : PROFILING_QUESTIONS, calculateBaseRiskScore, mapStressAnswerToRiskBand, deriveTimeHorizonYears, deriveCorridorCurrencies
 rules/src/refresh-token.rule.ts : byte count, base64url pattern, isRefreshToken
+rules/src/tenant.rule.ts : TENANT_PLANS, TENANT_STATUSES, API_KEY_PERMISSIONS, API_KEY_STATUSES
 rules/src/validation-keys.ts : VALIDATION_KEYS, ValidationKey, isValidationKey
 rules/src/viewport.rule.ts : MIN_TOUCH_TARGET_PX, MOBILE_BREAKPOINT_PX
 rules/tsconfig.json : typecheck settings
