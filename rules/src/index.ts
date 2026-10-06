@@ -1,4 +1,5 @@
 // Public surface of the rules kernel: constants and pure functions only, no dependencies.
+export * from './analytics.rule.ts';
 export * from './asset-class.rule.ts';
 export * from './burn-rate.rule.ts';
 export * from './currency.rule.ts';
@@ -11,6 +12,7 @@ export * from './client-type.rule.ts';
 export * from './refresh-token.rule.ts';
 export * from './error-codes.ts';
 export * from './locale.rule.ts';
+export * from './market-data.rule.ts';
 export * from './llm-provider.rule.ts';
 export * from './validation-keys.ts';
 export * from './viewport.rule.ts';

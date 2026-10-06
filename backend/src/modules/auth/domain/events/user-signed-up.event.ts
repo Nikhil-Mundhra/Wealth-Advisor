@@ -1,9 +1,9 @@
-import type { DomainEvent } from '#core/domain/domain-event.ts';
+import { createEnvelope, type EventEnvelope } from '#core/events/event-envelope.ts';
 
 export const USER_SIGNED_UP = 'auth.user_signed_up';
 
-export type UserSignedUp = DomainEvent<typeof USER_SIGNED_UP, { readonly userId: string }>;
+export type UserSignedUp = EventEnvelope<typeof USER_SIGNED_UP, { readonly userId: string }>;
 
 export function userSignedUp(userId: string, occurredAt: Date): UserSignedUp {
-  return { name: USER_SIGNED_UP, occurredAt, payload: { userId } };
+  return createEnvelope({ type: USER_SIGNED_UP, version: 1, occurredAt, payload: { userId } });
 }

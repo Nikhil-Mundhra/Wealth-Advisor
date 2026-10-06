@@ -22,5 +22,5 @@
 .nvmrc : Node major CI builds and local version managers use; change it and ci.yml `node-version` together
 infra/docker-compose.yml : nginx container in front of the host backend; host port from PROXY_PORT
 infra/nginx/default.conf : serves frontend/dist, proxies /api to the host backend, cache and security headers
-vercel.json : Vercel Services: frontend and backend service definitions and top-level rewrites
+vercel.json : Vercel Services: frontend and backend service definitions, top-level rewrites, weekday market refresh cron
 ```

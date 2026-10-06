@@ -3,6 +3,8 @@
 
 export const ERROR_CODE_PREFIXES = {
   auth: 'AU',
+  market: 'MK',
+  analytics: 'AN',
 } as const;
 
 export const CORE_ERROR_CODES = {
@@ -25,6 +27,21 @@ export const AUTH_ERROR_CODES = {
   signingKeysMissing: 'AU_1901',
 } as const;
 
+export const MARKET_ERROR_CODES = {
+  cronUnauthorized: 'MK_1001',
+  invariantViolated: 'MK_1900',
+  providerUnavailable: 'MK_1901',
+  providerQuotaSpent: 'MK_1902',
+  providerNotConfigured: 'MK_1903',
+} as const;
+
+export const ANALYTICS_ERROR_CODES = {
+  noSnapshot: 'AN_1001',
+  invariantViolated: 'AN_1900',
+} as const;
+
 export type CoreErrorCode = (typeof CORE_ERROR_CODES)[keyof typeof CORE_ERROR_CODES];
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
-export type ErrorCode = CoreErrorCode | AuthErrorCode;
+export type MarketErrorCode = (typeof MARKET_ERROR_CODES)[keyof typeof MARKET_ERROR_CODES];
+export type AnalyticsErrorCode = (typeof ANALYTICS_ERROR_CODES)[keyof typeof ANALYTICS_ERROR_CODES];
+export type ErrorCode = CoreErrorCode | AuthErrorCode | MarketErrorCode | AnalyticsErrorCode;

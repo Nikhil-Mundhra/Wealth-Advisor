@@ -15,7 +15,7 @@
 - schema: indexes and validators are applied by `make db-indexes`, never per request.
 
 ## Workflow
-- collection or index change: `<collection>.schema.ts` → `<module>-collections.ts` → `make db-indexes` → `docs/backend/collections.md`
+- collection or index change: `<collection>.schema.ts` → `<module>-collections.ts` (core: `backend/src/core/db/schema/core-collections.ts`) → `make db-indexes` → `docs/backend/collections.md`
 - repository port change: Mongo and memory implementations in the same change; the auth-flow suite runs on both.
 
 ## File structure
@@ -34,7 +34,14 @@ backend/src/core/db/retry/retry-policy.ts : read retry attempts, backoff, retrya
 backend/src/core/db/retry/with-read-retry.ts : runs a read or connect under the retry policy
 backend/src/core/db/schema/apply-collection-definitions.ts : creates collections, validators, indexes (idempotent)
 backend/src/core/db/schema/collection-definition.ts : type for a collection's indexes and $jsonSchema validator
+backend/src/core/db/schema/core-collections.ts : collection definitions owned by core mechanisms (processed events, request budgets)
 backend/src/core/db/schema/nullable.ts : $jsonSchema type that also allows null
+backend/src/modules/analytics/infrastructure/db/documents/market-snapshot.document.ts : stored shape of market_snapshots
+backend/src/modules/analytics/infrastructure/db/mappers/market-snapshot.mapper.ts : MarketSnapshotDocument ↔ MarketSnapshot
+backend/src/modules/analytics/infrastructure/db/memory/memory-market-snapshot.repository.ts : snapshot repository in memory; last write per asOf wins
+backend/src/modules/analytics/infrastructure/db/repositories/mongo-market-snapshot.repository.ts : snapshot repository on Mongo; upsert = replaceOne by asOf; latest by asOf desc
+backend/src/modules/analytics/infrastructure/db/schema/analytics-collections.ts : the analytics module's collection definitions
+backend/src/modules/analytics/infrastructure/db/schema/market-snapshots.schema.ts : market_snapshots index (unique asOf) and $jsonSchema
 backend/src/modules/auth/application/ports/session-repository.port.ts : session persistence contract (compare-and-set)
 backend/src/modules/auth/application/ports/user-repository.port.ts : user persistence contract
 backend/src/modules/auth/infrastructure/db/documents/session.document.ts : stored shape of sessions (incl. purgeAt)
@@ -49,6 +56,18 @@ backend/src/modules/auth/infrastructure/db/schema/auth-collections.ts : the auth
 backend/src/modules/auth/infrastructure/db/schema/sessions.schema.ts : sessions indexes (unique tokenHash, TTL) and $jsonSchema
 backend/src/modules/auth/infrastructure/db/schema/users.schema.ts : users indexes (partial unique provider) and $jsonSchema
 backend/src/modules/auth/infrastructure/db/seed/demo-user.seed.ts : creates the demo account if missing (memory store and seed script)
+backend/src/modules/market/infrastructure/db/documents/fx-rate.document.ts : stored shape of fx_rates
+backend/src/modules/market/infrastructure/db/documents/price.document.ts : stored shape of prices (money as amount + currency)
+backend/src/modules/market/infrastructure/db/mappers/fx-rate.mapper.ts : FxRateDocument ↔ FxRate
+backend/src/modules/market/infrastructure/db/mappers/price.mapper.ts : PriceDocument ↔ Price
+backend/src/modules/market/infrastructure/db/mappers/stored-currency.ts : stored currency code → Currency, or corruption error
+backend/src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts : fx rate repository in memory; first write per (base, quote, date) wins
+backend/src/modules/market/infrastructure/db/memory/memory-price.repository.ts : price repository in memory; first write per (symbol, date) wins
+backend/src/modules/market/infrastructure/db/repositories/mongo-fx-rate.repository.ts : fx rate repository on Mongo; append = $setOnInsert upserts
+backend/src/modules/market/infrastructure/db/repositories/mongo-price.repository.ts : price repository on Mongo; append = $setOnInsert upserts; latest per symbol by aggregation
+backend/src/modules/market/infrastructure/db/schema/fx-rates.schema.ts : fx_rates indexes (unique base+quote+date, date) and $jsonSchema
+backend/src/modules/market/infrastructure/db/schema/market-collections.ts : the market module's collection definitions
+backend/src/modules/market/infrastructure/db/schema/prices.schema.ts : prices indexes (unique symbol+date) and $jsonSchema
 backend/src/scripts/ensure-indexes.ts : applies every module's collection definitions (deploy step)
 backend/src/scripts/seed-demo-user.ts : seeds the demo account into Mongo (refuses NODE_ENV=production)
 ```

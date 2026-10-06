@@ -4,6 +4,7 @@ import type { EventBus } from '#core/events/event-bus.ts';
 import { mountRoutes } from '#core/http/route-builder.ts';
 import type { ModuleManifest } from '#core/module/define-module.ts';
 import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
+import { coreCollections } from '#core/db/schema/core-collections.ts';
 
 // Collects module manifests and applies them: routes onto the API router, subscriptions onto the event bus.
 export class ModuleRegistry {
@@ -27,7 +28,7 @@ export class ModuleRegistry {
 
   subscribe(bus: EventBus): void {
     for (const manifest of this.modules.values()) {
-      for (const subscription of manifest.subscriptions) bus.subscribe(subscription.eventName, subscription.handler);
+      for (const subscription of manifest.subscriptions) bus.subscribe(subscription.eventType, subscription.handler);
     }
   }
 
@@ -40,6 +41,6 @@ export class ModuleRegistry {
   }
 
   collections(): CollectionDefinition[] {
-    return [...this.modules.values()].flatMap((manifest) => [...manifest.collections]);
+    return [...coreCollections, ...[...this.modules.values()].flatMap((manifest) => [...manifest.collections])];
   }
 }

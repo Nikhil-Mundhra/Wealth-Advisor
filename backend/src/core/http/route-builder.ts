@@ -8,9 +8,10 @@ import { parseContract } from '#core/http/validate-contract.ts';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
-export interface RouteContext<Body> {
+export interface RouteContext<Body, Query = undefined> {
   readonly c: Context;
   readonly body: Body;
+  readonly query: Query;
 }
 
 export interface RouteDefinition {
@@ -25,14 +26,15 @@ interface BuilderState {
   readonly path: string;
   readonly middlewares: readonly MiddlewareHandler[];
   readonly bodySchema?: z.ZodType;
+  readonly querySchema?: z.ZodType;
   readonly responseSchema?: z.ZodType;
   readonly successStatus: ContentfulStatusCode;
 }
 
 // Declarative route: RouteBuilder.post('/login').body(LoginRequest).responds(TokenPairResponse).handle(fn).
-// The builder validates the request body and the response against their contracts, so handlers only map
-// contract → command → use case → result. Each call returns a new builder; a builder is never mutated.
-export class RouteBuilder<Body = undefined, Out = void> {
+// The builder validates the query string, the request body and the response against their contracts, so handlers
+// only map contract → command → use case → result. Each call returns a new builder; a builder is never mutated.
+export class RouteBuilder<Body = undefined, Out = void, Query = undefined> {
   private readonly state: BuilderState;
 
   private constructor(state: BuilderState) {
@@ -63,28 +65,34 @@ export class RouteBuilder<Body = undefined, Out = void> {
     return new RouteBuilder({ method, path, middlewares: [], successStatus: 200 });
   }
 
-  use(...middlewares: MiddlewareHandler[]): RouteBuilder<Body, Out> {
+  use(...middlewares: MiddlewareHandler[]): RouteBuilder<Body, Out, Query> {
     return new RouteBuilder({ ...this.state, middlewares: [...this.state.middlewares, ...middlewares] });
   }
 
-  body<S extends z.ZodType>(schema: S): RouteBuilder<z.output<S>, Out> {
+  body<S extends z.ZodType>(schema: S): RouteBuilder<z.output<S>, Out, Query> {
     return new RouteBuilder({ ...this.state, bodySchema: schema });
   }
 
+  // Query values arrive as strings; a repeated key keeps its first value. Failures are the same 400 as a body's.
+  query<S extends z.ZodType>(schema: S): RouteBuilder<Body, Out, z.output<S>> {
+    return new RouteBuilder({ ...this.state, querySchema: schema });
+  }
+
   // Without responds(), the handler returns nothing and the route answers 204.
-  responds<S extends z.ZodType>(schema: S, status: ContentfulStatusCode = 200): RouteBuilder<Body, z.input<S>> {
+  responds<S extends z.ZodType>(schema: S, status: ContentfulStatusCode = 200): RouteBuilder<Body, z.input<S>, Query> {
     return new RouteBuilder({ ...this.state, responseSchema: schema, successStatus: status });
   }
 
-  handle(handler: (context: RouteContext<Body>) => Promise<Out>): RouteDefinition {
-    const { method, path, middlewares, bodySchema, responseSchema, successStatus } = this.state;
+  handle(handler: (context: RouteContext<Body, Query>) => Promise<Out>): RouteDefinition {
+    const { method, path, middlewares, bodySchema, querySchema, responseSchema, successStatus } = this.state;
     return {
       method,
       path,
       middlewares,
       handler: async (c) => {
+        const query = querySchema ? parseContract(querySchema, c.req.query()) : undefined;
         const body = bodySchema ? parseContract(bodySchema, await readJsonBody(c)) : undefined;
-        const out = await handler({ c, body: body as Body });
+        const out = await handler({ c, body: body as Body, query: query as Query });
         if (!responseSchema) return c.body(null, 204);
         return c.json(parseResponse(responseSchema, out), successStatus);
       },

@@ -25,6 +25,7 @@ jobs:
           key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - run: make docs-lint
-      - run: npm run typecheck
+      - run: make deps-lint
+      - run: make typecheck
       - run: make test
       - run: make build

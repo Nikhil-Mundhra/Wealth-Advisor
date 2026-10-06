@@ -1,5 +1,6 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import type { Hono } from 'hono';
+import type { HttpClient } from '#core/http-client/http-client.ts';
 import { FakeClock } from './fake-clock.ts';
 
 export interface TestApp {
@@ -8,15 +9,30 @@ export interface TestApp {
   stop(): Promise<void>;
 }
 
+export interface TestAppOptions {
+  readonly store?: 'mongo' | 'memory';
+  readonly start?: Date;
+  // Outbound HTTP for provider adapters; the default refuses every call, so no test reaches a live provider.
+  readonly http?: HttpClient;
+  readonly env?: Readonly<Record<string, string>>;
+}
+
+const offline: HttpClient = {
+  async getJson(url) {
+    throw new Error(`test made a live HTTP call to ${new URL(url).origin}; pass a fake http client`);
+  },
+};
+
 // Boots the real app with a fake clock, on a throwaway mongod (collections and indexes applied) or on the
 // in-memory store. Env is set before the app modules are imported because env() is read once.
-export async function startTestApp(options: { store?: 'mongo' | 'memory' } = {}): Promise<TestApp> {
+export async function startTestApp(options: TestAppOptions = {}): Promise<TestApp> {
   const memory = options.store === 'memory';
   const mongo = memory ? null : await MongoMemoryServer.create();
   process.env.NODE_ENV = 'test';
   if (mongo) process.env.MONGODB_URI = mongo.getUri();
   else process.env.DATA_STORE = 'memory';
   process.env.MONGODB_DB_NAME = 'wealth_advisor_test';
+  Object.assign(process.env, options.env);
 
   const { createApp } = await import('../../src/app.ts');
   const { InProcessEventBus } = await import('#core/events/event-bus.ts');
@@ -26,8 +42,8 @@ export async function startTestApp(options: { store?: 'mongo' | 'memory' } = {})
   const { objectIdGenerator } = await import('#core/db/ids/object-id-generator.ts');
   const { buildModules } = await import('#modules/index.ts');
 
-  const clock = new FakeClock(new Date());
-  const context = { db: getDb, clock, ids: objectIdGenerator, events: new InProcessEventBus() };
+  const clock = new FakeClock(options.start ?? new Date());
+  const context = { db: getDb, clock, ids: objectIdGenerator, events: new InProcessEventBus(), http: options.http ?? offline };
   const registry = new ModuleRegistry();
   for (const manifest of buildModules(context)) registry.register(manifest);
   if (mongo) await applyCollectionDefinitions(await getDb(), registry.collections());

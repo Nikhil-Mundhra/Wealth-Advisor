@@ -1,6 +1,6 @@
 # Sync docs
 
-last synced: d68fbba
+last synced: b8b52d7
 
 ## Calls
 - `agents/docs/writing.md` : map and doc format; the rules every changed doc must still meet
@@ -12,7 +12,7 @@ last synced: d68fbba
 - Report scope: files changed in the range only.
 
 ## Workflow
-1. Unchecked changes: `git log --stat --reverse <last synced>..HEAD` plus `git status --short`; skip package-lock.json and build output.
+1. Unchecked changes: `git log --stat --reverse <last synced>..HEAD` plus `git status --short`; skip package-lock.json and build output. A `last synced:` that is not an ancestor of HEAD (rewritten history): use the HEAD commit with the same subject, else the whole history, and say which in the report.
 2. Read each added, renamed or modified file; add, delete, re-path or rewrite its map line (rewrite only if the file's job changed).
 3. Docs that describe a changed file: grep `docs/` for its path, basename and new exported names; correct each stale statement and add each missing item.
 4. Every `## Rules` line in `AGENTS.md` or `agents/` that a changed file now contradicts: report it with that file.

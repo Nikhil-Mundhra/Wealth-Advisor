@@ -16,6 +16,7 @@ Backend variables are validated once, on first use, by `backend/src/core/config/
 | `AUTH_ACCESS_TOKEN_TTL_SECONDS` | `900` (15 min) | no | access token lifetime |
 | `AUTH_REFRESH_TOKEN_TTL_SECONDS` | `1209600` (14 d) | no | refresh session lifetime |
 | `AUTH_REFRESH_REUSE_GRACE_SECONDS` | `5` | no | window in which a rotated token counts as a retry |
-| `MARKETSTACK_ACCESS_KEY` | none | no; no code reads it yet | Marketstack API key for the planned market-data adapter |
+| `MARKETSTACK_ACCESS_KEY` | none | for market refresh | Marketstack API key (free plan: 100 requests per month, counted in `request_budgets`); unset → `GET /api/market/refresh` answers `MK_1903`; sent only in the provider's query string, never logged |
+| `CRON_SECRET` | none | for market refresh | shared secret Vercel Cron sends as `Authorization: Bearer <CRON_SECRET>` to `GET /api/market/refresh`; unset or different → `MK_1001` for every call |
 | `PORT` | backend port (`docs/infra/ports.md`) | no | listen port of `backend/src/node-server.ts`; set by `make backend` and `make prod` |
 | `PROXY_PORT` | proxy port (`docs/infra/ports.md`) | no | nginx host port in `infra/docker-compose.yml`; set by `make proxy` |

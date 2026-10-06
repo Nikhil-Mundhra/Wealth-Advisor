@@ -4,7 +4,8 @@
 - `docs/shared/apis/index.md` : route docs
 
 ## Rules
-- Handlers only map contract → command → use case → result → contract; `RouteBuilder` validates both ends.
+- Handlers only map contract → command → use case → result → contract; `RouteBuilder` validates query, body and response.
+- auth: user routes use the module's token middleware; machine callers (cron) use `requireBearerSecret` from `core/http`, never a user-token middleware; proxies (`infra/nginx`, `vercel.json`) only route, never authenticate.
 
 ## Workflow
 - add a route: contract first → route → use case → integration test → route doc (error ids only) in the same change
@@ -12,6 +13,8 @@
 ## File structure
 
 ```
+backend/src/modules/analytics/presentation/mappers/result-to-contract.mapper.ts : MarketSnapshot → snapshot contract
+backend/src/modules/analytics/presentation/routes/analytics.routes.ts : GET snapshot (optional asOf)
 backend/src/modules/auth/application/dto/get-me.query.ts : current user id
 backend/src/modules/auth/application/dto/login.command.ts : login input
 backend/src/modules/auth/application/dto/logout.command.ts : one session or all sessions
@@ -31,4 +34,6 @@ backend/src/modules/auth/presentation/mappers/contract-to-command.mapper.ts : re
 backend/src/modules/auth/presentation/mappers/result-to-contract.mapper.ts : result DTO → response contract
 backend/src/modules/auth/presentation/routes/auth.routes.ts : signup, login, refresh, logout, logout-all
 backend/src/modules/auth/presentation/routes/me.routes.ts : GET /me
+backend/src/modules/market/presentation/mappers/result-to-contract.mapper.ts : market api results → quotes, fx-rates and refresh contracts
+backend/src/modules/market/presentation/routes/market.routes.ts : GET quotes, fx (query base, date), refresh (cron bearer)
 ```

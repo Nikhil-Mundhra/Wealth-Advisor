@@ -14,6 +14,8 @@ const EnvSchema = z.object({
   AUTH_ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(15 * 60),
   AUTH_REFRESH_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(14 * 24 * 60 * 60),
   AUTH_REFRESH_REUSE_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(5),
+  MARKETSTACK_ACCESS_KEY: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

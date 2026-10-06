@@ -10,6 +10,8 @@ export const VALIDATION_KEYS = {
   displayNameTooLong: 'display_name.too_long',
   clientTypeInvalid: 'client_type.invalid',
   refreshTokenInvalid: 'refresh_token.invalid',
+  currencyInvalid: 'currency.invalid',
+  dateInvalid: 'date.invalid',
 } as const;
 
 export type ValidationKey = (typeof VALIDATION_KEYS)[keyof typeof VALIDATION_KEYS];
