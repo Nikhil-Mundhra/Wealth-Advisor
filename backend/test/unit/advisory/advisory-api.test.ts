@@ -60,4 +60,41 @@ describe('AdvisoryApi', () => {
     assert.ok(zh.reply.includes('家庭'));
     assert.ok(zh.complianceDisclaimer.includes('沙盒顾问模式'));
   });
+
+  it('supports openai and gemini providers with graceful fallback to grounded mock', async () => {
+    const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
+    const finance = createFinanceApi({
+      accounts: new MemoryAccountRepository(),
+      transactions: new MemoryTransactionRepository(),
+      clock,
+    });
+    const wealth = createWealthApi({
+      products: new MemoryAssetProductRepository(),
+      portfolios: new MemoryPortfolioRepository(),
+      ledger: new MemorySandboxLedgerRepository(),
+      clock,
+    });
+    const gateway = new LlmGateway({
+      geminiApiKey: 'test-dummy-gemini-key',
+      openaiApiKey: 'test-dummy-openai-key',
+    });
+
+    const openaiApi = createAdvisoryApi({
+      finance,
+      wealth,
+      gateway,
+      getActiveProvider: async () => 'openai',
+    });
+
+    const res = await openaiApi.chat('default', 'default', {
+      message: 'Can I rebalance safely?',
+      locale: 'en',
+      householdMode: 'INDIVIDUAL',
+    });
+
+    assert.ok(res.reply.includes('individual profile'));
+    assert.ok(res.actionCards.length === 2);
+    assert.equal(res.actionCards[0].cardType, 'PROPOSAL');
+    assert.ok(res.actionCards[0].payload.valuationTotalBase > 0);
+  });
 });

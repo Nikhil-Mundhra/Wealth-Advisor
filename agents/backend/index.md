@@ -93,8 +93,8 @@ backend/src/modules/analytics/domain/returns.ts : alignment on dates every symbo
 backend/src/modules/analytics/public.ts : the analytics surface other modules may import (api type, MarketSnapshot type)
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
 backend/src/modules/finance/application/ports.ts : AccountRepository, TransactionRepository ports
-backend/src/modules/finance/domain/burn-rate-calculator.ts : calculateBurnRateRunway with household mode multipliers
-backend/src/modules/finance/finance.api.ts : createFinanceApi: accounts, transactions, burn rate and runway orchestrators
+backend/src/modules/finance/domain/burn-rate-calculator.ts : monthly inflow/outflow averaged over the calendar months present, runway from the base-currency reserves it is given, household mode multipliers
+backend/src/modules/finance/finance.api.ts : createFinanceApi: accounts valued into the base currency (null when unvalued), transactions, burn rate and runway orchestrators
 backend/src/modules/finance/finance.module.ts : composition root: store-selected account and transaction repos → api, routes, manifest
 backend/src/modules/finance/public.ts : the finance surface other modules may import
 backend/src/modules/index.ts : explicit, statically imported module list; builds market first and hands its api to analytics

@@ -12,7 +12,10 @@ export const AccountDto = z.object({
   institutionName: z.string(),
   accountType: z.enum(ACCOUNT_TYPES),
   currency: z.enum(CURRENCIES),
-  balance: z.number().int(), // minor units
+  balance: z.number().int(), // minor units, in `currency`
+  // The same balance in the base currency, so a multi-currency list and the cashflow summary agree. Null when no rate
+  // values this account today; the caller must not read that as zero.
+  baseBalance: z.number().int().nullable(),
   lastSyncedAt: z.string(),
   isPrimaryLiquidity: z.boolean(),
   createdAt: z.string(),

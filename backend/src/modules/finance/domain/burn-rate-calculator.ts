@@ -4,12 +4,12 @@ import {
   runwayBand,
   type RunwayBand,
 } from '@wealth-advisor/rules';
-import type { AccountDocument } from '../infrastructure/db/documents/account.document.ts';
 import type { TransactionDocument } from '../infrastructure/db/documents/transaction.document.ts';
 
 export interface BurnRateCalculationInput {
   householdMode: HouseholdMode;
-  accounts: readonly AccountDocument[];
+  // Liquid reserves in base minor units, already valued into one currency by the caller.
+  totalLiquidReservesBase: number;
   transactions: readonly TransactionDocument[];
 }
 
@@ -23,33 +23,29 @@ export interface BurnRateCalculationResult {
   reserveMultiplier: number;
 }
 
+const MONTH_KEY = /^\d{4}-\d{2}/;
+
 export function calculateBurnRate(input: BurnRateCalculationInput): BurnRateCalculationResult {
-  const { householdMode, accounts, transactions } = input;
+  const { householdMode, transactions } = input;
+  const totalLiquidReservesBase = input.totalLiquidReservesBase;
   const reserveMultiplier = HOUSEHOLD_RESERVE_MULTIPLIER[householdMode];
 
-  let monthlyInflowBase = 0;
-  let monthlyOutflowBase = 0;
-
+  // One month's flows are the sum over the calendar months the transactions actually fall in, averaged over those
+  // months. Averaging over elapsed time instead would divide a busy week by the months it does not cover and call the
+  // result a month.
+  const inflowByMonth = new Map<string, number>();
+  const outflowByMonth = new Map<string, number>();
   for (const tx of transactions) {
-    if (tx.category.startsWith('INCOME')) {
-      monthlyInflowBase += tx.convertedBaseAmount;
-    } else {
-      monthlyOutflowBase += tx.convertedBaseAmount;
-    }
+    const month = MONTH_KEY.exec(tx.timestamp.toISOString())?.[0];
+    if (!month) continue;
+    const target = tx.category.startsWith('INCOME') ? inflowByMonth : outflowByMonth;
+    target.set(month, (target.get(month) ?? 0) + tx.convertedBaseAmount);
   }
+  const months = new Set([...inflowByMonth.keys(), ...outflowByMonth.keys()]);
+  const divisor = Math.max(months.size, 1);
 
-  // If transactions span multiple months, normalize to an average 30-day monthly rate
-  if (transactions.length > 1) {
-    const timestamps = transactions.map((t) => t.timestamp.getTime());
-    const minTime = Math.min(...timestamps);
-    const maxTime = Math.max(...timestamps);
-    const daysSpan = (maxTime - minTime) / (1000 * 60 * 60 * 24);
-    if (daysSpan > 30) {
-      const months = daysSpan / 30;
-      monthlyInflowBase = Math.round(monthlyInflowBase / months);
-      monthlyOutflowBase = Math.round(monthlyOutflowBase / months);
-    }
-  }
+  let monthlyInflowBase = Math.round(mean(inflowByMonth, divisor));
+  let monthlyOutflowBase = Math.round(mean(outflowByMonth, divisor));
 
   // Fallback defaults if no transactions logged yet
   if (monthlyInflowBase === 0 && monthlyOutflowBase === 0) {
@@ -57,7 +53,6 @@ export function calculateBurnRate(input: BurnRateCalculationInput): BurnRateCalc
     monthlyOutflowBase = householdMode === 'INDIVIDUAL' ? 250000 : 540000;
   }
 
-  const totalLiquidReservesBase = accounts.reduce((acc, a) => acc + a.balance, 0);
   const netCashflowBase = monthlyInflowBase - monthlyOutflowBase;
 
   // Monthly reserve needed incorporates household obligations
@@ -76,4 +71,10 @@ export function calculateBurnRate(input: BurnRateCalculationInput): BurnRateCalc
     runwayBand: runwayBand(runwayMonths),
     reserveMultiplier,
   };
+}
+
+function mean(byMonth: Map<string, number>, divisor: number): number {
+  let sum = 0;
+  for (const value of byMonth.values()) sum += value;
+  return sum / divisor;
 }

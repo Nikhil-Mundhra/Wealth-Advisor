@@ -13,7 +13,7 @@ import type { Clock } from '#core/time/clock.ts';
 import { toIsoDate } from '#core/time/calendar-date.ts';
 import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import { DomainError } from '#core/domain/domain-error.ts';
-import { type MarketApi, Money } from '../market/public.ts';
+import { type ConversionResult, type MarketApi, Money } from '../market/public.ts';
 import type { AccountRepository, TransactionRepository } from './application/ports.ts';
 import { calculateBurnRate } from './domain/burn-rate-calculator.ts';
 import type { AccountDocument } from './infrastructure/db/documents/account.document.ts';
@@ -26,7 +26,7 @@ export interface FinanceApiDeps {
   market?: MarketApi;
 }
 
-function toAccountDto(doc: AccountDocument): AccountDto {
+function toAccountDto(doc: AccountDocument, baseBalance: number | null): AccountDto {
   return {
     id: doc._id.toHexString(),
     tenantId: doc.tenantId.toHexString(),
@@ -36,6 +36,7 @@ function toAccountDto(doc: AccountDocument): AccountDto {
     accountType: doc.accountType,
     currency: doc.currency,
     balance: doc.balance,
+    baseBalance,
     lastSyncedAt: doc.lastSyncedAt.toISOString(),
     isPrimaryLiquidity: doc.isPrimaryLiquidity,
     createdAt: doc.createdAt.toISOString(),
@@ -60,6 +61,41 @@ function toTransactionDto(doc: TransactionDocument): TransactionDto {
   };
 }
 
+// One valuation pass shared by the accounts list and the cashflow summary, so the two never disagree. A base-currency
+// account values itself; anything else needs today's spot rate, and an account no rate can value stays unvalued rather
+// than contributing its own minor units to a EUR total.
+async function valueAccounts(
+  accounts: readonly AccountDocument[],
+  market: MarketApi | undefined,
+  asOf: string,
+): Promise<Map<string, number | null>> {
+  // A base-currency account values itself whether or not a market is reachable.
+  const valued = new Map<string, number | null>(
+    accounts.map((a) => [a._id.toHexString(), a.currency === 'EUR' ? a.balance : null]),
+  );
+  const nonBase = accounts.filter((a) => a.currency !== 'EUR');
+  if (!market || nonBase.length === 0) return valued;
+
+  let conversions: ConversionResult[] = [];
+  try {
+    conversions = await market.convert({
+      items: nonBase.map((a) => ({ money: Money.of(a.balance, a.currency), date: asOf })),
+      target: 'EUR',
+      mode: 'spot',
+    });
+  } catch {
+    // Unseeded or unavailable rates leave every account unvalued; the caller reports how many.
+    return valued;
+  }
+
+  // convertBatch maps items in order, so an index identifies its account; a failed item leaves only itself unvalued.
+  nonBase.forEach((account, index) => {
+    const result = conversions[index];
+    if (result?.ok) valued.set(account._id.toHexString(), result.valuation.converted.amount);
+  });
+  return valued;
+}
+
 // A write must be attributed to a real scope: an id that is neither a document id nor the demo scope is refused, so a
 // malformed caller can never file an account under the demo tenant.
 function requireScopeId(id: string, demoId: string, label: string): ObjectId {
@@ -74,7 +110,8 @@ export function createFinanceApi(deps: FinanceApiDeps) {
   return {
     async getAccounts(tenantId: string, userId: string): Promise<AccountListResponse> {
       const docs = await accounts.findByUser(tenantId, userId);
-      return { accounts: docs.map(toAccountDto) };
+      const valued = await valueAccounts(docs, deps.market, toIsoDate(clock.now()));
+      return { accounts: docs.map((doc) => toAccountDto(doc, valued.get(doc._id.toHexString()) ?? null)) };
     },
 
     async createAccount(tenantId: string, userId: string, input: CreateAccountRequest): Promise<AccountDto> {
@@ -91,7 +128,7 @@ export function createFinanceApi(deps: FinanceApiDeps) {
         isPrimaryLiquidity: input.isPrimaryLiquidity ?? false,
         createdAt: now,
       });
-      return toAccountDto(created);
+      return toAccountDto(created, created.currency === 'EUR' ? created.balance : null);
     },
 
     async getTransactions(tenantId: string, userId: string): Promise<TransactionListResponse> {
@@ -106,38 +143,13 @@ export function createFinanceApi(deps: FinanceApiDeps) {
     ): Promise<CashflowSummaryResponse> {
       const accDocs = await accounts.findByUser(tenantId, userId);
       const txDocs = await transactions.findByUser(tenantId, userId);
+      const valued = await valueAccounts(accDocs, deps.market, toIsoDate(clock.now()));
 
-      let convertedAccounts = accDocs;
-      if (deps.market) {
-        const nonBase = accDocs.filter((a) => a.currency !== 'EUR');
-        if (nonBase.length > 0) {
-          try {
-            const conversions = await deps.market.convert({
-              items: nonBase.map((a) => ({ money: Money.of(a.balance, a.currency), date: toIsoDate(clock.now()) })),
-              target: 'EUR',
-              mode: 'spot',
-            });
-            // convertBatch maps items in order, so an index is an account identity; a failed item keeps its own balance.
-            const converted = new Map<string, number>();
-            nonBase.forEach((account, index) => {
-              const result = conversions[index];
-              if (result?.ok) converted.set(account._id.toHexString(), result.valuation.converted.amount);
-            });
-            convertedAccounts = accDocs.map((a) => {
-              const amount = converted.get(a._id.toHexString());
-              return amount === undefined ? a : { ...a, balance: amount };
-            });
-          } catch {
-            // Unseeded or unavailable rates leave the raw balances in place.
-          }
-        }
-      }
+      // Runway is measured against what could be valued; an account left out is reported rather than silently counted.
+      const reserves = accDocs.reduce((sum, doc) => sum + (valued.get(doc._id.toHexString()) ?? 0), 0);
+      const unvaluedAccountCount = accDocs.filter((doc) => valued.get(doc._id.toHexString()) == null).length;
 
-      const burn = calculateBurnRate({
-        householdMode,
-        accounts: convertedAccounts,
-        transactions: txDocs,
-      });
+      const burn = calculateBurnRate({ householdMode, transactions: txDocs, totalLiquidReservesBase: reserves });
 
       let eurCnyRate = 7.82;
       let gbpSgdRate = 1.71;
@@ -182,6 +194,7 @@ export function createFinanceApi(deps: FinanceApiDeps) {
         monthlyOutflowBase: burn.monthlyOutflowBase,
         netCashflowBase: burn.netCashflowBase,
         totalLiquidReservesBase: burn.totalLiquidReservesBase,
+        unvaluedAccountCount,
         runwayMonths: burn.runwayMonths,
         runwayBand: burn.runwayBand,
         reserveMultiplier: burn.reserveMultiplier,

@@ -22,8 +22,12 @@ export function createAdvisoryModule(
   _context: ModuleContext,
   deps: AdvisoryModuleDeps,
 ): { manifest: ModuleManifest; api: AdvisoryApi } {
-  const geminiApiKey = env().GEMINI_API_KEY;
-  const gateway = new LlmGateway(geminiApiKey);
+  const currentEnv = env();
+  const gateway = new LlmGateway({
+    geminiApiKey: currentEnv.GEMINI_API_KEY,
+    openaiApiKey: currentEnv.OPENAI_API_KEY,
+    anthropicApiKey: currentEnv.ANTHROPIC_API_KEY,
+  });
   const api = createAdvisoryApi({
     finance: deps.finance,
     wealth: deps.wealth,

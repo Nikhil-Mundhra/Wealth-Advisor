@@ -28,7 +28,7 @@ flowchart TB
 
 ### G1 · Tenant identity from the token · `backend/src/modules/auth/`
 status   `partial`
-evidence `admin-collections.ts` declares `tenants` and `api_keys`, and the admin, finance and wealth repositories filter on `tenantId` (`mongo-finance.repository.ts:15`, `mongo-wealth.repository.ts:36`); `AccessTokenClaims` (`backend/src/modules/auth/application/ports/access-token-signer.port.ts:2`) is `subject` and `roles` only, so `finance.routes.ts:15`, `wealth.routes.ts:20`, `advisory.routes.ts:10` and `sharing.routes.ts:14` all pass the literal `'default'`
+evidence `AccessTokenClaims` carries `tenantId`, the signer writes it as `tenant_id`, and `requireAuth`/`optionalAuth` put it on the principal every scoped route reads; no route reads a tenant header, and an unusable scope id is refused by the write paths rather than falling back to the demo tenant. Open: `sharing.routes.ts` still passes the literal `'default'` (its repository filters on `shareToken` alone), and signup joins one tenant because there is no tenant provisioning
 remedy  add `tenantId` to the claims and the me contract; resolve it per request; filter the sharing repository on it too (`mongo-sharing.repository.ts:13` filters on `shareToken` alone)
 blocked  none
 done when every advisory route derives its tenant from the verified token and no route contains a tenant literal
@@ -41,7 +41,7 @@ done when closed
 
 ### G3 · Cross-currency runway
 status   `partial`
-evidence `burn-rate-calculator.ts` returns reserves, runway months and band, but classifies `INCOME*` transactions without converting them, and substitutes literals of 450000/1050000 inflow and 250000/540000 outflow when a tenant has no transactions (`burn-rate-calculator.ts:43`); `MarketApi.convert` (`backend/src/modules/market/market.api.ts:92`) still has no caller, and the remittance corridors in `finance.api.ts:102` are literals
+evidence account balances are valued into the base currency through `MarketApi.convert`/`convertBatch` in one shared pass, and `AccountDto.baseBalance` is `null` for an account no rate values, so `totalLiquidReservesBase` never mixes minor units; open: transactions are still read from their stored `convertedBaseAmount` rather than routed through `convertBatch`, the 450000/1050000 inflow and 250000/540000 outflow literals still stand in for an empty ledger, and the remittance corridors in `finance.api.ts` are literals
 remedy  route every transaction amount through `convertBatch` into the tenant baseline currency; derive the corridors from `rules/src/tenant.rule.ts`; delete the no-transaction fallbacks so an empty ledger reads as zero
 blocked  G1
 done when the cashflow response moves when a currency or a transaction changes
@@ -68,7 +68,7 @@ done when closed
 
 ### G7 · Computed optimizer
 status   `fixture`
-evidence `wealth.api.ts:137` returns a fixed action list — sell CSPX.LSE, buy IEAC.LSE and XEON.XETRA with hardcoded amounts — and `wealth.api.ts:164` returns three literal rationale strings; only the drift per holding is computed (`wealth.api.ts:134`)
+evidence `planRebalance` in `wealth.api.ts` derives every action from the holdings' own drift, sizes it off `totalValuationBase`, lists sells first, and caps the buys at the sell proceeds so the list is always executable; the strategy sentence names the holding actually rebalanced. Open: the personal-finance and cross-border pillars are still literal strings, and the target weights themselves come from the profile rather than from the effective risk score and the covariance in `market_snapshots`
 remedy  target weights from the effective score and the covariance in `market_snapshots`, carve-outs ring-fenced into money-market buckets, actions derived from the difference
 blocked  G5
 done when changing a holding or the risk score changes the returned actions
@@ -96,7 +96,7 @@ done when an assertion with a bad signature is refused and recorded as a refusal
 
 ### G11 · Immutable, verified ledger
 status   `partial`
-evidence `wealth.api.ts:187` computes `sha256Hex(userId:tenantId:timestamp:passkeySignature:tradeDiff)`, and `mongo-wealth.repository.ts` appends a row; but the digest is over an unverified signature, `wealth.api.ts:212` mutates the portfolio in the same call, and the evidence page still renders `DEMO_LEDGER`
+evidence `wealth.api.ts` appends the ledger row before the portfolio moves, so a failed persist leaves an attempt on record rather than an unexplained rebalance, and each executed trade is checked against the holding's recorded target instead of the client's word; the digests cover the initial and resulting state summaries. Open: the digest still folds in an unverified passkey signature, and the evidence page still renders `DEMO_LEDGER`
 remedy  verify before hashing, append only, and have the digest cover the resulting state rather than constant strings
 blocked  G10
 done when `/evidence` lists rows read from the API whose digests recompute from their own fields

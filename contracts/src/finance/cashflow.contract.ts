@@ -21,6 +21,9 @@ export const CashflowSummaryResponse = z.object({
   monthlyOutflowBase: z.number().int(),
   netCashflowBase: z.number().int(),
   totalLiquidReservesBase: z.number().int(),
+  // Accounts no rate could value today. They are left out of totalLiquidReservesBase, so runway is a floor, not a
+  // whole picture, whenever this is above zero.
+  unvaluedAccountCount: z.number().int(),
   runwayMonths: z.number(),
   runwayBand: z.enum(RUNWAY_BANDS),
   reserveMultiplier: z.number(),
