@@ -36,7 +36,7 @@ export class MockLlmAdapter implements LlmAdapter {
     for (const h of portfolio.holdings) {
       currentWeights[h.assetSymbol] = h.currentWeight;
       targetWeights[h.assetSymbol] = h.targetWeight;
-      if (h.assetClass === 'EQUITY') {
+      if (h.assetClass === 'EQUITY_GLOBAL' || h.assetClass === 'EQUITY_US') {
         equityWeight += h.currentWeight;
         targetEquityWeight += h.targetWeight;
       }
