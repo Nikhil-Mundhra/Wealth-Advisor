@@ -25,7 +25,7 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 - delete/rename: grep the symbol or path, remove its references first, re-grep returns nothing.
 - commit: `make test` green; never commit `.env`, `.env.local`, `.vercel/`, `dist/`; no AI attribution lines.
 - commands: `make help` lists every task (dev, build, test, db, deploy).
-- ci: a new check goes into `.github/workflows/ci.yml` as a `make` target; the Node major lives in `.nvmrc` and ci.yml `node-version` together.
+- ci: a new check goes into `.github/workflows/ci.yml` as a `make` target; the Node major lives in `.nvmrc` and ci.yml `node-version` together; the runner image is pinned and moves only after a green run on the new image.
 - process control: Makefile start/stop/status act only on processes running inside this checkout; new services reuse `start_svc`, `stop_svc`, `status_svc`.
 - data: `make seed-demo` is local only.
 - docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
@@ -35,7 +35,7 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 ## File structure
 
 ```
-.github/workflows/ci.yml : on PRs and main: docs-lint, deps-lint, typecheck, tests, frontend build
+.github/workflows/ci.yml : on PRs and main, on a pinned ubuntu-24.04 runner: docs-lint, deps-lint, typecheck, tests, frontend build
 .nvmrc : Node major CI builds and local version managers use; change it and ci.yml `node-version` together
 vercel.json : Vercel Services: frontend and backend service definitions, top-level rewrites, weekday market refresh cron
 ```
