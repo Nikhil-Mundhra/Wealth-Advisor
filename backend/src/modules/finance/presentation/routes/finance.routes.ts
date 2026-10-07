@@ -10,7 +10,7 @@ import {
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { FinanceApi } from '../../finance.api.ts';
 
-export function financeRoutes(api: FinanceApi, auth: MiddlewareHandler): readonly RouteDefinition[] {
+export function financeRoutes(api: FinanceApi, auth: MiddlewareHandler, writeAuth: MiddlewareHandler): readonly RouteDefinition[] {
   const guard = [auth];
   const scope = (c: Context) => {
     const { tenantId, userId } = c.get('principal');
@@ -27,7 +27,7 @@ export function financeRoutes(api: FinanceApi, auth: MiddlewareHandler): readonl
       }),
 
     RouteBuilder.post('/accounts')
-      .use(...guard)
+      .use(writeAuth)
       .body(CreateAccountRequest)
       .responds(AccountDto, 201)
       .handle(async ({ c, body }) => {

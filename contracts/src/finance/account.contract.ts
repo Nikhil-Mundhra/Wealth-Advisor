@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CURRENCIES, HOUSEHOLD_MODES } from '@wealth-advisor/rules';
+import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const ACCOUNT_TYPES = ['CHECKING', 'SAVINGS', 'MULTI_CURRENCY_WALLET', 'BROKERAGE_CASH'] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
@@ -28,7 +29,7 @@ export const CreateAccountRequest = z.object({
   currency: z.enum(CURRENCIES),
   balance: z.number().int(),
   isPrimaryLiquidity: z.boolean().default(false),
-  householdMode: z.enum(HOUSEHOLD_MODES).default('INDIVIDUAL'),
+  householdMode: HouseholdModeField.default('INDIVIDUAL'),
 });
 export type CreateAccountRequest = z.infer<typeof CreateAccountRequest>;
 

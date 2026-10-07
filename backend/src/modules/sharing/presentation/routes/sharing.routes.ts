@@ -7,10 +7,10 @@ import {
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { SharingApi } from '../../sharing.api.ts';
 
-export function sharingRoutes(api: SharingApi, auth: MiddlewareHandler): readonly RouteDefinition[] {
+export function sharingRoutes(api: SharingApi, writeAuth: MiddlewareHandler): readonly RouteDefinition[] {
   return [
     RouteBuilder.post('/create')
-      .use(auth)
+      .use(writeAuth)
       .body(CreateShareLinkRequest)
       .responds(CreateShareLinkResponse, 201)
       .handle(async ({ c, body }) => {

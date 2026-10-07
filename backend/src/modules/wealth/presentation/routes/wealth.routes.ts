@@ -10,7 +10,7 @@ import {
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { WealthApi } from '../../wealth.api.ts';
 
-export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler): readonly RouteDefinition[] {
+export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth: MiddlewareHandler): readonly RouteDefinition[] {
   const guard = [auth];
   const scope = (c: Context) => {
     const { tenantId, userId } = c.get('principal');
@@ -40,7 +40,7 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler): readonly 
       }),
 
     RouteBuilder.post('/execute')
-      .use(...guard)
+      .use(writeAuth)
       .body(ExecuteTradeRequest)
       .responds(ExecuteTradeResponse)
       .handle(async ({ c, body }) => {

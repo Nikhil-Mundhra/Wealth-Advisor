@@ -33,6 +33,8 @@ import { wealthRoutes } from './presentation/routes/wealth.routes.ts';
 export interface WealthModuleDeps {
   analytics?: AnalyticsApi;
   auth: MiddlewareHandler;
+  // Writes need a signed-in caller: an anonymous request never writes into the demo account.
+  writeAuth: MiddlewareHandler;
 }
 
 export function createWealthModule(
@@ -71,7 +73,7 @@ export function createWealthModule(
     basePath: '/wealth',
     collections: wealthCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.wealth, statuses: WEALTH_ERROR_STATUSES },
-    routes: wealthRoutes(api, deps.auth),
+    routes: wealthRoutes(api, deps.auth, deps.writeAuth),
   });
 
   return { manifest, api };

@@ -66,10 +66,22 @@ describe('route guards', () => {
     assert.equal(response.status, 200);
   });
 
-  it('applies the auth guard to share-link creation', async () => {
-    const refused = await postJson(app.app, '/api/sharing/create', {}, { authorization: 'Bearer not.a.token' });
-    assert.equal(refused.status, 401);
-    const created = await postJson(app.app, '/api/sharing/create', {}, { authorization: `Bearer ${await tokenWith(['USER'])}` });
-    assert.equal(created.status, 201);
+  it('requires a signed-in caller for every write', async () => {
+    const writes: [string, unknown][] = [
+      ['/api/sharing/create', {}],
+      ['/api/finance/accounts', { institutionName: 'N26', accountType: 'CHECKING', currency: 'EUR', balance: 1, isPrimaryLiquidity: false }],
+      ['/api/wealth/execute', { trades: [], passkeyAssertion: { credentialId: 'c', clientDataJson: 'd', authenticatorData: 'a', signature: 's' } }],
+    ];
+    for (const [path, body] of writes) {
+      const response = await postJson(app.app, path, body);
+      assert.equal(response.status, 401, path);
+      assert.equal((await json(response)).code, 'AU_1005', path);
+    }
+  });
+
+  it('shares only a portfolio the signed-in caller holds', async () => {
+    const response = await postJson(app.app, '/api/sharing/create', {}, { authorization: `Bearer ${await tokenWith(['USER'])}` });
+    assert.equal(response.status, 404);
+    assert.equal((await json(response)).code, 'WL_1001');
   });
 });

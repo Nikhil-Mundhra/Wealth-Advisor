@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { HOUSEHOLD_MODES, LOCALES } from '@wealth-advisor/rules';
+import { LOCALES } from '@wealth-advisor/rules';
+import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const ActionCardDto = z.object({
   cardType: z.enum(['PROPOSAL', 'STRESS_TEST', 'RUNWAY_ALERT', 'PRODUCT_COMPARISON']),
@@ -10,7 +11,7 @@ export type ActionCardDto = z.infer<typeof ActionCardDto>;
 export const AdvisoryChatRequest = z.object({
   message: z.string().min(1).max(2000),
   locale: z.enum(LOCALES).optional().default('en'),
-  householdMode: z.enum(HOUSEHOLD_MODES).optional().default('INDIVIDUAL'),
+  householdMode: HouseholdModeField.default('INDIVIDUAL'),
 });
 export type AdvisoryChatRequest = z.infer<typeof AdvisoryChatRequest>;
 

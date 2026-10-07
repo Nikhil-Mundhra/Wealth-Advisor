@@ -9,12 +9,16 @@ import type {
   CreateShareLinkResponse,
   SharedPlanResponse,
 } from '@wealth-advisor/contracts';
+import type { WealthApi } from '../wealth/public.ts';
 import type { SharedPlanRepository } from './application/ports.ts';
 
 export interface SharingApiDeps {
   plans: SharedPlanRepository;
+  wealth: WealthApi;
   clock: Clock;
 }
+
+const UNNAMED_OWNER = 'DEWA client';
 
 // A share link is owned by a scope, so an id that is neither a document id nor the demo scope is refused rather than
 // silently filed under the demo account.
@@ -25,7 +29,7 @@ function requireScopeId(id: string, demoId: string, label: string): ObjectId {
 }
 
 export function createSharingApi(deps: SharingApiDeps) {
-  const { plans, clock } = deps;
+  const { plans, wealth, clock } = deps;
 
   return {
     async createShareLink(
@@ -37,33 +41,20 @@ export function createSharingApi(deps: SharingApiDeps) {
       const ttlHours = input.ttlHours ?? 72;
       const expiresAt = new Date(now.getTime() + ttlHours * 3600000);
       const token = `dewa_sec_${generateOpaqueToken(6)}`;
+      // The snapshot is the caller's own rebalance proposal at the moment of sharing.
+      const proposal = await wealth.optimizePortfolio(tenantId, userId);
 
       await plans.create({
         shareToken: token,
         tenantId: requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant'),
         userId: requireScopeId(userId, DEFAULT_USER_ID, 'user'),
-        ownerDisplayName: 'Elena',
+        ownerDisplayName: input.ownerDisplayName ?? UNNAMED_OWNER,
         privacyMasked: input.privacyMasked ?? true,
         planSnapshot: {
-          recommendedWeights: {
-            'CSPX.LSE': 0.4,
-            'IEAC.LSE': 0.35,
-            'XEON.XETRA': 0.25,
-          },
-          currentWeights: {
-            'CSPX.LSE': 0.6,
-            'IEAC.LSE': 0.25,
-            'XEON.XETRA': 0.15,
-          },
-          threePillarRationale: {
-            personalFinance: 'Runway expanded to 6.4 months by buffering short-term liabilities.',
-            crossBorder: 'Protected remittances against EUR/CNY exchange rate volatility.',
-            wealthStrategy: 'Reduced US equity concentration risk from 60% to 40%.',
-          },
-          stressTestScenario: {
-            fxShockPercent: -5.0,
-            estimatedDrawdownPercent: 1.8,
-          },
+          recommendedWeights: proposal.targetWeights,
+          currentWeights: proposal.currentWeights,
+          threePillarRationale: proposal.rationale,
+          stressTestScenario: null,
         },
         passphraseHash: null,
         expiresAt,

@@ -124,7 +124,7 @@ backend/src/modules/market/market.module.ts : composition root: store-selected r
 backend/src/modules/market/public.ts : the market surface other modules may import (api type, domain types, tracked symbols)
 backend/src/modules/sharing/application/ports.ts : SharedPlanRepository port
 backend/src/modules/sharing/public.ts : the sharing surface other modules may import
-backend/src/modules/sharing/sharing.api.ts : createSharingApi: share link creation with TTL, masked public plan resolution
+backend/src/modules/sharing/sharing.api.ts : createSharingApi: share link creation with TTL and a snapshot of the caller's wealth proposal, masked public plan resolution
 backend/src/modules/sharing/sharing.module.ts : composition root: store-selected shared plan repo → api, routes, manifest
 backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, SandboxLedgerRepository, PasskeyVerifier ports
 backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts : PasskeyVerifier that refuses every assertion; no passkey registration exists

@@ -36,6 +36,10 @@ flowchart TB
   authmod -->|optional auth guard| advisorymod
   advisorymod -.->|chat completion| llm[Gemini, OpenAI]
   modidx --> sharingmod[sharing.module.ts · composition root]
+  sharingmod -->|wealth api via public.ts| wealthmod
+  authmod -->|auth guard on writes| financemod
+  authmod -->|auth guard on writes| wealthmod
+  authmod -->|auth guard| sharingmod
   sharingmod -->|manifest| module
   app --> module
   app --> http
@@ -84,7 +88,7 @@ flowchart TB
 |---|---|---|
 | `backend/src/app.ts` | builds the HTTP app: registers manifests, error handler from the error catalog, `/health`, `/ai` (forwards to `/advisory/chat` with the caller's `authorization` header), 404 fallback | `core/module`, `core/http`, `backend/src/modules/index.ts` |
 | `backend/src/core/` | mechanisms: application, config, crypto, domain, errors, events (envelope, bus, processed events), http, http-client (outbound JSON, request budget), module, db, registry, time | contracts (type-only: error envelope), rules; nothing in `modules/` |
-| `backend/src/modules/index.ts` | explicit module list; build order auth, market, analytics, admin, finance, wealth, advisory, sharing; hands market api to analytics and finance, analytics api to wealth, finance and wealth apis and admin's `getActiveProvider` to advisory, auth guard to admin, optional auth guard to finance, wealth and advisory | each module's composition root |
+| `backend/src/modules/index.ts` | explicit module list; build order auth, market, analytics, admin, finance, wealth, advisory, sharing; hands market api to analytics and finance, analytics api to wealth, finance and wealth apis and admin's `getActiveProvider` to advisory, auth guard to admin and to the finance, wealth and sharing writes, optional auth guard to finance, wealth and advisory reads, wealth api to sharing | each module's composition root |
 | `backend/src/modules/admin/admin.module.ts` | composition root: store-selected tenant, API key and settings repositories; returns the manifest and the admin api | every admin layer, `core/module`, `core/config`, `core/db`, rules |
 | `backend/src/modules/admin/admin.api.ts` | function orchestrators: list and create tenants, list, create and revoke API keys, read and update the active LLM provider (`getActiveProvider`) | application ports, domain (errors), infrastructure documents, `core/crypto`, `core/time`, contracts, rules |
 | `backend/src/modules/admin/public.ts` | admin api type; no module imports it | api type |
@@ -112,7 +116,7 @@ flowchart TB
 | `backend/src/modules/finance/finance.module.ts` | composition root: store-selected account and transaction repositories; returns the manifest and the finance api | every finance layer, market `public.ts`, `core/module`, `core/config`, `core/db`, rules |
 | `backend/src/modules/finance/finance.api.ts` | function orchestrators: accounts, create account, transactions, cashflow summary (currency conversion through the market api) | application ports, domain, infrastructure documents, market `public.ts`, `core/db`, `core/domain`, `core/time`, contracts, rules |
 | `backend/src/modules/finance/public.ts` | the only finance file other modules import | api type |
-| `backend/src/modules/finance/presentation/` | accounts, transactions and cashflow routes behind the optional auth guard, error statuses | `finance.api.ts`, `core/http`, contracts, rules |
+| `backend/src/modules/finance/presentation/` | accounts, transactions and cashflow reads behind the optional auth guard, account creation behind the auth guard, error statuses | `finance.api.ts`, `core/http`, contracts, rules |
 | `backend/src/modules/finance/application/` | repository ports | infrastructure documents |
 | `backend/src/modules/finance/domain/` | burn-rate calculator | infrastructure documents, rules |
 | `backend/src/modules/finance/infrastructure/` | Mongo and memory account and transaction repositories, documents, schema | application ports, `core/db`, contracts, rules |
@@ -123,16 +127,16 @@ flowchart TB
 | `backend/src/modules/market/application/` | ports and refresh / conversion steps | domain, `core/*`, contracts (event payload), rules |
 | `backend/src/modules/market/domain/` | Money, Price, FxRate, Valuation, rate table, convertBatch, tracked symbols, errors | `core/domain`, `core/time`, rules |
 | `backend/src/modules/market/infrastructure/` | Marketstack and Frankfurter adapters, Mongo and memory repositories, schemas | application ports, domain, `core/http-client`, `core/db`, `core/time`, rules |
-| `backend/src/modules/sharing/sharing.module.ts` | composition root: store-selected shared-plan repository; returns the manifest and the sharing api | every sharing layer, `core/module`, `core/config`, `core/db`, rules |
-| `backend/src/modules/sharing/sharing.api.ts` | function orchestrators: create share link (random token), shared plan by token | application ports, `core/crypto`, `core/db`, `core/domain`, `core/time`, contracts, rules |
+| `backend/src/modules/sharing/sharing.module.ts` | composition root: store-selected shared-plan repository; returns the manifest and the sharing api | every sharing layer, `wealth/public.ts`, `core/module`, `core/config`, `core/db`, rules |
+| `backend/src/modules/sharing/sharing.api.ts` | function orchestrators: create share link (random token, snapshot from the caller's wealth proposal), shared plan by token | application ports, `wealth/public.ts`, `core/crypto`, `core/db`, `core/domain`, `core/time`, contracts, rules |
 | `backend/src/modules/sharing/public.ts` | sharing api type; no module imports it | api type |
-| `backend/src/modules/sharing/presentation/` | create route behind the optional auth guard, public get-by-token route; error statuses | `sharing.api.ts`, `core/http`, contracts, rules |
+| `backend/src/modules/sharing/presentation/` | create route behind the auth guard, public get-by-token route; error statuses | `sharing.api.ts`, `core/http`, contracts, rules |
 | `backend/src/modules/sharing/application/` | repository port | infrastructure documents |
 | `backend/src/modules/sharing/infrastructure/` | Mongo and memory shared-plan repositories, document, schema | application ports, `core/db`, contracts |
 | `backend/src/modules/wealth/wealth.module.ts` | composition root: store-selected asset product, portfolio and sandbox ledger repositories; returns the manifest and the wealth api | every wealth layer, analytics `public.ts`, `core/module`, `core/config`, `core/db`, rules |
 | `backend/src/modules/wealth/wealth.api.ts` | function orchestrators: products, portfolio, optimize (latest analytics snapshot when present), execute sandbox trade, ledger | application ports, infrastructure documents, analytics `public.ts`, `core/crypto`, `core/db`, `core/domain`, `core/time`, contracts, rules |
 | `backend/src/modules/wealth/public.ts` | the only wealth file other modules import | api type |
-| `backend/src/modules/wealth/presentation/` | products, portfolio, optimize, execute and ledger routes behind the optional auth guard, error statuses | `wealth.api.ts`, `core/http`, contracts, rules |
+| `backend/src/modules/wealth/presentation/` | products, portfolio, optimize and ledger routes behind the optional auth guard, execute behind the auth guard, error statuses | `wealth.api.ts`, `core/http`, contracts, rules |
 | `backend/src/modules/wealth/application/` | repository ports | infrastructure documents |
 | `backend/src/modules/wealth/infrastructure/` | Mongo and memory asset product, portfolio and sandbox ledger repositories, documents, schema | application ports, `core/db`, contracts, rules |
 

@@ -6,7 +6,7 @@
 
 ## POST /api/finance/accounts
 - responsibility: create an account in the caller's scope; `baseBalance` is the balance for an EUR account, null otherwise
-- contract: request `CreateAccountRequest`, response `AccountDto` 201, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `FN_1900`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`
+- contract: request `CreateAccountRequest`, response `AccountDto` 201, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `FN_1900`, `CORE_DB_UNCONFIGURED`; auth required Bearer (`backend/docs/auth-token.md` `requireAuth`): no token or an invalid token → `AU_1005`
 
 ## GET /api/finance/transactions
 - responsibility: return the caller's transactions

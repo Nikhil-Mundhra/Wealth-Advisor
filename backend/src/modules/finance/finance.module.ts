@@ -26,6 +26,8 @@ import { financeRoutes } from './presentation/routes/finance.routes.ts';
 export interface FinanceModuleDeps {
   market?: MarketApi;
   auth: MiddlewareHandler;
+  // Writes need a signed-in caller: an anonymous request never writes into the demo account.
+  writeAuth: MiddlewareHandler;
 }
 
 export function createFinanceModule(
@@ -52,7 +54,7 @@ export function createFinanceModule(
     basePath: '/finance',
     collections: financeCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.finance, statuses: FINANCE_ERROR_STATUSES },
-    routes: financeRoutes(api, deps.auth),
+    routes: financeRoutes(api, deps.auth, deps.writeAuth),
   });
 
   return { manifest, api };

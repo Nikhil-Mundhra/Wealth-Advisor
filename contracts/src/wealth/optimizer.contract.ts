@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { HOUSEHOLD_MODES } from '@wealth-advisor/rules';
+import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const RebalanceActionDto = z.object({
   assetSymbol: z.string(),
@@ -10,7 +10,7 @@ export const RebalanceActionDto = z.object({
 export type RebalanceActionDto = z.infer<typeof RebalanceActionDto>;
 
 export const OptimizePortfolioRequest = z.object({
-  householdMode: z.enum(HOUSEHOLD_MODES).optional(),
+  householdMode: HouseholdModeField.optional(),
   statedRiskScore: z.number().min(1).max(10).optional(),
 });
 export type OptimizePortfolioRequest = z.infer<typeof OptimizePortfolioRequest>;

@@ -106,11 +106,21 @@ describe('AdvisoryApi', () => {
       getActiveProvider: async () => 'openai',
     });
 
-    const res = await openaiApi.chat('default', 'default', {
-      message: 'Can I rebalance safely?',
-      locale: 'en',
-      householdMode: 'INDIVIDUAL',
-    });
+    // A provider that cannot be reached: the adapter falls back to the deterministic answer.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      throw new Error('provider unreachable');
+    };
+    let res;
+    try {
+      res = await openaiApi.chat('default', 'default', {
+        message: 'Can I rebalance safely?',
+        locale: 'en',
+        householdMode: 'INDIVIDUAL',
+      });
+    } finally {
+      globalThis.fetch = realFetch;
+    }
 
     assert.ok(res.reply.includes('individual profile'));
     assert.ok(res.actionCards.length === 2);

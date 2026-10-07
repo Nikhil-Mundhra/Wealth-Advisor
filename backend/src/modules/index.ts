@@ -16,15 +16,23 @@ export function buildModules(context: ModuleContext): ModuleManifest[] {
   const market = createMarketModule(context);
   const analytics = createAnalyticsModule(context, market.api);
   const admin = createAdminModule(context, { auth: auth.authGuard });
-  const finance = createFinanceModule(context, { market: market.api, auth: auth.optionalAuthGuard });
-  const wealth = createWealthModule(context, { analytics: analytics.api, auth: auth.optionalAuthGuard });
+  const finance = createFinanceModule(context, {
+    market: market.api,
+    auth: auth.optionalAuthGuard,
+    writeAuth: auth.authGuard,
+  });
+  const wealth = createWealthModule(context, {
+    analytics: analytics.api,
+    auth: auth.optionalAuthGuard,
+    writeAuth: auth.authGuard,
+  });
   const advisory = createAdvisoryModule(context, {
     finance: finance.api,
     wealth: wealth.api,
     getActiveProvider: () => admin.api.getActiveProvider(),
     auth: auth.optionalAuthGuard,
   });
-  const sharing = createSharingModule(context, { auth: auth.optionalAuthGuard });
+  const sharing = createSharingModule(context, { wealth: wealth.api, writeAuth: auth.authGuard });
 
   return [
     auth.manifest,

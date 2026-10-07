@@ -126,7 +126,7 @@ done when each tab reads a backend route
 
 ### G15 · Snapshot content and privacy masking · `backend/src/modules/sharing/`
 status   `partial`
-evidence token creation, `ttlHours` default 72 capped at 720, and expiry on read all work (`sharing.api.ts:36`, `:83`); but the stored plan snapshot is a literal (`sharing.api.ts:47`), `ownerDisplayName` is the literal `'Elena'` (`sharing.api.ts:44`), and `privacyMasked` is stored and echoed back (`sharing.api.ts:45`, `:90`) with no field ever redacted
-remedy  build the snapshot from the portfolio read, take the owner name from the session, and redact holdings and amounts when the flag is set
+evidence token creation, `ttlHours` default 72 capped at 720, and expiry on read all work (`sharing.api.ts:36`, `:83`); the snapshot is the caller's rebalance proposal and `ownerDisplayName` comes from the request (`sharing.api.ts`); `privacyMasked` is stored and echoed back (`sharing.api.ts:45`, `:90`) with no field ever redacted
+remedy  redact holdings and amounts when the flag is set
 blocked  G6
 done when a shared link shows the sharer's real plan and honours the mask toggle

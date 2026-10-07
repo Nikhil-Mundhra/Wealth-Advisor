@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DisplayNameField } from '../fields/display-name.field.ts';
 
 export const PlanSnapshotDto = z.object({
   recommendedWeights: z.record(z.string(), z.number()),
@@ -8,16 +9,20 @@ export const PlanSnapshotDto = z.object({
     crossBorder: z.string(),
     wealthStrategy: z.string(),
   }),
-  stressTestScenario: z.object({
-    fxShockPercent: z.number(),
-    estimatedDrawdownPercent: z.number(),
-  }),
+  // null until a stress-test engine exists.
+  stressTestScenario: z
+    .object({
+      fxShockPercent: z.number(),
+      estimatedDrawdownPercent: z.number(),
+    })
+    .nullable(),
 });
 export type PlanSnapshotDto = z.infer<typeof PlanSnapshotDto>;
 
 export const CreateShareLinkRequest = z.object({
   privacyMasked: z.boolean().default(true),
   ttlHours: z.number().int().positive().max(720).default(72),
+  ownerDisplayName: DisplayNameField.optional(),
 });
 export type CreateShareLinkRequest = z.infer<typeof CreateShareLinkRequest>;
 
