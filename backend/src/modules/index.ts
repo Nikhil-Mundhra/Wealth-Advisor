@@ -12,21 +12,24 @@ import { createWealthModule } from './wealth/wealth.module.ts';
 // Explicit module list. Static imports keep every module visible to Vercel's bundler; add new modules here.
 // A module is built before the modules that receive its api (market before analytics).
 export function buildModules(context: ModuleContext): ModuleManifest[] {
+  const auth = createAuthModule(context);
   const market = createMarketModule(context);
-  const admin = createAdminModule(context);
-  const finance = createFinanceModule(context);
-  const wealth = createWealthModule(context);
+  const analytics = createAnalyticsModule(context, market.api);
+  const admin = createAdminModule(context, { auth: auth.authGuard });
+  const finance = createFinanceModule(context, { market: market.api, auth: auth.optionalAuthGuard });
+  const wealth = createWealthModule(context, { analytics: analytics.api, auth: auth.optionalAuthGuard });
   const advisory = createAdvisoryModule(context, {
     finance: finance.api,
     wealth: wealth.api,
     getActiveProvider: () => admin.api.getActiveProvider(),
+    auth: auth.optionalAuthGuard,
   });
   const sharing = createSharingModule(context);
 
   return [
-    createAuthModule(context),
+    auth.manifest,
     market.manifest,
-    createAnalyticsModule(context, market.api),
+    analytics.manifest,
     admin.manifest,
     finance.manifest,
     wealth.manifest,

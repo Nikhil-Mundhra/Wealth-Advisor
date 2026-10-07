@@ -35,6 +35,7 @@ export interface Withdrawal {
 }
 
 export interface UserProps extends EntityProps {
+  tenantId: string | null;
   email: Email;
   emailVerifiedAt: Date | null;
   passwordHash: string | null;
@@ -48,6 +49,7 @@ export interface UserProps extends EntityProps {
 
 interface RegisterWithEmailInput {
   id: string;
+  tenantId?: string | null;
   email: Email;
   passwordHash: string;
   displayName: string | null;
@@ -61,6 +63,7 @@ export class User extends BaseEntity<UserProps> {
     return BaseEntity.finalize(
       new User({
         id: input.id,
+        tenantId: input.tenantId ?? null,
         createdAt: input.now,
         updatedAt: input.now,
         email: input.email,
@@ -90,6 +93,10 @@ export class User extends BaseEntity<UserProps> {
     invariant(new Set(providers.map((p) => `${p.type}:${p.subject}`)).size === providers.length, violated('duplicate provider link'));
     invariant(!providers.some((p) => p.type === 'EMAIL') || passwordHash !== null, violated('an EMAIL provider requires a password hash'));
     invariant(displayName === null || (displayName.length > 0 && displayName.length <= DISPLAY_NAME_MAX_LENGTH), violated('display name length'));
+  }
+
+  get tenantId(): string | null {
+    return this.props.tenantId;
   }
 
   get email(): Email {

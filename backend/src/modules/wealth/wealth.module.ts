@@ -23,11 +23,21 @@ import {
   MongoPortfolioRepository,
   MongoSandboxLedgerRepository,
 } from './infrastructure/db/repositories/mongo-wealth.repository.ts';
+import type { MiddlewareHandler } from 'hono';
+import type { AnalyticsApi } from '../analytics/public.ts';
 import { wealthCollections } from './infrastructure/db/schema/wealth-collections.ts';
 import { WEALTH_ERROR_STATUSES } from './presentation/wealth-error-statuses.ts';
 import { wealthRoutes } from './presentation/routes/wealth.routes.ts';
 
-export function createWealthModule(context: ModuleContext): { manifest: ModuleManifest; api: WealthApi } {
+export interface WealthModuleDeps {
+  analytics?: AnalyticsApi;
+  auth?: MiddlewareHandler;
+}
+
+export function createWealthModule(
+  context: ModuleContext,
+  deps?: WealthModuleDeps,
+): { manifest: ModuleManifest; api: WealthApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
 
@@ -46,14 +56,14 @@ export function createWealthModule(context: ModuleContext): { manifest: ModuleMa
       ? new MemorySandboxLedgerRepository()
       : new MongoSandboxLedgerRepository(async () => (await db()).collection<SandboxLedgerDocument>(SANDBOX_LEDGERS_COLLECTION));
 
-  const api = createWealthApi({ products, portfolios, ledger, clock });
+  const api = createWealthApi({ products, portfolios, ledger, clock, analytics: deps?.analytics });
 
   const manifest = defineModule({
     name: 'wealth',
     basePath: '/wealth',
     collections: wealthCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.wealth, statuses: WEALTH_ERROR_STATUSES },
-    routes: wealthRoutes(api),
+    routes: wealthRoutes(api, deps?.auth),
   });
 
   return { manifest, api };

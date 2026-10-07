@@ -18,10 +18,20 @@ import {
   MongoTransactionRepository,
 } from './infrastructure/db/repositories/mongo-finance.repository.ts';
 import { financeCollections } from './infrastructure/db/schema/finance-collections.ts';
+import type { MiddlewareHandler } from 'hono';
+import type { MarketApi } from '../market/public.ts';
 import { FINANCE_ERROR_STATUSES } from './presentation/finance-error-statuses.ts';
 import { financeRoutes } from './presentation/routes/finance.routes.ts';
 
-export function createFinanceModule(context: ModuleContext): { manifest: ModuleManifest; api: FinanceApi } {
+export interface FinanceModuleDeps {
+  market?: MarketApi;
+  auth?: MiddlewareHandler;
+}
+
+export function createFinanceModule(
+  context: ModuleContext,
+  deps?: FinanceModuleDeps,
+): { manifest: ModuleManifest; api: FinanceApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
 
@@ -35,14 +45,14 @@ export function createFinanceModule(context: ModuleContext): { manifest: ModuleM
       ? new MemoryTransactionRepository()
       : new MongoTransactionRepository(async () => (await db()).collection<TransactionDocument>(TRANSACTIONS_COLLECTION));
 
-  const api = createFinanceApi({ accounts, transactions, clock });
+  const api = createFinanceApi({ accounts, transactions, clock, market: deps?.market });
 
   const manifest = defineModule({
     name: 'finance',
     basePath: '/finance',
     collections: financeCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.finance, statuses: FINANCE_ERROR_STATUSES },
-    routes: financeRoutes(api),
+    routes: financeRoutes(api, deps?.auth),
   });
 
   return { manifest, api };

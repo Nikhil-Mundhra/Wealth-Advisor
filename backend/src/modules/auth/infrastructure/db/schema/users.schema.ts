@@ -25,6 +25,7 @@ export const usersSchema: CollectionDefinition = {
         'providers', 'consents', 'withdrawal', 'createdAt', 'updatedAt',
       ],
       properties: {
+        tenantId: nullable('objectId'),
         email: { bsonType: 'string', maxLength: EMAIL_MAX_LENGTH },
         emailVerifiedAt: nullable('date'),
         passwordHash: nullable('string'),

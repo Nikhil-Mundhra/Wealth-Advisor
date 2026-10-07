@@ -3,6 +3,7 @@ import { env } from '#core/config/env.ts';
 import { resolveDataStore } from '#core/db/connection/data-store.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
+import type { MiddlewareHandler } from 'hono';
 import { createAdminApi, type AdminApi } from './admin.api.ts';
 import {
   type AdminSettingsDocument,
@@ -24,7 +25,11 @@ import { adminCollections } from './infrastructure/db/schema/admin-collections.t
 import { ADMIN_ERROR_STATUSES } from './presentation/admin-error-statuses.ts';
 import { adminRoutes } from './presentation/routes/admin.routes.ts';
 
-export function createAdminModule(context: ModuleContext): { manifest: ModuleManifest; api: AdminApi } {
+export interface AdminModuleDeps {
+  auth?: MiddlewareHandler;
+}
+
+export function createAdminModule(context: ModuleContext, deps?: AdminModuleDeps): { manifest: ModuleManifest; api: AdminApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
 
@@ -52,7 +57,7 @@ export function createAdminModule(context: ModuleContext): { manifest: ModuleMan
     basePath: '/admin',
     collections: adminCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.admin, statuses: ADMIN_ERROR_STATUSES },
-    routes: adminRoutes({ api }),
+    routes: adminRoutes({ api, auth: deps?.auth }),
   });
 
   return { manifest, api };

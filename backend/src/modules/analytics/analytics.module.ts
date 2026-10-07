@@ -16,7 +16,10 @@ import { analyticsRoutes } from './presentation/routes/analytics.routes.ts';
 
 // Composition root. market's api arrives from modules/index.ts (the analytics → market edge); prices are asked for
 // synchronously, while the refresh itself arrives as the market.data_refreshed event.
-export function createAnalyticsModule(context: ModuleContext, market: MarketApi): ModuleManifest {
+export function createAnalyticsModule(
+  context: ModuleContext,
+  market: MarketApi,
+): { manifest: ModuleManifest; api: AnalyticsApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
   const snapshots =
@@ -25,7 +28,7 @@ export function createAnalyticsModule(context: ModuleContext, market: MarketApi)
       : new MongoMarketSnapshotRepository(async () => (await db()).collection<MarketSnapshotDocument>(MARKET_SNAPSHOTS_COLLECTION));
   const api = createAnalyticsApi({ market, snapshots, processed: createProcessedEvents(store, db, clock), clock });
 
-  return defineModule({
+  const manifest = defineModule({
     name: 'analytics',
     basePath: '/analytics',
     collections: analyticsCollections,
@@ -40,4 +43,6 @@ export function createAnalyticsModule(context: ModuleContext, market: MarketApi)
       },
     ],
   });
+
+  return { manifest, api };
 }

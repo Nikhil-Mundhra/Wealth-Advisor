@@ -14,6 +14,7 @@ export async function seedDemoUser(users: UserRepositoryPort, hasher: PasswordHa
   if (await users.findActiveByProvider('EMAIL', email.value)) return 'exists';
   const user = User.registerWithEmail({
     id: ids.next(),
+    tenantId: '600000000000000000000001',
     email,
     passwordHash: await hasher.hash(DEMO_PASSWORD),
     displayName: 'Demo',

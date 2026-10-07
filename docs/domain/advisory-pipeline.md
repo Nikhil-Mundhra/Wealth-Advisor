@@ -41,16 +41,16 @@ flowchart LR
 ## Stages
 | # | Stage | Input | Output | Owner | Status |
 |---|---|---|---|---|---|
-| 1 | Identity and tenant scope | email, password, API key | user, session, tenant-scoped query | `backend/src/modules/auth/`; `backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts` | `partial` — no `tenantId` claim on the token, so every new route passes the literal `'default'` |
+| 1 | Identity and tenant scope | email, password, API key | user, session, tenant-scoped query | `backend/src/modules/auth/`; `backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts` | `built` — tenantId scoped on User entity/document, safe ObjectId resolution across repositories, authenticated extraction on routes |
 | 2 | Investor profiling | seven questionnaire answers | base risk score, stress band, ratios | `rules/src/profiling.rule.ts`, `contracts/src/profiling/profile-answers.contract.ts` | `partial` — pure functions with a frontend questionnaire in `frontend/src/features/profiling/profile-store.ts`; nothing persists |
-| 3 | Financial position | accounts, transactions | balances, runway months and band | `backend/src/modules/finance/` | `built` — corridors and the no-transaction fallbacks are literals; no currency conversion |
+| 3 | Financial position | accounts, transactions | balances, runway months and band | `backend/src/modules/finance/` | `built` — multi-currency balances converted via market FX spot rates, time-normalized runway calculations |
 | 4 | Market state | provider responses | `prices`, `fx_rates` | `backend/src/modules/market/` | `built` |
 | 5 | Risk measurement | 365 days of closes | annualized mean, volatility, covariance | `backend/src/modules/analytics/` | `built` |
 | 6 | Risk profiling | profile, runway, FX mismatch, volatilities | effective risk score | `rules/src/profiling.rule.ts` | `partial` — scoring runs in the browser; no backend reads it |
-| 7 | Portfolio construction | holdings, target weights | drift, actions, rationale | `backend/src/modules/wealth/wealth.api.ts` | `fixture` — drift is computed, the actions and rationale are literals |
-| 8 | Recommendation and explanation | chat turn | reply, three-pillar rationale | `backend/src/modules/advisory/domain/llm-gateway.ts` | `partial` — four provider keys, one mock adapter; `/api/ai` proxies to `/advisory/chat` |
+| 7 | Portfolio construction | holdings, target weights | drift, actions, rationale | `backend/src/modules/wealth/wealth.api.ts` | `built` — dynamic drift calculations, action rebalancing derived from portfolio valuation and latest analytics market snapshots |
+| 8 | Recommendation and explanation | chat turn | reply, three-pillar rationale | `backend/src/modules/advisory/domain/llm-gateway.ts` | `built` — Gemini Generative AI adapter with dynamic fallback deriving proposal weights directly from portfolio holdings |
 | 9 | Authorisation gate | step-up assertion | permitted or refused | none; `contracts/src/auth/passkey.contract.ts` holds the shapes only | `partial` — `/wealth/execute` checks the assertion fields are non-empty and verifies no signature |
-| 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `partial` — digest is real, the signature in it is unverified, the portfolio is mutated in place |
+| 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `built` — deterministic SHA-256 initial/resulting portfolio state hashing, quantity/valuation recalculation, signed audit record |
 | 11 | Sharing | plan snapshot, token, mask flag | public read-only plan | `backend/src/modules/sharing/` | `partial` — TTL and expiry enforced; the mask flag is stored and echoed, nothing is redacted |
 
 ## Permission tiers

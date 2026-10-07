@@ -15,12 +15,12 @@ export interface SharingApiDeps {
   clock: Clock;
 }
 
-function toObjectId(id: string): ObjectId {
-  try {
-    return new ObjectId(id);
-  } catch {
-    return new ObjectId();
-  }
+const DEMO_TENANT_ID = '600000000000000000000001';
+const DEMO_USER_ID = '500000000000000000000001';
+
+function toObjectId(id: string, defaultFallback: string): ObjectId {
+  if (id === 'default') return new ObjectId(defaultFallback);
+  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : new ObjectId(defaultFallback);
 }
 
 export function createSharingApi(deps: SharingApiDeps) {
@@ -39,8 +39,8 @@ export function createSharingApi(deps: SharingApiDeps) {
 
       await plans.create({
         shareToken: token,
-        tenantId: toObjectId(tenantId),
-        userId: toObjectId(userId),
+        tenantId: toObjectId(tenantId, DEMO_TENANT_ID),
+        userId: toObjectId(userId, DEMO_USER_ID),
         ownerDisplayName: 'Elena',
         privacyMasked: input.privacyMasked ?? true,
         planSnapshot: {

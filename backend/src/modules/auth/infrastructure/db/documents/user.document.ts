@@ -5,6 +5,7 @@ export const USERS_COLLECTION = 'users';
 // Stored shape of a user. Enum-like fields are plain strings here; the collection's $jsonSchema enforces them.
 export interface UserDocument {
   _id: ObjectId;
+  tenantId?: ObjectId | null;
   email: string;
   emailVerifiedAt: Date | null;
   passwordHash: string | null;

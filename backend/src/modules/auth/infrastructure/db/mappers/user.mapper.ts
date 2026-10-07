@@ -14,6 +14,7 @@ export const userMapper: Mapper<User, UserDocument> = {
   toEntity(document) {
     return User.restore({
       id: document._id.toHexString(),
+      tenantId: document.tenantId ? document.tenantId.toHexString() : null,
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
       email: Email.restore(document.email),
@@ -32,6 +33,7 @@ export const userMapper: Mapper<User, UserDocument> = {
     const snapshot = user.toSnapshot();
     return {
       _id: new ObjectId(snapshot.id),
+      tenantId: snapshot.tenantId ? new ObjectId(snapshot.tenantId) : null,
       email: snapshot.email.value,
       emailVerifiedAt: snapshot.emailVerifiedAt,
       passwordHash: snapshot.passwordHash,

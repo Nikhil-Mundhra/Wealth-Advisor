@@ -38,6 +38,19 @@ export function calculateBurnRate(input: BurnRateCalculationInput): BurnRateCalc
     }
   }
 
+  // If transactions span multiple months, normalize to an average 30-day monthly rate
+  if (transactions.length > 1) {
+    const timestamps = transactions.map((t) => t.timestamp.getTime());
+    const minTime = Math.min(...timestamps);
+    const maxTime = Math.max(...timestamps);
+    const daysSpan = (maxTime - minTime) / (1000 * 60 * 60 * 24);
+    if (daysSpan > 30) {
+      const months = daysSpan / 30;
+      monthlyInflowBase = Math.round(monthlyInflowBase / months);
+      monthlyOutflowBase = Math.round(monthlyOutflowBase / months);
+    }
+  }
+
   // Fallback defaults if no transactions logged yet
   if (monthlyInflowBase === 0 && monthlyOutflowBase === 0) {
     monthlyInflowBase = householdMode === 'INDIVIDUAL' ? 450000 : 1050000;

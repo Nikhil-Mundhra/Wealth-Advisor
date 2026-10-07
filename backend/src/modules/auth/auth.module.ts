@@ -25,8 +25,12 @@ import { AUTH_ERROR_STATUSES } from './presentation/auth-error-statuses.ts';
 import { authRoutes } from './presentation/routes/auth.routes.ts';
 import { meRoutes } from './presentation/routes/me.routes.ts';
 
+import { optionalAuth, requireAuth } from './presentation/middleware/require-auth.ts';
+
 // Composition root: the only file that knows which concrete class implements each port.
-export function createAuthModule(context: ModuleContext): ModuleManifest {
+export function createAuthModule(
+  context: ModuleContext,
+): { manifest: ModuleManifest; authGuard: import('hono').MiddlewareHandler; optionalAuthGuard: import('hono').MiddlewareHandler } {
   const { db, clock, ids, events } = context;
   const config = env();
   const tokenConfig: TokenConfig = {
@@ -60,7 +64,7 @@ export function createAuthModule(context: ModuleContext): ModuleManifest {
   });
   const issuer = new TokenPairIssuer({ sessions, signer });
 
-  return defineModule({
+  const manifest = defineModule({
     name: 'auth',
     basePath: '/auth',
     collections: authCollections,
@@ -80,4 +84,10 @@ export function createAuthModule(context: ModuleContext): ModuleManifest {
       }),
     ],
   });
+
+  return {
+    manifest,
+    authGuard: requireAuth(signer),
+    optionalAuthGuard: optionalAuth(signer),
+  };
 }

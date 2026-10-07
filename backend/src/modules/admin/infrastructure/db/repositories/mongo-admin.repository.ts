@@ -5,6 +5,13 @@ import { type AdminSettingsDocument, ADMIN_SETTINGS_COLLECTION } from '../docume
 import { type ApiKeyDocument, API_KEYS_COLLECTION } from '../documents/api-key.document.ts';
 import { type TenantDocument, TENANTS_COLLECTION } from '../documents/tenant.document.ts';
 
+const DEMO_TENANT_ID = '600000000000000000000001';
+
+function resolveTenantObjectId(id: string): ObjectId | null {
+  if (id === 'default') return new ObjectId(DEMO_TENANT_ID);
+  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
+}
+
 export class MongoTenantRepository implements TenantRepository {
   private readonly col: () => Promise<Collection<TenantDocument>>;
 
@@ -17,11 +24,9 @@ export class MongoTenantRepository implements TenantRepository {
   }
 
   async findById(id: string): Promise<TenantDocument | null> {
-    try {
-      return (await this.col()).findOne({ _id: new ObjectId(id) });
-    } catch {
-      return null;
-    }
+    const tId = resolveTenantObjectId(id);
+    if (!tId) return null;
+    return (await this.col()).findOne({ _id: tId });
   }
 
   async findBySlug(slug: string): Promise<TenantDocument | null> {
@@ -48,19 +53,14 @@ export class MongoApiKeyRepository implements ApiKeyRepository {
   }
 
   async findByTenantId(tenantId: string): Promise<ApiKeyDocument[]> {
-    try {
-      return (await this.col()).find({ tenantId: new ObjectId(tenantId) }).toArray();
-    } catch {
-      return [];
-    }
+    const tId = resolveTenantObjectId(tenantId);
+    if (!tId) return [];
+    return (await this.col()).find({ tenantId: tId }).toArray();
   }
 
   async findById(id: string): Promise<ApiKeyDocument | null> {
-    try {
-      return (await this.col()).findOne({ _id: new ObjectId(id) });
-    } catch {
-      return null;
-    }
+    if (!ObjectId.isValid(id) || id.length !== 24) return null;
+    return (await this.col()).findOne({ _id: new ObjectId(id) });
   }
 
   async findByKeyHash(keyHash: string): Promise<ApiKeyDocument | null> {
@@ -75,12 +75,9 @@ export class MongoApiKeyRepository implements ApiKeyRepository {
   }
 
   async revoke(id: string): Promise<boolean> {
-    try {
-      const res = await (await this.col()).updateOne({ _id: new ObjectId(id) }, { $set: { status: 'REVOKED' } });
-      return res.modifiedCount > 0;
-    } catch {
-      return false;
-    }
+    if (!ObjectId.isValid(id) || id.length !== 24) return false;
+    const res = await (await this.col()).updateOne({ _id: new ObjectId(id) }, { $set: { status: 'REVOKED' } });
+    return res.modifiedCount > 0;
   }
 }
 

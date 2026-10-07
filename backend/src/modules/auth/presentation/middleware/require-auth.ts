@@ -26,6 +26,21 @@ export function requireAuth(signer: AccessTokenSignerPort): MiddlewareHandler {
   };
 }
 
+export function optionalAuth(signer: AccessTokenSignerPort): MiddlewareHandler {
+  return async (c, next) => {
+    const header = c.req.header('authorization');
+    if (header?.startsWith(BEARER)) {
+      try {
+        const claims = await signer.verify(header.slice(BEARER.length));
+        c.set('principal', { userId: claims.subject, roles: claims.roles });
+      } catch {
+        // Leave principal unset on invalid token
+      }
+    }
+    await next();
+  };
+}
+
 export function getPrincipal(c: Context): AuthPrincipal {
   const principal = c.get('principal');
   if (!principal) throw AuthErrors.unauthenticated();

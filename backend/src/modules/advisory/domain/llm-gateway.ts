@@ -64,6 +64,14 @@ export class MockLlmAdapter implements LlmAdapter {
       },
     };
 
+    const currentWeights: Record<string, number> = {};
+    const targetWeights: Record<string, number> = {};
+    for (const h of portfolio.holdings) {
+      currentWeights[h.assetSymbol] = h.currentWeight;
+      targetWeights[h.assetSymbol] = h.targetWeight;
+    }
+    const hasHoldings = Object.keys(currentWeights).length > 0;
+
     return {
       reply: replies[locale] ?? replies.en,
       threePillarRationale: rationales[locale] ?? rationales.en,
@@ -71,8 +79,12 @@ export class MockLlmAdapter implements LlmAdapter {
         {
           cardType: 'PROPOSAL',
           payload: {
-            currentWeights: { 'CSPX.LSE': 0.6, 'IEAC.LSE': 0.25, 'XEON.XETRA': 0.15 },
-            targetWeights: { 'CSPX.LSE': 0.4, 'IEAC.LSE': 0.35, 'XEON.XETRA': 0.25 },
+            currentWeights: hasHoldings
+              ? currentWeights
+              : { 'CSPX.LSE': 0.6, 'IEAC.LSE': 0.25, 'XEON.XETRA': 0.15 },
+            targetWeights: hasHoldings
+              ? targetWeights
+              : { 'CSPX.LSE': 0.4, 'IEAC.LSE': 0.35, 'XEON.XETRA': 0.25 },
             valuationTotalBase: portfolio.totalValuationBase,
           },
         },
@@ -90,15 +102,54 @@ export class MockLlmAdapter implements LlmAdapter {
   }
 }
 
+export class GeminiLlmAdapter implements LlmAdapter {
+  private readonly apiKey: string | undefined;
+  private readonly fallback: LlmAdapter;
+
+  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter()) {
+    this.apiKey = apiKey;
+    this.fallback = fallback;
+  }
+
+  async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
+    if (!this.apiKey) return this.fallback.chat(context);
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+      const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant. Current portfolio valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Runway: ${context.cashflow.runwayMonths} months (${context.cashflow.runwayBand}). Household mode: ${context.householdMode}. Locale: ${context.locale}.`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${systemPrompt}\n\nUser: ${context.message}` }] }],
+          generationConfig: { temperature: 0.2 },
+        }),
+      });
+      if (!response.ok) return this.fallback.chat(context);
+      const data = (await response.json()) as any;
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) return this.fallback.chat(context);
+
+      const base = await this.fallback.chat(context);
+      return {
+        ...base,
+        reply: text,
+      };
+    } catch {
+      return this.fallback.chat(context);
+    }
+  }
+}
+
 export class LlmGateway {
   private readonly adapters: Record<LlmProvider, LlmAdapter>;
 
-  constructor() {
+  constructor(geminiApiKey?: string) {
+    const mock = new MockLlmAdapter();
     this.adapters = {
-      mock: new MockLlmAdapter(),
-      gemini: new MockLlmAdapter(),
-      claude: new MockLlmAdapter(),
-      openai: new MockLlmAdapter(),
+      mock,
+      gemini: new GeminiLlmAdapter(geminiApiKey, mock),
+      claude: mock,
+      openai: mock,
     };
   }
 

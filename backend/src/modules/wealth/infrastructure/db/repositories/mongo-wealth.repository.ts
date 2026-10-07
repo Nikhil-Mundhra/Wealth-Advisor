@@ -24,6 +24,19 @@ export class MongoAssetProductRepository implements AssetProductRepository {
   }
 }
 
+const DEMO_TENANT_ID = '600000000000000000000001';
+const DEMO_USER_ID = '500000000000000000000001';
+
+function resolveTenantObjectId(id: string): ObjectId | null {
+  if (id === 'default') return new ObjectId(DEMO_TENANT_ID);
+  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
+}
+
+function resolveUserObjectId(id: string): ObjectId | null {
+  if (id === 'default') return new ObjectId(DEMO_USER_ID);
+  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
+}
+
 export class MongoPortfolioRepository implements PortfolioRepository {
   private readonly col: () => Promise<Collection<PortfolioDocument>>;
 
@@ -32,11 +45,10 @@ export class MongoPortfolioRepository implements PortfolioRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<PortfolioDocument | null> {
-    try {
-      return (await this.col()).findOne({ tenantId: new ObjectId(tenantId), userId: new ObjectId(userId) });
-    } catch {
-      return (await this.col()).findOne({});
-    }
+    const tId = resolveTenantObjectId(tenantId);
+    const uId = resolveUserObjectId(userId);
+    if (!tId || !uId) return null;
+    return (await this.col()).findOne({ tenantId: tId, userId: uId });
   }
 
   async save(portfolio: PortfolioDocument): Promise<void> {
@@ -52,14 +64,13 @@ export class MongoSandboxLedgerRepository implements SandboxLedgerRepository {
   }
 
   async findAllByUser(tenantId: string, userId: string): Promise<SandboxLedgerDocument[]> {
-    try {
-      return (await this.col())
-        .find({ tenantId: new ObjectId(tenantId), userId: new ObjectId(userId) })
-        .sort({ timestamp: -1 })
-        .toArray();
-    } catch {
-      return (await this.col()).find({}).sort({ timestamp: -1 }).toArray();
-    }
+    const tId = resolveTenantObjectId(tenantId);
+    const uId = resolveUserObjectId(userId);
+    if (!tId || !uId) return [];
+    return (await this.col())
+      .find({ tenantId: tId, userId: uId })
+      .sort({ timestamp: -1 })
+      .toArray();
   }
 
   async append(entry: Omit<SandboxLedgerDocument, '_id'>): Promise<SandboxLedgerDocument> {

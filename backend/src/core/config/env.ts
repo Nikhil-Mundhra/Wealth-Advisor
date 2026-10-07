@@ -16,6 +16,9 @@ const EnvSchema = z.object({
   AUTH_REFRESH_REUSE_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(5),
   MARKETSTACK_ACCESS_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

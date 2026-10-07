@@ -3,6 +3,19 @@ import type { AccountRepository, TransactionRepository } from '../../../applicat
 import { type AccountDocument, ACCOUNTS_COLLECTION } from '../documents/account.document.ts';
 import { type TransactionDocument, TRANSACTIONS_COLLECTION } from '../documents/transaction.document.ts';
 
+const DEMO_TENANT_ID = '600000000000000000000001';
+const DEMO_USER_ID = '500000000000000000000001';
+
+function resolveTenantObjectId(id: string): ObjectId | null {
+  if (id === 'default') return new ObjectId(DEMO_TENANT_ID);
+  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
+}
+
+function resolveUserObjectId(id: string): ObjectId | null {
+  if (id === 'default') return new ObjectId(DEMO_USER_ID);
+  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
+}
+
 export class MongoAccountRepository implements AccountRepository {
   private readonly col: () => Promise<Collection<AccountDocument>>;
 
@@ -11,19 +24,15 @@ export class MongoAccountRepository implements AccountRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<AccountDocument[]> {
-    try {
-      return (await this.col()).find({ tenantId: new ObjectId(tenantId), userId: new ObjectId(userId) }).toArray();
-    } catch {
-      return (await this.col()).find({}).toArray();
-    }
+    const tId = resolveTenantObjectId(tenantId);
+    const uId = resolveUserObjectId(userId);
+    if (!tId || !uId) return [];
+    return (await this.col()).find({ tenantId: tId, userId: uId }).toArray();
   }
 
   async findById(id: string): Promise<AccountDocument | null> {
-    try {
-      return (await this.col()).findOne({ _id: new ObjectId(id) });
-    } catch {
-      return null;
-    }
+    if (!ObjectId.isValid(id) || id.length !== 24) return null;
+    return (await this.col()).findOne({ _id: new ObjectId(id) });
   }
 
   async create(account: Omit<AccountDocument, '_id'>): Promise<AccountDocument> {
@@ -42,14 +51,13 @@ export class MongoTransactionRepository implements TransactionRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<TransactionDocument[]> {
-    try {
-      return (await this.col())
-        .find({ tenantId: new ObjectId(tenantId), userId: new ObjectId(userId) })
-        .sort({ timestamp: -1 })
-        .toArray();
-    } catch {
-      return (await this.col()).find({}).sort({ timestamp: -1 }).toArray();
-    }
+    const tId = resolveTenantObjectId(tenantId);
+    const uId = resolveUserObjectId(userId);
+    if (!tId || !uId) return [];
+    return (await this.col())
+      .find({ tenantId: tId, userId: uId })
+      .sort({ timestamp: -1 })
+      .toArray();
   }
 
   async create(tx: Omit<TransactionDocument, '_id'>): Promise<TransactionDocument> {

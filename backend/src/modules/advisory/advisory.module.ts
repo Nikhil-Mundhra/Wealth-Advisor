@@ -8,17 +8,22 @@ import { LlmGateway } from './domain/llm-gateway.ts';
 import { ADVISORY_ERROR_STATUSES } from './presentation/advisory-error-statuses.ts';
 import { advisoryRoutes } from './presentation/routes/advisory.routes.ts';
 
+import { env } from '#core/config/env.ts';
+import type { MiddlewareHandler } from 'hono';
+
 export interface AdvisoryModuleDeps {
   finance: FinanceApi;
   wealth: WealthApi;
   getActiveProvider?: () => Promise<LlmProvider>;
+  auth?: MiddlewareHandler;
 }
 
 export function createAdvisoryModule(
   _context: ModuleContext,
   deps: AdvisoryModuleDeps,
 ): { manifest: ModuleManifest; api: AdvisoryApi } {
-  const gateway = new LlmGateway();
+  const geminiApiKey = env().GEMINI_API_KEY;
+  const gateway = new LlmGateway(geminiApiKey);
   const api = createAdvisoryApi({
     finance: deps.finance,
     wealth: deps.wealth,
@@ -30,7 +35,7 @@ export function createAdvisoryModule(
     name: 'advisory',
     basePath: '/advisory',
     errors: { prefix: ERROR_CODE_PREFIXES.advisory, statuses: ADVISORY_ERROR_STATUSES },
-    routes: advisoryRoutes(api),
+    routes: advisoryRoutes(api, deps.auth),
   });
 
   return { manifest, api };

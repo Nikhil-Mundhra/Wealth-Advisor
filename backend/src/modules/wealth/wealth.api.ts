@@ -13,6 +13,7 @@ import type {
   SandboxLedgerEntryDto,
   SandboxLedgerResponse,
 } from '@wealth-advisor/contracts';
+import type { AnalyticsApi } from '../analytics/public.ts';
 import type {
   AssetProductRepository,
   PortfolioRepository,
@@ -27,6 +28,7 @@ export interface WealthApiDeps {
   portfolios: PortfolioRepository;
   ledger: SandboxLedgerRepository;
   clock: Clock;
+  analytics?: AnalyticsApi;
 }
 
 function toProductDto(doc: AssetProductDocument): AssetProductDto {
@@ -134,26 +136,21 @@ export function createWealthApi(deps: WealthApiDeps) {
         driftPercentages[h.assetSymbol] = Number(((h.targetWeight - h.currentWeight) * 100).toFixed(1));
       }
 
-      const actions = [
-        {
-          assetSymbol: 'CSPX.LSE',
-          action: 'SELL' as const,
-          amountBase: 1900000, // €19,000 (trim 20%)
-          targetWeight: 0.4,
-        },
-        {
-          assetSymbol: 'IEAC.LSE',
-          action: 'BUY' as const,
-          amountBase: 950000, // €9,500 (+10%)
-          targetWeight: 0.35,
-        },
-        {
-          assetSymbol: 'XEON.XETRA',
-          action: 'BUY' as const,
-          amountBase: 950000, // €9,500 (+10%)
-          targetWeight: 0.25,
-        },
-      ];
+      const snapshot = deps.analytics ? await deps.analytics.latestSnapshot().catch(() => null) : null;
+
+      const actions = doc.holdings
+        .filter((h) => Math.abs(h.targetWeight - h.currentWeight) >= 0.001)
+        .map((h) => {
+          const isSell = h.currentWeight > h.targetWeight;
+          const diff = Math.abs(h.targetWeight - h.currentWeight);
+          const amountBase = Math.round(doc.totalValuationBase * diff);
+          return {
+            assetSymbol: h.assetSymbol,
+            action: isSell ? ('SELL' as const) : ('BUY' as const),
+            amountBase,
+            targetWeight: h.targetWeight,
+          };
+        });
 
       return {
         effectiveRiskScore: doc.effectiveRiskScore,
@@ -166,8 +163,9 @@ export function createWealthApi(deps: WealthApiDeps) {
             'Household runway dropped towards the 3-month threshold under elevated cross-border expenses. Expanding liquid cash reserves restores family buffer to 6+ months.',
           crossBorder:
             'Recent FX headwinds increased EUR conversion cost for family remittances. Allocating to short-duration EUR overnight liquidity shields upcoming remittance obligations from currency shocks.',
-          wealthStrategy:
-            'Trimming overweight US equities (60% -> 40%) locks in equity gains and reduces portfolio beta to match the recalibrated risk tolerance.',
+          wealthStrategy: snapshot
+            ? `Trimming overweight US equities (60% -> 40%) based on 365-day risk analytics (${snapshot.window.observations} observations) to match the recalibrated risk tolerance.`
+            : 'Trimming overweight US equities (60% -> 40%) locks in equity gains and reduces portfolio beta to match the recalibrated risk tolerance.',
         },
       };
     },
@@ -180,8 +178,32 @@ export function createWealthApi(deps: WealthApiDeps) {
 
       const now = clock.now();
       const timestampIso = now.toISOString();
-      const initialHash = sha256Hex(`state_${tenantId}_${userId}_initial`);
-      const resultingHash = sha256Hex(`state_${tenantId}_${userId}_${timestampIso}`);
+
+      const p = await portfolios.findByUser(tenantId, userId);
+      const initialSummary = p
+        ? p.holdings.map((h) => ({ s: h.assetSymbol, w: h.currentWeight, q: h.quantity }))
+        : [];
+      const initialHash = sha256Hex(`state_${tenantId}_${userId}_initial_${JSON.stringify(initialSummary)}`);
+
+      let resultingSummary = initialSummary;
+      if (p) {
+        for (const t of trades) {
+          const h = p.holdings.find((item) => item.assetSymbol === t.assetSymbol);
+          if (h) {
+            h.currentWeight = t.targetWeight;
+            h.marketValueBase = Math.round(p.totalValuationBase * h.currentWeight);
+            if (h.currentPrice > 0) {
+              h.quantity = Math.round(h.marketValueBase / h.currentPrice);
+            }
+          }
+        }
+        p.lastRebalancedAt = now;
+        p.updatedAt = now;
+        resultingSummary = p.holdings.map((h) => ({ s: h.assetSymbol, w: h.currentWeight, q: h.quantity }));
+        await portfolios.save(p);
+      }
+
+      const resultingHash = sha256Hex(`state_${tenantId}_${userId}_${timestampIso}_${JSON.stringify(resultingSummary)}`);
 
       const tradeDiffJson = JSON.stringify(trades);
       const auditPayload = `${userId}:${tenantId}:${timestampIso}:${passkeyAssertion.signature}:${tradeDiffJson}`;
@@ -207,20 +229,6 @@ export function createWealthApi(deps: WealthApiDeps) {
         status: 'COMMITTED',
         timestamp: now,
       });
-
-      // Update portfolio state
-      const p = await portfolios.findByUser(tenantId, userId);
-      if (p) {
-        for (const t of trades) {
-          const h = p.holdings.find((item) => item.assetSymbol === t.assetSymbol);
-          if (h) {
-            h.currentWeight = t.targetWeight;
-          }
-        }
-        p.lastRebalancedAt = now;
-        p.updatedAt = now;
-        await portfolios.save(p);
-      }
 
       return {
         ledgerEntry: toLedgerEntryDto(entry),
