@@ -21,6 +21,7 @@ backend/test/integration/auth/auth-flow.memory.test.ts : runs the auth-flow suit
 backend/test/integration/auth/auth-flow.suite.ts : signup, login, me, refresh, reuse detection, logout
 backend/test/integration/auth/auth-flow.test.ts : runs the auth-flow suite on mongod
 backend/test/integration/auth/refresh-race.test.ts : concurrent refreshes; exactly one wins
+backend/test/integration/auth/users-index.test.ts : one ACTIVE user per email on mongod, across provider links; a WITHDRAWN holder frees it
 backend/test/integration/core/processed-events.test.ts : first vs duplicate marks, concurrent marks; mongo and memory
 backend/test/integration/core/request-budget.test.ts : limit, oversize refusal, UTC month rollover, concurrent reserves; mongo and memory
 backend/test/integration/market/market-routes.memory.test.ts : runs the market-routes suite on the memory store

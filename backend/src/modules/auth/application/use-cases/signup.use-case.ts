@@ -46,7 +46,7 @@ export class SignupUseCase implements UseCase<SignupCommand, SignupResult> {
       displayName: command.displayName,
       now,
     });
-    if ((await users.insert(user)) === 'DUPLICATE_PROVIDER') throw AuthErrors.emailTaken();
+    if ((await users.insert(user)) === 'DUPLICATE_IDENTITY') throw AuthErrors.emailTaken();
 
     await events.publish(userSignedUp(user.id, now));
     return { userId: user.id };

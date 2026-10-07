@@ -10,8 +10,10 @@ export class MemoryUserRepository implements UserRepositoryPort {
 
   async insert(user: User): Promise<InsertUserOutcome> {
     const document = userMapper.toDocument(user);
-    const taken = document.providers.some((provider) => this.findActiveDocument(provider.type, provider.subject));
-    if (taken) return 'DUPLICATE_PROVIDER';
+    const taken =
+      [...this.documents.values()].some((other) => other.status === 'ACTIVE' && other.email === document.email) ||
+      document.providers.some((provider) => this.findActiveDocument(provider.type, provider.subject));
+    if (taken) return 'DUPLICATE_IDENTITY';
     this.documents.set(document._id.toHexString(), document);
     return 'INSERTED';
   }

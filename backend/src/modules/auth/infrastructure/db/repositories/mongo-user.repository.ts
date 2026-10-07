@@ -17,7 +17,8 @@ export class MongoUserRepository extends BaseRepository<UserDocument> implements
       await this.insertDocument(userMapper.toDocument(user));
       return 'INSERTED';
     } catch (error) {
-      if (classifyDbError(error) === 'duplicate-key') return 'DUPLICATE_PROVIDER'; // uk_users_active_provider
+      // uk_users_active_email or uk_users_active_provider
+      if (classifyDbError(error) === 'duplicate-key') return 'DUPLICATE_IDENTITY';
       throw error;
     }
   }

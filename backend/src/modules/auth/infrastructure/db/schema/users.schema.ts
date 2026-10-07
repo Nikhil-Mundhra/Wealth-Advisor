@@ -15,6 +15,8 @@ export const usersSchema: CollectionDefinition = {
       unique: true,
       partialFilterExpression: { status: 'ACTIVE' },
     },
+    // The email is the login name: one ACTIVE account per email. Stored normalized (trimmed, lowercased).
+    { key: { email: 1 }, name: 'uk_users_active_email', unique: true, partialFilterExpression: { status: 'ACTIVE' } },
   ],
   validator: {
     $jsonSchema: {
