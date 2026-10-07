@@ -41,7 +41,7 @@ flowchart LR
 ## Stages
 | # | Stage | Input | Output | Owner | Status |
 |---|---|---|---|---|---|
-| 1 | Identity and tenant scope | email, password, API key | user, session, tenant-scoped query | `backend/src/modules/auth/`; `backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts` | `built` — tenantId scoped on User entity/document, safe ObjectId resolution across repositories, authenticated extraction on routes |
+| 1 | Identity and tenant scope | email, password, API key | user, session, tenant-scoped query | `backend/src/modules/auth/`; `backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts` | `partial` — the tenant travels in the token and every scoped route reads it from there (no header can move a caller), but the deployment is single-tenant: signup joins the default tenant and there is no tenant provisioning |
 | 2 | Investor profiling | seven questionnaire answers | base risk score, stress band, ratios | `rules/src/profiling.rule.ts`, `contracts/src/profiling/profile-answers.contract.ts` | `partial` — pure functions with a frontend questionnaire in `frontend/src/features/profiling/profile-store.ts`; nothing persists |
 | 3 | Financial position | accounts, transactions | balances, runway months and band | `backend/src/modules/finance/` | `built` — multi-currency balances converted via market FX spot rates, time-normalized runway calculations |
 | 4 | Market state | provider responses | `prices`, `fx_rates` | `backend/src/modules/market/` | `built` |

@@ -25,6 +25,7 @@ backend/src/core/db/connection/connection-options.ts : MongoClient options (pool
 backend/src/core/db/connection/data-store.ts : resolves mongo or memory from env; refuses memory in production
 backend/src/core/db/connection/database-health.ts : database status for /api/health (up, down, unconfigured, memory)
 backend/src/core/db/connection/mongo-client.ts : one MongoClient cached across serverless invocations
+backend/src/core/db/document-id.ts : default tenant and demo user ids; string → ObjectId for a document id or a tenant/user scope, null when unusable
 backend/src/core/db/errors/classify-db-error.ts : driver error → duplicate-key, transient or fatal
 backend/src/core/db/ids/object-id-generator.ts : IdGenerator backed by ObjectId hex strings
 backend/src/core/db/mapping/mapper.ts : Mapper<Entity, Document> interface

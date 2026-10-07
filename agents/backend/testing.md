@@ -26,6 +26,7 @@ backend/test/integration/core/request-budget.test.ts : limit, oversize refusal, 
 backend/test/integration/market/market-routes.memory.test.ts : runs the market-routes suite on the memory store
 backend/test/integration/market/market-routes.suite.ts : quotes, fx (query validation, weekend lookup), refresh (cron auth, backfill, re-run) over fixture providers
 backend/test/integration/market/market-routes.test.ts : runs the market-routes suite on mongod
+backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
 backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders, weekdays, generated Marketstack pages
@@ -43,6 +44,7 @@ backend/test/unit/core/calendar-date.test.ts : isIsoDate refuses impossible date
 backend/test/unit/core/db/classify-db-error.test.ts : duplicate-key, transient, fatal
 backend/test/unit/core/db/data-store.test.ts : store resolution and health without a database
 backend/test/unit/core/db/with-read-retry.test.ts : retries transient failures only, up to the policy
+backend/test/unit/core/document-id.test.ts : document id and tenant/user scope resolution, including the demo scope key
 backend/test/unit/core/error-catalog.test.ts : code → status mapping, prefix and duplicate checks
 backend/test/unit/core/http-client/http-client.test.ts : status, network, timeout and body failures → transient or fatal; no query string in messages
 backend/test/unit/core/require-bearer-secret.test.ts : exact bearer passes; wrong, missing, or unset secret → rejected

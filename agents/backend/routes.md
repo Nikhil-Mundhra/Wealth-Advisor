@@ -5,7 +5,7 @@
 
 ## Rules
 - Handlers only map contract → command → use case → result → contract; `RouteBuilder` validates query, body and response.
-- auth: user routes use the module's token middleware; machine callers (cron) use `requireBearerSecret` from `core/http`, never a user-token middleware; proxies (`infra/nginx`, `vercel.json`) only route, never authenticate.
+- auth: user routes take the module's token middleware as a required argument and scope the query by the principal the middleware set (tenant from the token, never a request header); machine callers (cron) use `requireBearerSecret` from `core/http`, never a user-token middleware; proxies (`infra/nginx`, `vercel.json`) only route, never authenticate.
 
 ## Workflow
 - add a route: contract first → route → use case → integration test → route doc (error ids only) in the same change

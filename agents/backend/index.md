@@ -90,6 +90,7 @@ backend/src/modules/analytics/domain/covariance.ts : annualized sample covarianc
 backend/src/modules/analytics/domain/market-snapshot.vo.ts : MarketSnapshot: asOf, symbols, means, volatilities, covariance, window, computedAt; square, symmetric, finite
 backend/src/modules/analytics/domain/measure-snapshot.ts : aligned closes → snapshot, or insufficient below the minimum observations
 backend/src/modules/analytics/domain/returns.ts : alignment on dates every symbol has, daily log returns, annualized mean
+backend/src/modules/analytics/public.ts : the analytics surface other modules may import (api type, MarketSnapshot type)
 backend/src/modules/auth/auth.module.ts : composition root: wires repositories → use cases → routes
 backend/src/modules/finance/application/ports.ts : AccountRepository, TransactionRepository ports
 backend/src/modules/finance/domain/burn-rate-calculator.ts : calculateBurnRateRunway with household mode multipliers
