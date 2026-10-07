@@ -5,7 +5,7 @@ import { createProcessedEvents } from '#core/events/processed-events.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import type { MarketApi } from '../market/public.ts';
-import { createAnalyticsApi } from './analytics.api.ts';
+import { type AnalyticsApi, createAnalyticsApi } from './analytics.api.ts';
 import { REFRESHED_EVENT_TYPE } from './application/read-refreshed-event.ts';
 import { type MarketSnapshotDocument, MARKET_SNAPSHOTS_COLLECTION } from './infrastructure/db/documents/market-snapshot.document.ts';
 import { MemoryMarketSnapshotRepository } from './infrastructure/db/memory/memory-market-snapshot.repository.ts';

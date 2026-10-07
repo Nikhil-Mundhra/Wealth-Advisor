@@ -8,10 +8,12 @@ import type {
   TransactionDto,
   TransactionListResponse,
 } from '@wealth-advisor/contracts';
-import type { Currency, HouseholdMode } from '@wealth-advisor/rules';
+import { FINANCE_ERROR_CODES, type Currency, type HouseholdMode } from '@wealth-advisor/rules';
 import type { Clock } from '#core/time/clock.ts';
 import { toIsoDate } from '#core/time/calendar-date.ts';
-import type { MarketApi } from '../market/public.ts';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
+import { DomainError } from '#core/domain/domain-error.ts';
+import { type MarketApi, Money } from '../market/public.ts';
 import type { AccountRepository, TransactionRepository } from './application/ports.ts';
 import { calculateBurnRate } from './domain/burn-rate-calculator.ts';
 import type { AccountDocument } from './infrastructure/db/documents/account.document.ts';
@@ -58,17 +60,12 @@ function toTransactionDto(doc: TransactionDocument): TransactionDto {
   };
 }
 
-const DEMO_TENANT_ID = '600000000000000000000001';
-const DEMO_USER_ID = '500000000000000000000001';
-
-function resolveTenantId(id: string): ObjectId {
-  if (id === 'default') return new ObjectId(DEMO_TENANT_ID);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : new ObjectId(DEMO_TENANT_ID);
-}
-
-function resolveUserId(id: string): ObjectId {
-  if (id === 'default') return new ObjectId(DEMO_USER_ID);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : new ObjectId(DEMO_USER_ID);
+// A write must be attributed to a real scope: an id that is neither a document id nor the demo scope is refused, so a
+// malformed caller can never file an account under the demo tenant.
+function requireScopeId(id: string, demoId: string, label: string): ObjectId {
+  const scopeId = toScopeId(id, demoId);
+  if (!scopeId) throw new DomainError(FINANCE_ERROR_CODES.invariantViolated, `unusable ${label} scope id`);
+  return scopeId;
 }
 
 export function createFinanceApi(deps: FinanceApiDeps) {
@@ -83,8 +80,8 @@ export function createFinanceApi(deps: FinanceApiDeps) {
     async createAccount(tenantId: string, userId: string, input: CreateAccountRequest): Promise<AccountDto> {
       const now = clock.now();
       const created = await accounts.create({
-        tenantId: resolveTenantId(tenantId),
-        userId: resolveUserId(userId),
+        tenantId: requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant'),
+        userId: requireScopeId(userId, DEFAULT_USER_ID, 'user'),
         householdMode: input.householdMode ?? 'INDIVIDUAL',
         institutionName: input.institutionName,
         accountType: input.accountType,
@@ -112,26 +109,27 @@ export function createFinanceApi(deps: FinanceApiDeps) {
 
       let convertedAccounts = accDocs;
       if (deps.market) {
-        try {
-          const nonBase = accDocs.filter((a) => a.currency !== 'EUR');
-          if (nonBase.length > 0) {
+        const nonBase = accDocs.filter((a) => a.currency !== 'EUR');
+        if (nonBase.length > 0) {
+          try {
             const conversions = await deps.market.convert({
-              items: nonBase.map((a) => ({
-                amount: a.balance,
-                currency: a.currency,
-                date: toIsoDate(clock.now()),
-              })),
+              items: nonBase.map((a) => ({ money: Money.of(a.balance, a.currency), date: toIsoDate(clock.now()) })),
               target: 'EUR',
-              mode: 'SPOT',
+              mode: 'spot',
+            });
+            // convertBatch maps items in order, so an index is an account identity; a failed item keeps its own balance.
+            const converted = new Map<string, number>();
+            nonBase.forEach((account, index) => {
+              const result = conversions[index];
+              if (result?.ok) converted.set(account._id.toHexString(), result.valuation.converted.amount);
             });
             convertedAccounts = accDocs.map((a) => {
-              if (a.currency === 'EUR') return a;
-              const match = conversions.find((c) => c.item.currency === a.currency);
-              return match?.valuation?.converted ? { ...a, balance: match.valuation.converted.amount } : a;
+              const amount = converted.get(a._id.toHexString());
+              return amount === undefined ? a : { ...a, balance: amount };
             });
+          } catch {
+            // Unseeded or unavailable rates leave the raw balances in place.
           }
-        } catch {
-          // If rates are temporarily unseeded or unavailable, retain raw balances
         }
       }
 
