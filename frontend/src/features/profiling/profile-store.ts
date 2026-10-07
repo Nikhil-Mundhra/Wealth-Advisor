@@ -5,6 +5,7 @@ import {
   deriveCorridorCurrencies,
   deriveTimeHorizonYears,
   isCurrency,
+  listHoldingAmounts,
   mapStressAnswerToRiskBand,
   type Currency,
   type ProfilingAnswersInput,
@@ -59,17 +60,18 @@ export const DEFAULT_ELENA_PROFILE: ProfilingAnswersInput = {
 export const INITIAL_EMPTY_PROFILE: ProfilingAnswersInput = {
   psychology: [],
   countries: {
-    residence: '',
-    incomeSources: [],
+    residence: 'AE',
+    incomeSources: ['AE', 'IN'],
     remittanceDestinations: [],
   },
   instruments: [],
   holdings: {
-    cashSavings: { amount: 0, currency: 'EUR' },
-    brokerageStocks: { amount: 0, currency: 'EUR' },
-    retirementPension: { amount: 0, currency: 'EUR' },
-    otherAssets: { amount: 0, currency: 'EUR' },
+    cashSavings: { amount: 0, currency: 'AED' },
+    brokerageStocks: { amount: 0, currency: 'AED' },
+    retirementPension: { amount: 0, currency: 'AED' },
+    otherAssets: { amount: 0, currency: 'AED' },
   },
+  holdingsByCurrency: {},
   age: 30,
   goals: {
     tags: [],
@@ -110,11 +112,7 @@ function computeProfileState(
   isCompleted: boolean,
   email?: string | null,
 ): ProfileState {
-  const totalHoldings =
-    answers.holdings.cashSavings.amount +
-    answers.holdings.brokerageStocks.amount +
-    answers.holdings.retirementPension.amount +
-    answers.holdings.otherAssets.amount;
+  const totalHoldings = listHoldingAmounts(answers).reduce((total, holding) => total + holding.amount, 0);
 
   let preferredCurrency: Currency;
   try {

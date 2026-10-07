@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router';
-import type { AssetClass } from '@wealth-advisor/rules';
+import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { useProfile } from '../../features/profiling/profile-store.ts';
@@ -25,40 +25,23 @@ export function PortfolioPage() {
 
   const { ref, visible } = useReveal<HTMLDivElement>();
 
-  // Real user holdings mapped from profiling answers
-  const realHoldings: { assetClass: AssetClass; label: string; amount: number; currency: string; weight: number }[] =
-    !isDemo && profile.totalHoldings > 0
-      ? [
-          {
-            assetClass: 'MONEY_MARKET' as const,
-            label: 'Cash Savings',
-            amount: profile.answers.holdings.cashSavings.amount,
-            currency: profile.answers.holdings.cashSavings.currency,
-            weight: Math.round((profile.answers.holdings.cashSavings.amount / profile.totalHoldings) * 100),
-          },
-          {
-            assetClass: 'EQUITY_GLOBAL' as const,
-            label: 'Brokerage & Equities',
-            amount: profile.answers.holdings.brokerageStocks.amount,
-            currency: profile.answers.holdings.brokerageStocks.currency,
-            weight: Math.round((profile.answers.holdings.brokerageStocks.amount / profile.totalHoldings) * 100),
-          },
-          {
-            assetClass: 'FIXED_INCOME_GOV' as const,
-            label: 'Retirement & Pension',
-            amount: profile.answers.holdings.retirementPension.amount,
-            currency: profile.answers.holdings.retirementPension.currency,
-            weight: Math.round((profile.answers.holdings.retirementPension.amount / profile.totalHoldings) * 100),
-          },
-          {
-            assetClass: 'FX_HEDGE' as const,
-            label: 'Other Assets',
-            amount: profile.answers.holdings.otherAssets.amount,
-            currency: profile.answers.holdings.otherAssets.currency,
-            weight: Math.round((profile.answers.holdings.otherAssets.amount / profile.totalHoldings) * 100),
-          },
-        ].filter((item) => item.amount > 0)
-      : [];
+  const holdingClasses: Record<string, { assetClass: AssetClass; label: string }> = {
+    cashSavings: { assetClass: 'MONEY_MARKET', label: 'Cash Savings' },
+    brokerageStocks: { assetClass: 'EQUITY_GLOBAL', label: 'Brokerage & Equities' },
+    retirementPension: { assetClass: 'FIXED_INCOME_GOV', label: 'Retirement & Pension' },
+    otherAssets: { assetClass: 'FX_HEDGE', label: 'Other Assets' },
+  };
+  const realHoldings = !isDemo && profile.totalHoldings > 0
+    ? listHoldingAmounts(profile.answers)
+        .filter((holding) => holding.amount > 0)
+        .map((holding) => ({
+          ...holdingClasses[holding.bucket],
+          label: `${holdingClasses[holding.bucket].label} (${holding.currency})`,
+          amount: holding.amount,
+          currency: holding.currency,
+          weight: Math.round((holding.amount / profile.totalHoldings) * 100),
+        }))
+    : [];
 
   return (
     <div

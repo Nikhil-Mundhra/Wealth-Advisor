@@ -19,7 +19,7 @@ This document details:
 | :--- | :--- | :--- | :--- |
 | **Residency & Corridor Detection** | Manual 2-letter ISO code typing (`DE`, `CN`, `SG`) | Geolocation / `Intl` locale detection + 1-tap global expat corridor chips | **85% fewer keystrokes** |
 | **Step Advancement** | Select option $\to$ move mouse $\to$ click "Next" button | **Auto-advance on single-select** with 200ms easing transition | **50% fewer clicks** |
-| **Holdings Valuation** | Manual multi-digit input for 4 asset buckets | **1-tap logarithmic wealth brackets** (`<€25k`, `€25k–€100k`, `€100k–€250k`, `€250k+`) or statement drag-and-drop | **Eliminates typing on mobile** |
+| **Holdings Valuation** | Blank amount fields for each asset bucket in every residence and income currency | **1-tap logarithmic wealth brackets** (`<€25k`, `€25k–€100k`, `€100k–€250k`, `€250k+`) or statement drag-and-drop | **Eliminates typing on mobile** |
 | **Age & Horizon** | Numeric input field | Life-stage chips (`Early Career <30`, `Peak Wealth 30–45`, `Pre-Retirement 45+`) | **1 tap** |
 | **Keyboard Accelerators** | Mouse/touch only | Hotkeys `1`–`4` for options, `Enter` to confirm, `Esc` / `Backspace` to step back | **Power user desktop speed** |
 | **Onboarding Tiers** | 7 mandatory sequential screens | **Express Mode (3 questions, 15 sec)** vs. **Comprehensive Mode (7 questions)** | **60% faster path to dashboard** |
@@ -84,7 +84,7 @@ Third-party integrations in Wealth Advisor do not require enterprise-tier or pai
 ## Screen & Interaction Specifications
 
 ### 1. Residency & Corridor Quick Chips
-Instead of typing country codes, the UI renders one-tap chips for frequent expatriate migration corridors:
+The onboarding questionnaire starts with UAE as the residence and UAE and India as income countries. The UI renders one-tap chips for frequent expatriate migration corridors:
 
 ```
 [ Germany (Current) ]  [ Switzerland ]  [ United Kingdom ]
@@ -93,7 +93,7 @@ Instead of typing country codes, the UI renders one-tap chips for frequent expat
 ```
 
 ### 2. Holdings Magnitude Brackets
-Instead of manual numeric keying on mobile keyboards:
+Question 4 currently shows a blank section for each distinct residence and income currency, with the residence currency first. A future bracket control could replace manual numeric keying on mobile keyboards:
 
 ```
 Bank & Liquid Cash:

@@ -29,6 +29,7 @@ describe('OnboardingPage', () => {
     expect(screen.getByText('Question 1 of 7')).toBeVisible();
     expect(screen.getByText('How do you feel about investment risk?')).toBeVisible();
 
+    await userEvent.click(screen.getByRole('button', { name: 'Accept normal market ups and downs for steady growth' }));
     const nextButton = screen.getByRole('button', { name: 'Next' });
     await userEvent.click(nextButton);
 

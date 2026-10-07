@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { ArrowLeftRight } from 'lucide-react';
 import {
   rankRelevantCurrencies,
+  listHoldingAmounts,
   type CorridorCountriesInput,
   type Currency,
-  type HoldingBucketInput,
+  type HoldingKind,
+  type HoldingsByCurrency,
   type ProfilingAnswersInput,
   type ProfilingGoalTag,
-  type ProfilingHoldingsInput,
   type ProfilingInstrumentOption,
   type ProfilingPsychologyOption,
   type ProfilingStressOption,
@@ -15,29 +15,37 @@ import {
 import { Button } from '../../../components/ui/button.tsx';
 import { useStrings } from '../../../lib/dictionaries.ts';
 import { CountryTagInput } from './country-tag-input.tsx';
-import { saveDraft, saveProfile, useProfile } from '../profile-store.ts';
+import { INITIAL_EMPTY_PROFILE, saveDraft, saveProfile, useProfile } from '../profile-store.ts';
 
 interface ProfilingQuestionnaireProps {
   onComplete: () => void;
   onCancel?: () => void;
   email?: string | null;
+  startFresh?: boolean;
 }
 
 const TOTAL_STEPS = 7;
 
-export function ProfilingQuestionnaire({ onComplete, onCancel, email }: ProfilingQuestionnaireProps) {
+export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh = false }: ProfilingQuestionnaireProps) {
   const strings = useStrings();
   const profile = useProfile(email);
 
   // Initialize from draft if available, otherwise from existing profile
   const initialStep = profile.draft ? profile.draft.step : 1;
-  const initialAnswers: ProfilingAnswersInput = profile.draft ? profile.draft.answers : profile.answers;
+  const initialAnswers: ProfilingAnswersInput = profile.draft
+    ? profile.draft.answers
+    : startFresh ? INITIAL_EMPTY_PROFILE : profile.answers;
 
   const [step, setStep] = useState(initialStep);
   const [answers, setAnswers] = useState<ProfilingAnswersInput>(initialAnswers);
   const [error, setError] = useState<string | null>(null);
 
   const rankedCurrencies = rankRelevantCurrencies(answers.countries);
+  const holdingCurrencies: Currency[] = Array.from(new Set<Currency>([
+    ...rankedCurrencies.filter(({ reason }) => reason === 'residence' || reason === 'income').map(({ currency }) => currency),
+    ...Object.keys(answers.holdingsByCurrency ?? {}) as Currency[],
+    ...(!answers.holdingsByCurrency ? Object.values(answers.holdings).map((holding) => holding.currency) : []),
+  ]));
 
   const updateAnswers = (updater: (prev: ProfilingAnswersInput) => ProfilingAnswersInput) => {
     setError(null);
@@ -135,17 +143,26 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email }: Profilin
     }));
   };
 
-  const updateHoldingBucket = (bucket: keyof ProfilingHoldingsInput, field: Partial<HoldingBucketInput>) => {
-    updateAnswers((prev) => ({
-      ...prev,
-      holdings: {
-        ...prev.holdings,
-        [bucket]: {
-          ...prev.holdings[bucket],
-          ...field,
+  const updateCurrencyHolding = (currency: Currency, bucket: HoldingKind, value: string) => {
+    updateAnswers((prev) => {
+      const existing: HoldingsByCurrency = prev.holdingsByCurrency ?? listHoldingAmounts(prev).reduce<HoldingsByCurrency>(
+        (rows, holding) => ({
+          ...rows,
+          [holding.currency]: { ...rows[holding.currency], [holding.bucket]: holding.amount },
+        }),
+        {},
+      );
+      return {
+        ...prev,
+        holdingsByCurrency: {
+          ...existing,
+          [currency]: {
+            ...existing[currency],
+            [bucket]: value === '' ? undefined : Number(value),
+          },
         },
-      },
-    }));
+      };
+    });
   };
 
   return (
@@ -294,135 +311,39 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email }: Profilin
             <h3 className="font-semibold text-base">{strings['profiling.q4.prompt']}</h3>
             <p className="text-xs text-subtle mt-0.5">{strings['profiling.q4.subtext']}</p>
           </div>
-
-          {/* Currency Corridor Relevance Callout */}
-          <div className="rounded-field border border-brand-200 bg-brand-50/70 p-3 text-xs dark:border-brand-900 dark:bg-brand-950/40">
-            <div className="flex items-center gap-2 font-medium text-brand-950 dark:text-brand-100">
-              <ArrowLeftRight className="size-4 shrink-0 text-brand-600 dark:text-brand-400" aria-hidden />
-              <span>Corridor Currencies Prioritized</span>
-            </div>
-            <p className="mt-1 text-subtle leading-relaxed">
-              Currencies from your residence{' '}
-              {answers.countries.residence && (
-                <strong className="text-ink font-semibold">({answers.countries.residence})</strong>
-              )}{' '}
-              and income corridors appear first. Select the reporting currency for each holding bucket.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <label htmlFor="holding-cash" className="text-xs font-medium text-subtle block mb-1">
-                {strings['profiling.q4.cash']}
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="holding-cash"
-                  type="number"
-                  min="0"
-                  value={answers.holdings.cashSavings.amount}
-                  onChange={(e) => updateHoldingBucket('cashSavings', { amount: Number(e.target.value) || 0 })}
-                  className="flex-1 rounded-field border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                />
-                <select
-                  aria-label={`${strings['profiling.q4.cash']} currency`}
-                  value={answers.holdings.cashSavings.currency}
-                  onChange={(e) => updateHoldingBucket('cashSavings', { currency: e.target.value as Currency })}
-                  className="w-32 rounded-field border border-line bg-surface px-2.5 py-2 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                >
-                  {rankedCurrencies.map(({ currency, reason, sourceCountry }) => (
-                    <option key={currency} value={currency}>
-                      {currency} {reason === 'residence' ? `(${sourceCountry})` : reason === 'income' ? `(Inc)` : reason === 'remittance' ? `(Rem)` : ''}
-                    </option>
-                  ))}
-                </select>
+          {holdingCurrencies.map((currency) => (
+            <fieldset key={currency} className="rounded-field border border-line p-4">
+              <legend className="px-1 text-sm font-semibold text-ink">{currency}</legend>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {([
+                  ['cashSavings', strings['profiling.q4.cash']],
+                  ['brokerageStocks', strings['profiling.q4.brokerage']],
+                  ['retirementPension', strings['profiling.q4.pension']],
+                  ['otherAssets', strings['profiling.q4.other']],
+                ] as const).map(([bucket, label]) => {
+                  const legacyHolding = answers.holdings[bucket];
+                  const amount = answers.holdingsByCurrency
+                    ? answers.holdingsByCurrency[currency]?.[bucket]
+                    : legacyHolding.currency === currency ? legacyHolding.amount : undefined;
+                  return (
+                    <div key={bucket}>
+                      <label htmlFor={`holding-${currency}-${bucket}`} className="mb-1 block text-xs font-medium text-subtle">
+                        {label} ({currency})
+                      </label>
+                      <input
+                        id={`holding-${currency}-${bucket}`}
+                        type="number"
+                        min="0"
+                        value={amount ?? ''}
+                        onChange={(event) => updateCurrencyHolding(currency, bucket, event.target.value)}
+                        className="w-full rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-
-            <div>
-              <label htmlFor="holding-brokerage" className="text-xs font-medium text-subtle block mb-1">
-                {strings['profiling.q4.brokerage']}
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="holding-brokerage"
-                  type="number"
-                  min="0"
-                  value={answers.holdings.brokerageStocks.amount}
-                  onChange={(e) => updateHoldingBucket('brokerageStocks', { amount: Number(e.target.value) || 0 })}
-                  className="flex-1 rounded-field border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                />
-                <select
-                  aria-label={`${strings['profiling.q4.brokerage']} currency`}
-                  value={answers.holdings.brokerageStocks.currency}
-                  onChange={(e) => updateHoldingBucket('brokerageStocks', { currency: e.target.value as Currency })}
-                  className="w-32 rounded-field border border-line bg-surface px-2.5 py-2 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                >
-                  {rankedCurrencies.map(({ currency, reason, sourceCountry }) => (
-                    <option key={currency} value={currency}>
-                      {currency} {reason === 'residence' ? `(${sourceCountry})` : reason === 'income' ? `(Inc)` : reason === 'remittance' ? `(Rem)` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="holding-pension" className="text-xs font-medium text-subtle block mb-1">
-                {strings['profiling.q4.pension']}
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="holding-pension"
-                  type="number"
-                  min="0"
-                  value={answers.holdings.retirementPension.amount}
-                  onChange={(e) => updateHoldingBucket('retirementPension', { amount: Number(e.target.value) || 0 })}
-                  className="flex-1 rounded-field border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                />
-                <select
-                  aria-label={`${strings['profiling.q4.pension']} currency`}
-                  value={answers.holdings.retirementPension.currency}
-                  onChange={(e) => updateHoldingBucket('retirementPension', { currency: e.target.value as Currency })}
-                  className="w-32 rounded-field border border-line bg-surface px-2.5 py-2 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                >
-                  {rankedCurrencies.map(({ currency, reason, sourceCountry }) => (
-                    <option key={currency} value={currency}>
-                      {currency} {reason === 'residence' ? `(${sourceCountry})` : reason === 'income' ? `(Inc)` : reason === 'remittance' ? `(Rem)` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="holding-other" className="text-xs font-medium text-subtle block mb-1">
-                {strings['profiling.q4.other']}
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="holding-other"
-                  type="number"
-                  min="0"
-                  value={answers.holdings.otherAssets.amount}
-                  onChange={(e) => updateHoldingBucket('otherAssets', { amount: Number(e.target.value) || 0 })}
-                  className="flex-1 rounded-field border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                />
-                <select
-                  aria-label={`${strings['profiling.q4.other']} currency`}
-                  value={answers.holdings.otherAssets.currency}
-                  onChange={(e) => updateHoldingBucket('otherAssets', { currency: e.target.value as Currency })}
-                  className="w-32 rounded-field border border-line bg-surface px-2.5 py-2 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
-                >
-                  {rankedCurrencies.map(({ currency, reason, sourceCountry }) => (
-                    <option key={currency} value={currency}>
-                      {currency} {reason === 'residence' ? `(${sourceCountry})` : reason === 'income' ? `(Inc)` : reason === 'remittance' ? `(Rem)` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
+            </fieldset>
+          ))}
         </div>
       )}
 

@@ -19,7 +19,7 @@ rules/src/analytics.rule.ts : trading days per year, snapshot window days, minim
 rules/src/asset-class.rule.ts : ASSET_CLASSES, AssetClass, isAssetClass
 rules/src/burn-rate.rule.ts : RUNWAY_CRITICAL/HEALTHY_MONTHS, RunwayBand, runwayBand
 rules/src/client-type.rule.ts : CLIENT_TYPES, ClientType, isClientType
-rules/src/currency.rule.ts : CURRENCIES, Currency, CURRENCY_MINOR_UNITS, isCurrency
+rules/src/currency.rule.ts : supported currencies including AED and INR, Currency, CURRENCY_MINOR_UNITS, isCurrency
 rules/src/display-name.rule.ts : max length, normalize, isDisplayName
 rules/src/email.rule.ts : max length, pattern (copied from zod), normalize, isEmail
 rules/src/error-codes.ts : module prefixes, CORE, AUTH, MARKET and ANALYTICS codes, ErrorCode types
@@ -31,7 +31,7 @@ rules/src/locale.rule.ts : LOCALES, Locale, DEFAULT_LOCALE, isLocale
 rules/src/market-data.rule.ts : Marketstack quota, page size and page cap; history depth; provider timeout; FX lookback days
 rules/src/password.rule.ts : min/max length, isPasswordLength
 rules/src/permission-tier.rule.ts : PERMISSION_TIERS, PermissionTier, isPermissionTier
-rules/src/profiling.rule.ts : PROFILING_QUESTIONS, calculateBaseRiskScore, mapStressAnswerToRiskBand, deriveTimeHorizonYears, deriveCorridorCurrencies
+rules/src/profiling.rule.ts : PROFILING_QUESTIONS, per-currency holdings, calculateBaseRiskScore, mapStressAnswerToRiskBand, deriveTimeHorizonYears, deriveCorridorCurrencies
 rules/src/refresh-token.rule.ts : byte count, base64url pattern, isRefreshToken
 rules/src/tenant.rule.ts : TENANT_PLANS, TENANT_STATUSES, API_KEY_PERMISSIONS, API_KEY_STATUSES
 rules/src/validation-keys.ts : VALIDATION_KEYS, ValidationKey, isValidationKey

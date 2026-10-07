@@ -24,10 +24,10 @@ frontend/src/features/profiling/components/country-tag-input.test.tsx : single a
 frontend/src/features/profiling/components/country-tag-input.tsx : accessible tag-based country input with autocomplete and quick presets
 frontend/src/features/profiling/components/profile-summary-card.tsx : compact risk score and currency corridor card
 frontend/src/features/profiling/components/profiling-modal.tsx : dialog wrapper for the profiling wizard
-frontend/src/features/profiling/components/profiling-questionnaire.test.tsx : wizard navigation, draft auto-saving, and completion
-frontend/src/features/profiling/components/profiling-questionnaire.tsx : 7-step onboarding questionnaire with humanized questions
+frontend/src/features/profiling/components/profiling-questionnaire.test.tsx : wizard navigation, country defaults, per-currency holdings draft auto-saving, and completion
+frontend/src/features/profiling/components/profiling-questionnaire.tsx : 7-step onboarding questionnaire with country defaults and per-currency holdings sections
 frontend/src/features/profiling/lib/countries.ts : country list data provider, Unicode flag emoji generator, and search filter
-frontend/src/features/profiling/profile-store.ts : local and session storage store for resumable profiling answers and base risk scores
+frontend/src/features/profiling/profile-store.ts : local and session storage store for resumable profiling answers, per-currency holdings, and base risk scores
 frontend/src/lib/errors/resolve-error.test.ts : lookup order: feature map, shared map, fallback; validation key to text
 frontend/src/lib/errors/resolve-error.ts : error → message: feature map, then shared map, then fallback
 frontend/src/lib/errors/shared-error-messages.ts : text for core and client error codes; generic fallback

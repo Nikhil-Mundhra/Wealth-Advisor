@@ -1,5 +1,6 @@
 import { ArrowLeftRight } from 'lucide-react';
 import { Navigate } from 'react-router';
+import { listHoldingAmounts } from '@wealth-advisor/rules';
 import { Card } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
@@ -23,17 +24,16 @@ export function CashflowPage() {
 
   const { ref, visible } = useReveal<HTMLDivElement>();
 
-  const realAccounts =
-    !isDemo && profile.answers.holdings.cashSavings.amount > 0
-      ? [
-          {
-            id: 'primary-cash',
-            label: 'Primary Cash & Savings',
-            balance: profile.answers.holdings.cashSavings.amount,
-            currency: profile.answers.holdings.cashSavings.currency,
-          },
-        ]
-      : [];
+  const realAccounts = !isDemo
+    ? listHoldingAmounts(profile.answers)
+        .filter((holding) => holding.bucket === 'cashSavings' && holding.amount > 0)
+        .map((holding) => ({
+          id: `cash-${holding.currency}`,
+          label: `Cash & Savings (${holding.currency})`,
+          balance: holding.amount,
+          currency: holding.currency,
+        }))
+    : [];
 
   const realRemittances =
     !isDemo && profile.answers.countries.remittanceDestinations.length > 0

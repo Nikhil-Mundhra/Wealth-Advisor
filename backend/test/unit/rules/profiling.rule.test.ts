@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 import {
   calculateBaseRiskScore,
+  CURRENCIES,
   deriveCorridorCurrencies,
   deriveTimeHorizonYears,
   mapStressAnswerToRiskBand,
@@ -69,7 +70,7 @@ describe('profiling.rule', () => {
     assert.equal(ranked[3].currency, 'SGD');
     assert.equal(ranked[3].reason, 'remittance');
     // Global currencies follow
-    assert.ok(ranked.length === 7);
+    assert.equal(ranked.length, CURRENCIES.length);
   });
 
   it('calculates expected base risk score and clamps within [1.0, 10.0]', () => {

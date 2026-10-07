@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../../../lib/locale-store.ts';
-import { clearDraft, saveDraft, DEFAULT_ELENA_PROFILE } from '../profile-store.ts';
+import { clearDraft, getProfileState, saveDraft, DEFAULT_ELENA_PROFILE, INITIAL_EMPTY_PROFILE } from '../profile-store.ts';
 import { ProfilingQuestionnaire } from './profiling-questionnaire.tsx';
 
 describe('ProfilingQuestionnaire', () => {
   beforeEach(() => {
     setLocale('en');
     clearDraft();
+    clearDraft('fresh@example.com');
   });
 
   it('renders step 1 with humanized question and advances to step 2', async () => {
@@ -63,17 +64,47 @@ describe('ProfilingQuestionnaire', () => {
     expect(screen.getByText('Question 3 of 7')).toBeVisible();
   });
 
-  it('renders step 4 with prioritized currencies banner and allows currency change', async () => {
-    saveDraft(4, DEFAULT_ELENA_PROFILE);
+  it('defaults question 2 to UAE residence and UAE and India income', () => {
+    saveDraft(2, INITIAL_EMPTY_PROFILE, 'fresh@example.com');
     const onComplete = vi.fn();
-    render(<ProfilingQuestionnaire onComplete={onComplete} />);
+    render(<ProfilingQuestionnaire onComplete={onComplete} email="fresh@example.com" />);
 
-    expect(screen.getByText('Corridor Currencies Prioritized')).toBeVisible();
-    const cashCurrencySelect = screen.getByLabelText('Bank accounts and cash currency');
-    expect(cashCurrencySelect).toBeVisible();
-    expect(cashCurrencySelect).toHaveValue('EUR');
+    expect(screen.getByRole('group', { name: 'Selected Country of residence' })).toHaveTextContent('(AE)');
+    expect(screen.getByRole('group', { name: 'Selected Where income is earned' })).toHaveTextContent('India');
+  });
 
-    await userEvent.selectOptions(cashCurrencySelect, 'GBP');
-    expect(cashCurrencySelect).toHaveValue('GBP');
+  it('renders blank AED and INR sections, with residence currency first, and saves both amounts', async () => {
+    saveDraft(4, INITIAL_EMPTY_PROFILE, 'fresh@example.com');
+    const onComplete = vi.fn();
+    render(<ProfilingQuestionnaire onComplete={onComplete} email="fresh@example.com" />);
+
+    const sections = screen.getAllByRole('group');
+    expect(sections[0]).toHaveTextContent('AED');
+    expect(sections[1]).toHaveTextContent('INR');
+    const aedCash = screen.getByRole('spinbutton', { name: 'Bank accounts and cash (AED)' });
+    const inrCash = screen.getByRole('spinbutton', { name: 'Bank accounts and cash (INR)' });
+    expect(aedCash).toHaveValue(null);
+    expect(inrCash).toHaveValue(null);
+
+    await userEvent.type(aedCash, '1200');
+    await userEvent.type(inrCash, '3500');
+    expect(aedCash).toHaveValue(1200);
+    expect(inrCash).toHaveValue(3500);
+    expect(getProfileState('fresh@example.com').draft?.answers.holdingsByCurrency).toMatchObject({
+      AED: { cashSavings: 1200 },
+      INR: { cashSavings: 3500 },
+    });
+  });
+
+  it('adds one section per distinct income currency and keeps the residence currency first', () => {
+    saveDraft(4, {
+      ...INITIAL_EMPTY_PROFILE,
+      countries: { residence: 'IN', incomeSources: ['AE', 'GB', 'IN'], remittanceDestinations: [] },
+    }, 'fresh@example.com');
+    render(<ProfilingQuestionnaire onComplete={vi.fn()} email="fresh@example.com" />);
+
+    expect(screen.getAllByRole('group').map((section) => section.querySelector('legend')?.textContent)).toEqual([
+      'INR', 'AED', 'GBP',
+    ]);
   });
 });

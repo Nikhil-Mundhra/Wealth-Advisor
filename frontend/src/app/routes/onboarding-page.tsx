@@ -32,6 +32,7 @@ export function OnboardingPage() {
         <div className="rounded-field border border-line bg-surface p-6 shadow-sm">
           <ProfilingQuestionnaire
             email={me?.email}
+            startFresh
             onComplete={() => navigate('/', { replace: true })}
           />
         </div>

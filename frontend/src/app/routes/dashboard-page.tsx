@@ -5,6 +5,7 @@ import {
   DEFAULT_FAMILY_BURN_ESTIMATE,
   DEFAULT_INDIVIDUAL_BURN_ESTIMATE,
   HOUSEHOLD_MODES,
+  listHoldingAmounts,
   RUNWAY_HEALTHY_MONTHS,
   type AssetClass,
   type HouseholdMode,
@@ -50,6 +51,10 @@ export function DashboardPage() {
   const { data: me } = useMe();
   const isDemo = !me || me.email === 'testing@example.com';
   const profile = useProfile(me?.email);
+  const holdingAmounts = listHoldingAmounts(profile.answers);
+  const bucketTotal = (bucket: typeof holdingAmounts[number]['bucket']) => holdingAmounts
+    .filter((holding) => holding.bucket === bucket)
+    .reduce((total, holding) => total + holding.amount, 0);
   const [household, setHousehold] = useState<HouseholdMode>(DEMO_HOUSEHOLD);
   const [profilingOpen, setProfilingOpen] = useState(false);
 
@@ -144,7 +149,7 @@ export function DashboardPage() {
   // Runway calculation: demo fixture vs real user's liquid cash buffer
   let displayRunwayMonths = DEMO_RUNWAY_MONTHS;
   if (!isDemo) {
-    const liquidCash = profile.answers.holdings.cashSavings.amount;
+    const liquidCash = bucketTotal('cashSavings');
     const estimatedMonthlyBurn =
       household === 'INDIVIDUAL' ? DEFAULT_INDIVIDUAL_BURN_ESTIMATE : DEFAULT_FAMILY_BURN_ESTIMATE;
     displayRunwayMonths = Math.round((liquidCash / estimatedMonthlyBurn) * 10) / 10;
@@ -158,22 +163,22 @@ export function DashboardPage() {
           {
             assetClass: 'MONEY_MARKET',
             label: 'Cash Savings',
-            weight: Math.round((profile.answers.holdings.cashSavings.amount / profile.totalHoldings) * 100),
+            weight: Math.round((bucketTotal('cashSavings') / profile.totalHoldings) * 100),
           },
           {
             assetClass: 'EQUITY_GLOBAL',
             label: 'Brokerage & Equities',
-            weight: Math.round((profile.answers.holdings.brokerageStocks.amount / profile.totalHoldings) * 100),
+            weight: Math.round((bucketTotal('brokerageStocks') / profile.totalHoldings) * 100),
           },
           {
             assetClass: 'FIXED_INCOME_GOV',
             label: 'Retirement & Pension',
-            weight: Math.round((profile.answers.holdings.retirementPension.amount / profile.totalHoldings) * 100),
+            weight: Math.round((bucketTotal('retirementPension') / profile.totalHoldings) * 100),
           },
           {
             assetClass: 'FX_HEDGE',
             label: 'Other Assets',
-            weight: Math.round((profile.answers.holdings.otherAssets.amount / profile.totalHoldings) * 100),
+            weight: Math.round((bucketTotal('otherAssets') / profile.totalHoldings) * 100),
           },
         ]
       : [];

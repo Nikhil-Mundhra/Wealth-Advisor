@@ -104,7 +104,7 @@ const en = {
   'profiling.q3.opt.money_market': 'Money market funds and cash reserves',
   'profiling.q3.opt.fx_hedge': 'Currency hedging',
   'profiling.q4.prompt': 'What are your current savings and investments?',
-  'profiling.q4.subtext': 'Rough amounts in your primary currency help establish your starting net worth.',
+  'profiling.q4.subtext': 'Enter amounts in each relevant currency. Leave a field blank if you have no holdings there.',
   'profiling.q4.cash': 'Bank accounts and cash',
   'profiling.q4.brokerage': 'Brokerage and stocks',
   'profiling.q4.pension': 'Retirement and pension',

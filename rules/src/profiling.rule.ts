@@ -54,6 +54,26 @@ export interface ProfilingHoldingsInput {
   otherAssets: HoldingBucketInput;
 }
 
+export type HoldingKind = keyof ProfilingHoldingsInput;
+export type HoldingsByCurrency = Partial<Record<Currency, Partial<Record<HoldingKind, number>>>>;
+
+export function listHoldingAmounts(answers: ProfilingAnswersInput): { bucket: HoldingKind; amount: number; currency: Currency }[] {
+  if (answers.holdingsByCurrency) {
+    return Object.entries(answers.holdingsByCurrency).flatMap(([currency, holdings]) =>
+      Object.entries(holdings ?? {}).map(([bucket, amount]) => ({
+        bucket: bucket as HoldingKind,
+        amount: amount ?? 0,
+        currency: currency as Currency,
+      })),
+    );
+  }
+  return Object.entries(answers.holdings).map(([bucket, holding]) => ({
+    bucket: bucket as HoldingKind,
+    amount: holding.amount,
+    currency: holding.currency,
+  }));
+}
+
 export interface CorridorCountriesInput {
   residence: string;
   incomeSources: string[];
@@ -65,6 +85,7 @@ export interface ProfilingAnswersInput {
   countries: CorridorCountriesInput;
   instruments: ProfilingInstrumentOption[];
   holdings: ProfilingHoldingsInput;
+  holdingsByCurrency?: HoldingsByCurrency;
   age: number;
   goals: {
     tags: ProfilingGoalTag[];
@@ -134,10 +155,10 @@ export const COUNTRY_CURRENCY_MAP: Record<string, Currency> = {
   CA: 'USD',
   AU: 'USD',
   NZ: 'USD',
-  AE: 'USD',
+  AE: 'AED',
   SA: 'USD',
   QA: 'USD',
-  IN: 'USD',
+  IN: 'INR',
   PH: 'USD',
   MX: 'USD',
   BR: 'USD',

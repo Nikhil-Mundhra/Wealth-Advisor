@@ -27,8 +27,8 @@ frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, house
 frontend/src/app/routes/evidence-page.test.tsx : executions with tiers and digests
 frontend/src/app/routes/evidence-page.tsx : sandbox ledger table
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
-frontend/src/app/routes/onboarding-page.test.tsx : onboarding questionnaire completes and redirects home
-frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire wizard for first-time signups
+frontend/src/app/routes/onboarding-page.test.tsx : onboarding starts without preselected risk answer and advances after selection
+frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire wizard with fresh answers for first-time signups
 frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
 frontend/src/app/routes/portfolio-page.tsx : holdings table with current vs target drift
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state

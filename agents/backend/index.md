@@ -107,7 +107,7 @@ backend/src/modules/market/domain/fx-rate.vo.ts : FxRate: base, quote, date, rat
 backend/src/modules/market/domain/money.vo.ts : Money: integer minor units + currency; provider decimals → minor units
 backend/src/modules/market/domain/price.vo.ts : Price: symbol, date, close, adjusted close, source
 backend/src/modules/market/domain/rate-table.ts : rate lookup on or before a day: direct, inverse, or crossed through a stored base
-backend/src/modules/market/domain/tracked-symbols.ts : tracked ETFs and their asset classes; FX base (EUR) and quote currencies
+backend/src/modules/market/domain/tracked-symbols.ts : tracked ETFs and their asset classes; FX base (EUR) and Frankfurter v1 quote currencies excluding AED
 backend/src/modules/market/domain/valuation.vo.ts : Valuation: original, converted, rate, rate date, mode (provenance of a conversion)
 backend/src/modules/market/infrastructure/providers/frankfurter-fx-source.ts : FxSource over Frankfurter v1 (ECB) range endpoint
 backend/src/modules/market/infrastructure/providers/marketstack-price-source.ts : PriceSource over Marketstack v2 /eod; one budget reservation per page; missing key → MK_1903
