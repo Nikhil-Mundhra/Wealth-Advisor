@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import {
   AssetProductListResponse,
   ExecuteTradeRequest,
@@ -10,12 +10,10 @@ import {
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { WealthApi } from '../../wealth.api.ts';
 
-export function wealthRoutes(api: WealthApi, auth?: MiddlewareHandler): readonly RouteDefinition[] {
-  const guard = auth ? [auth] : [];
-  const getContext = (c: any) => {
-    const principal = c.get('principal');
-    const userId = principal?.userId ?? 'default';
-    const tenantId = c.req.header('x-tenant-id') || 'default';
+export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler): readonly RouteDefinition[] {
+  const guard = [auth];
+  const scope = (c: Context) => {
+    const { tenantId, userId } = c.get('principal');
     return { tenantId, userId };
   };
 
@@ -29,7 +27,7 @@ export function wealthRoutes(api: WealthApi, auth?: MiddlewareHandler): readonly
       .use(...guard)
       .responds(PortfolioResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.getPortfolio(tenantId, userId);
       }),
 
@@ -37,7 +35,7 @@ export function wealthRoutes(api: WealthApi, auth?: MiddlewareHandler): readonly
       .use(...guard)
       .responds(RebalanceProposalResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.optimizePortfolio(tenantId, userId);
       }),
 
@@ -46,7 +44,7 @@ export function wealthRoutes(api: WealthApi, auth?: MiddlewareHandler): readonly
       .body(ExecuteTradeRequest)
       .responds(ExecuteTradeResponse)
       .handle(async ({ c, body }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.executeTrade(tenantId, userId, body);
       }),
 
@@ -54,7 +52,7 @@ export function wealthRoutes(api: WealthApi, auth?: MiddlewareHandler): readonly
       .use(...guard)
       .responds(SandboxLedgerResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.getLedger(tenantId, userId);
       }),
   ];

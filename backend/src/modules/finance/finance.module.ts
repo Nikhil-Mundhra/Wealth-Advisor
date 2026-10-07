@@ -25,12 +25,12 @@ import { financeRoutes } from './presentation/routes/finance.routes.ts';
 
 export interface FinanceModuleDeps {
   market?: MarketApi;
-  auth?: MiddlewareHandler;
+  auth: MiddlewareHandler;
 }
 
 export function createFinanceModule(
   context: ModuleContext,
-  deps?: FinanceModuleDeps,
+  deps: FinanceModuleDeps,
 ): { manifest: ModuleManifest; api: FinanceApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
@@ -52,7 +52,7 @@ export function createFinanceModule(
     basePath: '/finance',
     collections: financeCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.finance, statuses: FINANCE_ERROR_STATUSES },
-    routes: financeRoutes(api, deps?.auth),
+    routes: financeRoutes(api, deps.auth),
   });
 
   return { manifest, api };

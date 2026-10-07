@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { DEFAULT_TENANT_ID } from '#core/db/document-id.ts';
 import type { LlmProvider } from '@wealth-advisor/rules';
 import type { AdminSettingsRepository, ApiKeyRepository, TenantRepository } from '../../../application/ports.ts';
 import type { ApiKeyDocument } from '../documents/api-key.document.ts';
@@ -8,7 +9,7 @@ export class MemoryTenantRepository implements TenantRepository {
   private readonly tenants = new Map<string, TenantDocument>();
 
   constructor() {
-    const defaultId = new ObjectId('600000000000000000000001');
+    const defaultId = new ObjectId(DEFAULT_TENANT_ID);
     const now = new Date();
     this.tenants.set(defaultId.toHexString(), {
       _id: defaultId,

@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import {
   AccountDto,
   AccountListResponse,
@@ -6,15 +6,14 @@ import {
   CreateAccountRequest,
   TransactionListResponse,
 } from '@wealth-advisor/contracts';
+import type { HouseholdMode } from '@wealth-advisor/rules';
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { FinanceApi } from '../../finance.api.ts';
 
-export function financeRoutes(api: FinanceApi, auth?: MiddlewareHandler): readonly RouteDefinition[] {
-  const guard = auth ? [auth] : [];
-  const getContext = (c: any) => {
-    const principal = c.get('principal');
-    const userId = principal?.userId ?? 'default';
-    const tenantId = c.req.header('x-tenant-id') || 'default';
+export function financeRoutes(api: FinanceApi, auth: MiddlewareHandler): readonly RouteDefinition[] {
+  const guard = [auth];
+  const scope = (c: Context) => {
+    const { tenantId, userId } = c.get('principal');
     return { tenantId, userId };
   };
 
@@ -23,7 +22,7 @@ export function financeRoutes(api: FinanceApi, auth?: MiddlewareHandler): readon
       .use(...guard)
       .responds(AccountListResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.getAccounts(tenantId, userId);
       }),
 
@@ -32,7 +31,7 @@ export function financeRoutes(api: FinanceApi, auth?: MiddlewareHandler): readon
       .body(CreateAccountRequest)
       .responds(AccountDto, 201)
       .handle(async ({ c, body }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.createAccount(tenantId, userId, body);
       }),
 
@@ -40,7 +39,7 @@ export function financeRoutes(api: FinanceApi, auth?: MiddlewareHandler): readon
       .use(...guard)
       .responds(TransactionListResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = getContext(c);
+        const { tenantId, userId } = scope(c);
         return api.getTransactions(tenantId, userId);
       }),
 
@@ -48,8 +47,8 @@ export function financeRoutes(api: FinanceApi, auth?: MiddlewareHandler): readon
       .use(...guard)
       .responds(CashflowSummaryResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = getContext(c);
-        const mode = (c.req.query('householdMode') as any) ?? 'FAMILY_HOUSEHOLD';
+        const { tenantId, userId } = scope(c);
+        const mode = (c.req.query('householdMode') as HouseholdMode) ?? 'FAMILY_HOUSEHOLD';
         return api.getCashflowSummary(tenantId, userId, mode);
       }),
   ];

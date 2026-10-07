@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import type {
   AssetProductRepository,
   PortfolioRepository,
@@ -104,8 +105,8 @@ export class MemoryPortfolioRepository implements PortfolioRepository {
 
   private seedDefault() {
     const now = new Date();
-    const demoTenantId = new ObjectId('600000000000000000000001');
-    const demoUserId = new ObjectId('500000000000000000000001');
+    const demoTenantId = new ObjectId(DEFAULT_TENANT_ID);
+    const demoUserId = new ObjectId(DEFAULT_USER_ID);
 
     this.portfolio = {
       _id: new ObjectId(),
@@ -159,8 +160,10 @@ export class MemoryPortfolioRepository implements PortfolioRepository {
     };
   }
 
-  async findByUser(_tenantId: string, _userId: string): Promise<PortfolioDocument | null> {
-    return this.portfolio;
+  // The portfolio is a single row per user, so an unmatched scope reads nothing rather than the demo portfolio.
+  async findByUser(tenantId: string, userId: string): Promise<PortfolioDocument | null> {
+    const owned = this.portfolio && belongsTo(this.portfolio, tenantId, userId);
+    return owned ? this.portfolio : null;
   }
 
   async save(portfolio: PortfolioDocument): Promise<void> {
@@ -171,8 +174,8 @@ export class MemoryPortfolioRepository implements PortfolioRepository {
 export class MemorySandboxLedgerRepository implements SandboxLedgerRepository {
   private readonly entries: SandboxLedgerDocument[] = [];
 
-  async findAllByUser(_tenantId: string, _userId: string): Promise<SandboxLedgerDocument[]> {
-    return [...this.entries];
+  async findAllByUser(tenantId: string, userId: string): Promise<SandboxLedgerDocument[]> {
+    return this.entries.filter((entry) => belongsTo(entry, tenantId, userId));
   }
 
   async append(entry: Omit<SandboxLedgerDocument, '_id'>): Promise<SandboxLedgerDocument> {
@@ -181,4 +184,16 @@ export class MemorySandboxLedgerRepository implements SandboxLedgerRepository {
     this.entries.push(doc);
     return doc;
   }
+}
+
+// The same scope the Mongo repositories apply: an unusable scope id reads nothing rather than everything.
+function belongsTo(
+  document: { readonly tenantId: ObjectId; readonly userId: ObjectId },
+  tenantId: string,
+  userId: string,
+): boolean {
+  const tenant = toScopeId(tenantId, DEFAULT_TENANT_ID);
+  const user = toScopeId(userId, DEFAULT_USER_ID);
+  if (!tenant || !user) return false;
+  return document.tenantId.toHexString() === tenant.toHexString() && document.userId.toHexString() === user.toHexString();
 }

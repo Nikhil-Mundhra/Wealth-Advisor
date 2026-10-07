@@ -1,5 +1,6 @@
-import { ObjectId } from 'mongodb';
+import type { ObjectId } from 'mongodb';
 import { generateOpaqueToken } from '#core/crypto/random-token.ts';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import { DomainError } from '#core/domain/domain-error.ts';
 import type { Clock } from '#core/time/clock.ts';
 import { SHARING_ERROR_CODES } from '@wealth-advisor/rules';
@@ -15,12 +16,12 @@ export interface SharingApiDeps {
   clock: Clock;
 }
 
-const DEMO_TENANT_ID = '600000000000000000000001';
-const DEMO_USER_ID = '500000000000000000000001';
-
-function toObjectId(id: string, defaultFallback: string): ObjectId {
-  if (id === 'default') return new ObjectId(defaultFallback);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : new ObjectId(defaultFallback);
+// A share link is owned by a scope, so an id that is neither a document id nor the demo scope is refused rather than
+// silently filed under the demo account.
+function requireScopeId(id: string, demoId: string, label: string): ObjectId {
+  const scopeId = toScopeId(id, demoId);
+  if (!scopeId) throw new DomainError(SHARING_ERROR_CODES.invariantViolated, `unusable ${label} scope id`);
+  return scopeId;
 }
 
 export function createSharingApi(deps: SharingApiDeps) {
@@ -39,8 +40,8 @@ export function createSharingApi(deps: SharingApiDeps) {
 
       await plans.create({
         shareToken: token,
-        tenantId: toObjectId(tenantId, DEMO_TENANT_ID),
-        userId: toObjectId(userId, DEMO_USER_ID),
+        tenantId: requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant'),
+        userId: requireScopeId(userId, DEFAULT_USER_ID, 'user'),
         ownerDisplayName: 'Elena',
         privacyMasked: input.privacyMasked ?? true,
         planSnapshot: {

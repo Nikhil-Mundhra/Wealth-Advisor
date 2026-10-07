@@ -1,4 +1,6 @@
+import type { ObjectId } from 'mongodb';
 import { sha256Hex } from '#core/crypto/sha256.ts';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import type { Clock } from '#core/time/clock.ts';
 import { DomainError } from '#core/domain/domain-error.ts';
 import { WEALTH_ERROR_CODES } from '@wealth-advisor/rules';
@@ -9,6 +11,7 @@ import type {
   ExecuteTradeResponse,
   OptimizePortfolioRequest,
   PortfolioResponse,
+  RebalanceActionDto,
   RebalanceProposalResponse,
   SandboxLedgerEntryDto,
   SandboxLedgerResponse,
@@ -137,20 +140,11 @@ export function createWealthApi(deps: WealthApiDeps) {
       }
 
       const snapshot = deps.analytics ? await deps.analytics.latestSnapshot().catch(() => null) : null;
-
-      const actions = doc.holdings
-        .filter((h) => Math.abs(h.targetWeight - h.currentWeight) >= 0.001)
-        .map((h) => {
-          const isSell = h.currentWeight > h.targetWeight;
-          const diff = Math.abs(h.targetWeight - h.currentWeight);
-          const amountBase = Math.round(doc.totalValuationBase * diff);
-          return {
-            assetSymbol: h.assetSymbol,
-            action: isSell ? ('SELL' as const) : ('BUY' as const),
-            amountBase,
-            targetWeight: h.targetWeight,
-          };
-        });
+      const actions = planRebalance(doc);
+      const largest = doc.holdings.reduce<(typeof doc.holdings)[number] | null>(
+        (worst, h) => (!worst || Math.abs(h.targetWeight - h.currentWeight) > Math.abs(worst.targetWeight - worst.currentWeight) ? h : worst),
+        null,
+      );
 
       return {
         effectiveRiskScore: doc.effectiveRiskScore,
@@ -163,9 +157,9 @@ export function createWealthApi(deps: WealthApiDeps) {
             'Household runway dropped towards the 3-month threshold under elevated cross-border expenses. Expanding liquid cash reserves restores family buffer to 6+ months.',
           crossBorder:
             'Recent FX headwinds increased EUR conversion cost for family remittances. Allocating to short-duration EUR overnight liquidity shields upcoming remittance obligations from currency shocks.',
-          wealthStrategy: snapshot
-            ? `Trimming overweight US equities (60% -> 40%) based on 365-day risk analytics (${snapshot.window.observations} observations) to match the recalibrated risk tolerance.`
-            : 'Trimming overweight US equities (60% -> 40%) locks in equity gains and reduces portfolio beta to match the recalibrated risk tolerance.',
+          wealthStrategy: largest
+            ? `Rebalancing ${largest.assetSymbol} from ${(largest.currentWeight * 100).toFixed(0)}% to ${(largest.targetWeight * 100).toFixed(0)}%${snapshot ? ` against 365-day risk analytics (${snapshot.window.observations} observations)` : ''}, and holding any surplus proceeds in cash rather than deploying them past the target.`
+            : 'Every holding already sits at its target weight; no rebalance is due.',
         },
       };
     },
@@ -180,29 +174,27 @@ export function createWealthApi(deps: WealthApiDeps) {
       const timestampIso = now.toISOString();
 
       const p = await portfolios.findByUser(tenantId, userId);
-      const initialSummary = p
-        ? p.holdings.map((h) => ({ s: h.assetSymbol, w: h.currentWeight, q: h.quantity }))
-        : [];
+      if (!p) throw new DomainError(WEALTH_ERROR_CODES.portfolioNotFound, 'portfolio not found');
+
+      const initialSummary = p.holdings.map((h) => ({ s: h.assetSymbol, w: h.currentWeight, q: h.quantity }));
       const initialHash = sha256Hex(`state_${tenantId}_${userId}_initial_${JSON.stringify(initialSummary)}`);
 
-      let resultingSummary = initialSummary;
-      if (p) {
-        for (const t of trades) {
-          const h = p.holdings.find((item) => item.assetSymbol === t.assetSymbol);
-          if (h) {
-            h.currentWeight = t.targetWeight;
-            h.marketValueBase = Math.round(p.totalValuationBase * h.currentWeight);
-            if (h.currentPrice > 0) {
-              h.quantity = Math.round(h.marketValueBase / h.currentPrice);
-            }
-          }
+      // The client's target weight is checked against the portfolio's own and then discarded: the executed weight is the
+      // recorded one, so no caller can rebalance into a portfolio the profile never proposed.
+      const rebased = p.holdings.map((holding) => ({ ...holding }));
+      for (const trade of trades) {
+        const holding = rebased.find((item) => item.assetSymbol === trade.assetSymbol);
+        if (!holding || Math.abs(holding.targetWeight - trade.targetWeight) > WEIGHT_EPSILON) {
+          throw new DomainError(WEALTH_ERROR_CODES.tradeNotPermitted, `no permitted rebalance for ${trade.assetSymbol}`);
         }
-        p.lastRebalancedAt = now;
-        p.updatedAt = now;
-        resultingSummary = p.holdings.map((h) => ({ s: h.assetSymbol, w: h.currentWeight, q: h.quantity }));
-        await portfolios.save(p);
+        holding.currentWeight = holding.targetWeight;
+        holding.marketValueBase = Math.round(p.totalValuationBase * holding.currentWeight);
+        if (holding.currentPrice > 0) {
+          holding.quantity = Math.round(holding.marketValueBase / holding.currentPrice);
+        }
       }
 
+      const resultingSummary = rebased.map((h) => ({ s: h.assetSymbol, w: h.currentWeight, q: h.quantity }));
       const resultingHash = sha256Hex(`state_${tenantId}_${userId}_${timestampIso}_${JSON.stringify(resultingSummary)}`);
 
       const tradeDiffJson = JSON.stringify(trades);
@@ -210,9 +202,11 @@ export function createWealthApi(deps: WealthApiDeps) {
       const auditDigest = sha256Hex(auditPayload);
       const transactionHash = `0x${sha256Hex(auditDigest).slice(0, 40)}`;
 
+      // Evidence lands before state: a failure to persist the rebalance leaves a ledger row that records an attempt
+      // that did not take effect, never a moved portfolio that nothing accounts for.
       const entry = await ledger.append({
-        tenantId: docId(tenantId),
-        userId: docId(userId),
+        tenantId: requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant'),
+        userId: requireScopeId(userId, DEFAULT_USER_ID, 'user'),
         orderType,
         initialPortfolioStateHash: initialHash,
         executedTrades: trades,
@@ -230,6 +224,11 @@ export function createWealthApi(deps: WealthApiDeps) {
         timestamp: now,
       });
 
+      p.holdings = rebased;
+      p.lastRebalancedAt = now;
+      p.updatedAt = now;
+      await portfolios.save(p);
+
       return {
         ledgerEntry: toLedgerEntryDto(entry),
         success: true,
@@ -243,8 +242,38 @@ export function createWealthApi(deps: WealthApiDeps) {
   };
 }
 
-function docId(val: string): any {
-  return val;
+// Weights are stored as decimals, so a target and its drift are compared with a tolerance rather than for equality.
+const WEIGHT_EPSILON = 0.001;
+
+// Drift is the plan, but a plan whose buys outrun its sells cannot be executed: the buys share the sell proceeds in
+// drift order and whatever is left over stays in cash rather than being deployed past the target.
+function planRebalance(doc: PortfolioDocument): RebalanceActionDto[] {
+  const sells = doc.holdings.filter((h) => h.currentWeight - h.targetWeight >= WEIGHT_EPSILON);
+  const buys = doc.holdings.filter((h) => h.targetWeight - h.currentWeight >= WEIGHT_EPSILON);
+  const amountOf = (weight: number) => Math.round(doc.totalValuationBase * weight);
+
+  let proceeds = sells.reduce((sum, h) => sum + amountOf(h.currentWeight - h.targetWeight), 0);
+  const actions: RebalanceActionDto[] = sells.map((h) => ({
+    assetSymbol: h.assetSymbol,
+    action: 'SELL',
+    amountBase: amountOf(h.currentWeight - h.targetWeight),
+    targetWeight: h.targetWeight,
+  }));
+  for (const h of buys) {
+    const wanted = amountOf(h.targetWeight - h.currentWeight);
+    const amountBase = Math.min(wanted, Math.max(proceeds, 0));
+    proceeds -= amountBase;
+    if (amountBase > 0) actions.push({ assetSymbol: h.assetSymbol, action: 'BUY', amountBase, targetWeight: h.targetWeight });
+  }
+  return actions;
+}
+
+// A ledger row is owned by a scope, so an id that is neither a document id nor the demo scope is refused rather than
+// stored as a string the schema would reject.
+function requireScopeId(id: string, demoId: string, label: string): ObjectId {
+  const scopeId = toScopeId(id, demoId);
+  if (!scopeId) throw new DomainError(WEALTH_ERROR_CODES.invariantViolated, `unusable ${label} scope id`);
+  return scopeId;
 }
 
 export type WealthApi = ReturnType<typeof createWealthApi>;

@@ -1,4 +1,5 @@
 import { type Collection, ObjectId } from 'mongodb';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import type {
   AssetProductRepository,
   PortfolioRepository,
@@ -24,19 +25,6 @@ export class MongoAssetProductRepository implements AssetProductRepository {
   }
 }
 
-const DEMO_TENANT_ID = '600000000000000000000001';
-const DEMO_USER_ID = '500000000000000000000001';
-
-function resolveTenantObjectId(id: string): ObjectId | null {
-  if (id === 'default') return new ObjectId(DEMO_TENANT_ID);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
-}
-
-function resolveUserObjectId(id: string): ObjectId | null {
-  if (id === 'default') return new ObjectId(DEMO_USER_ID);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
-}
-
 export class MongoPortfolioRepository implements PortfolioRepository {
   private readonly col: () => Promise<Collection<PortfolioDocument>>;
 
@@ -45,8 +33,8 @@ export class MongoPortfolioRepository implements PortfolioRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<PortfolioDocument | null> {
-    const tId = resolveTenantObjectId(tenantId);
-    const uId = resolveUserObjectId(userId);
+    const tId = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const uId = toScopeId(userId, DEFAULT_USER_ID);
     if (!tId || !uId) return null;
     return (await this.col()).findOne({ tenantId: tId, userId: uId });
   }
@@ -64,8 +52,8 @@ export class MongoSandboxLedgerRepository implements SandboxLedgerRepository {
   }
 
   async findAllByUser(tenantId: string, userId: string): Promise<SandboxLedgerDocument[]> {
-    const tId = resolveTenantObjectId(tenantId);
-    const uId = resolveUserObjectId(userId);
+    const tId = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const uId = toScopeId(userId, DEFAULT_USER_ID);
     if (!tId || !uId) return [];
     return (await this.col())
       .find({ tenantId: tId, userId: uId })

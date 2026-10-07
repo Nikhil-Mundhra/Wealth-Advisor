@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
 import { checkDatabase } from '#core/db/connection/database-health.ts';
@@ -23,18 +24,23 @@ export function createApp(context: ModuleContext): Hono {
   const api = new Hono();
   api.onError(errorHandler);
   api.get('/health', async (c) => c.json({ status: 'ok', database: await checkDatabase(env()) }));
-  // Forward /ai to advisory copilot chat through the gateway
+  // Forward /ai to advisory copilot chat through the gateway. The caller's token travels with it, so the copilot
+  // answers for the scope the token carries rather than for the demo account.
   api.post('/ai', async (c) => {
     const body = await c.req.json().catch(() => ({}));
     const message = body.message ?? 'Analyze my portfolio and cross-border cashflow';
     const locale = body.locale ?? 'en';
     const householdMode = body.householdMode ?? 'FAMILY_HOUSEHOLD';
+    const authorization = c.req.header('authorization');
     const res = await api.request('/advisory/chat', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(authorization ? { authorization } : {}),
+      },
       body: JSON.stringify({ message, locale, householdMode }),
     });
-    return c.json(await res.json(), res.status as any);
+    return c.json(await res.json(), res.status as ContentfulStatusCode);
   });
   registry.mount(api);
   // Unmatched /api/* gets the error contract instead of falling through to the SPA.

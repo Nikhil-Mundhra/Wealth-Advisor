@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID } from '#core/db/document-id.ts';
 import type { SharedPlanRepository } from '../../../application/ports.ts';
 import type { SharedPlanDocument } from '../documents/shared-plan.document.ts';
 
@@ -12,8 +13,8 @@ export class MemorySharedPlanRepository implements SharedPlanRepository {
     const demoPlan: SharedPlanDocument = {
       _id: new ObjectId(),
       shareToken: 'dewa_sec_789f',
-      tenantId: new ObjectId('600000000000000000000001'),
-      userId: new ObjectId('500000000000000000000001'),
+      tenantId: new ObjectId(DEFAULT_TENANT_ID),
+      userId: new ObjectId(DEFAULT_USER_ID),
       ownerDisplayName: 'Elena',
       privacyMasked: true,
       planSnapshot: {

@@ -15,7 +15,7 @@ export interface AdvisoryModuleDeps {
   finance: FinanceApi;
   wealth: WealthApi;
   getActiveProvider?: () => Promise<LlmProvider>;
-  auth?: MiddlewareHandler;
+  auth: MiddlewareHandler;
 }
 
 export function createAdvisoryModule(

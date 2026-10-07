@@ -1,20 +1,8 @@
 import { type Collection, ObjectId } from 'mongodb';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toDocumentId, toScopeId } from '#core/db/document-id.ts';
 import type { AccountRepository, TransactionRepository } from '../../../application/ports.ts';
 import { type AccountDocument, ACCOUNTS_COLLECTION } from '../documents/account.document.ts';
 import { type TransactionDocument, TRANSACTIONS_COLLECTION } from '../documents/transaction.document.ts';
-
-const DEMO_TENANT_ID = '600000000000000000000001';
-const DEMO_USER_ID = '500000000000000000000001';
-
-function resolveTenantObjectId(id: string): ObjectId | null {
-  if (id === 'default') return new ObjectId(DEMO_TENANT_ID);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
-}
-
-function resolveUserObjectId(id: string): ObjectId | null {
-  if (id === 'default') return new ObjectId(DEMO_USER_ID);
-  return ObjectId.isValid(id) && id.length === 24 ? new ObjectId(id) : null;
-}
 
 export class MongoAccountRepository implements AccountRepository {
   private readonly col: () => Promise<Collection<AccountDocument>>;
@@ -24,15 +12,16 @@ export class MongoAccountRepository implements AccountRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<AccountDocument[]> {
-    const tId = resolveTenantObjectId(tenantId);
-    const uId = resolveUserObjectId(userId);
+    const tId = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const uId = toScopeId(userId, DEFAULT_USER_ID);
     if (!tId || !uId) return [];
     return (await this.col()).find({ tenantId: tId, userId: uId }).toArray();
   }
 
   async findById(id: string): Promise<AccountDocument | null> {
-    if (!ObjectId.isValid(id) || id.length !== 24) return null;
-    return (await this.col()).findOne({ _id: new ObjectId(id) });
+    const docId = toDocumentId(id);
+    if (!docId) return null;
+    return (await this.col()).findOne({ _id: docId });
   }
 
   async create(account: Omit<AccountDocument, '_id'>): Promise<AccountDocument> {
@@ -51,8 +40,8 @@ export class MongoTransactionRepository implements TransactionRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<TransactionDocument[]> {
-    const tId = resolveTenantObjectId(tenantId);
-    const uId = resolveUserObjectId(userId);
+    const tId = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const uId = toScopeId(userId, DEFAULT_USER_ID);
     if (!tId || !uId) return [];
     return (await this.col())
       .find({ tenantId: tId, userId: uId })

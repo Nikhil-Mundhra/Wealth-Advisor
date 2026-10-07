@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import type { AccountRepository, TransactionRepository } from '../../../application/ports.ts';
 import type { AccountDocument } from '../documents/account.document.ts';
 import type { TransactionDocument } from '../documents/transaction.document.ts';
@@ -12,8 +13,8 @@ export class MemoryAccountRepository implements AccountRepository {
 
   private seedDefaults() {
     const now = new Date();
-    const demoTenantId = new ObjectId('600000000000000000000001');
-    const demoUserId = new ObjectId('500000000000000000000001');
+    const demoTenantId = new ObjectId(DEFAULT_TENANT_ID);
+    const demoUserId = new ObjectId(DEFAULT_USER_ID);
 
     const seeds: Omit<AccountDocument, '_id'>[] = [
       {
@@ -60,8 +61,8 @@ export class MemoryAccountRepository implements AccountRepository {
     }
   }
 
-  async findByUser(_tenantId: string, _userId: string): Promise<AccountDocument[]> {
-    return Array.from(this.accounts.values());
+  async findByUser(tenantId: string, userId: string): Promise<AccountDocument[]> {
+    return scopedTo(this.accounts.values(), tenantId, userId);
   }
 
   async findById(id: string): Promise<AccountDocument | null> {
@@ -85,8 +86,8 @@ export class MemoryTransactionRepository implements TransactionRepository {
 
   private seedDefaults() {
     const now = new Date();
-    const demoTenantId = new ObjectId('600000000000000000000001');
-    const demoUserId = new ObjectId('500000000000000000000001');
+    const demoTenantId = new ObjectId(DEFAULT_TENANT_ID);
+    const demoUserId = new ObjectId(DEFAULT_USER_ID);
     const dummyAccId = new ObjectId();
 
     const seeds: Omit<TransactionDocument, '_id'>[] = [
@@ -152,8 +153,8 @@ export class MemoryTransactionRepository implements TransactionRepository {
     }
   }
 
-  async findByUser(_tenantId: string, _userId: string): Promise<TransactionDocument[]> {
-    return Array.from(this.transactions.values());
+  async findByUser(tenantId: string, userId: string): Promise<TransactionDocument[]> {
+    return scopedTo(this.transactions.values(), tenantId, userId);
   }
 
   async create(tx: Omit<TransactionDocument, '_id'>): Promise<TransactionDocument> {
@@ -162,4 +163,17 @@ export class MemoryTransactionRepository implements TransactionRepository {
     this.transactions.set(id.toHexString(), doc);
     return doc;
   }
+}
+
+// The same scope the Mongo repositories apply: an unusable scope id reads nothing rather than everything.
+function scopedTo<T extends { readonly tenantId: ObjectId; readonly userId: ObjectId }>(
+  documents: Iterable<T>,
+  tenantId: string,
+  userId: string,
+): T[] {
+  const tenant = toScopeId(tenantId, DEFAULT_TENANT_ID);
+  const user = toScopeId(userId, DEFAULT_USER_ID);
+  if (!tenant || !user) return [];
+  const id = (value: ObjectId) => value.toHexString();
+  return Array.from(documents).filter((doc) => id(doc.tenantId) === id(tenant) && id(doc.userId) === id(user));
 }
