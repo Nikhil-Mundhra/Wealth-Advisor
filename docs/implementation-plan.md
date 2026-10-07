@@ -165,7 +165,7 @@ To provide a native banking app experience beyond mobile web:
 * **Android Distribution Branch:** Android Studio project, Gradle build system, Keystore release signing, Android App Bundle (`.aab`) generation for Google Play Console.
 
 ### 3.8 MongoDB Atlas Multi-Tenant Schema Specification
-Built collections: [backend/collections.md](backend/collections.md). Planned collections: [planned-collections.md](planned-collections.md).
+Built collections: [backend/docs/collections.md](../backend/docs/collections.md). Planned collections: [backend/docs/planned-collections.md](../backend/docs/planned-collections.md).
 
 ---
 

@@ -108,4 +108,4 @@ flowchart TB
 
 `frontend/src/features/` has hooks for auth and admin only; there is no finance, wealth, advisory or sharing feature directory, so every advisory number a user sees still comes from `frontend/src/lib/demo-data.ts` or from the seeded replies in `frontend/src/app/routes/advisory-page.tsx`.
 
-Route surface: `docs/shared/apis/market.md`, `docs/shared/apis/analytics.md`, `docs/shared/apis/core.md`. Module and event contracts: `docs/backend/module-dependencies.md`, `docs/backend/events.md`.
+Route surface: `contracts/docs/apis/market.md`, `contracts/docs/apis/analytics.md`, `contracts/docs/apis/core.md`. Module and event contracts: `backend/docs/module-dependencies.md`, `backend/docs/events.md`.

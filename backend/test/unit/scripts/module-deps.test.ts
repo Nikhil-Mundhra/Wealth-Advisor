@@ -18,7 +18,7 @@ interface ModuleDeps {
 }
 
 // The checker is a plain .mjs script with no type declarations, so it is loaded through a computed specifier.
-const SCRIPT = new URL('../../../../scripts/module-deps.mjs', import.meta.url).href;
+const SCRIPT = new URL('../../../scripts/module-deps.mjs', import.meta.url).href;
 
 const EDGES_DOC = `# Module dependencies
 
@@ -32,28 +32,28 @@ const EDGES_DOC = `# Module dependencies
 `;
 
 const FIXTURE: Record<string, string> = {
-  'docs/backend/module-dependencies.md': EDGES_DOC,
-  'backend/src/modules/index.ts': "import { createMarketModule } from './market/market.module.ts';\n",
-  'backend/src/modules/market/public.ts': "export type { Money } from './domain/money.ts';\n",
-  'backend/src/modules/market/domain/money.ts': 'export interface Money { amount: number }\n',
-  'backend/src/modules/market/market.api.ts': [
+  'docs/module-dependencies.md': EDGES_DOC,
+  'src/modules/index.ts': "import { createMarketModule } from './market/market.module.ts';\n",
+  'src/modules/market/public.ts': "export type { Money } from './domain/money.ts';\n",
+  'src/modules/market/domain/money.ts': 'export interface Money { amount: number }\n',
+  'src/modules/market/market.api.ts': [
     "import type { Clock } from '#core/time/clock.ts';",
     "import { z } from 'zod';",
     "import type { Money } from './domain/money.ts';",
     "import type { Snapshot } from '../analytics/public.ts';",
   ].join('\n'),
-  'backend/src/modules/analytics/public.ts': 'export interface Snapshot { asOf: string }\n',
-  'backend/src/modules/analytics/analytics.api.ts': [
+  'src/modules/analytics/public.ts': 'export interface Snapshot { asOf: string }\n',
+  'src/modules/analytics/analytics.api.ts': [
     '// import { nothing } from "../market/domain/money.ts";',
     "import type { Money } from '../market/public.ts';",
     'import {',
     '  type Money as Cash,',
     "} from '../market/domain/money.ts';",
   ].join('\n'),
-  'backend/src/modules/auth/auth.module.ts': "import { env } from '#core/config/env.ts';\n",
-  'backend/src/core/time/clock.ts': "import type { Db } from 'mongodb';\n",
-  'backend/src/core/http/alias.ts': "import type { Money } from '#modules/market/public.ts';\n",
-  'backend/src/core/http/relative.ts': "\nimport { createMarketModule } from '../../modules/market/market.module.ts';\n",
+  'src/modules/auth/auth.module.ts': "import { env } from '#core/config/env.ts';\n",
+  'src/core/time/clock.ts': "import type { Db } from 'mongodb';\n",
+  'src/core/http/alias.ts': "import type { Money } from '#modules/market/public.ts';\n",
+  'src/core/http/relative.ts': "\nimport { createMarketModule } from '../../modules/market/market.module.ts';\n",
 };
 
 describe('module-deps', () => {
@@ -80,8 +80,8 @@ describe('module-deps', () => {
     assert.equal(cycle, null);
     const found = violations.map(({ kind, where, from, to }) => ({ kind, where, from, to }));
     assert.deepEqual(found.filter((v) => v.from !== 'core'), [
-      { kind: 'non-public', where: 'backend/src/modules/analytics/analytics.api.ts:5', from: 'analytics', to: 'market' },
-      { kind: 'off-graph', where: 'backend/src/modules/market/market.api.ts:4', from: 'market', to: 'analytics' },
+      { kind: 'non-public', where: 'src/modules/analytics/analytics.api.ts:5', from: 'analytics', to: 'market' },
+      { kind: 'off-graph', where: 'src/modules/market/market.api.ts:4', from: 'market', to: 'analytics' },
     ]);
   });
 
@@ -90,8 +90,8 @@ describe('module-deps', () => {
     assert.deepEqual(
       found.map(({ kind, where, to }) => ({ kind, where, to })).sort((a, b) => a.where.localeCompare(b.where)),
       [
-        { kind: 'core-imports-module', where: 'backend/src/core/http/alias.ts:1', to: 'market/public.ts' },
-        { kind: 'core-imports-module', where: 'backend/src/core/http/relative.ts:2', to: 'market/market.module.ts' },
+        { kind: 'core-imports-module', where: 'src/core/http/alias.ts:1', to: 'market/public.ts' },
+        { kind: 'core-imports-module', where: 'src/core/http/relative.ts:2', to: 'market/market.module.ts' },
       ],
     );
   });

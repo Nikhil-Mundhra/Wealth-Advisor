@@ -1,4 +1,4 @@
-# Local/single-host edge. Ports: docs/infra/ports.md. The backend runs on the host (make backend); nginx reaches it via host.docker.internal.
+# Local/single-host edge. Ports: infra/docs/ports.md. The backend runs on the host (make backend); nginx reaches it via host.docker.internal.
 name: wealth-advisor
 
 services:

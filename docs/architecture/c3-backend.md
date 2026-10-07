@@ -78,4 +78,4 @@ flowchart TB
 | `backend/src/modules/market/domain/` | Money, Price, FxRate, Valuation, rate table, convertBatch, tracked symbols, errors | `core/domain`, `core/time`, rules |
 | `backend/src/modules/market/infrastructure/` | Marketstack and Frankfurter adapters, Mongo and memory repositories, schemas | application ports, domain, `core/http-client`, `core/db`, `core/time`, rules |
 
-Module manifest and mounting: `docs/backend/module-contract.md`. Allowed imports between modules: `docs/backend/module-dependencies.md`.
+Module manifest and mounting: `backend/docs/module-contract.md`. Allowed imports between modules: `backend/docs/module-dependencies.md`.

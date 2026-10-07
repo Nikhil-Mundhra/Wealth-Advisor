@@ -2,7 +2,7 @@
 # Start/stop only ever act on processes whose working directory is inside this repo,
 # so a different app on the same port is reported, never killed.
 
-# Fixed ports; see docs/infra/ports.md. Vite and nginx hard-code the backend port, so change all three together.
+# Fixed ports; see infra/docs/ports.md. Vite and nginx hard-code the backend port, so change all three together.
 BACKEND_PORT  := 3000
 FRONTEND_PORT := 5173
 PROXY_PORT    := 8088
@@ -36,7 +36,7 @@ stop-backend:  ## Stop the backend
 proxy: build  ## Build the SPA and start nginx in front of the backend (needs Docker)
 	@$(DOCKER_UP) || { echo "proxy NOT started: Docker is not running"; exit 1; }
 	@if lsof -ti tcp:$(PROXY_PORT) -sTCP:LISTEN >/dev/null && [ -z "$$($(COMPOSE) ps -q nginx 2>/dev/null)" ]; then \
-		echo "proxy NOT started: port $(PROXY_PORT) is held by another app (see docs/infra/ports.md)"; exit 1; fi
+		echo "proxy NOT started: port $(PROXY_PORT) is held by another app (see infra/docs/ports.md)"; exit 1; fi
 	@$(COMPOSE) up -d --quiet-pull
 	@echo "proxy → http://localhost:$(PROXY_PORT)  (start the API with: make backend)"
 
@@ -81,8 +81,8 @@ typecheck:  ## Typecheck every workspace
 docs-lint:  ## Check agent guides and docs: links, file maps, reachability
 	node scripts/docs-lint.mjs
 
-deps-lint:  ## Check cross-module imports against docs/backend/module-dependencies.md
-	node scripts/module-deps.mjs
+deps-lint:  ## Check cross-module imports against backend/docs/module-dependencies.md
+	node backend/scripts/module-deps.mjs
 
 $(RUN_DIR):
 	@mkdir -p $(RUN_DIR)

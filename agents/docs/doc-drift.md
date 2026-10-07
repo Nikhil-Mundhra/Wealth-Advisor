@@ -20,10 +20,10 @@ status: planned · not built
 |---|---|---|---|
 | `map` | any tracked file | its owning `## File structure` map | failure, already in `scripts/docs-lint.mjs` |
 | `sync` | `agents/docs/sync-docs.md` `last synced:` | none | failure, Phase 1 |
-| `module` | new `backend/src/modules/<name>/` | `docs/backend/module-dependencies.md` | warning, Phase 1 |
+| `module` | new `backend/src/modules/<name>/` | `backend/docs/module-dependencies.md` | warning, Phase 1 |
 | `engine` | new export in `backend/src/modules/*/domain/` | `docs/domain/advisory-pipeline.md` | warning, Phase 1 |
-| `route` | new entry in `backend/src/app.ts` | `docs/shared/apis/index.md` | warning, Phase 2, after those docs are tabular |
-| `contract` | new export in `contracts/src/` | `agents/shared/contracts.md` | warning, Phase 2 |
+| `route` | new entry in `backend/src/app.ts` | `contracts/docs/apis/index.md` | warning, Phase 2, after those docs are tabular |
+| `contract` | new export in `contracts/src/` | `contracts/AGENTS.md` | warning, Phase 2 |
 
 ## Workflow
 1. Table before checks: the prefix → doc map lives in `scripts/docs-lint.mjs`; a check with no declared owner is not written.

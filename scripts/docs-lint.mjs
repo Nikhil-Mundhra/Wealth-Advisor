@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Checks the agent-guide and docs graph: one-way edges, one owner per mapped path, no dangling paths,
-// an index.md in every docs folder, every guide or doc reachable from the entry point, and CLAUDE.md equal to it.
+// Checks the agent-guide and docs graph across the root and every repo folder holding an AGENTS.md: one-way edges,
+// one owner per mapped path, no dangling paths, an index.md in every docs folder, every guide or doc reachable from
+// the root entry point, and each CLAUDE.md equal to the AGENTS.md beside it.
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -9,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ENTRY = 'AGENTS.md';
 const ENTRY_COPY = 'CLAUDE.md';
+const GUIDES_DIR = 'agents';
+const DOCS_DIR = 'docs';
 // A backticked token or map path is checked only when it starts at one of these repo-root entries.
 const ROOTS = new Set([
   'agents', 'docs', 'backend', 'frontend', 'contracts', 'rules', 'infra', 'scripts',
@@ -94,11 +97,23 @@ function asRepoPath(token) {
   return path;
 }
 
-const agentFiles = ['AGENTS.md', ...(exists('agents') ? walk('agents') : [])];
-const docFiles = exists('docs') ? walk('docs') : [];
+// '' is the root; a repo is a top-level folder with its own entry point.
+const repos = [
+  '',
+  ...readdirSync(ROOT).filter((name) => statSync(join(ROOT, name)).isDirectory() && exists(`${name}/${ENTRY}`)),
+];
+const inRepo = (repo, path) => (repo ? `${repo}/${path}` : path);
+const docRoots = repos.map((repo) => inRepo(repo, DOCS_DIR)).filter(exists);
+const entryFiles = repos.map((repo) => inRepo(repo, ENTRY));
+const agentFiles = [
+  ...entryFiles,
+  ...repos.map((repo) => inRepo(repo, GUIDES_DIR)).filter(exists).flatMap((dir) => walk(dir)),
+];
+const docFiles = docRoots.flatMap((dir) => walk(dir));
+const docSet = new Set(docFiles);
 const allMd = [...agentFiles, ...docFiles];
 
-// (a) docs never link to agents/
+// (a) docs never link to a guides folder
 for (const file of docFiles) {
   read(file)
     .split('\n')
@@ -144,8 +159,8 @@ for (const file of allMd) {
 }
 
 // (d) every docs folder has an index.md
-if (exists('docs')) {
-  for (const dir of dirsUnder('docs')) {
+for (const root of docRoots) {
+  for (const dir of dirsUnder(root)) {
     if (!exists(`${dir}/index.md`)) fail('[no index]', dir, 'missing index.md');
   }
 }
@@ -153,7 +168,7 @@ if (exists('docs')) {
 // (e) every guide and doc is reachable from the entry point through @imports, Route/Calls lines and index maps
 function edges(file) {
   const text = read(file);
-  if (file.startsWith('docs/')) {
+  if (docSet.has(file)) {
     if (!file.endsWith('/index.md')) return [];
     return fencedLines(text).map(mapPath).filter(Boolean);
   }
@@ -172,8 +187,12 @@ for (const file of [...agentFiles, ...docFiles]) {
   if (!reached.has(file)) fail('[unreachable]', file, `no Route, Axes, Calls or index edge from ${ENTRY}`);
 }
 
-// (h) the Claude Code entry is a byte copy of AGENTS.md
-if (!exists(ENTRY_COPY) || read(ENTRY_COPY) !== read(ENTRY)) fail('[entry copy]', ENTRY_COPY, `differs from ${ENTRY}; cp ${ENTRY} ${ENTRY_COPY}`);
+// (h) each Claude Code entry is a byte copy of the AGENTS.md beside it
+for (const repo of repos) {
+  const entry = inRepo(repo, ENTRY);
+  const copy = inRepo(repo, ENTRY_COPY);
+  if (!exists(copy) || read(copy) !== read(entry)) fail('[entry copy]', copy, `differs from ${entry}; cp ${entry} ${copy}`);
+}
 
 if (errors.length > 0) {
   console.error(errors.join('\n'));

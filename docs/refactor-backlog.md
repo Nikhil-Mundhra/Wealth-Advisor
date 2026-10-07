@@ -98,7 +98,7 @@ closed 2026-10-06 by 1b9dbfc (fixed before the first commit; the prefix map hold
 closed 2026-10-06 by 1b9dbfc (fixed before the first commit; no setFields in history)
 
 ### R31 · Comments (misleading) · backend/src/modules/analytics/analytics.api.ts:32 · onMarketDataRefreshed
-closed 2026-10-06 by 080f852 — the comment and docs/backend/events.md now describe in-process delivery (logged, never redelivered)
+closed 2026-10-06 by 080f852 — the comment and backend/docs/events.md now describe in-process delivery (logged, never redelivered)
 
 ## Dropped
 
@@ -147,7 +147,7 @@ dropped 2026-10-06 — 0 callers today, but the finance slice (burn rate, dashbo
 dropped 2026-10-06 — kind is the transient/fatal contract the spec defines and its tests pin; the retry consumer is the next provider user. Re-check when a second provider integration lands.
 
 ### R21 · Speculative generality · backend/src/modules/analytics/analytics.api.ts:45 · markProcessed after the work
-dropped 2026-10-06 — documented preparation for a redelivering transport (docs/backend/events.md); costs one insert per refresh.
+dropped 2026-10-06 — documented preparation for a redelivering transport (backend/docs/events.md); costs one insert per refresh.
 
 ### R24 · Duplicate code · `broken` invariant helper in 4 value objects
 dropped 2026-10-06 — a one-line closure per file; a shared helper adds an import and a hop for no measured gain (KISS).

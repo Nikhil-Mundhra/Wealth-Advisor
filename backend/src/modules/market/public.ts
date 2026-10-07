@@ -1,4 +1,4 @@
-// The market module's surface for other modules (docs/backend/module-dependencies.md); nothing else is importable.
+// The market module's surface for other modules (backend/docs/module-dependencies.md); nothing else is importable.
 export type { MarketApi, ConvertInput, QuotesResult, RatesResult, RefreshResult } from './market.api.ts';
 export type { ConversionItem, ConversionResult } from './domain/convert.ts';
 export { Money } from './domain/money.vo.ts';
