@@ -3,6 +3,7 @@ export * from './common/error.contract.ts';
 export * from './fields/client-type.field.ts';
 export * from './fields/display-name.field.ts';
 export * from './fields/email.field.ts';
+export * from './fields/household-mode.field.ts';
 export * from './fields/password.field.ts';
 export * from './fields/refresh-token.field.ts';
 export * from './auth/signup.contract.ts';

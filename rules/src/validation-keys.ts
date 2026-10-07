@@ -12,6 +12,7 @@ export const VALIDATION_KEYS = {
   refreshTokenInvalid: 'refresh_token.invalid',
   currencyInvalid: 'currency.invalid',
   dateInvalid: 'date.invalid',
+  householdModeInvalid: 'household_mode.invalid',
   profilingAgeInvalid: 'profiling.age_invalid',
   profilingResidenceRequired: 'profiling.residence_required',
   profilingPsychologyRequired: 'profiling.psychology_required',

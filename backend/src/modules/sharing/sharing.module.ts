@@ -1,3 +1,4 @@
+import type { MiddlewareHandler } from 'hono';
 import { ERROR_CODE_PREFIXES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
 import { resolveDataStore } from '#core/db/connection/data-store.ts';
@@ -14,7 +15,14 @@ import { sharingCollections } from './infrastructure/db/schema/sharing-collectio
 import { SHARING_ERROR_STATUSES } from './presentation/sharing-error-statuses.ts';
 import { sharingRoutes } from './presentation/routes/sharing.routes.ts';
 
-export function createSharingModule(context: ModuleContext): { manifest: ModuleManifest; api: SharingApi } {
+export interface SharingModuleDeps {
+  auth: MiddlewareHandler;
+}
+
+export function createSharingModule(
+  context: ModuleContext,
+  deps: SharingModuleDeps,
+): { manifest: ModuleManifest; api: SharingApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
 
@@ -30,7 +38,7 @@ export function createSharingModule(context: ModuleContext): { manifest: ModuleM
     basePath: '/sharing',
     collections: sharingCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.sharing, statuses: SHARING_ERROR_STATUSES },
-    routes: sharingRoutes(api),
+    routes: sharingRoutes(api, deps.auth),
   });
 
   return { manifest, api };

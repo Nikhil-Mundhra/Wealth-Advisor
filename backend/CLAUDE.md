@@ -84,7 +84,8 @@ backend/src/modules/admin/application/ports.ts : TenantRepository, ApiKeyReposit
 backend/src/modules/admin/public.ts : the admin surface other modules may import
 backend/src/modules/advisory/advisory.api.ts : createAdvisoryApi: multilingual copilot chat, proposal cards, calculation shield
 backend/src/modules/advisory/advisory.module.ts : composition root: llm gateway, mock adapter → api, routes, manifest
-backend/src/modules/advisory/domain/llm-gateway.ts : multi-provider LLM gateway and mock deterministic adapter
+backend/src/modules/advisory/domain/calculation-shield.ts : shieldText keeps model text only when every number in it matches an engine fact; factNumbers reads facts from text
+backend/src/modules/advisory/domain/llm-gateway.ts : multi-provider LLM gateway and mock deterministic adapter; live replies pass through the calculation shield
 backend/src/modules/advisory/public.ts : the advisory surface other modules may import
 backend/src/modules/analytics/analytics.api.ts : createAnalyticsApi: onMarketDataRefreshed (work, then mark), latestSnapshot, snapshotAt
 backend/src/modules/analytics/analytics.module.ts : composition root: store-selected snapshot repository, processed events → api, routes, market.data_refreshed subscription, manifest
@@ -125,7 +126,8 @@ backend/src/modules/sharing/application/ports.ts : SharedPlanRepository port
 backend/src/modules/sharing/public.ts : the sharing surface other modules may import
 backend/src/modules/sharing/sharing.api.ts : createSharingApi: share link creation with TTL, masked public plan resolution
 backend/src/modules/sharing/sharing.module.ts : composition root: store-selected shared plan repo → api, routes, manifest
-backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, SandboxLedgerRepository ports
+backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, SandboxLedgerRepository, PasskeyVerifier ports
+backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts : PasskeyVerifier that refuses every assertion; no passkey registration exists
 backend/src/modules/wealth/public.ts : the wealth surface other modules may import
 backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, optimizer, sandbox trade execution, ledger
 backend/src/modules/wealth/wealth.module.ts : composition root: store-selected wealth repos → api, routes, manifest

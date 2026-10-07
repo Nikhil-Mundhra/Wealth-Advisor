@@ -25,6 +25,7 @@ import {
 } from './infrastructure/db/repositories/mongo-wealth.repository.ts';
 import type { MiddlewareHandler } from 'hono';
 import type { AnalyticsApi } from '../analytics/public.ts';
+import { unregisteredPasskeyVerifier } from './infrastructure/crypto/unregistered-passkey-verifier.ts';
 import { wealthCollections } from './infrastructure/db/schema/wealth-collections.ts';
 import { WEALTH_ERROR_STATUSES } from './presentation/wealth-error-statuses.ts';
 import { wealthRoutes } from './presentation/routes/wealth.routes.ts';
@@ -56,7 +57,14 @@ export function createWealthModule(
       ? new MemorySandboxLedgerRepository()
       : new MongoSandboxLedgerRepository(async () => (await db()).collection<SandboxLedgerDocument>(SANDBOX_LEDGERS_COLLECTION));
 
-  const api = createWealthApi({ products, portfolios, ledger, clock, analytics: deps?.analytics });
+  const api = createWealthApi({
+    products,
+    portfolios,
+    ledger,
+    passkeys: unregisteredPasskeyVerifier,
+    clock,
+    analytics: deps?.analytics,
+  });
 
   const manifest = defineModule({
     name: 'wealth',

@@ -1,8 +1,7 @@
-import { DISPLAY_NAME_MAX_LENGTH, EMAIL_MAX_LENGTH } from '@wealth-advisor/rules';
+import { DISPLAY_NAME_MAX_LENGTH, EMAIL_MAX_LENGTH, ROLES } from '@wealth-advisor/rules';
 import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
 import { nullable } from '#core/db/schema/nullable.ts';
 import { MAX_PROVIDERS, PROVIDER_TYPES, USER_STATUSES } from '../../../domain/entities/user.entity.ts';
-import { ROLES } from '../../../domain/value-objects/role.vo.ts';
 import { USERS_COLLECTION } from '../documents/user.document.ts';
 
 export const usersSchema: CollectionDefinition = {

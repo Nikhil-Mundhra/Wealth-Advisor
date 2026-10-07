@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createWealthApi } from '../../../src/modules/wealth/wealth.api.ts';
-import type { SandboxLedgerRepository } from '../../../src/modules/wealth/application/ports.ts';
+import type { PasskeyVerifier, SandboxLedgerRepository } from '../../../src/modules/wealth/application/ports.ts';
 import type { SandboxLedgerDocument } from '../../../src/modules/wealth/infrastructure/db/documents/sandbox-ledger.document.ts';
 import {
   MemoryAssetProductRepository,
@@ -9,12 +9,14 @@ import {
   MemorySandboxLedgerRepository,
 } from '../../../src/modules/wealth/infrastructure/db/memory/memory-wealth.repository.ts';
 
-function setup() {
+const acceptingPasskeys: PasskeyVerifier = { verify: async () => true };
+
+function setup(passkeys: PasskeyVerifier = acceptingPasskeys) {
   const products = new MemoryAssetProductRepository();
   const portfolios = new MemoryPortfolioRepository();
   const ledger = new MemorySandboxLedgerRepository();
   const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
-  const api = createWealthApi({ products, portfolios, ledger, clock });
+  const api = createWealthApi({ products, portfolios, ledger, passkeys, clock });
   return { api, portfolios, ledger };
 }
 
@@ -149,6 +151,7 @@ describe('WealthApi', () => {
       products: new MemoryAssetProductRepository(),
       portfolios,
       ledger: failing,
+      passkeys: acceptingPasskeys,
       clock: { now: () => new Date('2026-10-06T12:00:00Z') },
     });
     const before = await portfolios.findByUser('default', 'default');
@@ -197,5 +200,20 @@ describe('WealthApi', () => {
         }),
       /passkey signature required/,
     );
+  });
+
+  it('refuses an assertion the verifier rejects, before any ledger entry or portfolio change', async () => {
+    const { api, portfolios, ledger } = setup({ verify: async () => false });
+    const before = await portfolios.findByUser('default', 'default');
+    const trade = { assetSymbol: 'CSPX.LSE', action: 'SELL' as const, amountBase: 100, targetWeight: before?.holdings[0]?.targetWeight ?? 0 };
+
+    await assert.rejects(
+      () => api.executeTrade('default', 'default', { orderType: 'PORTFOLIO_REBALANCE', trades: [trade], passkeyAssertion: PASSKEY }),
+      (error: { code?: string }) => error.code === 'WL_1004',
+    );
+
+    assert.deepEqual(await ledger.findAllByUser('default', 'default'), []);
+    const after = await portfolios.findByUser('default', 'default');
+    assert.equal(after?.holdings[0]?.currentWeight, before?.holdings[0]?.currentWeight);
   });
 });

@@ -10,6 +10,7 @@ export * from './permission-tier.rule.ts';
 export * from './display-name.rule.ts';
 export * from './client-type.rule.ts';
 export * from './refresh-token.rule.ts';
+export * from './role.rule.ts';
 export * from './error-codes.ts';
 export * from './locale.rule.ts';
 export * from './market-data.rule.ts';

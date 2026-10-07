@@ -1,3 +1,4 @@
+import { ADMIN_ROLE } from '@wealth-advisor/rules';
 import { Navigate, Outlet } from 'react-router';
 import { Spinner } from '../components/ui/spinner.tsx';
 import { useMe } from '../features/auth/api/use-me.ts';
@@ -29,6 +30,6 @@ export function GuestRoute() {
 export function AdminRoute() {
   const me = useMe();
   if (me.isPending) return <FullPageSpinner />;
-  if (me.isError || !me.data?.roles.includes('ADMIN')) return <Navigate to="/" replace />;
+  if (me.isError || !me.data?.roles.includes(ADMIN_ROLE)) return <Navigate to="/" replace />;
   return <Outlet />;
 }

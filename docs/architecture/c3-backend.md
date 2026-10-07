@@ -88,7 +88,7 @@ flowchart TB
 | `backend/src/modules/admin/admin.module.ts` | composition root: store-selected tenant, API key and settings repositories; returns the manifest and the admin api | every admin layer, `core/module`, `core/config`, `core/db`, rules |
 | `backend/src/modules/admin/admin.api.ts` | function orchestrators: list and create tenants, list, create and revoke API keys, read and update the active LLM provider (`getActiveProvider`) | application ports, domain (errors), infrastructure documents, `core/crypto`, `core/time`, contracts, rules |
 | `backend/src/modules/admin/public.ts` | admin api type; no module imports it | api type |
-| `backend/src/modules/admin/presentation/` | tenant, API key and model routes behind the auth guard (no role check), error statuses | `admin.api.ts`, `core/http`, contracts, rules |
+| `backend/src/modules/admin/presentation/` | tenant, API key and model routes behind the auth guard and the ADMIN role guard, error statuses | `admin.api.ts`, `core/http`, contracts, rules |
 | `backend/src/modules/admin/application/` | repository ports | infrastructure documents, rules |
 | `backend/src/modules/admin/domain/` | errors | `core/domain`, rules |
 | `backend/src/modules/admin/infrastructure/` | Mongo and memory repositories for tenants, API keys and admin settings, documents, schema | application ports, `core/db`, rules |
@@ -126,7 +126,7 @@ flowchart TB
 | `backend/src/modules/sharing/sharing.module.ts` | composition root: store-selected shared-plan repository; returns the manifest and the sharing api | every sharing layer, `core/module`, `core/config`, `core/db`, rules |
 | `backend/src/modules/sharing/sharing.api.ts` | function orchestrators: create share link (random token), shared plan by token | application ports, `core/crypto`, `core/db`, `core/domain`, `core/time`, contracts, rules |
 | `backend/src/modules/sharing/public.ts` | sharing api type; no module imports it | api type |
-| `backend/src/modules/sharing/presentation/` | create and get-by-token routes, no auth guard; error statuses | `sharing.api.ts`, `core/http`, contracts, rules |
+| `backend/src/modules/sharing/presentation/` | create route behind the optional auth guard, public get-by-token route; error statuses | `sharing.api.ts`, `core/http`, contracts, rules |
 | `backend/src/modules/sharing/application/` | repository port | infrastructure documents |
 | `backend/src/modules/sharing/infrastructure/` | Mongo and memory shared-plan repositories, document, schema | application ports, `core/db`, contracts |
 | `backend/src/modules/wealth/wealth.module.ts` | composition root: store-selected asset product, portfolio and sandbox ledger repositories; returns the manifest and the wealth api | every wealth layer, analytics `public.ts`, `core/module`, `core/config`, `core/db`, rules |

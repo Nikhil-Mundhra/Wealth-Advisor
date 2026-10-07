@@ -26,13 +26,15 @@ backend/test/integration/core/request-budget.test.ts : limit, oversize refusal, 
 backend/test/integration/market/market-routes.memory.test.ts : runs the market-routes suite on the memory store
 backend/test/integration/market/market-routes.suite.ts : quotes, fx (query validation, weekend lookup), refresh (cron auth, backfill, re-run) over fixture providers
 backend/test/integration/market/market-routes.test.ts : runs the market-routes suite on mongod
+backend/test/integration/scoped-routes/route-guards.memory.test.ts : ADMIN role on the admin console, householdMode query validation, auth guard on share-link creation
 backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
 backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders, weekdays, generated Marketstack pages
 backend/test/support/test-app.ts : boots the real app on a throwaway mongod or the memory store; fake clock, env, outbound http (offline by default)
 backend/test/unit/admin/admin-api.test.ts : tenant provisioning, key revocation, and model switching
-backend/test/unit/advisory/advisory-api.test.ts : multilingual copilot responses, calculation shields, and action cards
+backend/test/unit/advisory/advisory-api.test.ts : multilingual copilot responses, live model replies held to engine numbers, and action cards
+backend/test/unit/advisory/calculation-shield.test.ts : grounded, rounded, decimal-comma and invented numbers; missing candidates
 backend/test/unit/analytics/market-snapshot.test.ts : MarketSnapshot invariants; measureSnapshot threshold and window
 backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns, annualization and covariance against a hand-computed series
 backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
@@ -57,5 +59,6 @@ backend/test/unit/rules/fundamental-ratios.rule.test.ts : valuation tilts, corpo
 backend/test/unit/rules/profiling.rule.test.ts : stress answer mapping, age horizon derivation, supported corridor currency ranking, risk scoring bounds
 backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public/off-graph imports on a fixture tree, core importing a module, cycle detection
 backend/test/unit/sharing/sharing-api.test.ts : cryptographic share tokens and masked snapshot resolution
-backend/test/unit/wealth/wealth-api.test.ts : portfolio rebalancing, passkey assertions, and ledger digests
+backend/test/unit/sharing/sharing-routes.test.ts : share-link creation files under the principal the auth guard resolved
+backend/test/unit/wealth/wealth-api.test.ts : portfolio rebalancing, passkey presence and verifier refusal, ledger digests
 ```

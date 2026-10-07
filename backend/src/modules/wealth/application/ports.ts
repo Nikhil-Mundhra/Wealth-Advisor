@@ -12,6 +12,18 @@ export interface PortfolioRepository {
   save(portfolio: PortfolioDocument): Promise<void>;
 }
 
+export interface PasskeyAssertion {
+  readonly credentialId: string;
+  readonly clientDataJson: string;
+  readonly authenticatorData: string;
+  readonly signature: string;
+}
+
+// Checks an assertion's signature against a credential the user registered.
+export interface PasskeyVerifier {
+  verify(tenantId: string, userId: string, assertion: PasskeyAssertion): Promise<boolean>;
+}
+
 export interface SandboxLedgerRepository {
   findAllByUser(tenantId: string, userId: string): Promise<SandboxLedgerDocument[]>;
   append(entry: Omit<SandboxLedgerDocument, '_id'>): Promise<SandboxLedgerDocument>;

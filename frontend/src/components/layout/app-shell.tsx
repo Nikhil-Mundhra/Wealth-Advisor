@@ -1,3 +1,4 @@
+import { ADMIN_ROLE } from '@wealth-advisor/rules';
 import { ArrowLeftRight, LayoutDashboard, MessagesSquare, Settings, Shield, Wallet } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { useMe } from '../../features/auth/api/use-me.ts';
@@ -25,7 +26,7 @@ function tabClass({ isActive }: { isActive: boolean }): string {
 export function AppShell() {
   const strings = useStrings();
   const me = useMe();
-  const isAdmin = Boolean(me.data?.roles.includes('ADMIN'));
+  const isAdmin = Boolean(me.data?.roles.includes(ADMIN_ROLE));
 
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">

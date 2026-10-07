@@ -1,3 +1,4 @@
+import type { MiddlewareHandler } from 'hono';
 import {
   CreateShareLinkRequest,
   CreateShareLinkResponse,
@@ -6,12 +7,16 @@ import {
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { SharingApi } from '../../sharing.api.ts';
 
-export function sharingRoutes(api: SharingApi): readonly RouteDefinition[] {
+export function sharingRoutes(api: SharingApi, auth: MiddlewareHandler): readonly RouteDefinition[] {
   return [
     RouteBuilder.post('/create')
+      .use(auth)
       .body(CreateShareLinkRequest)
       .responds(CreateShareLinkResponse, 201)
-      .handle(async ({ body }) => api.createShareLink('default', 'default', body)),
+      .handle(async ({ c, body }) => {
+        const { tenantId, userId } = c.get('principal');
+        return api.createShareLink(tenantId, userId, body);
+      }),
 
     RouteBuilder.get('/:token')
       .responds(SharedPlanResponse)

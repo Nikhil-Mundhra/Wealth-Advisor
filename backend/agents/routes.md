@@ -13,7 +13,8 @@
 ## File structure
 
 ```
-backend/src/modules/admin/presentation/routes/admin.routes.ts : tenants, api-keys, and model management routes
+backend/src/modules/admin/presentation/middleware/require-admin-role.ts : refuses a principal without the ADMIN role (AD_1004); runs after the auth guard
+backend/src/modules/admin/presentation/routes/admin.routes.ts : tenants, api-keys, and model management routes; every route behind the auth guard and the ADMIN role
 backend/src/modules/advisory/presentation/routes/advisory.routes.ts : copilot chat advisory routes
 backend/src/modules/analytics/presentation/mappers/result-to-contract.mapper.ts : MarketSnapshot → snapshot contract
 backend/src/modules/analytics/presentation/routes/analytics.routes.ts : GET snapshot (optional asOf)
@@ -33,7 +34,6 @@ backend/src/modules/auth/domain/entities/user.entity.ts : User with embedded pro
 backend/src/modules/auth/domain/events/user-signed-up.event.ts : emitted after signup
 backend/src/modules/auth/domain/policies/password.policy.ts : password rule for every writer, not only HTTP signup
 backend/src/modules/auth/domain/value-objects/email.vo.ts : normalized, validated email
-backend/src/modules/auth/domain/value-objects/role.vo.ts : USER | ADMIN
 backend/src/modules/auth/presentation/mappers/contract-to-command.mapper.ts : request contract → command DTO
 backend/src/modules/auth/presentation/mappers/result-to-contract.mapper.ts : result DTO → response contract
 backend/src/modules/auth/presentation/routes/auth.routes.ts : signup, login, refresh, logout, logout-all
@@ -41,6 +41,6 @@ backend/src/modules/auth/presentation/routes/me.routes.ts : GET /me, DELETE /me
 backend/src/modules/finance/presentation/routes/finance.routes.ts : accounts, transactions, and cashflow summary routes
 backend/src/modules/market/presentation/mappers/result-to-contract.mapper.ts : market api results → quotes, fx-rates and refresh contracts
 backend/src/modules/market/presentation/routes/market.routes.ts : GET quotes, fx (query base, date), refresh (cron bearer)
-backend/src/modules/sharing/presentation/routes/sharing.routes.ts : create share token and fetch public shared plan routes
+backend/src/modules/sharing/presentation/routes/sharing.routes.ts : create share token under the caller scope (optional auth) and fetch public shared plan routes
 backend/src/modules/wealth/presentation/routes/wealth.routes.ts : products, portfolio, optimize, sandbox trade execution, and ledger routes
 ```

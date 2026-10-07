@@ -5,6 +5,7 @@ import type {
   PortfolioResponse,
 } from '@wealth-advisor/contracts';
 import type { HouseholdMode, LlmProvider, Locale } from '@wealth-advisor/rules';
+import { factNumbers, shieldText } from './calculation-shield.ts';
 
 export interface LlmContext {
   message: string;
@@ -123,6 +124,21 @@ export class MockLlmAdapter implements LlmAdapter {
   }
 }
 
+// The model replaces only the narrative fields, each only with text whose numbers the engines produced.
+function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, prompt: string): AdvisoryChatResponse {
+  const pillars = base.threePillarRationale;
+  const facts = factNumbers(prompt, base.reply, pillars.personalFinance, pillars.crossBorder, pillars.wealthStrategy);
+  return {
+    ...base,
+    reply: shieldText(parsed.reply, base.reply, facts),
+    threePillarRationale: {
+      personalFinance: shieldText(parsed.personalFinance, pillars.personalFinance, facts),
+      crossBorder: shieldText(parsed.crossBorder, pillars.crossBorder, facts),
+      wealthStrategy: shieldText(parsed.wealthStrategy, pillars.wealthStrategy, facts),
+    },
+  };
+}
+
 export class GeminiLlmAdapter implements LlmAdapter {
   private readonly apiKey: string | undefined;
   private readonly fallback: LlmAdapter;
@@ -170,25 +186,7 @@ Respond ONLY in valid JSON with these keys:
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) return base;
 
-      const parsed = JSON.parse(rawText);
-      return {
-        ...base,
-        reply: typeof parsed.reply === 'string' && parsed.reply ? parsed.reply : base.reply,
-        threePillarRationale: {
-          personalFinance:
-            typeof parsed.personalFinance === 'string' && parsed.personalFinance
-              ? parsed.personalFinance
-              : base.threePillarRationale.personalFinance,
-          crossBorder:
-            typeof parsed.crossBorder === 'string' && parsed.crossBorder
-              ? parsed.crossBorder
-              : base.threePillarRationale.crossBorder,
-          wealthStrategy:
-            typeof parsed.wealthStrategy === 'string' && parsed.wealthStrategy
-              ? parsed.wealthStrategy
-              : base.threePillarRationale.wealthStrategy,
-        },
-      };
+      return narrate(base, JSON.parse(rawText) as Record<string, unknown>, systemPrompt);
     } catch {
       return this.fallback.chat(context);
     }
@@ -208,6 +206,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
     if (!this.apiKey) return this.fallback.chat(context);
     try {
       const base = await this.fallback.chat(context);
+      const systemPrompt = `You are an expat wealth advisor for DEWA. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy".`;
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -219,7 +218,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
           messages: [
             {
               role: 'system',
-              content: `You are an expat wealth advisor for DEWA. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy".`,
+              content: systemPrompt,
             },
             { role: 'user', content: context.message },
           ],
@@ -231,16 +230,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
       const data = (await response.json()) as any;
       const content = data?.choices?.[0]?.message?.content;
       if (!content) return base;
-      const parsed = JSON.parse(content);
-      return {
-        ...base,
-        reply: parsed.reply || base.reply,
-        threePillarRationale: {
-          personalFinance: parsed.personalFinance || base.threePillarRationale.personalFinance,
-          crossBorder: parsed.crossBorder || base.threePillarRationale.crossBorder,
-          wealthStrategy: parsed.wealthStrategy || base.threePillarRationale.wealthStrategy,
-        },
-      };
+      return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt);
     } catch {
       return this.fallback.chat(context);
     }

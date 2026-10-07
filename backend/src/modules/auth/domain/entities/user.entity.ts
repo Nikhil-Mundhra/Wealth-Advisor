@@ -1,9 +1,8 @@
-import { DISPLAY_NAME_MAX_LENGTH } from '@wealth-advisor/rules';
+import { DEFAULT_ROLES, DISPLAY_NAME_MAX_LENGTH, type Role } from '@wealth-advisor/rules';
 import { BaseEntity, type EntityProps } from '#core/domain/base-entity.ts';
 import { invariant } from '#core/domain/invariant.ts';
 import { AuthErrors } from '../errors/auth-errors.ts';
 import type { Email } from '../value-objects/email.vo.ts';
-import { DEFAULT_ROLES, type Role } from '../value-objects/role.vo.ts';
 
 export const PROVIDER_TYPES = ['EMAIL'] as const;
 export type ProviderType = (typeof PROVIDER_TYPES)[number];

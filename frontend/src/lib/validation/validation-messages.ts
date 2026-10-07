@@ -18,6 +18,7 @@ export const VALIDATION_MESSAGES: Readonly<Record<ValidationKey, string>> = {
   'display_name.required': 'Enter a display name.',
   'display_name.too_long': `Use ${DISPLAY_NAME_MAX_LENGTH} characters or fewer.`,
   'client_type.invalid': 'This app version is not supported.',
+  'household_mode.invalid': 'Choose individual or family household.',
   'refresh_token.invalid': 'Your session has expired. Please sign in again.',
   'currency.invalid': 'Choose a supported currency.',
   'date.invalid': 'Enter a date as YYYY-MM-DD.',

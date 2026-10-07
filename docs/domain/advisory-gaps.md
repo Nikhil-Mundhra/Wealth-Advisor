@@ -89,7 +89,7 @@ done when a chat turn resolves the cashflow and portfolio tools from stored data
 
 ### G10 · Passkey verification · `backend/src/modules/auth/`
 status   `partial`
-evidence `contracts/src/auth/passkey.contract.ts` defines the challenge, verify request and response, and `rules/src/error-codes.ts` reserves `AU_1008`, `WL_1003` and `WL_1004`; `wealth.api.ts:177` only asserts that `signature` and `credentialId` are non-empty strings, `users.schema.ts` has no credential field, and the frontend still shows the string in `frontend/src/lib/dictionaries.ts:45` instead of calling `navigator.credentials`
+evidence `contracts/src/auth/passkey.contract.ts` defines the challenge, verify request and response, and `rules/src/error-codes.ts` reserves `AU_1008`, `WL_1003` and `WL_1004`; `wealth.api.ts` refuses every assertion through `unregisteredPasskeyVerifier` (`WL_1004`) because no credential is stored, `users.schema.ts` has no credential field, and the frontend still shows the string in `frontend/src/lib/dictionaries.ts:45` instead of calling `navigator.credentials`
 remedy  registration and assertion routes, a credential per user, and signature verification before the ledger write
 blocked  G1
 done when an assertion with a bad signature is refused and recorded as a refusal

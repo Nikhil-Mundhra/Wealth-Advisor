@@ -13,6 +13,24 @@ import {
   MemoryPortfolioRepository,
   MemorySandboxLedgerRepository,
 } from '../../../src/modules/wealth/infrastructure/db/memory/memory-wealth.repository.ts';
+import { unregisteredPasskeyVerifier } from '../../../src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts';
+
+function setupApis() {
+  const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
+  const finance = createFinanceApi({
+    accounts: new MemoryAccountRepository(),
+    transactions: new MemoryTransactionRepository(),
+    clock,
+  });
+  const wealth = createWealthApi({
+    products: new MemoryAssetProductRepository(),
+    portfolios: new MemoryPortfolioRepository(),
+    ledger: new MemorySandboxLedgerRepository(),
+    passkeys: unregisteredPasskeyVerifier,
+    clock,
+  });
+  return { finance, wealth };
+}
 
 function setup() {
   const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
@@ -25,6 +43,7 @@ function setup() {
     products: new MemoryAssetProductRepository(),
     portfolios: new MemoryPortfolioRepository(),
     ledger: new MemorySandboxLedgerRepository(),
+    passkeys: unregisteredPasskeyVerifier,
     clock,
   });
   const gateway = new LlmGateway();
@@ -72,6 +91,7 @@ describe('AdvisoryApi', () => {
       products: new MemoryAssetProductRepository(),
       portfolios: new MemoryPortfolioRepository(),
       ledger: new MemorySandboxLedgerRepository(),
+      passkeys: unregisteredPasskeyVerifier,
       clock,
     });
     const gateway = new LlmGateway({
@@ -97,4 +117,35 @@ describe('AdvisoryApi', () => {
     assert.equal(res.actionCards[0].cardType, 'PROPOSAL');
     assert.ok(res.actionCards[0].payload.valuationTotalBase > 0);
   });
+
+  it('keeps a live model reply only when its numbers come from the engines', async () => {
+    const { finance, wealth } = setupApis();
+    const gateway = new LlmGateway({ geminiApiKey: 'test-key' });
+    const api = createAdvisoryApi({ finance, wealth, gateway, getActiveProvider: async () => 'gemini' });
+    const deterministic = await createAdvisoryApi({ finance, wealth, gateway: new LlmGateway() }).chat('default', 'default', {
+      message: 'Can I rebalance safely?',
+      locale: 'en',
+      householdMode: 'INDIVIDUAL',
+    });
+    const modelOutput = {
+      reply: 'Rebalancing is safe and will return 12.7% a year.',
+      personalFinance: 'Keep your buffer topped up.',
+      crossBorder: 'Hedge your remittance corridors.',
+      wealthStrategy: 'Hold the target weights.',
+    };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(modelOutput) }] } }] }), {
+        status: 200,
+      });
+    try {
+      const res = await api.chat('default', 'default', { message: 'Can I rebalance safely?', locale: 'en', householdMode: 'INDIVIDUAL' });
+      assert.equal(res.reply, deterministic.reply);
+      assert.equal(res.threePillarRationale.crossBorder, 'Hedge your remittance corridors.');
+      assert.equal(res.threePillarRationale.wealthStrategy, 'Hold the target weights.');
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
 });
+

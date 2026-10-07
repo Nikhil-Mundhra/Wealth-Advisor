@@ -12,15 +12,16 @@ import {
 } from '@wealth-advisor/contracts';
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { AdminApi } from '../../admin.api.ts';
+import { requireAdminRole } from '../middleware/require-admin-role.ts';
 
 export interface AdminRoutesDeps {
   api: AdminApi;
-  auth?: MiddlewareHandler;
+  auth: MiddlewareHandler;
 }
 
 export function adminRoutes(deps: AdminRoutesDeps): readonly RouteDefinition[] {
   const { api, auth } = deps;
-  const guard = auth ? [auth] : [];
+  const guard = [auth, requireAdminRole];
 
   return [
     RouteBuilder.get('/tenants')

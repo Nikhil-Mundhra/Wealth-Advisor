@@ -24,7 +24,7 @@ export function buildModules(context: ModuleContext): ModuleManifest[] {
     getActiveProvider: () => admin.api.getActiveProvider(),
     auth: auth.optionalAuthGuard,
   });
-  const sharing = createSharingModule(context);
+  const sharing = createSharingModule(context, { auth: auth.optionalAuthGuard });
 
   return [
     auth.manifest,

@@ -72,4 +72,4 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `SH_1002` | 410 | shared plan expired |
 | `SH_1900` | 500 | sharing invariant violated (a write's tenant or user scope id is unusable) |
 
-- Defined with a status but thrown by no code path: `AU_1008`, `AD_1004`, `AD_1900`, `FN_1001`, `FN_1002`, `WL_1002`, `WL_1004`, `AV_1001`, `AV_1002`, `AV_1900`.
+- Defined with a status but thrown by no code path: `AU_1008`, `AD_1900`, `FN_1001`, `FN_1002`, `WL_1002`, `AV_1001`, `AV_1002`, `AV_1900`.

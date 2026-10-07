@@ -14,5 +14,5 @@
 
 ## GET /api/finance/cashflow
 - responsibility: return the caller's monthly inflow, outflow, net cashflow, liquid reserves (accounts valued as in `GET /api/finance/accounts`; unvalued accounts counted in `unvaluedAccountCount`, left out of reserves), runway and the EUR_CNY and GBP_SGD remittance corridors; corridor `lastRate` is the stored ECB rate, 7.82 (EUR_CNY) and 1.71 (GBP_SGD) when none is stored; corridor targets and recipients are fixed values
-- contract: request query (no contract), response `CashflowSummaryResponse` 200, errors `AU_1005`, `AU_1901`, `CORE_INTERNAL`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`
-- nested route / query: `householdMode` optional, not validated, default `FAMILY_HOUSEHOLD`; a value outside `HOUSEHOLD_MODES` fails the response contract → `CORE_INTERNAL`
+- contract: request query `CashflowQuery`, response `CashflowSummaryResponse` 200, errors `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`
+- nested route / query: `householdMode` optional, default `FAMILY_HOUSEHOLD`; a value outside `HOUSEHOLD_MODES` → `CORE_VALIDATION_FAILED` with issue `household_mode.invalid`

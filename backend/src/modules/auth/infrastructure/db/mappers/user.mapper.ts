@@ -1,10 +1,10 @@
 import { ObjectId } from 'mongodb';
+import { ROLES } from '@wealth-advisor/rules';
 import { parseMember } from '#core/domain/parse-member.ts';
 import type { Mapper } from '#core/db/mapping/mapper.ts';
 import { PROVIDER_TYPES, User, USER_STATUSES } from '../../../domain/entities/user.entity.ts';
 import { AuthErrors } from '../../../domain/errors/auth-errors.ts';
 import { Email } from '../../../domain/value-objects/email.vo.ts';
-import { ROLES } from '../../../domain/value-objects/role.vo.ts';
 import type { UserDocument } from '../documents/user.document.ts';
 
 // Stored values outside the known lists are corruption (500), never silently dropped or cast.

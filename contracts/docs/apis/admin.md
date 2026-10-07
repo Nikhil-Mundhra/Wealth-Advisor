@@ -1,6 +1,6 @@
 # Admin APIs
 
-Every admin route requires a Bearer access token (`backend/docs/auth-token.md` `requireAuth`); no role is checked.
+Every admin route requires a Bearer access token (`backend/docs/auth-token.md` `requireAuth`) whose roles include `ADMIN`; a token without it → `AD_1004` (403).
 
 ## GET /api/admin/tenants
 - responsibility: return every tenant

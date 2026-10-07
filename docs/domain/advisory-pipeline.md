@@ -49,8 +49,8 @@ flowchart LR
 | 6 | Risk profiling | profile, runway, FX mismatch, volatilities | effective risk score | `rules/src/profiling.rule.ts` | `partial` — scoring runs in the browser; no backend reads it |
 | 7 | Portfolio construction | holdings, target weights | drift, actions, rationale | `backend/src/modules/wealth/wealth.api.ts` | `built` — actions are derived from the holdings' own drift, buys are capped at the sell proceeds, and the rationale names the holding actually rebalanced |
 | 8 | Recommendation and explanation | chat turn | reply, three-pillar rationale | `backend/src/modules/advisory/domain/llm-gateway.ts` | `built` — Gemini Generative AI adapter with dynamic fallback deriving proposal weights directly from portfolio holdings |
-| 9 | Authorisation gate | step-up assertion | permitted or refused | none; `contracts/src/auth/passkey.contract.ts` holds the shapes only | `partial` — `/wealth/execute` checks the assertion fields are non-empty and verifies no signature |
-| 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `partial` — the ledger row is written before the portfolio moves and each trade is checked against the recorded target, but the assertion signature is still unverified (stage 9) |
+| 9 | Authorisation gate | step-up assertion | permitted or refused | `backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts`; `contracts/src/auth/passkey.contract.ts` holds the shapes only | `partial` — `/wealth/execute` refuses every assertion (`WL_1004`): no passkey registration stores a key to verify against |
+| 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `partial` — the ledger row is written before the portfolio moves and each trade is checked against the recorded target, but no assertion can pass verification yet, so the route refuses every execution with `WL_1004` (stage 9) |
 | 11 | Sharing | plan snapshot, token, mask flag | public read-only plan | `backend/src/modules/sharing/` | `partial` — TTL and expiry enforced; the mask flag is stored and echoed, nothing is redacted |
 
 ## Permission tiers
@@ -64,7 +64,7 @@ flowchart LR
 | `TIER_3_EXECUTE` | writing a sandbox ledger row | a non-empty assertion check in `backend/src/modules/wealth/wealth.api.ts` |
 
 ## Deterministic engines
-Every advice-bearing number is meant to come from a pure function over stored data; the model narrates, it does not compute.
+Every advice-bearing number is meant to come from a pure function over stored data; the model narrates, it does not compute. A live model's reply and rationale fields are kept only when every number in them matches a number the engines produced or the prompt carried (`backend/src/modules/advisory/domain/calculation-shield.ts`); any other field falls back to the deterministic text. Numbers spelled out in words are not detected.
 
 | Engine | Computes | Status |
 |---|---|---|
@@ -85,7 +85,7 @@ There is no tool registry, function-calling schema or tool dispatch in the codeb
 | `calculate_adaptive_portfolio` | risk profiler, optimizer | `TIER_1_ADVISORY` | `absent` — scoring runs client-side, optimizer is literal |
 | `simulate_stress_test` | snapshot covariance | `TIER_2_SIMULATE` | `absent` |
 | `create_rebalance_proposal` | optimizer | `TIER_2_SIMULATE` | `absent` — route exists, no tool |
-| `execute_sandbox_trade` | sandbox ledger | `TIER_3_EXECUTE` | `absent` — route exists, no tool, signature unverified |
+| `execute_sandbox_trade` | sandbox ledger | `TIER_3_EXECUTE` | `absent` — route exists, no tool; every assertion refused until passkey registration exists |
 
 ## Data flow today
 ```mermaid

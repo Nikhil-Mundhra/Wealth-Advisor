@@ -39,5 +39,5 @@ flowchart TB
 - browser → API: untrusted; every body is validated against `@wealth-advisor/contracts`
 - API → database: trusted; reachable only with the server's credentials
 - API → Marketstack, Frankfurter, Gemini, OpenAI: outbound HTTPS from the backend only; the browser never calls them
-- `ADMIN` role: checked by the frontend `AdminRoute` only; `/api/admin/*` requires a valid access token and no role
+- `ADMIN` role: checked by the frontend `AdminRoute` and by `/api/admin/*`, which requires a valid access token carrying it
 - provider `claude` is answered by the deterministic mock; no Anthropic API call is made

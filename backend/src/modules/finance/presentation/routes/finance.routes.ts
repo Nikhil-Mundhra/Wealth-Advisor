@@ -2,11 +2,11 @@ import type { Context, MiddlewareHandler } from 'hono';
 import {
   AccountDto,
   AccountListResponse,
+  CashflowQuery,
   CashflowSummaryResponse,
   CreateAccountRequest,
   TransactionListResponse,
 } from '@wealth-advisor/contracts';
-import type { HouseholdMode } from '@wealth-advisor/rules';
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { FinanceApi } from '../../finance.api.ts';
 
@@ -45,11 +45,11 @@ export function financeRoutes(api: FinanceApi, auth: MiddlewareHandler): readonl
 
     RouteBuilder.get('/cashflow')
       .use(...guard)
+      .query(CashflowQuery)
       .responds(CashflowSummaryResponse)
-      .handle(async ({ c }) => {
+      .handle(async ({ c, query }) => {
         const { tenantId, userId } = scope(c);
-        const mode = (c.req.query('householdMode') as HouseholdMode) ?? 'FAMILY_HOUSEHOLD';
-        return api.getCashflowSummary(tenantId, userId, mode);
+        return api.getCashflowSummary(tenantId, userId, query.householdMode);
       }),
   ];
 }

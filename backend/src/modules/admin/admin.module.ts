@@ -26,10 +26,10 @@ import { ADMIN_ERROR_STATUSES } from './presentation/admin-error-statuses.ts';
 import { adminRoutes } from './presentation/routes/admin.routes.ts';
 
 export interface AdminModuleDeps {
-  auth?: MiddlewareHandler;
+  auth: MiddlewareHandler;
 }
 
-export function createAdminModule(context: ModuleContext, deps?: AdminModuleDeps): { manifest: ModuleManifest; api: AdminApi } {
+export function createAdminModule(context: ModuleContext, deps: AdminModuleDeps): { manifest: ModuleManifest; api: AdminApi } {
   const { db, clock } = context;
   const store = resolveDataStore(env());
 
@@ -57,7 +57,7 @@ export function createAdminModule(context: ModuleContext, deps?: AdminModuleDeps
     basePath: '/admin',
     collections: adminCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.admin, statuses: ADMIN_ERROR_STATUSES },
-    routes: adminRoutes({ api, auth: deps?.auth }),
+    routes: adminRoutes({ api, auth: deps.auth }),
   });
 
   return { manifest, api };

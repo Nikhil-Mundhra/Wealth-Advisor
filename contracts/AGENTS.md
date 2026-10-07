@@ -31,12 +31,13 @@ contracts/src/fields/client-type.field.ts : WEB | IOS | ANDROID
 contracts/src/fields/currency.field.ts : ISO currency from CURRENCIES; fails with currency.invalid
 contracts/src/fields/display-name.field.ts : trimmed display name with length limit
 contracts/src/fields/email.field.ts : signup email (normalized, pattern-checked) and login email (presence and length only)
+contracts/src/fields/household-mode.field.ts : HOUSEHOLD_MODES member; fails with household_mode.invalid
 contracts/src/fields/iso-date.field.ts : calendar date YYYY-MM-DD; fails with date.invalid
 contracts/src/fields/money.field.ts : integer amount in minor units with its currency
 contracts/src/fields/password.field.ts : new password (policy length) and login password (presence and upper bound)
 contracts/src/fields/refresh-token.field.ts : refresh token format
 contracts/src/finance/account.contract.ts : bank accounts and balances list/create contracts
-contracts/src/finance/cashflow.contract.ts : cashflow summary and household runway contracts
+contracts/src/finance/cashflow.contract.ts : cashflow query (householdMode, default FAMILY_HOUSEHOLD), cashflow summary and household runway contracts
 contracts/src/finance/transaction.contract.ts : cross-border transactions and remittance metadata contracts
 contracts/src/index.ts : public barrel; the only import path consumers use
 contracts/src/market/fx-rates.contract.ts : FX rates query (base, optional date) and response (asOf, base, rates per quote currency)

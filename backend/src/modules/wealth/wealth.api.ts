@@ -19,6 +19,7 @@ import type {
 import type { AnalyticsApi } from '../analytics/public.ts';
 import type {
   AssetProductRepository,
+  PasskeyVerifier,
   PortfolioRepository,
   SandboxLedgerRepository,
 } from './application/ports.ts';
@@ -30,6 +31,7 @@ export interface WealthApiDeps {
   products: AssetProductRepository;
   portfolios: PortfolioRepository;
   ledger: SandboxLedgerRepository;
+  passkeys: PasskeyVerifier;
   clock: Clock;
   analytics?: AnalyticsApi;
 }
@@ -107,7 +109,7 @@ function toLedgerEntryDto(doc: SandboxLedgerDocument): SandboxLedgerEntryDto {
 }
 
 export function createWealthApi(deps: WealthApiDeps) {
-  const { products, portfolios, ledger, clock } = deps;
+  const { products, portfolios, ledger, passkeys, clock } = deps;
 
   return {
     async getProducts(): Promise<AssetProductListResponse> {
@@ -168,6 +170,9 @@ export function createWealthApi(deps: WealthApiDeps) {
       const { passkeyAssertion, trades, orderType } = input;
       if (!passkeyAssertion?.signature || !passkeyAssertion?.credentialId) {
         throw new DomainError(WEALTH_ERROR_CODES.passkeyRequired, 'FIDO2 biometric passkey signature required for Tier 3 execution');
+      }
+      if (!(await passkeys.verify(tenantId, userId, passkeyAssertion))) {
+        throw new DomainError(WEALTH_ERROR_CODES.passkeyInvalid, 'passkey assertion failed signature verification');
       }
 
       const now = clock.now();
