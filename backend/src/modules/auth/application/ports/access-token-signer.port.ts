@@ -1,6 +1,9 @@
 export interface AccessTokenClaims {
   readonly subject: string;
   readonly roles: readonly string[];
+  // The tenant the token is scoped to. Null for a user provisioned before tenant scoping; the caller then resolves to
+  // the default tenant rather than reading across every tenant.
+  readonly tenantId: string | null;
 }
 
 export interface SignedAccessToken {

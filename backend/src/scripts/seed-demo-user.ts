@@ -1,3 +1,4 @@
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ID } from '#core/db/document-id.ts';
 import { ObjectId } from 'mongodb';
 import { env } from '#core/config/env.ts';
 import { closeMongoClient, getDb } from '#core/db/connection/mongo-client.ts';
@@ -21,8 +22,8 @@ if (env().NODE_ENV === 'production') {
 
 const db = await getDb();
 const now = systemClock.now();
-const defaultTenantId = new ObjectId('600000000000000000000001');
-const demoUserId = new ObjectId('500000000000000000000001');
+const defaultTenantId = new ObjectId(DEFAULT_TENANT_ID);
+const demoUserId = new ObjectId(DEFAULT_USER_ID);
 
 // 1. Seed demo user
 const users = new MongoUserRepository(async () => db.collection<UserDocument>(USERS_COLLECTION), systemClock);

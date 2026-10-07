@@ -34,7 +34,7 @@ export class TokenPairIssuer {
 
   async issue(user: User, session: Session, rawRefreshToken: string): Promise<TokenPairResult> {
     await this.deps.sessions.insert(session);
-    const access = await this.deps.signer.sign({ subject: user.id, roles: user.roles });
+    const access = await this.deps.signer.sign({ subject: user.id, roles: user.roles, tenantId: user.tenantId });
     return {
       accessToken: access.token,
       accessTokenExpiresIn: access.expiresIn,

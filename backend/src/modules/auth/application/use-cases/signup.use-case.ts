@@ -1,4 +1,5 @@
 import type { UseCase } from '#core/application/use-case.ts';
+import { DEFAULT_TENANT_ID } from '#core/db/document-id.ts';
 import type { IdGenerator } from '#core/domain/id-generator.ts';
 import type { EventBus } from '#core/events/event-bus.ts';
 import type { Clock } from '#core/time/clock.ts';
@@ -38,6 +39,8 @@ export class SignupUseCase implements UseCase<SignupCommand, SignupResult> {
     const now = clock.now();
     const user = User.registerWithEmail({
       id: ids.next(),
+      // Signup provisions no tenant of its own, so the account joins the one tenant the deployment runs.
+      tenantId: DEFAULT_TENANT_ID,
       email,
       passwordHash: await hasher.hash(command.password),
       displayName: command.displayName,

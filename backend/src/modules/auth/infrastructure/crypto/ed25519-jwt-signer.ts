@@ -17,7 +17,7 @@ export interface Ed25519JwtSignerConfig {
   readonly clock: Clock;
 }
 
-// Access tokens with the claim set: iss, aud, sub, iat, exp, jti, token_use, roles.
+// Access tokens with the claim set: iss, aud, sub, iat, exp, jti, token_use, roles, tenant_id.
 export class Ed25519JwtSigner implements AccessTokenSignerPort {
   private readonly config: Ed25519JwtSignerConfig;
   private keys: Promise<SigningKeys> | undefined;
@@ -30,7 +30,7 @@ export class Ed25519JwtSigner implements AccessTokenSignerPort {
     const { issuer, audience, keyId, ttlSeconds, clock } = this.config;
     const { privateKey } = await this.getKeys();
     const issuedAt = Math.floor(clock.now().getTime() / 1000);
-    const token = await new SignJWT({ token_use: TOKEN_USE, roles: [...claims.roles] })
+    const token = await new SignJWT({ token_use: TOKEN_USE, roles: [...claims.roles], tenant_id: claims.tenantId })
       .setProtectedHeader({ alg: ALGORITHM, kid: keyId, typ: 'JWT' })
       .setIssuer(issuer)
       .setAudience(audience)
@@ -55,7 +55,13 @@ export class Ed25519JwtSigner implements AccessTokenSignerPort {
     if (payload.token_use !== TOKEN_USE || typeof payload.sub !== 'string' || !Array.isArray(roles)) {
       throw AuthErrors.unauthenticated();
     }
-    return { subject: payload.sub, roles: roles.filter((role): role is string => typeof role === 'string') };
+    // A token signed before tenant scoping carries no tenant_id; it verifies as null and resolves to the default tenant.
+    const tenantId = payload.tenant_id;
+    return {
+      subject: payload.sub,
+      roles: roles.filter((role): role is string => typeof role === 'string'),
+      tenantId: typeof tenantId === 'string' ? tenantId : null,
+    };
   }
 
   // Loaded on first use so a missing key fails the request that needs it, not the whole app at import time.

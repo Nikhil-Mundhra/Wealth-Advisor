@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { after, before, describe, it } from 'node:test';
+import { DEFAULT_TENANT_ID } from '#core/db/document-id.ts';
 import { type TestApp, postJson } from '../../support/test-app.ts';
 
 const EMAIL = 'june@example.com';
@@ -80,8 +81,9 @@ export function runAuthFlowSuite(start: () => Promise<TestApp>): void {
         .slice(0, 2)
         .map((part) => JSON.parse(Buffer.from(part, 'base64url').toString()));
       assert.equal(header.alg, 'EdDSA');
-      assert.deepEqual(Object.keys(payload).sort(), ['aud', 'exp', 'iat', 'iss', 'jti', 'roles', 'sub', 'token_use']);
+      assert.deepEqual(Object.keys(payload).sort(), ['aud', 'exp', 'iat', 'iss', 'jti', 'roles', 'sub', 'tenant_id', 'token_use']);
       assert.equal(payload.exp - payload.iat, 900);
+      assert.equal(payload.tenant_id, DEFAULT_TENANT_ID);
 
       const me = await t.app.request('/api/auth/me', { headers: bearer(String(login.accessToken)) });
       assert.equal(me.status, 200);

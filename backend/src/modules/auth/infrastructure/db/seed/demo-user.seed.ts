@@ -1,3 +1,4 @@
+import { DEFAULT_TENANT_ID } from '#core/db/document-id.ts';
 import type { IdGenerator } from '#core/domain/id-generator.ts';
 import type { Clock } from '#core/time/clock.ts';
 import type { PasswordHasherPort } from '../../../application/ports/password-hasher.port.ts';
@@ -14,7 +15,7 @@ export async function seedDemoUser(users: UserRepositoryPort, hasher: PasswordHa
   if (await users.findActiveByProvider('EMAIL', email.value)) return 'exists';
   const user = User.registerWithEmail({
     id: ids.next(),
-    tenantId: '600000000000000000000001',
+    tenantId: DEFAULT_TENANT_ID,
     email,
     passwordHash: await hasher.hash(DEMO_PASSWORD),
     displayName: 'Demo',
