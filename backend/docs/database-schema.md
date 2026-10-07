@@ -1,6 +1,6 @@
 # MongoDB Atlas Database Schema Specification
 
-Precedence: where this file conflicts with `backend/docs/collections.md` (built collections) or `backend/docs/planned-collections.md` (planned collections), follow those.
+Precedence: where this file differs, `backend/docs/collections.md` (built collections) and `backend/docs/planned-collections.md` (planned collections) hold.
 
 **Project:** Dynamic Expat Wealth Agent (DEWA)  
 **Database Engine:** MongoDB Atlas (MongoDB 7.x+)  

@@ -10,13 +10,15 @@ Email signup/login token model, on Hono + MongoDB.
 | Family | login starts a family; every rotation's child keeps the parent's `familyId` |
 | Passwords | scrypt N=2^17 r=8 p=1 (node:crypto; no native addon); parameters stored in each hash |
 | Scope | `tenant_id` is the user's tenant. Every tenant-scoped read and write takes its tenant from the token alone; no request header can move a caller between tenants |
+| Tenancy | one tenant per deployment: signup joins the default tenant; a token without `tenant_id` resolves to it |
 
 Defaults: `infra/docs/env.md`.
 
-The deployment runs one tenant, so signup joins the default tenant and a token minted before tenant scoping (no
-`tenant_id` claim) resolves to it. `requireAuth` refuses a request with no or an unusable token; `optionalAuth` serves
-the demo account only when no token is presented, and refuses a token that is present but invalid, expired or foreign
-rather than downgrading it to the demo scope.
+## Guards
+| Guard | No token | Valid token | Invalid, expired or foreign token |
+|---|---|---|---|
+| `requireAuth` | `AU_1005` | caller | `AU_1005` |
+| `optionalAuth` | demo account | caller | `AU_1005`; never the demo account |
 
 ## Rotation
 | Presented refresh token | Outcome |
