@@ -2,7 +2,6 @@
 
 ## Calls
 - `backend/docs/collections.md` : collections, indexes, TTL
-- `backend/docs/database-schema.md` : multi-tenant field spec; partial, superseded where it differs
 - `infra/docs/env.md` : `DATA_STORE`, `MONGODB_*`
 
 ## Rules

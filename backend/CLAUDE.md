@@ -26,6 +26,8 @@
 - outbound http: through `core/http-client`; a metered provider call reserves its `RequestBudget` first.
 - composition: only `<module>.module.ts` constructs concrete classes; `modules/index.ts` lists modules by static import.
 - construction: entities and value objects are built through `finalize()`; never call `postInit()` from a constructor.
+- advisory: the model narrates engine results only; weights, returns, variances and runway reach the response as structured fields from deterministic engines, never parsed from model text.
+- execution: a route that writes the sandbox ledger verifies the passkey assertion signature before any write; a field-presence check is not verification.
 - imports: `#core/` for core; `#modules/` only from outside `modules/`; relative inside a module.
 
 ## Workflow

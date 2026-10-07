@@ -8,6 +8,8 @@ flowchart LR
   edge -->|"/api/*"| api[Backend · Hono function]
   api --> db[(MongoDB Atlas)]
   spa -. "fetch /api/* + refresh cookie" .-> edge
+  cron([Vercel Cron]) -->|"GET /api/market/refresh"| edge
+  api -->|HTTPS| ext[Marketstack, Frankfurter, Gemini, OpenAI]
 ```
 
 ## Diagram: local
@@ -33,7 +35,7 @@ flowchart LR
 |---|---|---|
 | Frontend | React, Vite; static build | UI; access token in memory; calls `/api` |
 | Edge routing | Vercel Services (`vercel.json`) | sends each request to frontend or backend |
-| Backend | Hono on Vercel Functions; Node runner locally | API, auth, contract validation |
+| Backend | Hono on Vercel Functions; Node runner locally | API, auth, contract validation; outbound calls to market data and LLM providers |
 | Database | MongoDB Atlas, wherever `MONGODB_URI` points; tests use an in-memory mongod; local runs without it use the in-process memory store (`infra/docs/env.md`) | persistence |
 | nginx | Docker, local only | production-like edge for testing |
 
@@ -43,4 +45,4 @@ flowchart LR
 ## Data stores
 | Store | Owner | Collections |
 |---|---|---|
-| MongoDB | auth module | `backend/docs/collections.md` |
+| MongoDB | modules auth, market, analytics, admin, finance, wealth, sharing; core (events: `processed_events`; http-client: `request_budgets`) | `backend/docs/collections.md` |

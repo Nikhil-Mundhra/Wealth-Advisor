@@ -8,7 +8,7 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 - request and response schemas; API route docs → `contracts/AGENTS.md`
 - limits, patterns, error codes, validation keys; error catalogue → `rules/AGENTS.md`
 - ports, routing, containers, environment, Vercel deploy → `infra/AGENTS.md`
-- database schema: multi-tenant field spec, partial; superseded where it differs → `backend/docs/database-schema.md`
+- database schema: collections, fields, indexes → `backend/docs/collections.md` (built), `backend/docs/planned-collections.md` (planned)
 - code style for any code: imports, syntax, naming, exports, constants, comments → `agents/code.md`
 - docs, guides and file maps: writing or changing any .md → `agents/docs/writing.md`
 - syncing file maps and docs after commits → `agents/docs/sync-docs.md`

@@ -28,32 +28,7 @@
 
 ## 2. Core Development Principles & Architectural Guardrails
 
-### 2.1 Workspace Dependency Direction
-Strict unidirectional hierarchy enforced across the monorepo:
-$$\text{rules} \longleftarrow \text{contracts} \longleftarrow \text{backend} \quad\text{and}\quad \text{frontend}$$
-* **`@wealth-advisor/rules` (Zero dependencies):** Pure domain rules, financial constants, currency codes, asset classes, permission tiers, passkey constraints, tenant limits, i18n locales, theme constants, viewport breakpoints, error codes, and validation patterns.
-* **`@wealth-advisor/contracts` (Depends only on `rules` and `zod`):** Request/response Zod schemas and TypeScript types.
-* **`backend` (Depends on `rules`, `contracts`, `hono`, `mongodb`):** Domain logic, use cases, Mongo repositories, WebAuthn verification, and Hono route handlers.
-* **`frontend` (Depends on `rules`, `contracts`, `react`, `@tanstack/react-query`, `tailwindcss`):** SPA user interface, WebAuthn browser APIs, i18n dictionaries, theme state, responsive touch layouts, and presentation components.
-
-### 2.2 Erasable TypeScript & Runtime Cleanliness
-* No TypeScript `enum`s, namespaces, decorators, or parameter properties. Closed sets are defined as `as const` string objects.
-* Relative imports carry `.ts`/`.tsx` extensions for runtime compatibility with Node native module resolution.
-* Only one default export exists across the backend: `backend/src/app.ts` (Vercel entrypoint). All other exports are strictly named.
-
-### 2.3 The Deterministic Calculation Shield (Anti-Hallucination)
-To ensure regulatory compliance and prevent LLM hallucinations:
-* The LLM **never** calculates portfolio weights, returns, variances, or burn rates directly in text.
-* The LLM calls typed internal calculation tools.
-* The financial calculation engine executes deterministic TypeScript algorithms and returns structured JSON.
-* The LLM interprets the result, provides conversational context in the user's active language, and delivers the three-pillar explainability report.
-
-### 2.4 The 4-Tier Permission Architecture & Passkey Step-Up
-Every agent capability and API endpoint is bound to an explicit permission tier:
-* **Tier 0 (Read & Analytics):** Read-only data access (account balances, past transactions, asset catalog, portfolio status, shared plan view). Executed autonomously.
-* **Tier 1 (Advisory Recommendation):** Analytical recommendations (risk profile update, target portfolio proposal, currency hedge suggestions). Executed autonomously; output is advisory only.
-* **Tier 2 (Supervised Simulation):** What-if stress testing (e.g. simulating a -10% FX shock or a €15,000 family remittance spike). Executed on user request.
-* **Tier 3 (Execution Gate):** Sandbox ledger mutations (portfolio rebalancing order, scheduled liquidity ring-fencing). **Mandatory hardware-backed Passkey (TouchID/FaceID/BiometricPrompt) biometric signature required** before state commits.
+Engines, permission tiers and what each enforces today: `docs/domain/advisory-pipeline.md`.
 
 ---
 
