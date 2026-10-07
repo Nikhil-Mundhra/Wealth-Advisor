@@ -76,7 +76,7 @@ Third-party integrations in Wealth Advisor do not require enterprise-tier or pai
 
 ### 5. Frankfurter & European Central Bank FX Engine (100% Free, Built-In)
 - **Scope:** Reference rates for 30+ international currencies published by the ECB.
-- **Status:** Already implemented in `@wealth-advisor/backend` (`/api/market/fx`).
+- **Status:** Already implemented in `backend/src/modules/market/` (`/api/market/fx`).
 - **Zero Cost:** No API keys, no rate limits, completely open-source.
 
 ---

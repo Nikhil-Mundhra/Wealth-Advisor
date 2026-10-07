@@ -16,6 +16,7 @@
 - contract shapes → `contracts/AGENTS.md`
 
 ## Rules
+- paths: unrooted `core/` and `modules/` paths in this guide are under `backend/src/`.
 - layers: presentation → application → domain ← infrastructure; presentation may throw domain errors; all may use `core/`; `core/` never imports `modules/`.
 - contracts: imported only by presentation, plus error-envelope types in `core/http` and `core/errors`, plus event payload schemas (`contracts/src/events/`) in application.
 - core: mechanisms only (events, http, db, time, crypto); no domain concept (money, price, currency, snapshot, portfolio).

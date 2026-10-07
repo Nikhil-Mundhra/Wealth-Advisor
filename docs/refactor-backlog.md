@@ -1,6 +1,8 @@
 # Refactor backlog
 
 Surveyed 2026-10-06 · scope backend/src + contracts/src (focus: core/events, core/http-client, core/http, core/time, modules/market, modules/analytics) · 184 files
+
+Unrooted paths are under `backend/src/`.
 Baseline: tests 180 green · 5023 lines · 313 comment lines · history 73 commits (61 on main, 12 on feat/market-data; thin)
 
 ## Open
@@ -112,17 +114,17 @@ dropped 2026-10-04 — private helper, 2 callers; folding keyLength into scrypt 
 dropped 2026-10-04 — 1 caller; two functions to remove one flag costs more than it fixes
 
 ### R7 · Dead code · backend/src/core/registry/strategy-registry.ts · StrategyRegistry
-dropped 2026-10-04 — deliberate future seam (user direction: "think in terms of the future"; file map lists it for OAuth providers). Re-check when the first OAuth provider lands; delete if still unused then.
+dropped 2026-10-04 — deliberate future seam (user direction: "think in terms of the future"; `backend/AGENTS.md` file map lists it for OAuth providers). Re-check when the first OAuth provider lands; delete if still unused then.
 re-checked 2026-10-06 — still 0 callers; the market slice chose a closed ConversionMode union over the registry. Still a seam for OAuth providers and allocation strategies.
 
 ### R8 · Dead code · backend/src/core/http/route-builder.ts:48-58 · RouteBuilder.put / patch / delete
 dropped 2026-10-04 — builder verb set kept complete for upcoming modules (same direction as R7)
 
 ### R9 · Dead code · backend/src/core/domain/base-entity.ts, value-object.ts · BaseEntity.equals, BaseEntity.updatedAt, ValueObject.toString, ValueObject.equals
-dropped 2026-10-04 — base-class API the user asked for; ValueObject.equals pinned by test/unit/auth/session.entity.test.ts:53
+dropped 2026-10-04 — base-class API the user asked for; ValueObject.equals pinned by backend/test/unit/auth/session.entity.test.ts:53
 
 ### R10 · Speculative generality · backend/src/core/events/event-bus.ts, core/module/* · event subscriptions
-dropped 2026-10-04 — deliberate seam for a later outbox (documented in file map); 0 subscribers today. Re-check when a second module exists.
+dropped 2026-10-04 — deliberate seam for a later outbox (documented in the `backend/AGENTS.md` file map); 0 subscribers today. Re-check when a second module exists.
 re-checked 2026-10-06 — analytics subscribes to market.data_refreshed (analytics.module.ts:34): the seam is in use.
 
 ### R11 · Speculative generality · backend/src/modules/auth/application/ports/* · 4 single-implementation ports
@@ -138,7 +140,7 @@ dropped 2026-10-04 — keeps the domain off the database id type (reason stated 
 dropped 2026-10-04 — one-class-per-use-case is the approved layout
 
 ### R15 · Feature envy · backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts:12 · decideRotation
-dropped 2026-10-04 — extracted on purpose as a pure policy (backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts); table-tested in test/unit/auth/refresh-rotation.policy.test.ts; handles a null session
+dropped 2026-10-04 — extracted on purpose as a pure policy (backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts); table-tested in backend/test/unit/auth/refresh-rotation.policy.test.ts; handles a null session
 
 ### R19 · Speculative generality · backend/src/modules/market/market.api.ts:92 · MarketApi.convert (+ rate-window.ts, ConvertInput)
 dropped 2026-10-06 — 0 callers today, but the finance slice (burn rate, dashboard raw + converted view) is the planned first caller and convertBatch is tested. Re-check when finance lands; delete if still unused.

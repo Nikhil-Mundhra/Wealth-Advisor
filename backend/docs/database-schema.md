@@ -1,6 +1,6 @@
 # MongoDB Atlas Database Schema Specification
 
-Precedence: where this file differs, `backend/docs/collections.md` (built collections) and `backend/docs/planned-collections.md` (planned collections) hold.
+Precedence: where this file differs, the code holds, then `backend/docs/collections.md` (built collections) and `backend/docs/planned-collections.md` (planned collections).
 
 **Project:** Dynamic Expat Wealth Agent (DEWA)  
 **Database Engine:** MongoDB Atlas (MongoDB 7.x+)  
@@ -14,7 +14,7 @@ Precedence: where this file differs, `backend/docs/collections.md` (built collec
 Every persistent collection (with the exception of global system indexes and tenants themselves) is scoped by `tenantId`.
 * **Tenant Scoping:** All queries from authenticated expat users and institutional API keys include `{ tenantId }` in their filter predicates.
 * **Partial Unique Indexes:** Uniqueness constraints (such as user email, provider IDs, and account numbers) are enforced conditionally among active documents per tenant.
-* **Serverless Connection Lifecycle:** Connections are initialized via `getMongoClient()` in `backend/src/core/db/connection/mongo-client.ts`, caching the client promise on `globalThis` across Vercel serverless function invocations with `maxPoolSize: 10`.
+* **Serverless Connection Lifecycle:** Connections are initialized via `getMongoClient()` in `backend/src/core/db/connection/mongo-client.ts`, caching the client promise on `globalThis` across Vercel serverless function invocations; pool options (`maxPoolSize`) come from `backend/src/core/db/connection/connection-options.ts`.
 
 ```mermaid
 erDiagram

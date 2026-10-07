@@ -1,5 +1,7 @@
 # C3: Backend components
 
+Unrooted `core/` and `modules/` paths are under `backend/src/`.
+
 ## Diagram
 ```mermaid
 flowchart TB

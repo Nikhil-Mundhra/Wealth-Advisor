@@ -6,7 +6,7 @@ last synced: b8b52d7
 - `agents/docs/writing.md` : map and doc format; the rules every changed doc must still meet
 
 ## Rules
-- Owning map: the guide whose `## File structure` holds the path's prefix; a conventional root file (`CONVENTIONAL` in `scripts/docs-lint.mjs`) needs no map, any other root file goes in the root `AGENTS.md` map; a file inside a repo goes in that repo's guides; a new repo or component gets a guide (`agents/docs/sync-agent.md`).
+- Owning map: the guide whose `## File structure` holds the path's prefix; a conventional root file (`CONVENTIONAL` in `scripts/docs-lint.mjs`) needs no map, any other root file goes in the root `AGENTS.md` map or the root `agents/` guide that owns it; a file inside a repo goes in that repo's guides; a new repo or component gets a guide (`agents/docs/sync-agent.md`).
 - Keep each file's existing sections; add none.
 - Report contradicted rules and writing violations; do not fix them.
 - Report scope: files changed in the range only.

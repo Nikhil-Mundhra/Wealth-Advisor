@@ -5,7 +5,7 @@
 - placement: a guide or fact about one repo lives in that repo (`<repo>/AGENTS.md`, `<repo>/agents/`, `<repo>/docs/`); the root holds only what spans repos.
 - ownership: one fact, one owner; grep for it before writing; elsewhere link.
 - edges: guides → docs → docs; never docs → guides.
-- axes: each rule has one owner. Area index `## Route` lines name the axes each guide owns, `## Axes` names axes owned by another area, and rule lines start with their axis when a file owns several.
+- axes: each rule has one owner. `## Route` lines in a repo entry name the axes each guide owns, `## Axes` names axes owned by another repo or guide, and rule lines start with their axis when a file owns several.
 - guide content: directives only; never restate what the code or the file layout already shows.
 - doc content: facts and invariants (the unspoken rules a decision must respect, stated as facts: "a present but invalid token is never served the demo account"); a doc never decides, so a directive belongs in a guide.
 - reasoning: no `because`/`so` clauses, rejected alternatives, history or motivation in guides or docs; the why goes in a code comment (`agents/code.md`) or the commit message.
@@ -19,7 +19,7 @@
 - finish: `make docs-lint`
 
 ## Templates
-- repo entry (`<repo>/AGENTS.md`) and area index guide: `## Route` · `## Axes` · `## Rules` · `## Workflow` · `## File structure`
+- repo entry (`<repo>/AGENTS.md`): `## Route` · `## Axes` · `## Rules` · `## Workflow` · `## File structure`
 - component guide: `## Calls` · `## Rules` · `## Workflow` · `## File structure`
 - all guides: omit empty sections; workflow lines are one-line cross-file obligations or non-obvious order, never what the layout implies
 - map: flat `path : responsibility` lines, sorted by path, one code block, no tree glyphs, no padding

@@ -51,7 +51,7 @@ interface TenantDocument {
   settings: {
     baselineCurrency: 'EUR' | 'USD' | 'GBP' | 'SGD' | 'CNY';
     allowedCorridors: Array<'EUR_CNY' | 'GBP_SGD' | 'USD_CNY' | 'EUR_SGD'>;
-    defaultLlmProvider: 'GEMINI' | 'CLAUDE' | 'OPENAI' | 'MOCK';
+    defaultLlmProvider: 'gemini' | 'claude' | 'openai' | 'mock';
     maxMembers: number;
     requirePasskeyForRebalance: boolean;
   };

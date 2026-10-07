@@ -5,9 +5,10 @@
 
 ## Axes
 - adding an error code → `backend/agents/errors.md`
+- field validation text → `frontend/agents/forms.md`
 
 ## Rules
-- Imports nothing (no zod, no node, no workspace); exports constants, pure `is*`/`normalize*` functions and their types; `is*` expects normalized input.
+- Imports nothing (no zod, no node, no other repo); exports constants, pure `is*`/`normalize*` functions and their types; `is*` expects normalized input.
 - Error codes and validation keys are wire-visible: never reuse, rename or renumber; keys are `<field>.<reason>`.
 - `EMAIL_PATTERN` copies zod's `z.email()`; re-check it on zod upgrades.
 

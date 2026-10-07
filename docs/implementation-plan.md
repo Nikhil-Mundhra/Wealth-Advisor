@@ -347,7 +347,7 @@ sequenceDiagram
   - `POST /api/auth/passkey/login-verify`
   - `POST /api/auth/passkey/step-up-challenge`
 
-#### 2.2 Multi-Tenant & API Key Module (backend/src/modules/tenant & `admin`)
+#### 2.2 Multi-Tenant & API Key Module (`backend/src/modules/admin/`)
 - [ ] Implement `tenant.module.ts`:
   - Collections: `tenants` and `api_keys` with partial unique indexes.
   - Multi-tenant middleware: Scopes database queries to `tenantId` from JWT or API key header (`X-API-Key`).
@@ -477,7 +477,7 @@ sequenceDiagram
 ## 7. Definition of Done (DoD) by Phase
 
 * **Phase 1 Done:** `npm run typecheck` clean across `@wealth-advisor/rules` and `@wealth-advisor/contracts`. All financial math formulas, household cashflow, share contracts, and Passkey schemas have passing unit tests.
-* **Phase 2 Done:** Hono `auth` (with Passkeys), `tenant`, `finance`, `wealth`, `sharing`, `advisory`, and `admin` modules mounted. Multi-tenant scoping and API key hashing verified. Tier 3 execution blocked without valid Passkey signature.
+* **Phase 2 Done:** Hono `auth` (with Passkeys), `finance`, `wealth`, `sharing`, `advisory`, and `admin` modules mounted. Multi-tenant scoping and API key hashing verified. Tier 3 execution blocked without valid Passkey signature.
 * **Phase 3 Done:** All routes (`/`, `/portfolio`, `/cashflow`, `/advisory`, `/evidence`, `/share/:token`, `/settings/security`, `/admin/*`) fully rendered with dark mode, i18n, responsive touch mobile layout, and passing tests.
 * **Phase 4 Done:** Capacitor native iOS and Android projects configured, FaceID/BiometricPrompt verified, and release bundles buildable.
 * **Phase 5 Done:** All 6 submission checklist items documented in docs/submission/. Vercel deployment and mobile builds verified live.

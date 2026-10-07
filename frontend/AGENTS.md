@@ -13,6 +13,7 @@
 - contract shapes → `contracts/AGENTS.md`
 
 ## Rules
+- paths: unrooted paths in the frontend guides are under `frontend/src/`.
 - layers: `app` → `features` → `components` → `lib`; features never import each other; only `app/` composes features; `lib/` never imports `features/` outside tests.
 - imports: no path aliases; relative paths.
 - testing: tests sit next to the file; one `QueryClient` per test, created outside render.
