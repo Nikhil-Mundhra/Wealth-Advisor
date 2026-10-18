@@ -53,15 +53,21 @@ flowchart LR
 | 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `partial` — the ledger row is written before the portfolio moves and each trade is checked against the recorded target, but no assertion can pass verification yet, so the route refuses every execution with `WL_1004` (stage 9) |
 | 11 | Sharing | plan snapshot, token, mask flag | public read-only plan | `backend/src/modules/sharing/` | `partial` — TTL and expiry enforced; the snapshot is the sharer's rebalance proposal; the mask flag is stored and echoed, nothing is redacted |
 
-## Permission tiers
-`rules/src/permission-tier.rule.ts` is the only place tiers are defined. The only reader is `frontend/src/app/routes/security-settings-page.tsx`, which lists them.
+## Permission tiers and rules-based guardrails
+Permission tiers are defined in `rules/src/permission-tier.rule.ts` (`TIER_0_READ`, `TIER_1_ADVISORY`, `TIER_2_SIMULATE`, `TIER_3_EXECUTE`).
+The rules-based guardrail layer governs what operations and recommendations the platform and advisory agent are permitted to produce.
 
-| Tier | Allows | Enforced by |
-|---|---|---|
-| `TIER_0_READ` | stored positions, stored snapshots | nothing |
-| `TIER_1_ADVISORY` | a recommendation that changes nothing | nothing |
-| `TIER_2_SIMULATE` | stress tests and hypothetical rebalances | nothing |
-| `TIER_3_EXECUTE` | writing a sandbox ledger row | a non-empty assertion check in `backend/src/modules/wealth/wealth.api.ts` |
+| Guardrail Rule | Target Tier | Enforcement Type | Mechanism | Configuration |
+|---|---|---|---|---|
+| `G_PASSKEY_TIER3` | `TIER_3_EXECUTE` | Hard Block | `backend/src/modules/wealth/wealth.api.ts` verifies WebAuthn signature via `PasskeyVerifier` port before ledger append (`WL_1003` / `WL_1004`) | Platform-Invariant |
+| `G_CALC_SHIELD` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Hard Block (Fallback) | `backend/src/modules/advisory/domain/calculation-shield.ts` strips any response numbers not produced by deterministic engines, substituting deterministic fallback text | Platform-Invariant |
+| `G_RUNWAY_FLOOR` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Hard Block on Risk Increase | `rules/src/burn-rate.rule.ts` checks runway; blocks risky equity allocation increases when runway is critical (<3m individual / <6m family) | Tenant-Configurable |
+| `G_DRIFT_CORRIDOR` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Suppress Action | 5% corridor (`rules/src/asset-class.rule.ts`); prevents rebalancing turnover when drift is within tolerance | Tenant-Configurable |
+| `G_SELF_FINANCING` | `TIER_2_SIMULATE`, `TIER_3_EXECUTE` | Hard Block | `planRebalance` in `backend/src/modules/wealth/wealth.api.ts` caps buy total at sell proceeds, ensuring self-financing execution | Platform-Invariant |
+| `G_BOND_SOLVENCY` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Hard Block | `rules/src/fundamental-ratios.rule.ts` checks ICR >= 3.0x and Net Debt/EBITDA <= 3.5x; reallocates failing debt into sovereign bonds | Platform-Invariant |
+| `G_VALUATION_TILT` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Warning / Tilt | `rules/src/fundamental-ratios.rule.ts` trims equity sleeve at 85th percentile of 5Y history and accumulates below 20th | Platform-Invariant |
+| `G_FX_MISMATCH` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Warning / Hedge | `rules/src/fundamental-ratios.rule.ts` flags >30% foreign revenue mismatch against liability corridors to trigger FX hedge overlay | Platform-Invariant |
+| `G_FCF_PAYOUT` | `TIER_1_ADVISORY`, `TIER_2_SIMULATE` | Hard Block | Filters out dividend yield traps exceeding 90% free cash flow payout ratio | Platform-Invariant |
 
 ## Deterministic engines
 Every advice-bearing number is meant to come from a pure function over stored data; the model narrates, it does not compute. A live model's reply and rationale fields are kept only when every number in them matches a number the engines produced or the prompt carried (`backend/src/modules/advisory/domain/calculation-shield.ts`); any other field falls back to the deterministic text. Numbers spelled out in words are not detected.

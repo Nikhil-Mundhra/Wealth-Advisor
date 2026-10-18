@@ -301,7 +301,44 @@ sequenceDiagram
   3. **Asset Foreign Revenue Ratio:** Identifies underlying currency risk per asset; foreign revenue mismatch exceeding 30% against expat liability corridors triggers currency hedging overlays.
   4. **Free Cash Flow Payout Ratio:** Filters out unsustainable dividend yield traps exceeding 90% payout.
 
-#### 1.3 Deterministic Financial Engines (`backend/src/modules/`)
+#### 1.5 Market Data & News Providers Specification (#10)
+* **Prices & FX Data Ingestion:**
+  * Marketstack v2 (`/eod`) ingests end-of-day equity and bond ETF closes with a hard monthly budget limit (`MARKETSTACK_MONTHLY_QUOTA = 95` calls via `request_budgets` collection).
+  * Frankfurter v1 (ECB reference rates) ingests official daily FX rates for all supported base and corridor currencies.
+  * Ingestion runs automatically via Vercel Cron (`GET /api/market/refresh`) on weekdays at 23:00 UTC.
+  * Stored data lives in MongoDB collections (`prices`, `fx_rates`, `market_snapshots`). Live user sessions and advisory agent tools read exclusively from these stored collections, guaranteeing zero unmetered API calls and deterministic calculation shield operation during live demos.
+* **Curated News & Articles Feed:**
+  * Aggregates public macroeconomic RSS feeds from official central banks (ECB, US Federal Reserve, BIS) and financial wire feeds.
+  * Curated deterministically per user by matching article tags against the user's active currency corridors (`deriveCorridorCurrencies`) and portfolio asset classes (`ASSET_CLASSES`).
+  * Ingests article metadata (title, publisher source, publication timestamp, target URL, and matching tags) without storing or re-publishing full text, respecting copyright and display licensing terms with zero external API fees.
+
+#### 1.6 Hedge-Fund-Style Algorithms Shortlist & Analysis (#11)
+* **Shortlist of Deterministic Algorithms (TypeScript-native, monthly rebalancing frequency):**
+  1. **Liquidity-Carve-Out Black-Litterman / Mean-Variance Optimization (Markowitz 1952; Black & Litterman 1992):** Blends equilibrium market weights (`DEMO_TARGET_WEIGHTS`) with annualized sample covariance from `market_snapshots` (`measureSnapshot`) while ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) into short-term cash and money-market buckets.
+  2. **Volatility-Parity / Equal Risk Contribution (Maillard, Roncalli & Teiletche 2010):** Scales risky sleeve weights inversely to their 365-day realized volatility from `market_snapshots`, preventing high-volatility equity drawdowns from dominating household risk capacity during monthly rebalance intervals.
+  3. **Constant-Proportion Portfolio Insurance (CPPI) Runway Floor (Black & Jones 1987):** Imposes a non-negotiable floor equal to the household emergency reserve target (3 months for `INDIVIDUAL`, 6 months for `FAMILY_HOUSEHOLD`), dynamically scaling risky asset exposure as $E = m \cdot \max(0, W - F)$ to protect living expenses from market drawdowns.
+* **Deliberately Rejected Algorithms:**
+  * *High-Frequency Statistical Arbitrage / Pairs Trading:* Edge decays within minutes or hours; ineffective and fee-prohibitive at monthly rebalance frequencies with EOD prices.
+  * *Deep Reinforcement Learning / Black-Box Neural Allocators:* Opaque decision rationale, prone to overfitting on 365-day windows, and incompatible with audit digest verification.
+  * *Runtime Monte Carlo Copula Simulations:* Exceeds serverless function execution timeouts without yielding higher allocation accuracy than precomputed parametric covariance in `market_snapshots`.
+
+#### 1.7 Event-Driven Sentiment Tractability Assessment (#14)
+* **Verdict:** Consciously deferred for portfolio allocation (No direct sentiment signal feeding weights).
+* **Rationale:**
+  * Free social and news sentiment feeds lack reliable point-in-time historical archives, suffer severe rate limits, and are vulnerable to headline prompt-injection attacks (OWASP LLM01).
+  * Paid institutional sentiment feeds (e.g. RavenPack, Bloomberg) violate the zero-cost offline live-demo constraint.
+  * Failure mode analysis: Noisy event-driven sentiment induces excessive portfolio turnover, incurring unnecessary FX and brokerage transaction costs in violation of the Vanguard 5% drift corridor. Macro shock reactions are already captured deterministically through 365-day realized volatility spikes and 5Y valuation percentiles.
+
+#### 1.8 Rules-Based Guardrails Specification (#15)
+* **Guardrail Matrix & Tier Enforcement:**
+  1. **Passkey Step-Up Execution Gate (`G_PASSKEY_TIER3`):** `TIER_3_EXECUTE` | **Hard Block** (`WL_1003` / `WL_1004`) | **Platform-Invariant** (sandbox ledger writes require verified FIDO2 WebAuthn cryptographic assertion signature).
+  2. **Deterministic Calculation Shield (`G_CALC_SHIELD`):** `TIER_1_ADVISORY` & `TIER_2_SIMULATE` | **Hard Block with Fallback** (any model response containing numbers not present in deterministic engine facts automatically falls back to deterministic text).
+  3. **Emergency Runway Floor (`G_RUNWAY_FLOOR`):** `TIER_1_ADVISORY` & `TIER_2_SIMULATE` | **Hard Block on Risk Increases** when liquid runway $< 3.0$ months (individual) or $< 6.0$ months (family household); warning between 3 and 6 months | **Tenant-Configurable**.
+  4. **Rebalance Drift Corridor (`G_DRIFT_CORRIDOR`):** `TIER_1_ADVISORY` & `TIER_2_SIMULATE` | **Warning / Action Suppression** when asset drift $< 5\%$ (`REBALANCE_DRIFT_THRESHOLD_PCT`) to avoid churning small positions | **Tenant-Configurable**.
+  5. **Self-Financing Rebalance Constraint (`G_SELF_FINANCING`):** `TIER_2_SIMULATE` & `TIER_3_EXECUTE` | **Hard Block** (total buy notional in `planRebalance` is strictly capped by total sell proceeds, preventing negative cash balance) | **Platform-Invariant**.
+  6. **Fundamental Solvency & Valuation Guardrails (`G_BOND_SOLVENCY`, `G_VALUATION_TILT`, `G_FX_MISMATCH`, `G_FCF_PAYOUT`):** `TIER_1_ADVISORY` & `TIER_2_SIMULATE` | **Hard Block** on corporate bonds with $\text{ICR} < 3.0\times$ or $\text{Net Debt/EBITDA} > 3.5\times$ and equities with $\text{FCF Payout} > 90\%$; **Warning / Currency Hedge Recommendation** on $>30\%$ foreign revenue mismatch or $\ge 85\text{th}$ valuation percentile | **Platform-Invariant**.
+
+#### 1.9 Deterministic Financial Engines (`backend/src/modules/`)
 - [ ] **`BurnRateCalculator`:** Aggregates multi-currency transactions converted to baseline currency; adapts emergency reserve targets based on Individual vs. Family Household mode.
 - [ ] **`ExpatRiskProfiler`:** Recalibrates base risk score dynamically based on liquidity runway and foreign currency mismatch.
 - [ ] **`PortfolioOptimizer`:** Computes target asset allocation adapting to the effective risk score and ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) as non-negotiable liquidity carve-outs into matching short-term cash/money-market buckets.
