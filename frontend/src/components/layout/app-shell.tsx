@@ -1,5 +1,5 @@
 import { ADMIN_ROLE } from '@wealth-advisor/rules';
-import { ArrowLeftRight, LayoutDashboard, MessagesSquare, Settings, Shield, Wallet } from 'lucide-react';
+import { ArrowLeftRight, LayoutDashboard, MessagesSquare, Settings, Shield } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { cn } from '../../lib/cn.ts';
@@ -9,7 +9,6 @@ import { ThemeToggle } from '../ui/theme-toggle.tsx';
 
 const TABS = [
   { to: '/', key: 'nav.dashboard', Icon: LayoutDashboard, end: true },
-  { to: '/portfolio', key: 'nav.portfolio', Icon: Wallet },
   { to: '/cashflow', key: 'nav.cashflow', Icon: ArrowLeftRight },
   { to: '/advisory', key: 'nav.advisory', Icon: MessagesSquare },
 ] as const;
@@ -80,7 +79,7 @@ export function AppShell() {
 
       <nav
         aria-label={strings['header.nav.mobile']}
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-3 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.map(({ to, key, Icon, ...rest }) => (
           <NavLink key={to} to={to} {...rest} className={tabClass}>

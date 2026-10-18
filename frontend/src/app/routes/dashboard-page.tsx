@@ -19,6 +19,7 @@ import { PageTitle } from '../../components/ui/page-title.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { ProfilingModal } from '../../features/profiling/components/profiling-modal.tsx';
 import { useProfile } from '../../features/profiling/profile-store.ts';
+import { PortfolioSection } from './portfolio-section.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import {
   DEMO_BASELINE,
@@ -330,6 +331,8 @@ export function DashboardPage() {
           )}
         </Card>
       </div>
+
+      <PortfolioSection showTitle={false} />
 
       <ProfilingModal
         open={profilingOpen}

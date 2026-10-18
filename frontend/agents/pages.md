@@ -23,14 +23,15 @@ frontend/src/app/routes/advisory-page.tsx : copilot thread, rebalance card, biom
 frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan render
 frontend/src/app/routes/cashflow-page.tsx : multi-currency balances and remittance corridor plan
 frontend/src/app/routes/dashboard-page.test.tsx : net worth, runway gauge, trail chart, rebalance link, household toggle
-frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, household toggle, rebalance CTA, trail chart, target allocation
+frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, household toggle, rebalance CTA, trail chart, target allocation, portfolio holdings
 frontend/src/app/routes/evidence-page.test.tsx : executions with tiers and digests
 frontend/src/app/routes/evidence-page.tsx : sandbox ledger table
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
 frontend/src/app/routes/onboarding-page.test.tsx : onboarding starts without preselected risk answer and advances after selection
 frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire wizard with fresh answers for first-time signups
 frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
-frontend/src/app/routes/portfolio-page.tsx : holdings table with current vs target drift
+frontend/src/app/routes/portfolio-page.tsx : deep-link route wrapper rendering shared PortfolioSection
+frontend/src/app/routes/portfolio-section.tsx : shared portfolio holdings table rendered on the dashboard and as a deep link
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state
 frontend/src/app/routes/security-settings-page.tsx : session facts, tier ladder, passkeys, sign out
 frontend/src/app/routes/shared-plan-page.test.tsx : privacy masking toggle

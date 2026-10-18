@@ -22,10 +22,11 @@ describe('AppShell', () => {
   it('renders the page with sidebar and bottom-tab navigation to every core tab', () => {
     renderShell();
     expect(screen.getByText('Page body')).toBeVisible();
-    // Sidebar and bottom tabs both link every tab.
-    for (const name of ['Dashboard', 'Portfolio', 'Cash Flow', 'Advisory']) {
+    // Sidebar and bottom tabs both link the three primary tabs.
+    for (const name of ['Dashboard', 'Cash Flow', 'Advisory']) {
       expect(screen.getAllByRole('link', { name }).length).toBeGreaterThanOrEqual(2);
     }
+    expect(screen.queryByRole('link', { name: 'Portfolio' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeVisible();
   });
 });
