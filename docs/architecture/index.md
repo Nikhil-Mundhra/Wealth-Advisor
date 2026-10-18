@@ -5,4 +5,7 @@ docs/architecture/c1-context.md : L1 context: users, the system, external system
 docs/architecture/c2-containers.md : L2 containers: frontend, edge routing, backend, database; local runtimes
 docs/architecture/c3-backend.md : L3 backend components: core, module registry, auth, market, analytics, admin, finance, wealth, advisory, sharing modules
 docs/architecture/c3-frontend.md : L3 frontend components: app, features (admin, auth, marketing, profiling), shared UI, lib
+docs/architecture/data-classification.md : data classification taxonomy, field levels, LLM provider egress allow-list, and retention rules
+docs/architecture/threat-model.md : STRIDE threat model, load-bearing security controls, and defense-in-depth architecture
 ```
+

@@ -28,14 +28,17 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 - ci: a new check goes into `.github/workflows/ci.yml` as a `make` target; the Node major lives in `.nvmrc` and ci.yml `node-version` together; the runner image is pinned and moves only after a green run on the new image.
 - process control: Makefile start/stop/status act only on processes running inside this checkout; new services reuse `start_svc`, `stop_svc`, `status_svc`.
 - data: `make seed-demo` is local only.
-- docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`) stay UPPER.
+- docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`, `SECURITY.md`) stay UPPER.
 - entry: every `CLAUDE.md` is a byte copy of the `AGENTS.md` beside it; edit `AGENTS.md`, then `cp AGENTS.md CLAUDE.md` in that folder.
 - icons: strict no-emoji policy across UI, copy, code, commit messages, and docs; use vector SVG icons (e.g. lucide-react) for all icons, badges, and visual indicators.
 
 ## File structure
 
 ```
+.github/CODEOWNERS : code ownership for core backend, auth, infra, and ci workflows
+.github/dependabot.yml : weekly dependency update configuration for npm and github actions
 .github/workflows/ci.yml : on PRs and main, on a pinned ubuntu-24.04 runner: docs-lint, deps-lint, typecheck, tests, frontend build
 .nvmrc : Node major CI builds and local version managers use; change it and ci.yml `node-version` together
 vercel.json : Vercel Services: frontend and backend service definitions, top-level rewrites, weekday market refresh cron
 ```
+

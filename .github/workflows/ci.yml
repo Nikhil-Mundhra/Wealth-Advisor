@@ -5,6 +5,8 @@ on:
   push:
     branches: [main]
 
+permissions: read-all
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -14,6 +16,8 @@ jobs:
     # Pinned: mongodb-memory-server needs a mongod build for the runner's distro, so the image moves deliberately.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -28,5 +32,7 @@ jobs:
       - run: make docs-lint
       - run: make deps-lint
       - run: make typecheck
+      - run: make audit
       - run: make test
       - run: make build
+

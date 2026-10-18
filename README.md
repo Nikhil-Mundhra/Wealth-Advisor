@@ -48,3 +48,13 @@ To guide our technical development, system architecture, security design, and fi
 * **Step 1:** Finalize system architecture diagram (Agent Orchestrator, LLM Reasoning Engine, Financial Calculation Engine, and Mock Sandbox Environment).
 * **Step 2:** Define the security self-assessment framework and permission tiers for cross-border data handling.
 * **Step 3:** Draft core mock scenarios and test cases showcasing a user experiencing currency volatility and an unexpected burn-rate spike.
+
+---
+
+## 5. Security & Responsible AI Standards
+
+We enforce rigorous computer security and AI data privacy standards across the platform:
+- Vulnerability reporting and security controls: `SECURITY.md`
+- Architectural threat model: `docs/architecture/threat-model.md`
+- Data classification and LLM egress boundaries: `docs/architecture/data-classification.md`
+

@@ -1,0 +1,11 @@
+# Global default
+* @wealth-advisor/core-team
+
+# Core infrastructure and security boundaries
+.github/ @wealth-advisor/security-team @wealth-advisor/devops-team
+infra/ @wealth-advisor/devops-team
+SECURITY.md @wealth-advisor/security-team
+
+# Backend core and authentication modules
+backend/src/core/ @wealth-advisor/backend-leads @wealth-advisor/security-team
+backend/src/modules/auth/ @wealth-advisor/auth-team @wealth-advisor/security-team

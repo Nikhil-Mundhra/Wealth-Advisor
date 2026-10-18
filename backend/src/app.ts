@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { secureHeaders } from 'hono/secure-headers';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
@@ -48,6 +50,31 @@ export function createApp(context: ModuleContext): Hono {
 
   const app = new Hono();
   app.use(logger());
+  app.use(
+    '*',
+    secureHeaders({
+      contentSecurityPolicy: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+      },
+      xFrameOptions: 'DENY',
+      xContentTypeOptions: 'nosniff',
+      referrerPolicy: 'strict-origin-when-cross-origin',
+    }),
+  );
+  app.use(
+    '/api/*',
+    cors({
+      origin: (origin) => origin || '*',
+      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    }),
+  );
   app.onError(errorHandler);
   app.route('/api', api);
   return app;

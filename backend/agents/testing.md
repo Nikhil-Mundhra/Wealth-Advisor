@@ -50,8 +50,11 @@ backend/test/unit/core/db/with-read-retry.test.ts : retries transient failures o
 backend/test/unit/core/document-id.test.ts : document id and tenant/user scope resolution, including the demo scope key
 backend/test/unit/core/error-catalog.test.ts : code → status mapping, prefix and duplicate checks
 backend/test/unit/core/http-client/http-client.test.ts : status, network, timeout and body failures → transient or fatal; no query string in messages
+backend/test/unit/core/read-json-body.test.ts : json body parsing, empty body handling, 1MB size limit and 413 CORE_PAYLOAD_TOO_LARGE
 backend/test/unit/core/require-bearer-secret.test.ts : exact bearer passes; wrong, missing, or unset secret → rejected
 backend/test/unit/core/route-builder.test.ts : response contract check returns 500 on violation; query contract parses or 400s
+backend/test/unit/core/security-headers.test.ts : security headers (CSP, HSTS, X-Content-Type-Options, X-Frame-Options) and CORS on createApp
+
 backend/test/unit/finance/finance-api.test.ts : multi-currency accounts and household burn rate runway calculations
 backend/test/unit/market/convert.test.ts : convertBatch table: spot, historical, weekend gap, inverse, cross, raw, same currency, missing rate, out of range, half to even
 backend/test/unit/market/providers.test.ts : Marketstack and Frankfurter adapters vs fixtures: pagination, budget per page, key handling, error mapping

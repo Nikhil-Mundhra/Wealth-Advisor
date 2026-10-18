@@ -15,6 +15,7 @@ export const ERROR_CODE_PREFIXES = {
 export const CORE_ERROR_CODES = {
   validationFailed: 'CORE_VALIDATION_FAILED',
   invalidJson: 'CORE_INVALID_JSON',
+  payloadTooLarge: 'CORE_PAYLOAD_TOO_LARGE',
   notFound: 'CORE_NOT_FOUND',
   internal: 'CORE_INTERNAL',
   databaseUnconfigured: 'CORE_DB_UNCONFIGURED',

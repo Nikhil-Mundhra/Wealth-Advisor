@@ -9,14 +9,18 @@ interface RefreshCookieOptions {
   readonly expiresAt: Date;
 }
 
+const REFRESH_COOKIE_BASE_OPTIONS = {
+  path: PATH,
+  secure: true,
+  httpOnly: true,
+  sameSite: 'Lax' as const,
+};
+
 // Without rememberMe the cookie is a session cookie (gone when the browser closes); the server-side
 // session still lives 14 days either way.
 export function setRefreshCookie(c: Context, token: string, options: RefreshCookieOptions): void {
   setCookie(c, NAME, token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Lax',
-    path: PATH,
+    ...REFRESH_COOKIE_BASE_OPTIONS,
     ...(options.rememberMe ? { expires: options.expiresAt } : {}),
   });
 }
@@ -26,5 +30,6 @@ export function readRefreshCookie(c: Context): string | undefined {
 }
 
 export function clearRefreshCookie(c: Context): void {
-  deleteCookie(c, NAME, { path: PATH, secure: true });
+  deleteCookie(c, NAME, REFRESH_COOKIE_BASE_OPTIONS);
 }
+

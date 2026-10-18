@@ -39,5 +39,12 @@ Defaults: `infra/docs/env.md`.
 - logout and logout-all always clear the cookie.
 - The server-side session lives the full refresh lifetime whether or not `rememberMe` is set.
 
-## Not in scope yet
-Email verification, OAuth, password reset, rate limiting, JWKS, introspection, login audit.
+## Security controls
+- Security headers (CSP, HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy) and CORS on every API endpoint.
+- Unified HttpOnly, Secure, SameSite=Lax cookie attribute management for `setRefreshCookie` and `clearRefreshCookie`.
+- Request body payload capped at 1MB (`CORE_PAYLOAD_TOO_LARGE`, 413).
+- Token family replay detection and immediate whole-family revocation (`AU_1003`).
+
+## Future roadmap
+Email verification, OAuth2 social identity providers, self-service password reset, public JWKS endpoint.
+

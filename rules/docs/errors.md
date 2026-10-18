@@ -29,6 +29,7 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | Code | Status | Meaning |
 |---|---|---|
 | `CORE_INVALID_JSON` | 400 | request body is not valid JSON |
+| `CORE_PAYLOAD_TOO_LARGE` | 413 | request body exceeds size limit |
 | `CORE_VALIDATION_FAILED` | 400 | body fails its contract; `issues` lists every failed field |
 | `CORE_NOT_FOUND` | 404 | unmatched `/api/*` path or method |
 | `CORE_INTERNAL` | 500 | unhandled error or response-contract violation; details logged, not sent |

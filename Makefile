@@ -11,7 +11,8 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck audit
+
 
 help:  ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -84,7 +85,11 @@ docs-lint:  ## Check agent guides and docs: links, file maps, reachability
 deps-lint:  ## Check cross-module imports against backend/docs/module-dependencies.md
 	node backend/scripts/module-deps.mjs
 
+audit:  ## Check dependencies for high-severity vulnerabilities
+	npm audit --omit=dev --audit-level=high
+
 $(RUN_DIR):
+
 	@mkdir -p $(RUN_DIR)
 
 # Shell snippet: sets $$all (every listener on port $(1)) and $$ours (those with cwd inside this repo).

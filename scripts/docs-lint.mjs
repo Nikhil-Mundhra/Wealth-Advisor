@@ -15,9 +15,10 @@ const DOCS_DIR = 'docs';
 // A backticked token or map path is checked only when it starts at one of these repo-root entries.
 const ROOTS = new Set([
   'agents', 'docs', 'backend', 'frontend', 'contracts', 'rules', 'infra', 'scripts',
-  'AGENTS.md', 'CLAUDE.md', 'README.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json', '.env.example',
+  'AGENTS.md', 'CLAUDE.md', 'README.md', 'SECURITY.md', 'Makefile', 'package.json', 'package-lock.json', 'vercel.json', '.env.example',
   '.gitignore', '.vercelignore', '.github',
 ]);
+
 // Build output and local state: referenced on purpose, absent until something generates them.
 const GENERATED = new Set(['dist', 'node_modules', '.run', '.vercel']);
 // Conventional root files: their role is standard, so no guide map lists them. Any other root file still needs one.
