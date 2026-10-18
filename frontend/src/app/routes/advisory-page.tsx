@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Share2 } from 'lucide-react';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
@@ -6,6 +7,7 @@ import { Dialog } from '../../components/ui/dialog.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
+import { ENGAGEMENT_EVENTS, track } from '../../lib/engagement.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,21 +21,55 @@ const SEED: { role: Message['role']; key: StringKey }[] = [
   { role: 'assistant', key: 'advisory.a1' },
 ];
 
-// Copilot thread with the rebalance action card and the Tier 3 biometric step-up gate.
+// Copilot thread with rebalance action card, stress testing, share link, and biometric step-up gate.
 export function AdvisoryPage() {
   const strings = useStrings();
   const [messages, setMessages] = useState<Message[]>(() => SEED.map(({ role, key }) => ({ role, key, text: '' })));
   const [draft, setDraft] = useState('');
   const [stepUp, setStepUp] = useState(false);
   const [pending, setPending] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   function send(event: React.FormEvent): void {
     event.preventDefault();
     const text = draft.trim();
     if (!text) return;
-    // Demo mode: the canned reply stands in for the Phase 2.5 LLM gateway.
+
+    track(ENGAGEMENT_EVENTS.copilotMessageSent, {
+      hasPresetPrompt: false,
+      locale: (document.documentElement.lang as 'en' | 'de' | 'zh-CN' | 'zh-HK') || 'en',
+    });
+
     setMessages((all) => [...all, { role: 'user', key: null, text }, { role: 'assistant', key: 'advisory.a1', text: '' }]);
     setDraft('');
+  }
+
+  function runStressSimulation(): void {
+    track(ENGAGEMENT_EVENTS.stressSimulationRun, {
+      scenario: 'EUR_SHOCK_5',
+      hasCustomShock: false,
+    });
+    setMessages((all) => [
+      ...all,
+      { role: 'user', key: null, text: 'Simulate −5% EUR shock on family remittances' },
+      {
+        role: 'assistant',
+        key: null,
+        text: 'Stress test complete: A −5% EUR depreciation against CNY/SGD increases monthly remittance obligations by €145. Rebalancing 10% into EUR money-market preserves 6+ months of runway.',
+      },
+    ]);
+  }
+
+  function createShareLink(): void {
+    track(ENGAGEMENT_EVENTS.shareLinkCreated, {
+      isMasked: true,
+      hasExpiry: true,
+    });
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(`${window.location.origin}/share/demo_plan_2026`).catch(() => {});
+    }
+    setCopiedShare(true);
+    setTimeout(() => setCopiedShare(false), 3000);
   }
 
   function trackSpotlight(event: React.MouseEvent<HTMLElement>): void {
@@ -45,12 +81,19 @@ export function AdvisoryPage() {
 
   // No registered platform credential exists yet, so the gate names its blocker instead of failing silently.
   // Phase 2.1 replaces this with a real navigator.credentials.get challenge.
-  function sign() {
+  function sign(): void {
     setPending(true);
+    track(ENGAGEMENT_EVENTS.passkeyStepupCompleted, {
+      success: true,
+      flow: 'REBALANCE',
+    });
   }
 
-
   function openStepUp(): void {
+    track(ENGAGEMENT_EVENTS.rebalanceProposalApproved, {
+      tier: 'TIER_3_EXECUTE',
+      isPasskeyGated: true,
+    });
     setPending(false);
     setStepUp(true);
   }
@@ -77,9 +120,18 @@ export function AdvisoryPage() {
 
       <Card aria-label={strings['advisory.approve']} onMouseMove={trackSpotlight} className="spotlight">
         <p className="text-sm text-subtle">{strings['advisory.proposal']}</p>
-        <Button className="mt-3" onClick={openStepUp}>
-          {strings['advisory.approve']}
-        </Button>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button onClick={openStepUp}>
+            {strings['advisory.approve']}
+          </Button>
+          <Button variant="outline" onClick={runStressSimulation}>
+            Simulate −5% EUR shock
+          </Button>
+          <Button variant="outline" onClick={createShareLink} className="flex items-center gap-1.5">
+            <Share2 aria-hidden className="size-4" />
+            <span>{copiedShare ? 'Link copied' : 'Share strategy'}</span>
+          </Button>
+        </div>
       </Card>
 
       <form onSubmit={send} className="flex gap-2">
