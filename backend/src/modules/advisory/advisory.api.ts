@@ -16,7 +16,7 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
 
   return {
     async chat(tenantId: string, userId: string, input: AdvisoryChatRequest): Promise<AdvisoryChatResponse> {
-      const householdMode = input.householdMode ?? 'FAMILY_HOUSEHOLD';
+      const householdMode = input.householdMode;
       const locale = input.locale ?? 'en';
 
       // Deterministic calculation shield: aggregate cashflow & portfolio before prompting model

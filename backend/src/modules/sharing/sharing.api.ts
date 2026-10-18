@@ -7,6 +7,7 @@ import { SHARING_ERROR_CODES } from '@wealth-advisor/rules';
 import type {
   CreateShareLinkRequest,
   CreateShareLinkResponse,
+  PlanSnapshotDto,
   SharedPlanResponse,
 } from '@wealth-advisor/contracts';
 import type { WealthApi } from '../wealth/public.ts';
@@ -80,10 +81,33 @@ export function createSharingApi(deps: SharingApiDeps) {
         shareToken: plan.shareToken,
         ownerDisplayName: plan.ownerDisplayName,
         privacyMasked: plan.privacyMasked,
-        planSnapshot: plan.planSnapshot,
+        planSnapshot: plan.privacyMasked ? maskPlanSnapshot(plan.planSnapshot) : plan.planSnapshot,
         expiresAt: plan.expiresAt.toISOString(),
         createdAt: plan.createdAt.toISOString(),
       };
+    },
+  };
+}
+
+function maskPlanSnapshot(snapshot: PlanSnapshotDto): PlanSnapshotDto {
+  const maskWeights = (weights: Record<string, number>) => {
+    const masked: Record<string, number> = {};
+    let index = 1;
+    for (const weight of Object.values(weights)) {
+      masked[`Holding ${index++}`] = weight;
+    }
+    return masked;
+  };
+  const maskAmounts = (text: string) => text.replace(/[$€£¥]\s*\d+(?:[.,]\d+)*/g, '€***');
+
+  return {
+    ...snapshot,
+    currentWeights: maskWeights(snapshot.currentWeights),
+    recommendedWeights: maskWeights(snapshot.recommendedWeights),
+    threePillarRationale: {
+      personalFinance: maskAmounts(snapshot.threePillarRationale.personalFinance),
+      crossBorder: maskAmounts(snapshot.threePillarRationale.crossBorder),
+      wealthStrategy: maskAmounts(snapshot.threePillarRationale.wealthStrategy),
     },
   };
 }

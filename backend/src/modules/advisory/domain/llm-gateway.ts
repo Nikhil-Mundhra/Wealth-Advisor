@@ -5,6 +5,7 @@ import type {
   PortfolioResponse,
 } from '@wealth-advisor/contracts';
 import type { HouseholdMode, LlmProvider, Locale } from '@wealth-advisor/rules';
+import { type HttpClient, createHttpClient } from '#core/http-client/http-client.ts';
 import { factNumbers, shieldText } from './calculation-shield.ts';
 
 export interface LlmContext {
@@ -48,8 +49,8 @@ export class MockLlmAdapter implements LlmAdapter {
     }
 
     const hasHoldings = Object.keys(currentWeights).length > 0;
-    const equityPct = Math.round((equityWeight || 0.6) * 100);
-    const targetEquityPct = Math.round((targetEquityWeight || 0.4) * 100);
+    const equityPct = hasHoldings ? Math.round(equityWeight * 100) : 60;
+    const targetEquityPct = hasHoldings ? Math.round(targetEquityWeight * 100) : 40;
     const targetRunway = isFamily ? 6.0 : 3.0;
 
     const replies: Record<Locale, string> = {
@@ -139,13 +140,17 @@ function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, pr
   };
 }
 
+const ADVISORY_HTTP_TIMEOUT_MS = 8000;
+
 export class GeminiLlmAdapter implements LlmAdapter {
   private readonly apiKey: string | undefined;
   private readonly fallback: LlmAdapter;
+  private readonly http: HttpClient;
 
-  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter()) {
+  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
     this.apiKey = apiKey;
     this.fallback = fallback;
+    this.http = http;
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
@@ -167,22 +172,21 @@ Respond ONLY in valid JSON with these keys:
   "personalFinance": "One sentence summary on runway, cashflow, and emergency buffer",
   "crossBorder": "One sentence on currency corridors, remittance obligations, and FX risk",
   "wealthStrategy": "One sentence on portfolio weights and asset reallocation"
-}`;
+}
+Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      const data = (await this.http.postJson(
+        url,
+        {
           contents: [{ parts: [{ text: `${systemPrompt}\n\nUser Question: ${context.message}` }] }],
           generationConfig: {
             temperature: 0.2,
             responseMimeType: 'application/json',
           },
-        }),
-      });
+        },
+        { timeoutMs: ADVISORY_HTTP_TIMEOUT_MS },
+      )) as any;
 
-      if (!response.ok) return base;
-      const data = (await response.json()) as any;
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) return base;
 
@@ -196,24 +200,22 @@ Respond ONLY in valid JSON with these keys:
 export class OpenAiLlmAdapter implements LlmAdapter {
   private readonly apiKey: string | undefined;
   private readonly fallback: LlmAdapter;
+  private readonly http: HttpClient;
 
-  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter()) {
+  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
     this.apiKey = apiKey;
     this.fallback = fallback;
+    this.http = http;
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
     if (!this.apiKey) return this.fallback.chat(context);
     try {
       const base = await this.fallback.chat(context);
-      const systemPrompt = `You are an expat wealth advisor for DEWA. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy".`;
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
+      const systemPrompt = `You are an expat wealth advisor for DEWA. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+      const data = (await this.http.postJson(
+        'https://api.openai.com/v1/chat/completions',
+        {
           model: 'gpt-4o-mini',
           messages: [
             {
@@ -224,10 +226,15 @@ export class OpenAiLlmAdapter implements LlmAdapter {
           ],
           response_format: { type: 'json_object' },
           temperature: 0.2,
-        }),
-      });
-      if (!response.ok) return base;
-      const data = (await response.json()) as any;
+        },
+        {
+          timeoutMs: ADVISORY_HTTP_TIMEOUT_MS,
+          headers: {
+            authorization: `Bearer ${this.apiKey}`,
+          },
+        },
+      )) as any;
+
       const content = data?.choices?.[0]?.message?.content;
       if (!content) return base;
       return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt);
@@ -241,6 +248,7 @@ export interface LlmGatewayConfig {
   geminiApiKey?: string;
   openaiApiKey?: string;
   anthropicApiKey?: string;
+  http?: HttpClient;
 }
 
 export class LlmGateway {
@@ -249,13 +257,14 @@ export class LlmGateway {
   constructor(config?: LlmGatewayConfig | string) {
     const geminiKey = typeof config === 'string' ? config : config?.geminiApiKey;
     const openaiKey = typeof config === 'object' ? config.openaiApiKey : undefined;
+    const http = (typeof config === 'object' ? config.http : undefined) ?? createHttpClient();
 
     const mock = new MockLlmAdapter();
     this.adapters = {
       mock,
-      gemini: new GeminiLlmAdapter(geminiKey, mock),
+      gemini: new GeminiLlmAdapter(geminiKey, mock, http),
       claude: mock, // Claude gracefully falls back to deterministic mock until SDK wiring
-      openai: new OpenAiLlmAdapter(openaiKey, mock),
+      openai: new OpenAiLlmAdapter(openaiKey, mock, http),
     };
   }
 

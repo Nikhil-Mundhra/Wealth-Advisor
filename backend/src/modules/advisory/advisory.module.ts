@@ -19,7 +19,7 @@ export interface AdvisoryModuleDeps {
 }
 
 export function createAdvisoryModule(
-  _context: ModuleContext,
+  context: ModuleContext,
   deps: AdvisoryModuleDeps,
 ): { manifest: ModuleManifest; api: AdvisoryApi } {
   const currentEnv = env();
@@ -27,6 +27,7 @@ export function createAdvisoryModule(
     geminiApiKey: currentEnv.GEMINI_API_KEY,
     openaiApiKey: currentEnv.OPENAI_API_KEY,
     anthropicApiKey: currentEnv.ANTHROPIC_API_KEY,
+    http: context.http,
   });
   const api = createAdvisoryApi({
     finance: deps.finance,

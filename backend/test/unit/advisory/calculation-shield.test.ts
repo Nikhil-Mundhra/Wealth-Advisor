@@ -35,4 +35,25 @@ describe('calculation shield', () => {
   it('keeps text with no numbers', () => {
     assert.equal(shieldText('Consider a larger EUR buffer.', FALLBACK, facts), 'Consider a larger EUR buffer.');
   });
+
+  it('rejects sign-flipped candidates and keeps matching signed numbers', () => {
+    const cashflowFacts = factNumbers('Net cashflow is €500. Monthly deficit is -€200.');
+    assert.equal(
+      shieldText('Your net burn is -€500.', FALLBACK, cashflowFacts),
+      FALLBACK,
+    );
+    assert.equal(
+      shieldText('Monthly surplus is €200.', FALLBACK, cashflowFacts),
+      FALLBACK,
+    );
+    assert.equal(
+      shieldText('You have a €500 positive cashflow and -€200 monthly deficit.', FALLBACK, cashflowFacts),
+      'You have a €500 positive cashflow and -€200 monthly deficit.',
+    );
+  });
+
+  it('extracts unformatted integers without duplicating readings', () => {
+    const single = factNumbers('42');
+    assert.deepEqual(single, [42]);
+  });
 });

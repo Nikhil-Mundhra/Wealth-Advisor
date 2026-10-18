@@ -2,7 +2,7 @@
 // a fact (exactly, or rounded to the precision the candidate writes) is kept; any other candidate yields the fallback.
 // Numbers spelled out in words are not detected.
 
-const NUMBER = /\d+(?:[.,]\d+)*/g;
+const NUMBER = /(?:(?<=^|[\s([<€$£¥])[-−]\s*[$€£¥]?|[$€£¥]\s*[-−])?\d+(?:[.,]\d+)*/g;
 
 interface Reading {
   readonly value: number;
@@ -11,16 +11,21 @@ interface Reading {
 
 // "12,345" and "12.345" read as thousands or as decimals, "3,2" and "3.2" as decimals; every plausible reading is kept.
 function readings(token: string): Reading[] {
-  const groups = token.split(/[.,]/);
+  const isNegative = token.includes('-') || token.includes('−');
+  const clean = token.replace(/[^0-9.,]/g, '');
+  const groups = clean.split(/[.,]/);
   const result: Reading[] = [];
   const [head = '', ...rest] = groups;
-  if (rest.every((group) => group.length === 3)) result.push({ value: Number(groups.join('')), decimals: 0 });
+  const sign = isNegative ? -1 : 1;
+  if (rest.length > 0 && rest.every((group) => group.length === 3)) {
+    result.push({ value: sign * Number(groups.join('')), decimals: 0 });
+  }
   if (rest.length > 0) {
     const fraction = rest[rest.length - 1] ?? '';
     const whole = [head, ...rest.slice(0, -1)].join('');
-    result.push({ value: Number(`${whole}.${fraction}`), decimals: fraction.length });
+    result.push({ value: sign * Number(`${whole}.${fraction}`), decimals: fraction.length });
   }
-  if (rest.length === 0) result.push({ value: Number(head), decimals: 0 });
+  if (rest.length === 0) result.push({ value: sign * Number(head), decimals: 0 });
   return result;
 }
 

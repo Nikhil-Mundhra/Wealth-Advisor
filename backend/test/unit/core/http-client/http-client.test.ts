@@ -74,3 +74,23 @@ describe('http-client getJson', () => {
     assert.equal(error.status, 200);
   });
 });
+
+describe('http-client postJson', () => {
+  it('posts serialized body and returns parsed json without leaking URL query in errors', async () => {
+    let capturedBody = '';
+    const { client, calls } = clientAnswering(async () => Response.json({ success: true }));
+    const result = await client.postJson(URL_WITH_KEY, { prompt: 'hello' }, { timeoutMs: 1000, headers: { authorization: 'Bearer xyz' } });
+    assert.deepEqual(result, { success: true });
+    assert.equal(calls[0]?.method, 'POST');
+    assert.equal(calls[0]?.body, JSON.stringify({ prompt: 'hello' }));
+    assert.equal((calls[0]?.headers as Record<string, string>)?.authorization, 'Bearer xyz');
+  });
+
+  it('maps non-2xx post status and sanitizes error url', async () => {
+    const { client } = clientAnswering(async () => new Response('rate limited', { status: 429 }));
+    const error = await failure(client.postJson(URL_WITH_KEY, { foo: 'bar' }, { timeoutMs: 1000 }));
+    assert.equal(error.kind, 'transient');
+    assert.equal(error.status, 429);
+    assert.ok(!error.message.includes('SECRET-KEY'));
+  });
+});

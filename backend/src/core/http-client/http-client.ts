@@ -18,8 +18,14 @@ export interface GetJsonOptions {
   readonly timeoutMs: number;
 }
 
+export interface PostJsonOptions {
+  readonly timeoutMs: number;
+  readonly headers?: Record<string, string>;
+}
+
 export interface HttpClient {
   getJson(url: string, options: GetJsonOptions): Promise<unknown>;
+  postJson(url: string, body: unknown, options: PostJsonOptions): Promise<unknown>;
 }
 
 type Fetch = (input: string, init: RequestInit) => Promise<Response>;
@@ -41,6 +47,31 @@ export function createHttpClient(fetchImpl: Fetch = (input, init) => fetch(input
         throw new HttpClientError(kind, `GET ${target} body unreadable: ${failureName(error)}`, response.status);
       });
     },
+
+    async postJson(url, body, { timeoutMs, headers = {} }) {
+      const target = describeUrl(url);
+      const signal = AbortSignal.timeout(timeoutMs);
+      const response = await fetchImpl(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json',
+          ...headers,
+        },
+        body: JSON.stringify(body),
+        signal,
+      }).catch((error: unknown) => {
+        throw new HttpClientError('transient', `POST ${target} failed: ${failureName(error)}`);
+      });
+      if (!response.ok) {
+        await response.body?.cancel().catch(() => undefined);
+        throw new HttpClientError(statusKind(response.status), `POST ${target} answered ${response.status}`, response.status);
+      }
+      return response.json().catch((error: unknown) => {
+        const kind = isTimeout(error) ? 'transient' : 'fatal';
+        throw new HttpClientError(kind, `POST ${target} body unreadable: ${failureName(error)}`, response.status);
+      });
+    },
   };
 }
 
@@ -53,7 +84,7 @@ function describeUrl(url: string): string {
     const parsed = new URL(url);
     return `${parsed.origin}${parsed.pathname}`;
   } catch {
-    throw new HttpClientError('fatal', 'GET with an invalid URL');
+    throw new HttpClientError('fatal', 'request with an invalid URL');
   }
 }
 

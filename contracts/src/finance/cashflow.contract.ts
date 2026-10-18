@@ -3,7 +3,7 @@ import { CURRENCIES, HOUSEHOLD_MODES } from '@wealth-advisor/rules';
 import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const CashflowQuery = z.object({
-  householdMode: HouseholdModeField.default('FAMILY_HOUSEHOLD'),
+  householdMode: HouseholdModeField.default('INDIVIDUAL'),
 });
 export type CashflowQuery = z.infer<typeof CashflowQuery>;
 

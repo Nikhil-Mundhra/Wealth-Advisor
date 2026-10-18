@@ -30,6 +30,11 @@ export function fixtureHttp(answer: (url: URL) => unknown): HttpClient & { reado
       urls.push(parsed);
       return answer(parsed);
     },
+    async postJson(url) {
+      const parsed = new URL(url);
+      urls.push(parsed);
+      return answer(parsed);
+    },
   };
 }
 

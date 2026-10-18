@@ -157,5 +157,38 @@ describe('AdvisoryApi', () => {
       globalThis.fetch = realFetch;
     }
   });
+
+  it('reports 0% equities for a portfolio holding no equities, avoiding falsy-zero default', async () => {
+    const { finance, wealth } = setupApis();
+    const api = createAdvisoryApi({
+      finance,
+      wealth: {
+        ...wealth,
+        getPortfolio: async () => ({
+          holdings: [
+            {
+              assetSymbol: 'IEAC.LSE',
+              assetClass: 'FIXED_INCOME',
+              currentWeight: 1.0,
+              targetWeight: 1.0,
+              marketValueBase: 1000000,
+              currentPrice: 100,
+              quantity: 100,
+            },
+          ],
+          totalValuationBase: 1000000,
+          effectiveRiskScore: 3.0,
+          updatedAt: new Date().toISOString(),
+        } as any),
+      },
+      gateway: new LlmGateway(),
+    });
+    const res = await api.chat('default', 'default', {
+      message: 'What is my equity allocation?',
+      locale: 'en',
+      householdMode: 'INDIVIDUAL',
+    });
+    assert.ok(res.threePillarRationale.wealthStrategy.includes('from 0% equities'));
+  });
 });
 

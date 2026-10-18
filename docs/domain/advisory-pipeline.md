@@ -51,7 +51,7 @@ flowchart LR
 | 8 | Recommendation and explanation | chat turn | reply, three-pillar rationale | `backend/src/modules/advisory/domain/llm-gateway.ts` | `built` — Gemini Generative AI adapter with dynamic fallback deriving proposal weights directly from portfolio holdings |
 | 9 | Authorisation gate | step-up assertion | permitted or refused | `backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts`; `contracts/src/auth/passkey.contract.ts` holds the shapes only | `partial` — `/wealth/execute` refuses every assertion (`WL_1004`): no passkey registration stores a key to verify against |
 | 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `partial` — the ledger row is written before the portfolio moves and each trade is checked against the recorded target, but no assertion can pass verification yet, so the route refuses every execution with `WL_1004` (stage 9) |
-| 11 | Sharing | plan snapshot, token, mask flag | public read-only plan | `backend/src/modules/sharing/` | `partial` — TTL and expiry enforced; the snapshot is the sharer's rebalance proposal; the mask flag is stored and echoed, nothing is redacted |
+| 11 | Sharing | plan snapshot, token, mask flag | public read-only plan | `backend/src/modules/sharing/` | `built` — TTL and expiry enforced; the snapshot is the sharer's rebalance proposal; holdings and amounts are redacted when privacyMasked is true |
 
 ## Permission tiers and rules-based guardrails
 Permission tiers are defined in `rules/src/permission-tier.rule.ts` (`TIER_0_READ`, `TIER_1_ADVISORY`, `TIER_2_SIMULATE`, `TIER_3_EXECUTE`).

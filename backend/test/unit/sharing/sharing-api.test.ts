@@ -56,7 +56,7 @@ describe('SharingApi', () => {
   it("snapshots the caller's own rebalance proposal, with no stress scenario until an engine exists", async () => {
     const { api, wealth } = setup();
     const proposal = await wealth.optimizePortfolio('default', 'default');
-    const res = await api.createShareLink('default', 'default', { privacyMasked: true, ttlHours: 24, ownerDisplayName: 'Mina' });
+    const res = await api.createShareLink('default', 'default', { privacyMasked: false, ttlHours: 24, ownerDisplayName: 'Mina' });
 
     const plan = await api.getSharedPlan(res.shareToken);
     assert.equal(plan.ownerDisplayName, 'Mina');
@@ -64,6 +64,21 @@ describe('SharingApi', () => {
     assert.deepEqual(plan.planSnapshot.recommendedWeights, proposal.targetWeights);
     assert.deepEqual(plan.planSnapshot.threePillarRationale, proposal.rationale);
     assert.equal(plan.planSnapshot.stressTestScenario, null);
+  });
+
+  it('redacts holdings and currency amounts when privacyMasked is true', async () => {
+    const { api, wealth } = setup();
+    const proposal = await wealth.optimizePortfolio('default', 'default');
+    const res = await api.createShareLink('default', 'default', { privacyMasked: true, ttlHours: 24, ownerDisplayName: 'Mina' });
+
+    const plan = await api.getSharedPlan(res.shareToken);
+    assert.equal(plan.ownerDisplayName, 'Mina');
+    assert.equal(plan.privacyMasked, true);
+    const keys = Object.keys(plan.planSnapshot.currentWeights);
+    assert.ok(keys.length > 0);
+    assert.ok(keys.every((k) => k.startsWith('Holding ')));
+    assert.ok(!keys.some((k) => Object.keys(proposal.currentWeights).includes(k)));
+    assert.ok(!plan.planSnapshot.threePillarRationale.personalFinance.match(/€\d+/));
   });
 
   it('refuses to share for a caller with no portfolio', async () => {

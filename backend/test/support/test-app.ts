@@ -21,6 +21,9 @@ const offline: HttpClient = {
   async getJson(url) {
     throw new Error(`test made a live HTTP call to ${new URL(url).origin}; pass a fake http client`);
   },
+  async postJson(url) {
+    throw new Error(`test made a live HTTP call to ${new URL(url).origin}; pass a fake http client`);
+  },
 };
 
 // Boots the real app with a fake clock, on a throwaway mongod (collections and indexes applied) or on the

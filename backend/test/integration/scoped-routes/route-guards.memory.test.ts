@@ -64,6 +64,8 @@ describe('route guards', () => {
   it('defaults householdMode when the query omits it', async () => {
     const response = await app.app.request('/api/finance/cashflow');
     assert.equal(response.status, 200);
+    const body = await json(response);
+    assert.equal(body.householdMode, 'INDIVIDUAL');
   });
 
   it('requires a signed-in caller for every write', async () => {
