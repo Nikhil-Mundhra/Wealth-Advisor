@@ -24,8 +24,6 @@ frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan re
 frontend/src/app/routes/cashflow-page.tsx : multi-currency balances and remittance corridor plan
 frontend/src/app/routes/dashboard-page.test.tsx : net worth, runway gauge, trail chart, rebalance link, household toggle
 frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, household toggle, rebalance CTA, trail chart, target allocation, portfolio holdings
-frontend/src/app/routes/evidence-page.test.tsx : executions with tiers and digests
-frontend/src/app/routes/evidence-page.tsx : sandbox ledger table
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
 frontend/src/app/routes/onboarding-page.test.tsx : onboarding starts without preselected risk answer and advances after selection
 frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire wizard with fresh answers for first-time signups
@@ -34,6 +32,9 @@ frontend/src/app/routes/portfolio-page.tsx : deep-link route wrapper rendering s
 frontend/src/app/routes/portfolio-section.tsx : shared portfolio holdings table rendered on the dashboard and as a deep link
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state
 frontend/src/app/routes/security-settings-page.tsx : session facts, tier ladder, passkeys, sign out
+frontend/src/app/routes/settings-ledger-page.test.tsx : executions with tiers, passkey proof, and CSV export trigger
+frontend/src/app/routes/settings-ledger-page.tsx : sandbox ledger table with SettingsNav and CSV export
+frontend/src/app/routes/settings-nav.tsx : settings subnavigation tabs between Security and Ledger
 frontend/src/app/routes/shared-plan-page.test.tsx : privacy masking toggle
 frontend/src/app/routes/shared-plan-page.tsx : public read-only strategy view with privacy masking
 frontend/src/app/routes/signup-page.tsx : signup page: highlight panel + signup form

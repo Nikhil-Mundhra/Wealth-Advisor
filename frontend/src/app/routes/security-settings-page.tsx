@@ -11,6 +11,7 @@ import { useLogout } from '../../features/auth/api/use-logout.ts';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { setPreferredCurrency, useProfile, wipeUserDataFromBrowser } from '../../features/profiling/profile-store.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
+import { SettingsNav } from './settings-nav.tsx';
 
 // Session facts, the tier ladder, passkey enrollment state, reporting currency, and account controls.
 export function SecuritySettingsPage() {
@@ -24,7 +25,10 @@ export function SecuritySettingsPage() {
   });
   return (
     <div className="flex flex-col gap-6">
-      <PageTitle>{strings['header.settings']}</PageTitle>
+      <div className="flex flex-col gap-4">
+        <PageTitle>{strings['header.settings']}</PageTitle>
+        <SettingsNav />
+      </div>
 
       <Card aria-label={strings['security.session']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.session']}</h2>

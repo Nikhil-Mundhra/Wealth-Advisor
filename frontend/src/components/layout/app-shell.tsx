@@ -1,5 +1,5 @@
 import { ADMIN_ROLE } from '@wealth-advisor/rules';
-import { ArrowLeftRight, LayoutDashboard, MessagesSquare, Settings, Shield } from 'lucide-react';
+import { ArrowLeftRight, LayoutDashboard, MessagesSquare, ScrollText, Settings, Shield } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { cn } from '../../lib/cn.ts';
@@ -44,6 +44,15 @@ export function AppShell() {
               {strings['admin.overview']}
             </NavLink>
           )}
+          <div className="my-2 border-t border-line" />
+          <NavLink to="/settings/security" className={linkClass}>
+            <Settings aria-hidden className="size-5" />
+            {strings['settings.security']}
+          </NavLink>
+          <NavLink to="/settings/ledger" className={linkClass}>
+            <ScrollText aria-hidden className="size-5" />
+            {strings['settings.ledger']}
+          </NavLink>
         </nav>
       </aside>
 

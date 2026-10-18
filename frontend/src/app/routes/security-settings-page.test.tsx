@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../../lib/locale-store.ts';
 import { SecuritySettingsPage } from './security-settings-page.tsx';
@@ -25,7 +26,9 @@ describe('SecuritySettingsPage', () => {
     );
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <SecuritySettingsPage />
+        <MemoryRouter>
+          <SecuritySettingsPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
@@ -46,7 +49,9 @@ describe('SecuritySettingsPage', () => {
     );
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <SecuritySettingsPage />
+        <MemoryRouter>
+          <SecuritySettingsPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
@@ -75,7 +80,9 @@ describe('SecuritySettingsPage', () => {
 
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <SecuritySettingsPage />
+        <MemoryRouter>
+          <SecuritySettingsPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 

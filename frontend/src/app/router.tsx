@@ -7,11 +7,11 @@ import { AdminTenantsPage } from './routes/admin-tenants-page.tsx';
 import { AdvisoryPage } from './routes/advisory-page.tsx';
 import { CashflowPage } from './routes/cashflow-page.tsx';
 import { DashboardPage } from './routes/dashboard-page.tsx';
-import { EvidencePage } from './routes/evidence-page.tsx';
 import { LoginPage } from './routes/login-page.tsx';
 import { OnboardingPage } from './routes/onboarding-page.tsx';
 import { PortfolioPage } from './routes/portfolio-page.tsx';
 import { SecuritySettingsPage } from './routes/security-settings-page.tsx';
+import { SettingsLedgerPage } from './routes/settings-ledger-page.tsx';
 import { SharedPlanPage } from './routes/shared-plan-page.tsx';
 import { SignupPage } from './routes/signup-page.tsx';
 import { AppShell } from '../components/layout/app-shell.tsx';
@@ -35,8 +35,10 @@ export const router = createBrowserRouter([
           { path: '/portfolio', element: <PortfolioPage /> },
           { path: '/cashflow', element: <CashflowPage /> },
           { path: '/advisory', element: <AdvisoryPage /> },
-          { path: '/evidence', element: <EvidencePage /> },
+          { path: '/evidence', element: <Navigate to="/settings/ledger" replace /> },
+          { path: '/settings', element: <Navigate to="/settings/security" replace /> },
           { path: '/settings/security', element: <SecuritySettingsPage /> },
+          { path: '/settings/ledger', element: <SettingsLedgerPage /> },
           {
             element: <AdminRoute />,
             children: [

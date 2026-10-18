@@ -43,6 +43,8 @@ frontend/src/components/ui/theme-toggle.test.tsx : flips the dark class and anno
 frontend/src/components/ui/theme-toggle.tsx : header control flipping .dark on <html>
 frontend/src/lib/chart-colors.ts : chart color class per asset class
 frontend/src/lib/cn.ts : className merge helper
+frontend/src/lib/csv-export.test.ts : RFC 4180 escaping, BOM prefix, and empty ledger serialization
+frontend/src/lib/csv-export.ts : RFC 4180 CSV serializer with UTF-8 BOM and browser download trigger
 frontend/src/lib/demo-data.ts : Elena fixture standing in for the Phase 2 endpoints
 frontend/src/lib/dictionaries.ts : UI copy per locale with a locale-reading hook
 frontend/src/lib/format-money.test.ts : locale currency rendering
