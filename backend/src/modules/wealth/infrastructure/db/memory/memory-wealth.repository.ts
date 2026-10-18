@@ -3,10 +3,12 @@ import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document
 import type {
   AssetProductRepository,
   PortfolioRepository,
+  RiskProfileRepository,
   SandboxLedgerRepository,
 } from '../../../application/ports.ts';
 import type { AssetProductDocument } from '../documents/asset-product.document.ts';
 import type { PortfolioDocument } from '../documents/portfolio.document.ts';
+import type { RiskProfileDocument } from '../documents/risk-profile.document.ts';
 import type { SandboxLedgerDocument } from '../documents/sandbox-ledger.document.ts';
 
 export class MemoryAssetProductRepository implements AssetProductRepository {
@@ -183,6 +185,77 @@ export class MemorySandboxLedgerRepository implements SandboxLedgerRepository {
     const doc: SandboxLedgerDocument = { ...entry, _id: id };
     this.entries.push(doc);
     return doc;
+  }
+}
+
+export class MemoryRiskProfileRepository implements RiskProfileRepository {
+  private readonly profiles = new Map<string, RiskProfileDocument>();
+
+  constructor() {
+    this.seedDefault();
+  }
+
+  private seedDefault() {
+    const now = new Date();
+    const demoTenantId = new ObjectId(DEFAULT_TENANT_ID);
+    const demoUserId = new ObjectId(DEFAULT_USER_ID);
+
+    const doc: RiskProfileDocument = {
+      _id: new ObjectId(),
+      tenantId: demoTenantId,
+      userId: demoUserId,
+      answers: {
+        psychology: ['STEADY_GROWTH', 'MAX_GROWTH'],
+        countries: {
+          residence: 'DE',
+          incomeSources: ['DE', 'GB'],
+          remittanceDestinations: ['CN', 'SG'],
+        },
+        instruments: [
+          'GLOBAL_EQUITIES',
+          'TECH_GROWTH_EQUITIES',
+          'GOVERNMENT_CORPORATE_BONDS',
+          'MONEY_MARKET_CASH',
+        ],
+        holdings: {
+          cashSavings: { amount: 15000, currency: 'EUR' },
+          brokerageStocks: { amount: 57000, currency: 'EUR' },
+          retirementPension: { amount: 23000, currency: 'EUR' },
+          otherAssets: { amount: 0, currency: 'EUR' },
+        },
+        age: 31,
+        goals: {
+          tags: ['FAMILY_SUPPORT', 'EMERGENCY_BUFFER'],
+          notes: 'Support parents in Shanghai and maintain family liquid runway.',
+        },
+        stressResponse: 'STAY_INVESTED',
+      },
+      summary: {
+        baseRiskScore: 7.0,
+        effectiveRiskBand: 'moderate',
+        timeHorizonYears: 30,
+        corridorCurrencies: ['EUR', 'GBP', 'CNY', 'SGD'],
+        completedAt: now.toISOString(),
+      },
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const key = `${demoTenantId.toHexString()}:${demoUserId.toHexString()}`;
+    this.profiles.set(key, doc);
+  }
+
+  async findByUser(tenantId: string, userId: string): Promise<RiskProfileDocument | null> {
+    const tenant = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const user = toScopeId(userId, DEFAULT_USER_ID);
+    if (!tenant || !user) return null;
+    const key = `${tenant.toHexString()}:${user.toHexString()}`;
+    return this.profiles.get(key) ?? null;
+  }
+
+  async save(profile: RiskProfileDocument): Promise<void> {
+    const key = `${profile.tenantId.toHexString()}:${profile.userId.toHexString()}`;
+    this.profiles.set(key, profile);
   }
 }
 

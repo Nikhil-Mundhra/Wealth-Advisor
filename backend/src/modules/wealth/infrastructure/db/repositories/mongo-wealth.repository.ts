@@ -3,10 +3,12 @@ import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document
 import type {
   AssetProductRepository,
   PortfolioRepository,
+  RiskProfileRepository,
   SandboxLedgerRepository,
 } from '../../../application/ports.ts';
 import { type AssetProductDocument, ASSET_PRODUCTS_COLLECTION } from '../documents/asset-product.document.ts';
 import { type PortfolioDocument, PORTFOLIOS_COLLECTION } from '../documents/portfolio.document.ts';
+import { type RiskProfileDocument, RISK_PROFILES_COLLECTION } from '../documents/risk-profile.document.ts';
 import { type SandboxLedgerDocument, SANDBOX_LEDGERS_COLLECTION } from '../documents/sandbox-ledger.document.ts';
 
 export class MongoAssetProductRepository implements AssetProductRepository {
@@ -68,3 +70,27 @@ export class MongoSandboxLedgerRepository implements SandboxLedgerRepository {
     return doc;
   }
 }
+
+export class MongoRiskProfileRepository implements RiskProfileRepository {
+  private readonly col: () => Promise<Collection<RiskProfileDocument>>;
+
+  constructor(col: () => Promise<Collection<RiskProfileDocument>>) {
+    this.col = col;
+  }
+
+  async findByUser(tenantId: string, userId: string): Promise<RiskProfileDocument | null> {
+    const tId = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const uId = toScopeId(userId, DEFAULT_USER_ID);
+    if (!tId || !uId) return null;
+    return (await this.col()).findOne({ tenantId: tId, userId: uId });
+  }
+
+  async save(profile: RiskProfileDocument): Promise<void> {
+    await (await this.col()).replaceOne(
+      { tenantId: profile.tenantId, userId: profile.userId },
+      profile,
+      { upsert: true },
+    );
+  }
+}
+

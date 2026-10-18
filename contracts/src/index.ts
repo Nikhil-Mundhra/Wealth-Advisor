@@ -32,6 +32,7 @@ export * from './wealth/asset-product.contract.ts';
 export * from './wealth/portfolio.contract.ts';
 export * from './wealth/optimizer.contract.ts';
 export * from './wealth/sandbox-ledger.contract.ts';
+export * from './wealth/risk-profile.contract.ts';
 export * from './auth/passkey.contract.ts';
 export * from './advisory/advisory-chat.contract.ts';
 export * from './sharing/sharing.contract.ts';

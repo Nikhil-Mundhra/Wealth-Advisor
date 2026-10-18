@@ -1,5 +1,6 @@
 import type { AssetProductDocument } from '../infrastructure/db/documents/asset-product.document.ts';
 import type { PortfolioDocument } from '../infrastructure/db/documents/portfolio.document.ts';
+import type { RiskProfileDocument } from '../infrastructure/db/documents/risk-profile.document.ts';
 import type { SandboxLedgerDocument } from '../infrastructure/db/documents/sandbox-ledger.document.ts';
 
 export interface AssetProductRepository {
@@ -10,6 +11,11 @@ export interface AssetProductRepository {
 export interface PortfolioRepository {
   findByUser(tenantId: string, userId: string): Promise<PortfolioDocument | null>;
   save(portfolio: PortfolioDocument): Promise<void>;
+}
+
+export interface RiskProfileRepository {
+  findByUser(tenantId: string, userId: string): Promise<RiskProfileDocument | null>;
+  save(profile: RiskProfileDocument): Promise<void>;
 }
 
 export interface PasskeyAssertion {

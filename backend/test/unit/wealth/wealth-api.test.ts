@@ -6,6 +6,7 @@ import type { SandboxLedgerDocument } from '../../../src/modules/wealth/infrastr
 import {
   MemoryAssetProductRepository,
   MemoryPortfolioRepository,
+  MemoryRiskProfileRepository,
   MemorySandboxLedgerRepository,
 } from '../../../src/modules/wealth/infrastructure/db/memory/memory-wealth.repository.ts';
 
@@ -14,10 +15,11 @@ const acceptingPasskeys: PasskeyVerifier = { verify: async () => true };
 function setup(passkeys: PasskeyVerifier = acceptingPasskeys) {
   const products = new MemoryAssetProductRepository();
   const portfolios = new MemoryPortfolioRepository();
+  const profiles = new MemoryRiskProfileRepository();
   const ledger = new MemorySandboxLedgerRepository();
   const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
-  const api = createWealthApi({ products, portfolios, ledger, passkeys, clock });
-  return { api, portfolios, ledger };
+  const api = createWealthApi({ products, portfolios, profiles, ledger, passkeys, clock });
+  return { api, portfolios, profiles, ledger };
 }
 
 const PASSKEY = {
@@ -215,5 +217,52 @@ describe('WealthApi', () => {
     assert.deepEqual(await ledger.findAllByUser('default', 'default'), []);
     const after = await portfolios.findByUser('default', 'default');
     assert.equal(after?.holdings[0]?.currentWeight, before?.holdings[0]?.currentWeight);
+  });
+
+  it('returns seeded risk profile for demo user', async () => {
+    const { api } = setup();
+    const profile = await api.getProfile('default', 'default');
+    assert.equal(profile.summary.baseRiskScore, 7.0);
+    assert.equal(profile.summary.effectiveRiskBand, 'moderate');
+    assert.ok(profile.answers.countries.residence === 'DE');
+  });
+
+  it('throws WL_1006 when risk profile does not exist for an unknown user', async () => {
+    const { api } = setup();
+    await assert.rejects(
+      () => api.getProfile('507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012'),
+      (err: { code?: string }) => err.code === 'WL_1006',
+    );
+  });
+
+  it('saves and calculates updated risk profile, recomputing base risk score on the portfolio', async () => {
+    const { api, portfolios } = setup();
+    const updated = await api.saveProfile('default', 'default', {
+      psychology: ['PROTECT_CAPITAL'],
+      countries: {
+        residence: 'AE',
+        incomeSources: ['AE'],
+        remittanceDestinations: ['IN'],
+      },
+      instruments: ['MONEY_MARKET_CASH'],
+      holdings: {
+        cashSavings: { amount: 50000, currency: 'AED' },
+        brokerageStocks: { amount: 0, currency: 'AED' },
+        retirementPension: { amount: 0, currency: 'AED' },
+        otherAssets: { amount: 0, currency: 'AED' },
+      },
+      age: 45,
+      goals: {
+        tags: ['RETIREMENT', 'EMERGENCY_BUFFER'],
+        notes: 'Capital preservation in UAE.',
+      },
+      stressResponse: 'CUT_RISK',
+    });
+
+    assert.equal(updated.summary.effectiveRiskBand, 'conservative');
+    assert.deepEqual(updated.summary.corridorCurrencies, ['AED', 'INR']);
+
+    const portfolio = await portfolios.findByUser('default', 'default');
+    assert.equal(portfolio?.baseRiskScore, updated.summary.baseRiskScore);
   });
 });

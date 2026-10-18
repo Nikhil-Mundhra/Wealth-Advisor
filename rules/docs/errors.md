@@ -64,6 +64,7 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `WL_1003` | 401 | trade request carries no passkey `signature` or `credentialId` |
 | `WL_1004` | 403 | passkey assertion invalid |
 | `WL_1005` | 403 | a trade's asset is not held, or its `targetWeight` differs from the stored target weight by more than 0.001 |
+| `WL_1006` | 404 | no risk profile for the caller's scope |
 | `WL_1900` | 500 | wealth invariant violated (a ledger write's tenant or user scope id is unusable) |
 | `AV_1001` | 503 | LLM gateway unavailable |
 | `AV_1002` | 400 | unsupported model |

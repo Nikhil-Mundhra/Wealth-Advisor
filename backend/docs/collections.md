@@ -17,6 +17,7 @@
 | `prices` | market | one end-of-day close (and adjusted close) per (`symbol`, `date`), money in integer minor units; append-only | unique (`symbol`, `date`); appends are `$setOnInsert` upserts, so a fact is never overwritten |
 | `processed_events` | core (events) | one document per (`handler`, `eventId`) an event handler has accepted | the unique (`handler`, `eventId`) index is the idempotency guard; no TTL |
 | `request_budgets` | core (http-client) | one counter per provider per UTC month, `_id` = `<provider>:<YYYY-MM>` | reservations are one conditional `$inc` (`used` ≤ limit − count); old months stay as history |
+| `risk_profiles` | wealth | investor questionnaire answers and computed profile summary per (`tenantId`, `userId`) | unique (`tenantId`, `userId`); writes replace the document whole (`replaceOne` upsert) |
 | `sandbox_ledgers` | wealth | audit of simulated rebalances and carve-outs: executed trades, portfolio state hashes, passkey assertion proof, `auditDigest`, `transactionHash`; append-only | unique (`auditDigest`); unique (`transactionHash`); written only by `insertOne` |
 | `sessions` | auth | one document per refresh token | unique (`tokenHash`); TTL purges at `purgeAt` = `expiresAt` + 7 d; expiry is checked in code, never left to the TTL |
 | `shared_plans` | sharing | shareable plan snapshots addressed by `shareToken`, with optional `passphraseHash` and `privacyMasked` | unique (`shareToken`); TTL deletes at `expiresAt` (`expireAfterSeconds: 0`) |

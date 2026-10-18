@@ -10,17 +10,23 @@ import {
 } from './infrastructure/db/documents/asset-product.document.ts';
 import { type PortfolioDocument, PORTFOLIOS_COLLECTION } from './infrastructure/db/documents/portfolio.document.ts';
 import {
+  type RiskProfileDocument,
+  RISK_PROFILES_COLLECTION,
+} from './infrastructure/db/documents/risk-profile.document.ts';
+import {
   type SandboxLedgerDocument,
   SANDBOX_LEDGERS_COLLECTION,
 } from './infrastructure/db/documents/sandbox-ledger.document.ts';
 import {
   MemoryAssetProductRepository,
   MemoryPortfolioRepository,
+  MemoryRiskProfileRepository,
   MemorySandboxLedgerRepository,
 } from './infrastructure/db/memory/memory-wealth.repository.ts';
 import {
   MongoAssetProductRepository,
   MongoPortfolioRepository,
+  MongoRiskProfileRepository,
   MongoSandboxLedgerRepository,
 } from './infrastructure/db/repositories/mongo-wealth.repository.ts';
 import type { MiddlewareHandler } from 'hono';
@@ -54,6 +60,11 @@ export function createWealthModule(
       ? new MemoryPortfolioRepository()
       : new MongoPortfolioRepository(async () => (await db()).collection<PortfolioDocument>(PORTFOLIOS_COLLECTION));
 
+  const profiles =
+    store === 'memory'
+      ? new MemoryRiskProfileRepository()
+      : new MongoRiskProfileRepository(async () => (await db()).collection<RiskProfileDocument>(RISK_PROFILES_COLLECTION));
+
   const ledger =
     store === 'memory'
       ? new MemorySandboxLedgerRepository()
@@ -62,6 +73,7 @@ export function createWealthModule(
   const api = createWealthApi({
     products,
     portfolios,
+    profiles,
     ledger,
     passkeys: unregisteredPasskeyVerifier,
     clock,

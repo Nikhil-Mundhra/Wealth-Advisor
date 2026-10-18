@@ -126,10 +126,11 @@ backend/src/modules/sharing/application/ports.ts : SharedPlanRepository port
 backend/src/modules/sharing/public.ts : the sharing surface other modules may import
 backend/src/modules/sharing/sharing.api.ts : createSharingApi: share link creation with TTL and a snapshot of the caller's wealth proposal, masked public plan resolution
 backend/src/modules/sharing/sharing.module.ts : composition root: store-selected shared plan repo → api, routes, manifest
-backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, SandboxLedgerRepository, PasskeyVerifier ports
+backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, RiskProfileRepository, SandboxLedgerRepository, PasskeyVerifier ports
 backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts : PasskeyVerifier that refuses every assertion; no passkey registration exists
+backend/src/modules/wealth/infrastructure/db/documents/risk-profile.document.ts : RiskProfileDocument, RISK_PROFILES_COLLECTION
 backend/src/modules/wealth/public.ts : the wealth surface other modules may import
-backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, optimizer, sandbox trade execution, ledger
+backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, risk profile, optimizer, sandbox trade execution, ledger
 backend/src/modules/wealth/wealth.module.ts : composition root: store-selected wealth repos → api, routes, manifest
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
 backend/tsconfig.json : typecheck settings (erasable syntax only)

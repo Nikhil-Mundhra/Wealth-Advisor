@@ -1,6 +1,7 @@
 import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
 import { ASSET_PRODUCTS_COLLECTION } from '../documents/asset-product.document.ts';
 import { PORTFOLIOS_COLLECTION } from '../documents/portfolio.document.ts';
+import { RISK_PROFILES_COLLECTION } from '../documents/risk-profile.document.ts';
 import { SANDBOX_LEDGERS_COLLECTION } from '../documents/sandbox-ledger.document.ts';
 
 export const wealthCollections: readonly CollectionDefinition[] = [
@@ -11,6 +12,10 @@ export const wealthCollections: readonly CollectionDefinition[] = [
   {
     name: PORTFOLIOS_COLLECTION,
     indexes: [{ key: { tenantId: 1, userId: 1 }, name: 'uk_portfolios_tenant_user', unique: true }],
+  },
+  {
+    name: RISK_PROFILES_COLLECTION,
+    indexes: [{ key: { tenantId: 1, userId: 1 }, name: 'uk_risk_profiles_tenant_user', unique: true }],
   },
   {
     name: SANDBOX_LEDGERS_COLLECTION,

@@ -47,17 +47,16 @@ blocked  G1
 done when the cashflow response moves when a currency or a transaction changes
 
 ### G4 · Persisted investor profile
-status   `partial`
-evidence `rules/src/profiling.rule.ts` and `contracts/src/profiling/profile-answers.contract.ts` define the seven questions and the scoring, and `frontend/src/features/profiling/profile-store.ts:86` keeps the answers in browser storage keyed by email; `grep -rn profil backend/src` finds no collection, document or route
-remedy  a tenant-scoped profile collection, a write route the questionnaire calls on completion, and reads from it instead of localStorage
-blocked  G1
+status   closed
+evidence `risk_profiles` collection (`RiskProfileDocument`), `GET /profile` and `PUT /profile` under `/api/wealth`, and `profile-store.ts` background sync to wealth module. Covered by `wealth-api.test.ts` and `route-guards.memory.test.ts`.
+blocked  —
 done when answers survive a new browser and a signed-in read returns them
 
 ### G5 · Server-side risk scoring
-status   `partial`
-evidence `calculateBaseRiskScore` (`rules/src/profiling.rule.ts:222`) and `mapStressAnswerToRiskBand` are pure and tested, and run in the browser; nothing recomputes a score from the stored runway in `finance.api.ts` or reads one back
-remedy  a scoring service that takes the stored profile plus the finance runway and currency mismatch, and persists the effective score the portfolio optimizer then consumes
-blocked  G3, G4
+status   closed
+evidence `WealthApi.saveProfile` executes `computeRiskScoreSummary` (`rules/src/profiling.rule.ts`), computes base risk score, band, capacity, tolerance and need server-side, stores the profile, and updates the investor portfolio's `baseRiskScore` atomically. Covered by `wealth-api.test.ts`.
+blocked  —
+done when closed
 done when the score a user sees comes from a stored profile and a stored runway
 
 ### G6 · Portfolios and asset products

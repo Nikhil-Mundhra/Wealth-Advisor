@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { RiskProfileResponse } from '@wealth-advisor/contracts';
 import {
   calculateBaseRiskScore,
   COUNTRY_CURRENCY_MAP,
@@ -10,6 +11,7 @@ import {
   type Currency,
   type ProfilingAnswersInput,
 } from '@wealth-advisor/rules';
+import { apiRequest } from '../../lib/api-client.ts';
 
 export interface ProfilingDraft {
   step: number;
@@ -236,6 +238,39 @@ export function saveProfile(answers: ProfilingAnswersInput, email?: string | nul
   const newState = computeProfileState(answers, null, true, email);
   stateCache.set(profileKey, newState);
   emit();
+
+  if (!isDemoEmail(email)) {
+    apiRequest('/wealth/profile', {
+      method: 'PUT',
+      body: answers,
+      authenticated: true,
+      response: RiskProfileResponse,
+    }).catch(() => {
+      // Background sync failure gracefully handled; state preserved locally
+    });
+  }
+}
+
+export async function syncProfileFromServer(email?: string | null): Promise<void> {
+  if (isDemoEmail(email)) return;
+  try {
+    const data = await apiRequest('/wealth/profile', {
+      method: 'GET',
+      authenticated: true,
+      response: RiskProfileResponse,
+    });
+    if (data?.answers) {
+      const profileKey = getProfileStorageKey(email);
+      const newState = computeProfileState(data.answers, null, true, email);
+      stateCache.set(profileKey, newState);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(profileKey, JSON.stringify(data.answers));
+      }
+      emit();
+    }
+  } catch {
+    // If not found (404), profile has not been persisted on server yet
+  }
 }
 
 export function setPreferredCurrency(currency: Currency, email?: string | null): void {

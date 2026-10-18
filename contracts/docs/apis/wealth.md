@@ -19,3 +19,12 @@
 ## GET /api/wealth/ledger
 - responsibility: return the caller's sandbox ledger entries
 - contract: request none, response `SandboxLedgerResponse` 200, errors `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`
+
+## GET /api/wealth/profile
+- responsibility: return the caller's stored investor questionnaire answers and computed profile summary
+- contract: request none, response `RiskProfileResponse` 200, errors `AU_1005`, `AU_1901`, `WL_1006`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`
+
+## PUT /api/wealth/profile
+- responsibility: save investor questionnaire answers, recompute base risk score, stress risk band, time horizon and corridor currencies, update the user's portfolio baseRiskScore if one exists, and persist the updated risk profile
+- contract: request `SaveRiskProfileRequest`, response `RiskProfileResponse` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `WL_1900`, `CORE_DB_UNCONFIGURED`; auth required Bearer (`backend/docs/auth-token.md` `requireAuth`): no token or an invalid token → `AU_1005`
+

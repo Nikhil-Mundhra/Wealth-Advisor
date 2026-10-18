@@ -62,3 +62,7 @@ export async function startTestApp(options: TestAppOptions = {}): Promise<TestAp
 export async function postJson(app: Hono, path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> {
   return app.request(path, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 }
+
+export async function putJson(app: Hono, path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> {
+  return app.request(path, { method: 'PUT', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
+}

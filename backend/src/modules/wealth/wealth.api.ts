@@ -1,9 +1,15 @@
-import type { ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { sha256Hex } from '#core/crypto/sha256.ts';
 import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import type { Clock } from '#core/time/clock.ts';
 import { DomainError } from '#core/domain/domain-error.ts';
-import { WEALTH_ERROR_CODES } from '@wealth-advisor/rules';
+import {
+  calculateBaseRiskScore,
+  deriveCorridorCurrencies,
+  deriveTimeHorizonYears,
+  mapStressAnswerToRiskBand,
+  WEALTH_ERROR_CODES,
+} from '@wealth-advisor/rules';
 import type {
   AssetProductDto,
   AssetProductListResponse,
@@ -11,8 +17,11 @@ import type {
   ExecuteTradeResponse,
   OptimizePortfolioRequest,
   PortfolioResponse,
+  ProfileSummary,
+  ProfilingAnswers,
   RebalanceActionDto,
   RebalanceProposalResponse,
+  RiskProfileResponse,
   SandboxLedgerEntryDto,
   SandboxLedgerResponse,
 } from '@wealth-advisor/contracts';
@@ -21,15 +30,18 @@ import type {
   AssetProductRepository,
   PasskeyVerifier,
   PortfolioRepository,
+  RiskProfileRepository,
   SandboxLedgerRepository,
 } from './application/ports.ts';
 import type { AssetProductDocument } from './infrastructure/db/documents/asset-product.document.ts';
 import type { PortfolioDocument } from './infrastructure/db/documents/portfolio.document.ts';
+import type { RiskProfileDocument } from './infrastructure/db/documents/risk-profile.document.ts';
 import type { SandboxLedgerDocument } from './infrastructure/db/documents/sandbox-ledger.document.ts';
 
 export interface WealthApiDeps {
   products: AssetProductRepository;
   portfolios: PortfolioRepository;
+  profiles?: RiskProfileRepository;
   ledger: SandboxLedgerRepository;
   passkeys: PasskeyVerifier;
   clock: Clock;
@@ -109,7 +121,7 @@ function toLedgerEntryDto(doc: SandboxLedgerDocument): SandboxLedgerEntryDto {
 }
 
 export function createWealthApi(deps: WealthApiDeps) {
-  const { products, portfolios, ledger, passkeys, clock } = deps;
+  const { products, portfolios, profiles, ledger, passkeys, clock } = deps;
 
   return {
     async getProducts(): Promise<AssetProductListResponse> {
@@ -243,6 +255,71 @@ export function createWealthApi(deps: WealthApiDeps) {
     async getLedger(tenantId: string, userId: string): Promise<SandboxLedgerResponse> {
       const entries = await ledger.findAllByUser(tenantId, userId);
       return { entries: entries.map(toLedgerEntryDto) };
+    },
+
+    async getProfile(tenantId: string, userId: string): Promise<RiskProfileResponse> {
+      if (!profiles) throw new DomainError(WEALTH_ERROR_CODES.profileNotFound, 'risk profile not found');
+      const doc = await profiles.findByUser(tenantId, userId);
+      if (!doc) throw new DomainError(WEALTH_ERROR_CODES.profileNotFound, 'risk profile not found');
+      return {
+        tenantId: toIdString(doc.tenantId),
+        userId: toIdString(doc.userId),
+        answers: doc.answers,
+        summary: doc.summary,
+        updatedAt: doc.updatedAt.toISOString(),
+      };
+    },
+
+    async saveProfile(
+      tenantId: string,
+      userId: string,
+      answers: ProfilingAnswers,
+    ): Promise<RiskProfileResponse> {
+      if (!profiles) throw new DomainError(WEALTH_ERROR_CODES.profileNotFound, 'risk profile not configured');
+      const tId = requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant');
+      const uId = requireScopeId(userId, DEFAULT_USER_ID, 'user');
+      const now = clock.now();
+
+      const baseRiskScore = calculateBaseRiskScore(answers);
+      const effectiveRiskBand = mapStressAnswerToRiskBand(answers.stressResponse);
+      const timeHorizonYears = deriveTimeHorizonYears(answers.age);
+      const corridorCurrencies = deriveCorridorCurrencies(answers.countries);
+
+      const summary: ProfileSummary = {
+        baseRiskScore,
+        effectiveRiskBand,
+        timeHorizonYears,
+        corridorCurrencies,
+        completedAt: now.toISOString(),
+      };
+
+      const existing = await profiles.findByUser(tenantId, userId);
+      const doc: RiskProfileDocument = {
+        _id: existing?._id ?? new ObjectId(),
+        tenantId: tId,
+        userId: uId,
+        answers,
+        summary,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      };
+
+      await profiles.save(doc);
+
+      const p = await portfolios.findByUser(tenantId, userId);
+      if (p) {
+        p.baseRiskScore = baseRiskScore;
+        p.updatedAt = now;
+        await portfolios.save(p);
+      }
+
+      return {
+        tenantId: toIdString(tId),
+        userId: toIdString(uId),
+        answers: doc.answers,
+        summary: doc.summary,
+        updatedAt: doc.updatedAt.toISOString(),
+      };
     },
   };
 }

@@ -5,7 +5,9 @@ import {
   ExecuteTradeResponse,
   PortfolioResponse,
   RebalanceProposalResponse,
+  RiskProfileResponse,
   SandboxLedgerResponse,
+  SaveRiskProfileRequest,
 } from '@wealth-advisor/contracts';
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { WealthApi } from '../../wealth.api.ts';
@@ -54,6 +56,23 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
       .handle(async ({ c }) => {
         const { tenantId, userId } = scope(c);
         return api.getLedger(tenantId, userId);
+      }),
+
+    RouteBuilder.get('/profile')
+      .use(...guard)
+      .responds(RiskProfileResponse)
+      .handle(async ({ c }) => {
+        const { tenantId, userId } = scope(c);
+        return api.getProfile(tenantId, userId);
+      }),
+
+    RouteBuilder.put('/profile')
+      .use(writeAuth)
+      .body(SaveRiskProfileRequest)
+      .responds(RiskProfileResponse)
+      .handle(async ({ c, body }) => {
+        const { tenantId, userId } = scope(c);
+        return api.saveProfile(tenantId, userId, body);
       }),
   ];
 }

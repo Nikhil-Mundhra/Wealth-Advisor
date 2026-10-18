@@ -67,6 +67,7 @@ export const WEALTH_ERROR_CODES = {
   passkeyRequired: 'WL_1003',
   passkeyInvalid: 'WL_1004',
   tradeNotPermitted: 'WL_1005',
+  profileNotFound: 'WL_1006',
   invariantViolated: 'WL_1900',
 } as const;
 

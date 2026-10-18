@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { after, before, describe, it } from 'node:test';
 import { exportPKCS8, exportSPKI, generateKeyPair, SignJWT } from 'jose';
-import { type TestApp, postJson, startTestApp } from '../../support/test-app.ts';
+import { type TestApp, postJson, putJson, startTestApp } from '../../support/test-app.ts';
 
 const json = async (response: Response) => (await response.json()) as Record<string, unknown>;
 
@@ -77,6 +77,10 @@ describe('route guards', () => {
       assert.equal(response.status, 401, path);
       assert.equal((await json(response)).code, 'AU_1005', path);
     }
+
+    const putResponse = await putJson(app.app, '/api/wealth/profile', {});
+    assert.equal(putResponse.status, 401, '/api/wealth/profile');
+    assert.equal((await json(putResponse)).code, 'AU_1005', '/api/wealth/profile');
   });
 
   it('shares only a portfolio the signed-in caller holds', async () => {
