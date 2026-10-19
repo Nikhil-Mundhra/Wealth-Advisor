@@ -37,6 +37,8 @@ export function AdminEditUserModal({
 
   const isSelf = user ? user.id === currentUserId : false;
 
+  const [selectedRole, setSelectedRole] = useState<'USER' | 'ADVISOR' | 'ADMIN'>('USER');
+
   const {
     register,
     handleSubmit,
@@ -57,9 +59,15 @@ export function AdminEditUserModal({
 
   useEffect(() => {
     if (user) {
+      const primaryRole: 'USER' | 'ADVISOR' | 'ADMIN' = user.roles.includes('ADMIN')
+        ? 'ADMIN'
+        : user.roles.includes('ADVISOR')
+        ? 'ADVISOR'
+        : 'USER';
+      setSelectedRole(primaryRole);
       reset({
         displayName: user.displayName || '',
-        roles: (user.roles as any) || ['USER'],
+        roles: primaryRole === 'ADMIN' ? ['USER', 'ADMIN'] : primaryRole === 'ADVISOR' ? ['USER', 'ADVISOR'] : ['USER'],
         status: user.status,
         tenantId: user.tenantId || null,
         emailVerified: user.emailVerified,
@@ -79,9 +87,15 @@ export function AdminEditUserModal({
     try {
       setSubmitting(true);
       setServerError(null);
+      const computedRoles = selectedRole === 'ADMIN'
+        ? ['USER', 'ADMIN']
+        : selectedRole === 'ADVISOR'
+        ? ['USER', 'ADVISOR']
+        : ['USER'];
+
       await onSubmit(user.id, {
         displayName: data.displayName?.trim() || null,
-        roles: data.roles,
+        roles: computedRoles as any,
         status: data.status,
         tenantId: data.tenantId || null,
         emailVerified: data.emailVerified,
@@ -125,8 +139,9 @@ export function AdminEditUserModal({
             <select
               id="edit-user-role"
               disabled={isSelf}
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value as any)}
               className="h-11 rounded-field border border-line bg-surface px-3 text-sm text-ink disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-brand-600"
-              {...register('roles.0')}
             >
               <option value="USER">USER (Client)</option>
               <option value="ADVISOR">ADVISOR (Wealth Analyst)</option>

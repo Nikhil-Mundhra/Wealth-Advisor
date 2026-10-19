@@ -48,9 +48,17 @@ export function AdminCreateUserModal({ open, onClose, onSubmit, tenants }: Admin
     try {
       setSubmitting(true);
       setServerError(null);
+      const roleChoice = data.roles?.[0];
+      const computedRoles = roleChoice === 'ADMIN'
+        ? ['USER', 'ADMIN']
+        : roleChoice === 'ADVISOR'
+        ? ['USER', 'ADVISOR']
+        : ['USER'];
+
       await onSubmit({
         ...data,
         displayName: data.displayName?.trim() || null,
+        roles: computedRoles as any,
         tenantId: data.tenantId || null,
       });
       handleClose();

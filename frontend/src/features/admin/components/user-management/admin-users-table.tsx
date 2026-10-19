@@ -1,4 +1,4 @@
-import { Check, Clock, KeyRound, Pencil, Shield, Trash2 } from 'lucide-react';
+import { Briefcase, Check, Clock, KeyRound, Pencil, Shield, Trash2, User } from 'lucide-react';
 import type { AdminUserDto, TenantDto } from '@wealth-advisor/contracts';
 import { Button } from '../../../../components/ui/button.tsx';
 import { cardClassName } from '../../../../components/ui/card.tsx';
@@ -89,6 +89,7 @@ export function AdminUsersTable({
           <tbody className="divide-y divide-line">
             {users.map((user) => {
               const isAdmin = user.roles.includes('ADMIN');
+              const isAdvisor = user.roles.includes('ADVISOR');
               const isActive = user.status === 'ACTIVE';
               const isSelf = currentUserId === user.id;
               const tenantName = user.tenantId ? tenantMap.get(user.tenantId) ?? user.tenantId : null;
@@ -118,13 +119,19 @@ export function AdminUsersTable({
                   {/* Role */}
                   <td className="px-4 py-3">
                     {isAdmin ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 text-xs font-medium text-gold">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:text-purple-300">
                         <Shield aria-hidden className="size-3" />
                         <span>ADMIN</span>
                       </span>
+                    ) : isAdvisor ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold-dark dark:text-gold-light">
+                        <Briefcase aria-hidden className="size-3 text-gold" />
+                        <span>ADVISOR</span>
+                      </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full border border-line bg-surface-subtle px-2 py-0.5 text-xs font-medium text-subtle">
-                        USER
+                      <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-subtle px-2.5 py-0.5 text-xs font-medium text-subtle">
+                        <User aria-hidden className="size-3" />
+                        <span>CLIENT</span>
                       </span>
                     )}
                   </td>

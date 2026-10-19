@@ -1,4 +1,4 @@
-import { Building2, Shield, UserCheck, Users } from 'lucide-react';
+import { Briefcase, Building2, Shield, UserCheck, Users } from 'lucide-react';
 import type { AdminUserDto } from '@wealth-advisor/contracts';
 import { cardClassName } from '../../../../components/ui/card.tsx';
 import { cn } from '../../../../lib/cn.ts';
@@ -13,8 +13,8 @@ export function AdminUserStatCards({ users }: AdminUserStatCardsProps) {
 
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.status === 'ACTIVE').length;
+  const advisorUsers = users.filter((u) => u.roles.includes('ADVISOR')).length;
   const adminUsers = users.filter((u) => u.roles.includes('ADMIN')).length;
-  const tenantUsers = users.filter((u) => Boolean(u.tenantId)).length;
 
   const stats = [
     {
@@ -30,16 +30,16 @@ export function AdminUserStatCards({ users }: AdminUserStatCardsProps) {
       iconColor: 'text-emerald-600 dark:text-emerald-500',
     },
     {
-      label: strings['admin.users.stats.admins'],
-      value: adminUsers,
-      Icon: Shield,
+      label: 'Wealth Advisors',
+      value: advisorUsers,
+      Icon: Briefcase,
       iconColor: 'text-gold',
     },
     {
-      label: strings['admin.users.stats.tenants'],
-      value: tenantUsers,
-      Icon: Building2,
-      iconColor: 'text-subtle',
+      label: strings['admin.users.stats.admins'],
+      value: adminUsers,
+      Icon: Shield,
+      iconColor: 'text-purple-600 dark:text-purple-400',
     },
   ];
 
