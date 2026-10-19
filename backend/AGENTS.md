@@ -127,6 +127,7 @@ backend/src/modules/sharing/public.ts : the sharing surface other modules may im
 backend/src/modules/sharing/sharing.api.ts : createSharingApi: share link creation with TTL and a snapshot of the caller's wealth proposal, masked public plan resolution
 backend/src/modules/sharing/sharing.module.ts : composition root: store-selected shared plan repo → api, routes, manifest
 backend/src/modules/wealth/application/ports.ts : AssetProductRepository, PortfolioRepository, RiskProfileRepository, SandboxLedgerRepository, PasskeyVerifier ports
+backend/src/modules/wealth/domain/institutional-securities.ts : INSTITUTIONAL_CANDIDATE_SECURITIES catalog across Indian G-Secs, UAE Sukuk, global equities, and mutual funds
 backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts : PasskeyVerifier that refuses every assertion; no passkey registration exists
 backend/src/modules/wealth/infrastructure/db/documents/risk-profile.document.ts : RiskProfileDocument, RISK_PROFILES_COLLECTION
 backend/src/modules/wealth/public.ts : the wealth surface other modules may import

@@ -59,8 +59,13 @@ backend/test/unit/finance/finance-api.test.ts : multi-currency accounts and hous
 backend/test/unit/market/convert.test.ts : convertBatch table: spot, historical, weekend gap, inverse, cross, raw, same currency, missing rate, out of range, half to even
 backend/test/unit/market/providers.test.ts : Marketstack and Frankfurter adapters vs fixtures: pagination, budget per page, key handling, error mapping
 backend/test/unit/market/refresh.test.ts : refresh with fake sources: backfill, incremental range, re-run, quota and provider failures write nothing, one event per refresh; quotes and rates
+backend/test/unit/rules/bond-valuation.rule.test.ts : bond YTM, duration, convexity, yield curve bootstrapping, and interest rate macro stress scenarios
+backend/test/unit/rules/fundamental-analysis.rule.test.ts : DCF, DDM, EPV, country-specific WACC, margin of safety, and fundamental scoring
 backend/test/unit/rules/fundamental-ratios.rule.test.ts : valuation tilts, corporate bond solvency, foreign revenue FX triggers, retail signals
+backend/test/unit/rules/mutual-fund-analysis.rule.test.ts : Sharpe, Sortino, Jensen Alpha, Information Ratio, Modigliani M2, expense screens, and diversification caps
+backend/test/unit/rules/portfolio-optimizer.rule.test.ts : risk tier mapping, composite security scoring, constrained solver, Monte Carlo simulation, and macro stress tests
 backend/test/unit/rules/profiling.rule.test.ts : stress answer mapping, age horizon derivation, supported corridor currency ranking, risk scoring bounds
+backend/test/unit/rules/technical-analysis.rule.test.ts : RSI normalization, MA crossovers, MACD, Bollinger Bands, ADX, VWAP, Ichimoku, liquidity adjustments, and conservative trend filters
 backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public/off-graph imports on a fixture tree, core importing a module, cycle detection
 backend/test/unit/sharing/sharing-api.test.ts : share tokens and TTL, snapshot from the caller's rebalance proposal, no portfolio refused, seeded demo link
 backend/test/unit/sharing/sharing-routes.test.ts : share-link creation files under the principal the auth guard resolved

@@ -265,4 +265,61 @@ describe('WealthApi', () => {
     const portfolio = await portfolios.findByUser('default', 'default');
     assert.equal(portfolio?.baseRiskScore, updated.summary.baseRiskScore);
   });
+
+  it('constructs optimal portfolio integrating technical, fundamental, bond, and mutual fund analytics', async () => {
+    const { api } = setup();
+    const result = await api.constructPortfolio('default', 'default');
+
+    assert.ok(result.holdings.length > 0);
+    const totalWeight = result.holdings.reduce((sum, h) => sum + h.weight, 0);
+    assert.ok(Math.abs(totalWeight - 1.0) < 0.001);
+
+    assert.ok(result.portfolioExpectedReturn > 0);
+    assert.ok(result.portfolioVolatility > 0);
+    assert.ok(result.durationWeightedExposure >= 0);
+
+    // Stress testing and Monte Carlo
+    assert.equal(result.stressTestOutcomes.length, 4);
+    assert.equal(result.monteCarlo.numSimulations, 2000);
+    assert.ok(result.monteCarlo.valueAtRisk95 >= 0);
+
+    // Rationale multi-pillar and source attribution
+    assert.ok(result.rationale.personalFinance.length > 0);
+    assert.ok(result.rationale.crossBorder.length > 0);
+    assert.ok(result.rationale.wealthStrategy.length > 0);
+    assert.ok(result.rationale.technicalAttribution.length > 0);
+    assert.ok(result.rationale.fundamentalAttribution.length > 0);
+    assert.ok(result.rationale.regulatoryAttribution.length > 0);
+    assert.ok(result.sourceAttribution.length >= 5);
+  });
+
+  it('constructs Sharia-compliant portfolio when requested or for UAE clients', async () => {
+    const { api } = setup();
+    const result = await api.constructPortfolio('default', 'default', {
+      shariaOnly: true,
+      riskTier: 'moderate',
+    });
+
+    assert.ok(result.holdings.length > 0);
+    for (const h of result.holdings) {
+      assert.equal(h.isShariaCompliant, true);
+    }
+    assert.equal(result.complianceChecks.shariaPassed, true);
+    assert.ok(result.rationale.regulatoryAttribution.includes('Sharia'));
+  });
+
+  it('constructs jurisdiction-specific portfolio for India or UAE', async () => {
+    const { api } = setup();
+    const indiaResult = await api.constructPortfolio('default', 'default', {
+      jurisdiction: 'INDIA',
+    });
+    assert.ok(indiaResult.holdings.length > 0);
+    assert.ok(indiaResult.holdings.some((h) => h.symbol.includes('.NSE') || h.symbol.includes('GSEC') || h.symbol.includes('HDFC')));
+
+    const uaeResult = await api.constructPortfolio('default', 'default', {
+      jurisdiction: 'UAE',
+    });
+    assert.ok(uaeResult.holdings.length > 0);
+    assert.ok(uaeResult.holdings.some((h) => h.symbol.includes('SUKUK') || h.symbol.includes('.DFM')));
+  });
 });

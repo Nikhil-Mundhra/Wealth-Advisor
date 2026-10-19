@@ -89,4 +89,5 @@ frontend/src/features/marketing/components/neuro-symbolic-simulator.tsx : intera
 frontend/src/features/marketing/components/positioning-matrix-section.tsx : strategic positioning comparison matrix for B2B2C vs B2C
 frontend/src/features/marketing/components/triad-overview-section.tsx : overview of the triad architecture (Workflow OS, Semantic Graph, MIT Sloan)
 frontend/src/features/marketing/data/highlights.ts : highlight copy
+frontend/src/features/wealth/components/portfolio-construction-modal.tsx : quantitative portfolio construction and mean-variance optimization modal
 ```

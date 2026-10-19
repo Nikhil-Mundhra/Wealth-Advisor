@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Scale } from 'lucide-react';
 import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
@@ -9,6 +9,7 @@ import { useProfile } from '../../features/profiling/profile-store.ts';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
 import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
+import { PortfolioConstructionModal } from '../../features/wealth/components/portfolio-construction-modal.tsx';
 import { usePortfolio } from '../../features/wealth/api/use-portfolio.ts';
 import { DEMO_BASELINE } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
@@ -28,6 +29,7 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
   const profile = useProfile(me?.email);
   const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
+  const [constructionModalOpen, setConstructionModalOpen] = useState(false);
   const { ref, visible } = useReveal<HTMLDivElement>();
 
   // Non-demo users without completed profiling must onboard first
@@ -96,6 +98,14 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              onClick={() => setConstructionModalOpen(true)}
+              className="gap-1.5 text-brand-700 dark:text-brand-300 border-brand-500/30"
+            >
+              <Scale className="size-3.5" />
+              Construction Engine
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setInstrumentModalOpen(true)}
             >
               Compare UCITS Products
@@ -125,6 +135,14 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setConstructionModalOpen(true)}
+              className="text-xs text-brand-700 hover:text-brand-800 dark:text-brand-300 gap-1"
+            >
+              <Scale className="size-3" />
+              Construction Engine
+            </Button>
             <Button
               variant="ghost"
               onClick={() => setInstrumentModalOpen(true)}
@@ -230,6 +248,15 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
       <InstrumentComparisonModal
         open={instrumentModalOpen}
         onClose={() => setInstrumentModalOpen(false)}
+      />
+
+      <PortfolioConstructionModal
+        open={constructionModalOpen}
+        onClose={() => setConstructionModalOpen(false)}
+        clientName={activeClient.name}
+        defaultCurrency={activeClient.baseCurrency}
+        defaultRiskScore={activeClient.riskScore}
+        initialTotalValue={activeClient.netWorth}
       />
     </div>
   );

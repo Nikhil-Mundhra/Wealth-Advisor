@@ -1,5 +1,7 @@
 import {
   AssetProductListResponse,
+  ConstructPortfolioRequest,
+  ConstructPortfolioResponse,
   ExecuteTradeRequest,
   ExecuteTradeResponse,
   PortfolioResponse,
@@ -32,6 +34,14 @@ export const wealthApi = {
     apiRequest('/wealth/optimize', {
       method: 'POST',
       response: RebalanceProposalResponse,
+      authenticated: true,
+    }),
+
+  constructPortfolio: (body?: ConstructPortfolioRequest) =>
+    apiRequest('/wealth/construct', {
+      method: 'POST',
+      body,
+      response: ConstructPortfolioResponse,
       authenticated: true,
     }),
 

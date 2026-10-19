@@ -1,6 +1,8 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import {
   AssetProductListResponse,
+  ConstructPortfolioRequest,
+  ConstructPortfolioResponse,
   ExecuteTradeRequest,
   ExecuteTradeResponse,
   PortfolioResponse,
@@ -39,6 +41,15 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
       .handle(async ({ c }) => {
         const { tenantId, userId } = scope(c);
         return api.optimizePortfolio(tenantId, userId);
+      }),
+
+    RouteBuilder.post('/construct')
+      .use(...guard)
+      .body(ConstructPortfolioRequest)
+      .responds(ConstructPortfolioResponse)
+      .handle(async ({ c, body }) => {
+        const { tenantId, userId } = scope(c);
+        return api.constructPortfolio(tenantId, userId, body);
       }),
 
     RouteBuilder.post('/execute')

@@ -50,6 +50,7 @@ contracts/src/tenant/api-key.contract.ts : tenant API keys list, create, and rev
 contracts/src/tenant/tenant.contract.ts : tenant settings and onboarding contracts
 contracts/src/wealth/asset-product.contract.ts : asset products catalog and UCITS ETF metadata contracts
 contracts/src/wealth/optimizer.contract.ts : portfolio optimization and rebalancing proposal contracts
+contracts/src/wealth/portfolio-construction.contract.ts : quantitative portfolio construction, risk tiers, stress testing, and multi-asset allocation contracts
 contracts/src/wealth/portfolio.contract.ts : portfolio holdings and target weight contracts
 contracts/src/wealth/risk-profile.contract.ts : risk profile query, answers, and summary contracts
 contracts/src/wealth/sandbox-ledger.contract.ts : sandbox trade execution and cryptographic ledger contracts
