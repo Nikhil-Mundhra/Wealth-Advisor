@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router';
+import logoImg from '../../assets/logo.png';
+import logoDarkImg from '../../assets/logo-dark.png';
 import { LanguageSelect } from '../../components/ui/language-select.tsx';
 import { ThemeToggle } from '../../components/ui/theme-toggle.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
@@ -15,7 +17,21 @@ export function OnboardingPage() {
     <div className="min-h-dvh bg-surface text-ink">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
-          <p className="text-lg font-semibold tracking-tight">{strings['app.name']}</p>
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex size-8 shrink-0 items-center justify-center">
+              <img
+                src={logoImg}
+                alt="Syntropy AI Logo"
+                className="size-8 object-contain dark:hidden"
+              />
+              <img
+                src={logoDarkImg}
+                alt="Syntropy AI Logo"
+                className="hidden size-8 object-contain dark:block"
+              />
+            </div>
+            <p className="text-lg font-semibold tracking-tight">{strings['app.name']}</p>
+          </div>
           <div className="flex items-center gap-2">
             <LanguageSelect />
             <ThemeToggle />

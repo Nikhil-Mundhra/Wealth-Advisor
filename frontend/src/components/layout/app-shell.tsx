@@ -14,8 +14,10 @@ import {
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import logoImg from '../../assets/logo.png';
+import logoDarkImg from '../../assets/logo-dark.png';
 import { ME_QUERY_KEY } from '../../features/auth/api/use-me.ts';
 import {
   getAdminActingSession,
@@ -128,15 +130,33 @@ export function AppShell() {
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface md:flex">
         <div className="px-5 pb-2 pt-6">
-          <p className="text-lg font-semibold tracking-tight">{strings['app.name']}</p>
+          <Link
+            to={isAdminSection ? '/admin' : isAdvisorSection ? '/advisor' : '/'}
+            aria-label={strings['app.name']}
+            className="flex items-center gap-2.5 text-ink transition-opacity hover:opacity-90"
+          >
+            <div className="relative flex size-8 shrink-0 items-center justify-center">
+              <img
+                src={logoImg}
+                alt="Syntropy AI Logo"
+                className="size-8 object-contain dark:hidden"
+              />
+              <img
+                src={logoDarkImg}
+                alt="Syntropy AI Logo"
+                className="hidden size-8 object-contain dark:block"
+              />
+            </div>
+            <p className="text-lg font-semibold tracking-tight">{strings['app.name']}</p>
+          </Link>
           {isAdminSection && (
-            <div className="mt-1 flex items-center gap-1.5">
+            <div className="mt-1 flex items-center gap-1.5 pl-10.5">
               <span className="flex size-1.5 rounded-full bg-gold" />
               <span className="font-semibold text-[11px] uppercase tracking-wider text-gold">Admin Console</span>
             </div>
           )}
           {isAdvisorSection && (
-            <div className="mt-1 flex items-center gap-1.5">
+            <div className="mt-1 flex items-center gap-1.5 pl-10.5">
               <span className="flex size-1.5 rounded-full bg-gold" />
               <span className="font-semibold text-[11px] uppercase tracking-wider text-gold">Advisor Workstation</span>
             </div>
@@ -208,7 +228,25 @@ export function AppShell() {
       <header className="sticky top-0 z-10 border-b border-line bg-surface">
         <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4">
           <div className="flex items-center gap-3">
-            <p className="text-lg font-semibold tracking-tight md:hidden">{strings['app.name']}</p>
+            <Link
+              to={isAdminSection ? '/admin' : isAdvisorSection ? '/advisor' : '/'}
+              aria-label={strings['app.name']}
+              className="flex items-center gap-2 text-ink md:hidden"
+            >
+              <div className="relative flex size-7 shrink-0 items-center justify-center">
+                <img
+                  src={logoImg}
+                  alt="Syntropy AI Logo"
+                  className="size-7 object-contain dark:hidden"
+                />
+                <img
+                  src={logoDarkImg}
+                  alt="Syntropy AI Logo"
+                  className="hidden size-7 object-contain dark:block"
+                />
+              </div>
+              <p className="text-lg font-semibold tracking-tight">{strings['app.name']}</p>
+            </Link>
             {isAdminSection ? (
               <div className="flex items-center gap-2">
                 <Shield aria-hidden className="size-4 text-gold" />
