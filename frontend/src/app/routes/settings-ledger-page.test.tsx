@@ -1,15 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import * as csvExport from '../../lib/csv-export.ts';
 import { setLocale } from '../../lib/locale-store.ts';
 import { SettingsLedgerPage } from './settings-ledger-page.tsx';
 
+function renderWithClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
+
 describe('SettingsLedgerPage', () => {
   it('lists sandbox executions with their tiers, passkey proof, and digests', () => {
     setLocale('en');
-    render(
+    renderWithClient(
       <MemoryRouter>
         <SettingsLedgerPage />
       </MemoryRouter>,
@@ -27,7 +35,7 @@ describe('SettingsLedgerPage', () => {
     setLocale('en');
     const downloadSpy = vi.spyOn(csvExport, 'downloadCsv').mockImplementation(() => {});
 
-    render(
+    renderWithClient(
       <MemoryRouter>
         <SettingsLedgerPage />
       </MemoryRouter>,
@@ -46,7 +54,7 @@ describe('SettingsLedgerPage', () => {
 
   it('redirects /evidence to /settings/ledger', () => {
     setLocale('en');
-    render(
+    renderWithClient(
       <MemoryRouter initialEntries={['/evidence']}>
         <Routes>
           <Route path="/evidence" element={<Navigate to="/settings/ledger" replace />} />

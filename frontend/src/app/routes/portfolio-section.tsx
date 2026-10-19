@@ -1,15 +1,19 @@
+import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
+import { Button } from '../../components/ui/button.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { useProfile } from '../../features/profiling/profile-store.ts';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
-import { DEMO_BASELINE, DEMO_HOLDINGS, DEMO_TARGET_WEIGHTS } from '../../lib/demo-data.ts';
+import { useActiveClient } from '../../features/advisor/advisor-store.ts';
+import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
+import { usePortfolio } from '../../features/wealth/api/use-portfolio.ts';
+import { DEMO_BASELINE } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 import { useReveal } from '../../lib/use-reveal.ts';
-
-const CLASSES = Object.keys(DEMO_TARGET_WEIGHTS) as AssetClass[];
 
 export interface PortfolioSectionProps {
   showTitle?: boolean;
@@ -19,15 +23,17 @@ export interface PortfolioSectionProps {
 export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
   const strings = useStrings();
   const { data: me } = useMe();
+  const activeClient = useActiveClient();
   const isDemo = !me || me.email === 'testing@example.com';
   const profile = useProfile(me?.email);
+  const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
+  const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
+  const { ref, visible } = useReveal<HTMLDivElement>();
 
   // Non-demo users without completed profiling must onboard first
   if (!isDemo && !profile.isCompleted && showTitle) {
     return <Navigate to="/onboarding" replace />;
   }
-
-  const { ref, visible } = useReveal<HTMLDivElement>();
 
   const holdingClasses: Record<string, { assetClass: AssetClass; label: string }> = {
     cashSavings: { assetClass: 'MONEY_MARKET', label: 'Cash Savings' },
@@ -47,6 +53,21 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
         }))
     : [];
 
+  const isElena = isDemo && activeClient.id === 'elena-vance';
+  const hasLiveApiData = Boolean(isElena && apiPortfolio && apiPortfolio.holdings.length > 0);
+
+  const displayDemoHoldings = hasLiveApiData && apiPortfolio
+    ? apiPortfolio.holdings.map((h) => ({
+        assetClass: h.assetClass,
+        label: h.assetName,
+        symbol: h.assetSymbol,
+        weight: Math.round(h.currentWeight * 100),
+        targetWeight: Math.round(h.targetWeight * 100),
+        value: Math.round(h.marketValueBase / 100),
+        currency: apiPortfolio.baseCurrency,
+      }))
+    : activeClient.holdings;
+
   return (
     <div
       ref={ref}
@@ -57,13 +78,64 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
       }`}
     >
       {showTitle ? (
-        <PageTitle>{strings['nav.portfolio']}</PageTitle>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <PageTitle>{strings['nav.portfolio']}</PageTitle>
+              {hasLiveApiData && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live API Feed
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-subtle">
+              Fiduciary allocation review for <span className="font-semibold text-brand-700 dark:text-brand-900">{activeClient.name}</span> · Base: {activeClient.baseCurrency} · Net Worth: {formatMoney(activeClient.netWorth, activeClient.baseCurrency)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setInstrumentModalOpen(true)}
+            >
+              Compare UCITS Products
+            </Button>
+            <a
+              href="/advisory"
+              className="rounded-field bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 dark:text-brand-950"
+            >
+              Propose Rebalance →
+            </a>
+          </div>
+        </div>
       ) : (
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold tracking-tight">{strings['nav.portfolio']}</h2>
-          <Link to="/portfolio" className="text-xs text-subtle hover:text-ink">
-            {strings['portfolio.holdings']} &rarr;
-          </Link>
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold tracking-tight">{strings['nav.portfolio']}</h2>
+            {hasLiveApiData && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="size-1 rounded-full bg-emerald-500 animate-pulse" />
+                Live API
+              </span>
+            )}
+            {isDemo && activeClient.driftAlert && (
+              <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">
+                ±5% Drift Alert
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setInstrumentModalOpen(true)}
+              className="text-xs text-brand-700 hover:text-brand-800 dark:text-brand-900"
+            >
+              Compare Products
+            </Button>
+            <a href="/portfolio" className="text-xs text-subtle hover:text-ink">
+              {strings['portfolio.holdings']} &rarr;
+            </a>
+          </div>
         </div>
       )}
       <section aria-label={strings['portfolio.holdings']} className="overflow-hidden rounded-field border border-line bg-surface">
@@ -75,29 +147,47 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
                 <th scope="col" className="px-4 py-3 text-right font-medium">{strings['portfolio.current']}</th>
                 <th scope="col" className="px-4 py-3 text-right font-medium">{strings['portfolio.target']}</th>
                 <th scope="col" className="px-4 py-3 text-right font-medium">{strings['portfolio.drift']}</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">Value</th>
               </tr>
             </thead>
             <tbody>
-              {CLASSES.map((assetClass) => {
-                const holding = DEMO_HOLDINGS.find((candidate) => candidate.assetClass === assetClass);
-                const current = holding?.weight ?? 0;
-                const target = DEMO_TARGET_WEIGHTS[assetClass];
-                const drift = target - current;
+              {displayDemoHoldings.map((holding) => {
+                const current = holding.weight;
+                const target = holding.targetWeight;
+                const drift = target - current; // target - current: -20% when 40 - 60
+                const isBreached = Math.abs(drift) > 5;
                 return (
-                  <tr key={assetClass} className="border-b border-line transition-colors last:border-0 motion-safe:hover:bg-surface-subtle">
+                  <tr key={holding.symbol || holding.assetClass} className="border-b border-line transition-colors last:border-0 motion-safe:hover:bg-surface-subtle">
                     <th scope="row" className="px-4 py-3 text-left font-normal">
                       <span className="flex items-center gap-2.5">
-                        <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${CLASS_CHART[assetClass]}`} />
-                        {holding?.label ?? assetClass}
+                        <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${CLASS_CHART[holding.assetClass] || 'bg-brand-600'}`} />
+                        <span className="font-medium text-ink">{holding.label}</span>
+                        {holding.symbol && (
+                          <span className="rounded border border-line bg-surface-subtle px-1.5 py-0.5 text-[11px] font-mono text-subtle">
+                            {holding.symbol}
+                          </span>
+                        )}
                       </span>
-                      {holding && <span className="block pl-5 font-display text-xs text-subtle">{formatMoney(holding.valueEur, DEMO_BASELINE)}</span>}
                     </th>
                     <td className="px-4 py-3 text-right font-display font-semibold">{current}%</td>
                     <td className="px-4 py-3 text-right text-subtle">{target}%</td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`inline-block min-w-16 rounded-full px-2 py-0.5 text-xs font-medium ${drift === 0 ? 'bg-surface-subtle text-subtle' : 'bg-gold-subtle text-gold'}`}>
-                        {drift > 0 ? `+${drift}` : drift}%
+                      <span
+                        className={`inline-flex items-center gap-1 min-w-16 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          isBreached
+                            ? 'bg-danger/15 text-danger font-semibold'
+                            : drift === 0
+                              ? 'bg-surface-subtle text-subtle'
+                              : 'bg-gold-subtle text-gold'
+                        }`}
+                        title={isBreached ? 'Drift exceeds ±5% fiduciary rebalancing corridor' : 'Within ±5% corridor'}
+                      >
+                        {isBreached && <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />}
+                        <span>{drift > 0 ? `+${drift}` : drift}%{isBreached ? ' Breach' : ''}</span>
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-display text-subtle">
+                      {formatMoney(holding.value, holding.currency)}
                     </td>
                   </tr>
                 );
@@ -136,6 +226,11 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
           </div>
         )}
       </section>
+
+      <InstrumentComparisonModal
+        open={instrumentModalOpen}
+        onClose={() => setInstrumentModalOpen(false)}
+      />
     </div>
   );
 }

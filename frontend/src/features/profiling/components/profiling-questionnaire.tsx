@@ -15,6 +15,7 @@ import {
 import { Button } from '../../../components/ui/button.tsx';
 import { useStrings } from '../../../lib/dictionaries.ts';
 import { CountryTagInput } from './country-tag-input.tsx';
+import { CurrencyScrollInput } from './currency-scroll-input.tsx';
 import { INITIAL_EMPTY_PROFILE, saveDraft, saveProfile, useProfile } from '../profile-store.ts';
 
 interface ProfilingQuestionnaireProps {
@@ -217,7 +218,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
                   aria-pressed={selected}
                   className={`rounded-field border p-3 text-left text-sm transition-colors min-h-[44px] ${
                     selected
-                      ? 'border-brand-600 bg-brand-600/10 font-medium text-brand-900 dark:text-brand-100'
+                      ? 'border-brand-600 bg-brand-600/10 font-medium text-brand-900 dark:text-emerald-300 dark:border-emerald-500/50 dark:bg-emerald-500/15'
                       : 'border-line bg-surface hover:bg-surface-subtle text-ink'
                   }`}
                 >
@@ -292,7 +293,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
                   aria-pressed={selected}
                   className={`rounded-field border p-3 text-left text-sm transition-colors min-h-[44px] ${
                     selected
-                      ? 'border-brand-600 bg-brand-600/10 font-medium text-brand-900 dark:text-brand-100'
+                      ? 'border-brand-600 bg-brand-600/10 font-medium text-brand-900 dark:text-emerald-300 dark:border-emerald-500/50 dark:bg-emerald-500/15'
                       : 'border-line bg-surface hover:bg-surface-subtle text-ink'
                   }`}
                 >
@@ -330,13 +331,12 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
                       <label htmlFor={`holding-${currency}-${bucket}`} className="mb-1 block text-xs font-medium text-subtle">
                         {label} ({currency})
                       </label>
-                      <input
+                      <CurrencyScrollInput
                         id={`holding-${currency}-${bucket}`}
-                        type="number"
-                        min="0"
-                        value={amount ?? ''}
-                        onChange={(event) => updateCurrencyHolding(currency, bucket, event.target.value)}
-                        className="w-full rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
+                        currency={currency}
+                        value={amount}
+                        onChange={(newVal) => updateCurrencyHolding(currency, bucket, newVal === undefined ? '' : String(newVal))}
+                        className="w-full"
                       />
                     </div>
                   );
@@ -392,7 +392,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
                   aria-pressed={selected}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors min-h-[36px] ${
                     selected
-                      ? 'border-brand-600 bg-brand-600 text-white'
+                      ? 'border-brand-600 bg-brand-600 text-white dark:border-emerald-500/50 dark:bg-emerald-500/20 dark:text-emerald-300'
                       : 'border-line bg-surface hover:bg-surface-subtle text-ink'
                   }`}
                 >
@@ -439,7 +439,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
                   aria-pressed={selected}
                   className={`rounded-field border p-3.5 text-left text-sm transition-colors min-h-[48px] ${
                     selected
-                      ? 'border-brand-600 bg-brand-600/10 font-medium text-brand-900 dark:text-brand-100 ring-1 ring-brand-600'
+                      ? 'border-brand-600 bg-brand-600/10 font-medium text-brand-900 dark:text-emerald-300 dark:border-emerald-500/50 dark:bg-emerald-500/15 ring-1 ring-brand-600 dark:ring-emerald-500/50'
                       : 'border-line bg-surface hover:bg-surface-subtle text-ink'
                   }`}
                 >

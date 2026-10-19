@@ -25,7 +25,7 @@ describe('OnboardingPage', () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Welcome to Wealth Advisor' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Welcome to Syntropy AI' })).toBeVisible();
     expect(screen.getByText('Question 1 of 7')).toBeVisible();
     expect(screen.getByText('How do you feel about investment risk?')).toBeVisible();
 

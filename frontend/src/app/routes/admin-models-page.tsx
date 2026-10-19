@@ -59,6 +59,23 @@ export function AdminModelsPage() {
             <p>Uptime: {data.systemHealth.uptimeSeconds}s</p>
           </div>
         )}
+
+        <div className={cn(cardClassName, 'flex flex-col gap-2')}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-ink">Client & Advisor Custom AI Keys</p>
+              <p className="text-xs text-subtle">
+                Configure user API keys and select models benchmarked on FinanceBench Factual Correctness % (including NVIDIA Nemotron 3 Ultra #1 Free).
+              </p>
+            </div>
+            <a
+              href="/settings/ai"
+              className="inline-flex items-center gap-1 rounded bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors"
+            >
+              <span>Configure AI Keys</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

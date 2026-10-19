@@ -1,7 +1,11 @@
 import { ADMIN_ROLE } from '@wealth-advisor/rules';
 import { ArrowLeftRight, LayoutDashboard, MessagesSquare, ScrollText, Settings, Shield } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router';
 import { useMe } from '../../features/auth/api/use-me.ts';
+import { ClientSelector } from '../../features/advisor/components/client-selector.tsx';
+import { PreMeetingBriefModal } from '../../features/advisor/components/pre-meeting-brief-modal.tsx';
+import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { LanguageSelect } from '../ui/language-select.tsx';
@@ -25,10 +29,25 @@ function tabClass({ isActive }: { isActive: boolean }): string {
 export function AppShell() {
   const strings = useStrings();
   const me = useMe();
+  const navigate = useNavigate();
   const isAdmin = Boolean(me.data?.roles.includes(ADMIN_ROLE));
+
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [instrumentsOpen, setInstrumentsOpen] = useState(false);
 
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">
+      {/* Advisor Modals */}
+      <PreMeetingBriefModal
+        open={briefOpen}
+        onClose={() => setBriefOpen(false)}
+        onNavigateToAdvisory={() => navigate('/advisory')}
+      />
+      <InstrumentComparisonModal
+        open={instrumentsOpen}
+        onClose={() => setInstrumentsOpen(false)}
+      />
+
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface md:flex">
         <p className="px-5 pb-2 pt-6 text-lg font-semibold tracking-tight">{strings['app.name']}</p>
         <nav aria-label={strings['nav.main']} className="flex flex-col gap-1 px-3">
@@ -57,9 +76,16 @@ export function AppShell() {
       </aside>
 
       <header className="sticky top-0 z-10 border-b border-line bg-surface">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-2 px-4">
-          <p className="text-lg font-semibold tracking-tight md:hidden">{strings['app.name']}</p>
-          <div className="ml-auto flex items-center gap-2">
+        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4">
+          <div className="flex items-center gap-3">
+            <p className="text-lg font-semibold tracking-tight md:hidden">{strings['app.name']}</p>
+            <ClientSelector
+              onOpenBrief={() => setBriefOpen(true)}
+              onOpenInstruments={() => setInstrumentsOpen(true)}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
             <LanguageSelect />
             <ThemeToggle />
             {isAdmin && (

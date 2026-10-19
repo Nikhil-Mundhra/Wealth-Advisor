@@ -108,9 +108,9 @@ export function CountryTagInput(props: CountryTagInputProps) {
             return (
               <span
                 key={code}
-                className="inline-flex items-center gap-1.5 rounded-full border border-brand-300 bg-brand-50/80 px-2.5 py-1 text-xs font-medium text-brand-950 transition-all dark:border-brand-800 dark:bg-brand-950/60 dark:text-brand-100"
+                className="inline-flex items-center gap-1.5 rounded-full border border-brand-300 bg-brand-50/80 px-2.5 py-1 text-xs font-medium text-brand-950 transition-all dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-300"
               >
-                <Globe className="size-3.5 shrink-0 text-brand-600 dark:text-brand-400" aria-hidden />
+                <Globe className="size-3.5 shrink-0 text-brand-600 dark:text-emerald-400" aria-hidden />
                 <span>{country?.name}</span>
                 <span className="font-mono text-[10px] text-subtle uppercase">({code})</span>
                 <button
@@ -197,7 +197,7 @@ export function CountryTagInput(props: CountryTagInputProps) {
                 aria-label={`Preset ${shortName}`}
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors min-h-[28px] ${
                   isSelected
-                    ? 'border-brand-600 bg-brand-600/10 font-semibold text-brand-900 dark:text-brand-100'
+                    ? 'border-brand-600 bg-brand-600/10 font-semibold text-brand-900 dark:text-emerald-300 dark:border-emerald-500/50 dark:bg-emerald-500/15'
                     : 'border-line bg-surface text-ink hover:bg-surface-subtle'
                 }`}
               >

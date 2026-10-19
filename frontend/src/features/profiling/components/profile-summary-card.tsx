@@ -23,7 +23,7 @@ export function ProfileSummaryCard({ onOpenQuestionnaire }: ProfileSummaryCardPr
         <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
           <div>
             <span className="text-xs text-subtle">{strings['profiling.summary.horizon']}</span>
-            <p className="font-medium">{profile.timeHorizonYears} {strings['dashboard.months'] ? 'yrs' : 'years'}</p>
+            <p className="font-medium">{profile.timeHorizonYears} {strings['profiling.summary.years']}</p>
           </div>
           <div>
             <span className="text-xs text-subtle">{strings['profiling.summary.corridors']}</span>

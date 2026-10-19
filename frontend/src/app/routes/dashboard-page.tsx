@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router';
 import {
   COUNTRY_CURRENCY_MAP,
   DEFAULT_FAMILY_BURN_ESTIMATE,
@@ -21,10 +21,11 @@ import { ProfilingModal } from '../../features/profiling/components/profiling-mo
 import { useProfile } from '../../features/profiling/profile-store.ts';
 import { PortfolioSection } from './portfolio-section.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
+import { useActiveClient } from '../../features/advisor/advisor-store.ts';
+import { ClientRoster } from '../../features/advisor/components/client-roster.tsx';
+import { PreMeetingBriefModal } from '../../features/advisor/components/pre-meeting-brief-modal.tsx';
 import {
   DEMO_BASELINE,
-  DEMO_HOUSEHOLD,
-  DEMO_NET_WORTH_EUR,
   DEMO_NET_WORTH_SERIES,
   DEMO_RUNWAY_MONTHS,
   DEMO_TARGET_WEIGHTS,
@@ -46,29 +47,27 @@ const BAND_TONE: Record<RunwayBand, string> = {
   healthy: 'text-ink',
 };
 
-// Net worth hero, runway gauge, rebalance CTA, trail chart, and target allocation.
+// Net worth hero, client roster, runway gauge, rebalance CTA, trail chart, and target allocation.
 export function DashboardPage() {
   const strings = useStrings();
+  const navigate = useNavigate();
   const { data: me } = useMe();
+  const activeClient = useActiveClient();
   const isDemo = !me || me.email === 'testing@example.com';
   const profile = useProfile(me?.email);
   const holdingAmounts = listHoldingAmounts(profile.answers);
   const bucketTotal = (bucket: typeof holdingAmounts[number]['bucket']) => holdingAmounts
     .filter((holding) => holding.bucket === bucket)
     .reduce((total, holding) => total + holding.amount, 0);
-  const [household, setHousehold] = useState<HouseholdMode>(DEMO_HOUSEHOLD);
+  const [household, setHousehold] = useState<HouseholdMode>(activeClient.householdMode);
   const [profilingOpen, setProfilingOpen] = useState(false);
-
-  // Non-demo users who have not completed profiling must onboard first
-  if (!isDemo && !profile.isCompleted) {
-    return <Navigate to="/onboarding" replace />;
-  }
+  const [briefOpen, setBriefOpen] = useState(false);
 
   const primaryCurrency = isDemo
-    ? (profile.preferredCurrency || DEMO_BASELINE)
+    ? activeClient.baseCurrency
     : (profile.preferredCurrency || (profile.answers.countries.residence && COUNTRY_CURRENCY_MAP[profile.answers.countries.residence.toUpperCase()]) || DEMO_BASELINE);
 
-  const netWorthBasis = isDemo ? DEMO_NET_WORTH_EUR : profile.totalHoldings;
+  const netWorthBasis = isDemo ? activeClient.netWorth : (profile.totalHoldings || activeClient.netWorth);
   const netWorth = useCountUp(netWorthBasis);
 
   // Timeframe selection: defaults to 6M for demo fixture, 1W for new users (< 6 months history)
@@ -78,7 +77,7 @@ export function DashboardPage() {
   const chartData = useMemo(() => {
     if (timeframe === '6M') {
       const points = isDemo
-        ? DEMO_NET_WORTH_SERIES.map((val, idx) => ({
+        ? activeClient.netWorthSeries.map((val, idx) => ({
             label: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'][idx] ?? `M-${6 - idx}`,
             value: val,
           }))
@@ -90,11 +89,14 @@ export function DashboardPage() {
             { label: 'M-1', value: Math.round(netWorthBasis * 0.985) },
             { label: 'Now', value: netWorthBasis },
           ];
+      const startVal = points[0]?.value ?? netWorthBasis;
+      const endVal = points[points.length - 1]?.value ?? netWorthBasis;
+      const pctGrowth = (((endVal - startVal) / (startVal || 1)) * 100).toFixed(1);
       return {
         points,
         periodLabel: '6-month trailing',
         insight: isDemo
-          ? '6-Month Growth: Net worth grew by +7.7% (+€6.8k). Multi-currency assets in US tech and European fixed income outpaced FX headwinds.'
+          ? `6-Month Growth: Net worth grew for ${activeClient.name} (${Number(pctGrowth) >= 0 ? `+${pctGrowth}%` : `${pctGrowth}%`}). Multi-currency assets tracked against ${activeClient.baseCurrency}.`
           : '6-Month Trajectory: Steady multi-currency accumulation across your holdings and active currency corridors.',
       };
     }
@@ -102,10 +104,10 @@ export function DashboardPage() {
     if (timeframe === '1M') {
       const points = isDemo
         ? [
-            { label: 'W-3', value: 92300 },
-            { label: 'W-2', value: 93100 },
-            { label: 'W-1', value: 94200 },
-            { label: 'Now', value: 95000 },
+            { label: 'W-3', value: Math.round(netWorthBasis * 0.975) },
+            { label: 'W-2', value: Math.round(netWorthBasis * 0.984) },
+            { label: 'W-1', value: Math.round(netWorthBasis * 0.992) },
+            { label: 'Now', value: netWorthBasis },
           ]
         : [
             { label: 'W-3', value: Math.round(netWorthBasis * 0.985) },
@@ -123,13 +125,13 @@ export function DashboardPage() {
     // 1W (max(history length, 1 week) = 7 days)
     const points = isDemo
       ? [
-          { label: 'Mon', value: 94100 },
-          { label: 'Tue', value: 94350 },
-          { label: 'Wed', value: 93900 },
-          { label: 'Thu', value: 94600 },
-          { label: 'Fri', value: 94800 },
-          { label: 'Sat', value: 94950 },
-          { label: 'Sun', value: 95000 },
+          { label: 'Mon', value: Math.round(netWorthBasis * 0.99) },
+          { label: 'Tue', value: Math.round(netWorthBasis * 0.993) },
+          { label: 'Wed', value: Math.round(netWorthBasis * 0.988) },
+          { label: 'Thu', value: Math.round(netWorthBasis * 0.995) },
+          { label: 'Fri', value: Math.round(netWorthBasis * 0.998) },
+          { label: 'Sat', value: Math.round(netWorthBasis * 0.999) },
+          { label: 'Sun', value: netWorthBasis },
         ]
       : [
           { label: 'Mon', value: Math.round(netWorthBasis * 0.992) },
@@ -143,19 +145,19 @@ export function DashboardPage() {
     return {
       points,
       periodLabel: '7-day trailing',
-      insight: '7-Day Baseline: Portfolio baseline established across your 4 holding categories. Live valuations track your selected currencies.',
+      insight: `7-Day Baseline: Valuation tracked across active corridors for ${activeClient.name} in ${activeClient.baseCurrency}.`,
     };
-  }, [timeframe, isDemo, netWorthBasis]);
+  }, [timeframe, isDemo, netWorthBasis, activeClient]);
 
   // Runway calculation: demo fixture vs real user's liquid cash buffer
-  let displayRunwayMonths = DEMO_RUNWAY_MONTHS;
+  let displayRunwayMonths = isDemo ? activeClient.runwayMonths : DEMO_RUNWAY_MONTHS;
   if (!isDemo) {
     const liquidCash = bucketTotal('cashSavings');
     const estimatedMonthlyBurn =
       household === 'INDIVIDUAL' ? DEFAULT_INDIVIDUAL_BURN_ESTIMATE : DEFAULT_FAMILY_BURN_ESTIMATE;
     displayRunwayMonths = Math.round((liquidCash / estimatedMonthlyBurn) * 10) / 10;
   }
-  const band = runwayBand(displayRunwayMonths);
+  const band = isDemo ? activeClient.runwayBand : runwayBand(displayRunwayMonths);
 
   // User asset allocation weights
   const realAllocations: { assetClass: AssetClass; label: string; weight: number }[] =
@@ -187,6 +189,11 @@ export function DashboardPage() {
   const trailPoints = isDemo ? DEMO_NET_WORTH_SERIES : [netWorthBasis, netWorthBasis];
 
   const { ref, visible } = useReveal<HTMLDivElement>();
+
+  // Non-demo users who have not completed profiling must onboard first
+  if (!isDemo && !profile.isCompleted) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <div
@@ -221,6 +228,32 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {isDemo && (
+        <section aria-label="Advisor Client Portfolio Book" className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight text-ink">
+                Advisor Client Portfolio Book
+              </h2>
+              <p className="text-xs text-subtle">
+                Active Client: <span className="font-semibold text-brand-700 dark:text-brand-900">{activeClient.name}</span> ({activeClient.location}) · Risk: {activeClient.riskScore}/10 ({activeClient.riskBand})
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setBriefOpen(true)}
+              className="text-xs"
+            >
+              Open 30s Meeting Brief
+            </Button>
+          </div>
+          <ClientRoster
+            onOpenBriefForClient={() => setBriefOpen(true)}
+            onNavigateToAdvisory={() => navigate('/advisory')}
+          />
+        </section>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card aria-label={strings['dashboard.networth']} className="sm:col-span-1">
@@ -294,20 +327,33 @@ export function DashboardPage() {
           <p className="text-sm text-subtle">{strings['dashboard.allocation']}</p>
           {isDemo ? (
             <ul className="mt-3 flex flex-col gap-3 text-sm">
-              {(Object.keys(DEMO_TARGET_WEIGHTS) as AssetClass[]).map((assetClass) => (
-                <li key={assetClass}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p>{assetClass}</p>
-                    <p className="font-medium">{DEMO_TARGET_WEIGHTS[assetClass]}%</p>
-                  </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-subtle">
-                    <div
-                      className={`h-full rounded-full ${CLASS_CHART[assetClass]}`}
-                      style={{ width: `${DEMO_TARGET_WEIGHTS[assetClass]}%` }}
-                    />
-                  </div>
-                </li>
-              ))}
+              {activeClient.holdings.map((h) => {
+                const drift = h.targetWeight - h.weight;
+                const isBreached = Math.abs(drift) > 5;
+                return (
+                  <li key={h.symbol || h.assetClass}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="flex items-center gap-2">
+                        <span className="font-medium text-ink">{h.label}</span>
+                        {isBreached && (
+                          <span className="rounded bg-danger/10 px-1.5 py-0.5 text-[10px] font-semibold text-danger">
+                            Drift &gt;5%
+                          </span>
+                        )}
+                      </span>
+                      <p className="font-medium">
+                        {h.weight}% <span className="text-xs text-subtle">(target {h.targetWeight}%)</span>
+                      </p>
+                    </div>
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-subtle">
+                      <div
+                        className={`h-full rounded-full ${CLASS_CHART[h.assetClass] || 'bg-brand-600'}`}
+                        style={{ width: `${Math.min(h.weight, 100)}%` }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : realAllocations.length > 0 ? (
             <ul className="mt-3 flex flex-col gap-3 text-sm">
@@ -338,6 +384,12 @@ export function DashboardPage() {
         open={profilingOpen}
         onClose={() => setProfilingOpen(false)}
         email={me?.email}
+      />
+
+      <PreMeetingBriefModal
+        open={briefOpen}
+        onClose={() => setBriefOpen(false)}
+        client={activeClient}
       />
     </div>
   );

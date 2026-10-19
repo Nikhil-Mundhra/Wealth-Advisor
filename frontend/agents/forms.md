@@ -22,11 +22,14 @@ frontend/src/features/auth/components/signup-form.tsx : signup form validated by
 frontend/src/features/auth/errors/auth-error-messages.ts : text and target field for auth error codes
 frontend/src/features/profiling/components/country-tag-input.test.tsx : single and multi country selection, flag emojis, live autocomplete, and popular presets
 frontend/src/features/profiling/components/country-tag-input.tsx : accessible tag-based country input with autocomplete and quick presets
+frontend/src/features/profiling/components/currency-scroll-input.test.tsx : tests for speed-based denomination stepping and currency PPP calibrations
+frontend/src/features/profiling/components/currency-scroll-input.tsx : scrollable numerical cash input with velocity-scaled denominations and PPP awareness
 frontend/src/features/profiling/components/profile-summary-card.tsx : compact risk score and currency corridor card
 frontend/src/features/profiling/components/profiling-modal.tsx : dialog wrapper for the profiling wizard
 frontend/src/features/profiling/components/profiling-questionnaire.test.tsx : wizard navigation, country defaults, per-currency holdings draft auto-saving, and completion
 frontend/src/features/profiling/components/profiling-questionnaire.tsx : 7-step onboarding questionnaire with country defaults and per-currency holdings sections
 frontend/src/features/profiling/lib/countries.ts : country list data provider, Unicode flag emoji generator, and search filter
+frontend/src/features/profiling/lib/currency-denominations.ts : calibrated scroll denomination tiers for AED, USD, EUR, GBP, INR, JPY, and other global currencies
 frontend/src/features/profiling/profile-store.ts : local and session storage store for resumable profiling answers, per-currency holdings, and base risk scores
 frontend/src/lib/errors/resolve-error.test.ts : lookup order: feature map, shared map, fallback; validation key to text
 frontend/src/lib/errors/resolve-error.ts : error → message: feature map, then shared map, then fallback

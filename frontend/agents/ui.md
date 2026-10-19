@@ -46,6 +46,7 @@ frontend/src/lib/cn.ts : className merge helper
 frontend/src/lib/csv-export.test.ts : RFC 4180 escaping, BOM prefix, and empty ledger serialization
 frontend/src/lib/csv-export.ts : RFC 4180 CSV serializer with UTF-8 BOM and browser download trigger
 frontend/src/lib/demo-data.ts : Elena fixture standing in for the Phase 2 endpoints
+frontend/src/lib/dictionaries.test.ts : dictionary completeness across locales, non-empty values, and script integrity
 frontend/src/lib/dictionaries.ts : UI copy per locale with a locale-reading hook
 frontend/src/lib/engagement.test.ts : unit tests for typed event payloads and Vercel Analytics sink
 frontend/src/lib/engagement.ts : typed engagement tracking wrapper over Vercel Web Analytics

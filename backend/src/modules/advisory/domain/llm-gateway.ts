@@ -55,16 +55,16 @@ export class MockLlmAdapter implements LlmAdapter {
 
     const replies: Record<Locale, string> = {
       en: `Based on your ${isFamily ? 'family household' : 'individual'} profile, your current liquid runway stands at ${burnMonths.toFixed(1)} months. Because you maintain cross-border remittance commitments to East Asia, our deterministic optimizer recommends rebalancing ${equityPct > targetEquityPct ? `${equityPct - targetEquityPct}% of your equities (principally ${topHoldingSymbol})` : 'your portfolio allocations'} into high-yield sovereign bonds and short-term EUR liquidity buffers to absorb FX currency fluctuations.`,
-      'zh-CN': `根据您的${isFamily ? '家庭' : '个人'}财务规划，当前流动资金储备周期为 ${burnMonths.toFixed(1)} 个月。鉴于您需要定期向东亚进行跨境汇款，我们的确定性计算引擎建议将股票资产（尤其是 ${topHoldingSymbol}）再平衡至短期欧元流动性与政府债券，以抵御汇率波动风险。`,
-      'zh-HK': `根據您的${isFamily ? '家庭' : '個人'}財務規劃，當前流動資金儲備週期為 ${burnMonths.toFixed(1)} 個月。鑑於您需要定期向東亞進行跨境匯款，我們的確定性計算引擎建議將股票資產（尤其是 ${topHoldingSymbol}）再平衡至短期歐元流動性與政府債券，以抵御匯率波動風險。`,
+      'zh-CN': `根据您的${isFamily ? '家庭' : '个人'}财务规划，当前流动资金储备周期为 ${burnMonths.toFixed(1)} 个月。鉴于您需要定期向东亚进行跨境汇款，我们的确定性计算引擎建议将股票资产（尤其是 ${topHoldingSymbol}）再平衡至短期欧元流动性与高收益主权债券，以抵御汇率波动风险。`,
+      'zh-HK': `根據您的${isFamily ? '家庭' : '個人'}財務規劃，當前流動資金儲備週期為 ${burnMonths.toFixed(1)} 個月。鑑於您需要定期向東亞進行跨境匯款，我們的確定性計算引擎建議將股票資產（尤其是 ${topHoldingSymbol}）再平衡至短期歐元流動性與高收益主權債券，以抵禦匯率波動風險。`,
       de: `Basierend auf Ihrem ${isFamily ? 'Familienhaushalt' : 'Einzelhaushalt'} beträgt Ihre liquide Notfallreserve ${burnMonths.toFixed(1)} Monate. Angesichts Ihrer regelmäßigen Auslandsüberweisungen nach Ostasien empfiehlt unser finanzmathematischer Optimierer, Teile Ihrer Aktien (${topHoldingSymbol}) in kurzfristige EUR-Liquidität und Staatsanleihen umzuschichten.`,
     };
 
     const disclaimers: Record<Locale, string> = {
-      en: 'DEWA operates under sandbox advisory mode. Recommendations are deterministic simulations and do not constitute formal investment solicitation.',
-      'zh-CN': 'DEWA 运行于沙盒顾问模式。所有策略均为确定性算法推演，不构成正式投资要约。',
-      'zh-HK': 'DEWA 運行於沙盒顧問模式。所有策略均為確定性演算法推演，不構成正式投資要約。',
-      de: 'DEWA agiert im Sandbox-Beratungsmodus. Empfehlungen sind mathematische Simulationen und stellen keine Anlageberatung dar.',
+      en: 'Syntropy AI operates under advisor sandbox mode. Recommendations are deterministic simulations and do not constitute formal investment solicitation.',
+      'zh-CN': 'Syntropy AI 运行于沙盒顾问模式。所有策略均为确定性算法推演，不构成正式投资要约。',
+      'zh-HK': 'Syntropy AI 運行於沙盒顧問模式。所有策略均為確定性演算法推演，不構成正式投資要約。',
+      de: 'Syntropy AI agiert im Berater-Sandbox-Modus. Empfehlungen sind mathematische Simulationen und stellen keine Anlageberatung dar.',
     };
 
     const rationales: Record<
@@ -158,7 +158,7 @@ export class GeminiLlmAdapter implements LlmAdapter {
     try {
       const base = await this.fallback.chat(context);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
-      const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for DEWA.
+      const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
 Current Portfolio:
 - Valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}
 - Runway: ${context.cashflow.runwayMonths.toFixed(1)} months (${context.cashflow.runwayBand})
@@ -212,7 +212,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
     if (!this.apiKey) return this.fallback.chat(context);
     try {
       const base = await this.fallback.chat(context);
-      const systemPrompt = `You are an expat wealth advisor for DEWA. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+      const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
       const data = (await this.http.postJson(
         'https://api.openai.com/v1/chat/completions',
         {
