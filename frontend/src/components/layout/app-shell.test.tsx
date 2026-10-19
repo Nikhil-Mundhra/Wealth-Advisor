@@ -5,11 +5,19 @@ import { AppShell } from './app-shell.tsx';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-function renderShell() {
+function renderShell(initialEntry = '/') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
-    [{ element: <AppShell />, children: [{ path: '/', element: <p>Page body</p> }] }],
-    { initialEntries: ['/'] },
+    [
+      {
+        element: <AppShell />,
+        children: [
+          { path: '/', element: <p>Page body</p> },
+          { path: '/admin', element: <p>Admin body</p> },
+        ],
+      },
+    ],
+    { initialEntries: [initialEntry] },
   );
   render(
     <QueryClientProvider client={queryClient}>
@@ -20,7 +28,7 @@ function renderShell() {
 
 describe('AppShell', () => {
   it('renders the page with sidebar and bottom-tab navigation to every core tab', () => {
-    renderShell();
+    renderShell('/');
     expect(screen.getByText('Page body')).toBeVisible();
     // Sidebar and bottom tabs both link the three primary tabs.
     for (const name of ['Dashboard', 'Cash Flow', 'Advisory']) {
@@ -28,5 +36,21 @@ describe('AppShell', () => {
     }
     expect(screen.queryByRole('link', { name: 'Portfolio' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeVisible();
+  });
+
+  it('renders admin console navigation in sidebar when at /admin', () => {
+    renderShell('/admin');
+    expect(screen.getByText('Admin body')).toBeVisible();
+    expect(screen.getByText('Admin Console')).toBeVisible();
+    // Admin console items are rendered
+    expect(screen.getByRole('link', { name: 'User Accounts' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Demo Credentials' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Models & Keys' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Tenants' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'API Keys' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Exit to Client App' })).toBeVisible();
+    // Client-only navigation items are not in the admin sidebar
+    expect(screen.queryByRole('link', { name: 'Cash Flow' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
   });
 });
