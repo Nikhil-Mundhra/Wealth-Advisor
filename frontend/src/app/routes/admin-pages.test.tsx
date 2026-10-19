@@ -33,7 +33,7 @@ describe('admin pages', () => {
     renderAt('/admin');
 
     expect(screen.getByRole('heading', { name: 'Overview' })).toBeVisible();
-    for (const name of ['Tenants', 'API keys', 'Models']) {
+    for (const name of ['User accounts', 'Tenants', 'API keys', 'Models']) {
       expect(screen.getByRole('link', { name })).toBeVisible();
     }
   });

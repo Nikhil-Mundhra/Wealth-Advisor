@@ -1,4 +1,4 @@
-import { ADMIN_ROLE } from '@wealth-advisor/rules';
+import { ADMIN_ROLE, ADVISOR_ROLE } from '@wealth-advisor/rules';
 import { Navigate, Outlet } from 'react-router';
 import { Spinner } from '../components/ui/spinner.tsx';
 import { useMe } from '../features/auth/api/use-me.ts';
@@ -26,10 +26,21 @@ export function GuestRoute() {
   return status === 'anonymous' ? <Outlet /> : <Navigate to="/" replace />;
 }
 
-// Admin console: signed-in non-admins go home. Roles arrive with the session.
+// Advisor workstation: signed-in non-advisors go to /advisor/login.
+export function AdvisorRoute() {
+  const me = useMe();
+  if (me.isPending) return <FullPageSpinner />;
+  if (me.isError || !me.data?.roles.some((r) => r === ADVISOR_ROLE || r === ADMIN_ROLE)) {
+    return <Navigate to="/advisor/login" replace />;
+  }
+  return <Outlet />;
+}
+
+// Admin console: signed-in non-admins go to /admin/login. Roles arrive with the session.
 export function AdminRoute() {
   const me = useMe();
   if (me.isPending) return <FullPageSpinner />;
-  if (me.isError || !me.data?.roles.includes(ADMIN_ROLE)) return <Navigate to="/" replace />;
+  if (me.isError || !me.data?.roles.includes(ADMIN_ROLE)) return <Navigate to="/admin/login" replace />;
   return <Outlet />;
 }
+

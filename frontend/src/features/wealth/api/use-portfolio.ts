@@ -6,7 +6,7 @@ export const PORTFOLIO_QUERY_KEY = ['wealth', 'portfolio'] as const;
 export function usePortfolio(enabled = true) {
   return useQuery({
     queryKey: PORTFOLIO_QUERY_KEY,
-    queryFn: wealthApi.getPortfolio,
+    queryFn: () => wealthApi.getPortfolio(),
     enabled,
     retry: 1,
     staleTime: 30_000,

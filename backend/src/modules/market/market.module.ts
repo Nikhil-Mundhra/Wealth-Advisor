@@ -22,9 +22,13 @@ export interface MarketModule {
   readonly api: MarketApi;
 }
 
+export interface MarketModuleDeps {
+  readonly getAccessKey?: () => Promise<string | undefined> | string | undefined;
+}
+
 // Composition root: the only file that knows which concrete class implements each port. The api is returned beside
 // the manifest so modules/index.ts can hand it to modules with an edge to market.
-export function createMarketModule(context: ModuleContext): MarketModule {
+export function createMarketModule(context: ModuleContext, deps?: MarketModuleDeps): MarketModule {
   const { db, clock, events, http } = context;
   const config = env();
   const store = resolveDataStore(config);
@@ -39,7 +43,11 @@ export function createMarketModule(context: ModuleContext): MarketModule {
   const api = createMarketApi({
     prices,
     fxRates,
-    priceSource: createMarketstackPriceSource({ accessKey: config.MARKETSTACK_ACCESS_KEY, http, budget }),
+    priceSource: createMarketstackPriceSource({
+      accessKey: deps?.getAccessKey ?? config.MARKETSTACK_ACCESS_KEY,
+      http,
+      budget,
+    }),
     fxSource: createFrankfurterFxSource({ http }),
     events,
     clock,

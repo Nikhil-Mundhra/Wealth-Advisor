@@ -4,7 +4,11 @@ import { resolveDataStore } from '#core/db/connection/data-store.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import type { MiddlewareHandler } from 'hono';
-import { createAdminApi, type AdminApi } from './admin.api.ts';
+import type { AdminApi, AdminPasswordHasher } from './admin.api.ts';
+import { createAdminApi } from './admin.api.ts';
+import type { AdminUserRepository } from './application/ports.ts';
+import { MemoryAdminUserRepository } from './infrastructure/db/memory/memory-admin-user.repository.ts';
+import { MongoAdminUserRepository, type UserDoc } from './infrastructure/db/repositories/mongo-admin-user.repository.ts';
 import {
   type AdminSettingsDocument,
   ADMIN_SETTINGS_COLLECTION,
@@ -27,6 +31,9 @@ import { adminRoutes } from './presentation/routes/admin.routes.ts';
 
 export interface AdminModuleDeps {
   auth: MiddlewareHandler;
+  users?: AdminUserRepository;
+  hasher?: AdminPasswordHasher;
+  sharedUserDocs?: Map<string, any>;
 }
 
 export function createAdminModule(context: ModuleContext, deps: AdminModuleDeps): { manifest: ModuleManifest; api: AdminApi } {
@@ -50,7 +57,13 @@ export function createAdminModule(context: ModuleContext, deps: AdminModuleDeps)
           async () => (await db()).collection<AdminSettingsDocument>(ADMIN_SETTINGS_COLLECTION),
         );
 
-  const api = createAdminApi({ tenants, apiKeys, settings, clock });
+  const users =
+    deps.users ??
+    (store === 'memory'
+      ? new MemoryAdminUserRepository(deps.sharedUserDocs)
+      : new MongoAdminUserRepository(async () => (await db()).collection<UserDoc>('users')));
+
+  const api = createAdminApi({ tenants, apiKeys, settings, users, hasher: deps.hasher, clock });
 
   const manifest = defineModule({
     name: 'admin',

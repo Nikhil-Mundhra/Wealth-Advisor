@@ -3,7 +3,13 @@ import type { LoginCommand } from '../../application/dto/login.command.ts';
 import type { SignupCommand } from '../../application/dto/signup.command.ts';
 
 export function toSignupCommand(request: SignupRequest): SignupCommand {
-  return { email: request.email, password: request.password, displayName: request.displayName ?? null };
+  return {
+    email: request.email,
+    password: request.password,
+    displayName: request.displayName ?? null,
+    advisorCode: request.advisorCode ?? null,
+    clientRole: request.clientRole,
+  };
 }
 
 export function toLoginCommand(request: LoginRequest): LoginCommand {

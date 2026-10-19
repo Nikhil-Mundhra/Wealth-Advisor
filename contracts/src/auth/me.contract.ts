@@ -6,6 +6,7 @@ export const MeResponse = z.object({
   displayName: z.string().nullable(),
   roles: z.array(z.string()),
   emailVerified: z.boolean(),
+  advisorId: z.string().nullable().optional(),
   createdAt: z.iso.datetime(),
 });
 export type MeResponse = z.infer<typeof MeResponse>;

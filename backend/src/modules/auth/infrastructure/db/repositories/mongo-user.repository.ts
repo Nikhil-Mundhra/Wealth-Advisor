@@ -34,6 +34,13 @@ export class MongoUserRepository extends BaseRepository<UserDocument> implements
     return document ? userMapper.toEntity(document) : null;
   }
 
+  async findClientsByAdvisorId(advisorId: string): Promise<User[]> {
+    if (!ObjectId.isValid(advisorId)) return [];
+    const collection = await this.collection();
+    const documents = await collection.find({ advisorId: new ObjectId(advisorId), status: 'ACTIVE' }).toArray();
+    return documents.map(userMapper.toEntity);
+  }
+
   // Writes every field the domain can change; identity and createdAt never change.
   async save(user: User): Promise<void> {
     const { _id, createdAt, ...mutable } = userMapper.toDocument(user);

@@ -36,11 +36,27 @@ export class SignupUseCase implements UseCase<SignupCommand, SignupResult> {
     assertPasswordAllowed(command.password);
     if (await users.findActiveByProvider('EMAIL', email.value)) throw AuthErrors.emailTaken();
 
+    let advisorId: string | null = null;
+    if (command.advisorCode && command.advisorCode.trim().length > 0) {
+      const rawCode = command.advisorCode.trim();
+      const candidateId = rawCode.startsWith('ADV-') ? rawCode.slice(4) : rawCode;
+      const advisor = candidateId.includes('@')
+        ? await users.findActiveByProvider('EMAIL', candidateId)
+        : await users.findActiveById(candidateId);
+      if (advisor && (advisor.roles.includes('ADVISOR') || advisor.roles.includes('ADMIN'))) {
+        advisorId = advisor.id;
+      }
+    }
+
+    const roles = command.clientRole === 'ADVISOR' ? (['USER', 'ADVISOR'] as const) : (['USER'] as const);
     const now = clock.now();
+
     const user = User.registerWithEmail({
       id: ids.next(),
       // Signup provisions no tenant of its own, so the account joins the one tenant the deployment runs.
       tenantId: DEFAULT_TENANT_ID,
+      advisorId,
+      roles: [...roles],
       email,
       passwordHash: await hasher.hash(command.password),
       displayName: command.displayName,

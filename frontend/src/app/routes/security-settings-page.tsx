@@ -9,6 +9,7 @@ import { Spinner } from '../../components/ui/spinner.tsx';
 import { useDeleteAccount } from '../../features/auth/api/use-delete-account.ts';
 import { useLogout } from '../../features/auth/api/use-logout.ts';
 import { useMe } from '../../features/auth/api/use-me.ts';
+import { ConnectedAdvisorCard } from '../../features/advisor/components/connected-advisor-card.tsx';
 import { setPreferredCurrency, useProfile, wipeUserDataFromBrowser } from '../../features/profiling/profile-store.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { SettingsNav } from './settings-nav.tsx';
@@ -43,6 +44,8 @@ export function SecuritySettingsPage() {
           </dl>
         )}
       </Card>
+
+      <ConnectedAdvisorCard />
 
       <Card aria-label={strings['security.tiers']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.tiers']}</h2>

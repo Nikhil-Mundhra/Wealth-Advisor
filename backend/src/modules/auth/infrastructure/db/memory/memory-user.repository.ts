@@ -6,7 +6,11 @@ import { userMapper } from '../mappers/user.mapper.ts';
 // UserRepositoryPort in process memory for local runs without a database. Stores mapper output, so the same
 // mapping and invariants apply as on MongoDB; active-provider uniqueness mirrors the partial unique index.
 export class MemoryUserRepository implements UserRepositoryPort {
-  private readonly documents = new Map<string, UserDocument>();
+  private readonly documents: Map<string, UserDocument>;
+
+  constructor(documents?: Map<string, UserDocument>) {
+    this.documents = documents ?? new Map<string, UserDocument>();
+  }
 
   async insert(user: User): Promise<InsertUserOutcome> {
     const document = userMapper.toDocument(user);
@@ -26,6 +30,16 @@ export class MemoryUserRepository implements UserRepositoryPort {
   async findActiveById(id: string): Promise<User | null> {
     const document = this.documents.get(id);
     return document && document.status === 'ACTIVE' ? userMapper.toEntity(document) : null;
+  }
+
+  async findClientsByAdvisorId(advisorId: string): Promise<User[]> {
+    const clients: User[] = [];
+    for (const doc of this.documents.values()) {
+      if (doc.status === 'ACTIVE' && doc.advisorId?.toHexString() === advisorId) {
+        clients.push(userMapper.toEntity(doc));
+      }
+    }
+    return clients;
   }
 
   async save(user: User): Promise<void> {

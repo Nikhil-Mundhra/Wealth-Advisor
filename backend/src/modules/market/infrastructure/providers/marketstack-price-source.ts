@@ -35,7 +35,7 @@ const EodPage = z.object({
 });
 
 export interface MarketstackConfig {
-  readonly accessKey: string | undefined;
+  readonly accessKey: string | (() => Promise<string | undefined> | string | undefined) | undefined;
   readonly http: HttpClient;
   readonly budget: RequestBudget;
   readonly baseUrl?: string;
@@ -47,7 +47,7 @@ export function createMarketstackPriceSource(config: MarketstackConfig): PriceSo
   const baseUrl = config.baseUrl ?? MARKETSTACK_BASE_URL;
   return {
     async fetchEndOfDay(symbols, from, to) {
-      const accessKey = config.accessKey;
+      const accessKey = typeof config.accessKey === 'function' ? await config.accessKey() : config.accessKey;
       if (!accessKey) throw MarketErrors.providerNotConfigured(MARKETSTACK);
       const prices: Price[] = [];
       for (let page = 0; page < MARKETSTACK_MAX_PAGES; page += 1) {

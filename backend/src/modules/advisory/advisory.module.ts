@@ -15,6 +15,7 @@ export interface AdvisoryModuleDeps {
   finance: FinanceApi;
   wealth: WealthApi;
   getActiveProvider?: () => Promise<LlmProvider>;
+  getPlatformKeys?: () => Promise<{ gemini?: string; openai?: string; anthropic?: string }>;
   auth: MiddlewareHandler;
 }
 
@@ -24,9 +25,15 @@ export function createAdvisoryModule(
 ): { manifest: ModuleManifest; api: AdvisoryApi } {
   const currentEnv = env();
   const gateway = new LlmGateway({
-    geminiApiKey: currentEnv.GEMINI_API_KEY,
-    openaiApiKey: currentEnv.OPENAI_API_KEY,
-    anthropicApiKey: currentEnv.ANTHROPIC_API_KEY,
+    geminiApiKey: deps.getPlatformKeys
+      ? async () => (await deps.getPlatformKeys?.())?.gemini ?? currentEnv.GEMINI_API_KEY
+      : currentEnv.GEMINI_API_KEY,
+    openaiApiKey: deps.getPlatformKeys
+      ? async () => (await deps.getPlatformKeys?.())?.openai ?? currentEnv.OPENAI_API_KEY
+      : currentEnv.OPENAI_API_KEY,
+    anthropicApiKey: deps.getPlatformKeys
+      ? async () => (await deps.getPlatformKeys?.())?.anthropic ?? currentEnv.ANTHROPIC_API_KEY
+      : currentEnv.ANTHROPIC_API_KEY,
     http: context.http,
   });
   const api = createAdvisoryApi({

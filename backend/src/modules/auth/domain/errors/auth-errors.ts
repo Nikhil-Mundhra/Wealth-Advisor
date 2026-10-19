@@ -10,6 +10,7 @@ export const AuthErrors = {
   unauthenticated: () => new DomainError(C.unauthenticated, 'missing or invalid access token'),
   invalidEmail: () => new DomainError(C.invalidEmail, 'email address is invalid'),
   weakPassword: () => new DomainError(C.weakPassword, 'password does not meet the password policy'),
+  invalidAdvisorCode: () => new DomainError(C.invalidAdvisorCode, 'advisor invitation code is invalid or expired'),
   signingKeysMissing: () => new DomainError(C.signingKeysMissing, 'token signing keys are not configured'),
   invariantViolated: (detail: string) => new DomainError(C.invariantViolated, `auth invariant violated: ${detail}`),
 };

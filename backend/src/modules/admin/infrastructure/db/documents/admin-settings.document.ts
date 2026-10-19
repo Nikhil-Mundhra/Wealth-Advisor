@@ -7,5 +7,9 @@ export interface AdminSettingsDocument {
   _id: ObjectId;
   key: string;
   activeLlmProvider: LlmProvider;
+  geminiApiKey?: string | null;
+  openaiApiKey?: string | null;
+  anthropicApiKey?: string | null;
+  marketstackAccessKey?: string | null;
   updatedAt: Date;
 }

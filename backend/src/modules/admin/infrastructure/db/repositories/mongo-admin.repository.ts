@@ -96,4 +96,33 @@ export class MongoAdminSettingsRepository implements AdminSettingsRepository {
       { upsert: true },
     );
   }
+
+  async getPlatformKeys() {
+    const doc = await (await this.col()).findOne({ key: 'platform_settings' });
+    return {
+      geminiApiKey: doc?.geminiApiKey ?? null,
+      openaiApiKey: doc?.openaiApiKey ?? null,
+      anthropicApiKey: doc?.anthropicApiKey ?? null,
+      marketstackAccessKey: doc?.marketstackAccessKey ?? null,
+    };
+  }
+
+  async updatePlatformKeys(keys: {
+    geminiApiKey?: string | null;
+    openaiApiKey?: string | null;
+    anthropicApiKey?: string | null;
+    marketstackAccessKey?: string | null;
+  }): Promise<void> {
+    const updateFields: Record<string, unknown> = { updatedAt: new Date() };
+    if (keys.geminiApiKey !== undefined) updateFields.geminiApiKey = keys.geminiApiKey;
+    if (keys.openaiApiKey !== undefined) updateFields.openaiApiKey = keys.openaiApiKey;
+    if (keys.anthropicApiKey !== undefined) updateFields.anthropicApiKey = keys.anthropicApiKey;
+    if (keys.marketstackAccessKey !== undefined) updateFields.marketstackAccessKey = keys.marketstackAccessKey;
+
+    await (await this.col()).updateOne(
+      { key: 'platform_settings' },
+      { $set: updateFields },
+      { upsert: true },
+    );
+  }
 }

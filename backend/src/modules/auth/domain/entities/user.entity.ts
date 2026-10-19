@@ -35,6 +35,7 @@ export interface Withdrawal {
 
 export interface UserProps extends EntityProps {
   tenantId: string | null;
+  advisorId: string | null;
   email: Email;
   emailVerifiedAt: Date | null;
   passwordHash: string | null;
@@ -49,6 +50,7 @@ export interface UserProps extends EntityProps {
 interface RegisterWithEmailInput {
   id: string;
   tenantId?: string | null;
+  advisorId?: string | null;
   email: Email;
   passwordHash: string;
   displayName: string | null;
@@ -63,6 +65,7 @@ export class User extends BaseEntity<UserProps> {
       new User({
         id: input.id,
         tenantId: input.tenantId ?? null,
+        advisorId: input.advisorId ?? null,
         createdAt: input.now,
         updatedAt: input.now,
         email: input.email,
@@ -98,6 +101,10 @@ export class User extends BaseEntity<UserProps> {
     return this.props.tenantId;
   }
 
+  get advisorId(): string | null {
+    return this.props.advisorId;
+  }
+
   get email(): Email {
     return this.props.email;
   }
@@ -116,6 +123,24 @@ export class User extends BaseEntity<UserProps> {
 
   get isEmailVerified(): boolean {
     return this.props.emailVerifiedAt !== null;
+  }
+
+  assignAdvisor(advisorId: string | null, now: Date): void {
+    this.props.advisorId = advisorId;
+    this.props.updatedAt = now;
+    this.assertInvariants();
+  }
+
+  setPasswordHash(hash: string, now: Date): void {
+    this.props.passwordHash = hash;
+    this.props.updatedAt = now;
+    this.assertInvariants();
+  }
+
+  setRoles(roles: Role[], now: Date): void {
+    this.props.roles = [...roles];
+    this.props.updatedAt = now;
+    this.assertInvariants();
   }
 
   recordLogin(type: ProviderType, now: Date): void {

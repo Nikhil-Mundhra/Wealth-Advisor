@@ -7,6 +7,8 @@ export const SignupRequest = z.object({
   email: EmailField,
   password: NewPasswordField,
   displayName: DisplayNameField.optional(),
+  advisorCode: z.string().trim().optional().nullable(),
+  clientRole: z.enum(['USER', 'ADVISOR']).optional(),
 });
 export type SignupRequest = z.infer<typeof SignupRequest>;
 

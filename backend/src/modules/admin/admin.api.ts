@@ -1,27 +1,50 @@
 import { ObjectId } from 'mongodb';
-import { LLM_PROVIDERS, type LlmProvider } from '@wealth-advisor/rules';
+import { LLM_PROVIDERS, type LlmProvider, type Role } from '@wealth-advisor/rules';
 import type {
+  AdminModelSettingDto,
+  AdminResetPasswordRequest,
   AdminSettingsResponse,
+  AdminUserDto,
+  AdminUserListResponse,
+  AdminUserQueryRequest,
   ApiKeyCreatedResponse,
   ApiKeyDto,
   ApiKeyListResponse,
+  CreateAdminUserRequest,
   CreateApiKeyRequest,
   CreateTenantRequest,
+  PlatformKeyStatusDto,
+  PlatformKeysStatusDto,
   TenantDto,
   TenantListResponse,
+  UpdateAdminUserRequest,
+  UpdatePlatformKeysRequest,
 } from '@wealth-advisor/contracts';
+import { env } from '#core/config/env.ts';
 import { generateOpaqueToken } from '#core/crypto/random-token.ts';
 import { sha256Hex } from '#core/crypto/sha256.ts';
 import type { Clock } from '#core/time/clock.ts';
-import type { AdminSettingsRepository, ApiKeyRepository, TenantRepository } from './application/ports.ts';
+import type {
+  AdminSettingsRepository,
+  AdminUserRecord,
+  AdminUserRepository,
+  ApiKeyRepository,
+  TenantRepository,
+} from './application/ports.ts';
 import { AdminErrors } from './domain/errors/admin-errors.ts';
 import type { ApiKeyDocument } from './infrastructure/db/documents/api-key.document.ts';
 import type { TenantDocument } from './infrastructure/db/documents/tenant.document.ts';
+
+export interface AdminPasswordHasher {
+  hash(password: string): Promise<string>;
+}
 
 export interface AdminApiDeps {
   tenants: TenantRepository;
   apiKeys: ApiKeyRepository;
   settings: AdminSettingsRepository;
+  users?: AdminUserRepository;
+  hasher?: AdminPasswordHasher;
   clock: Clock;
 }
 
@@ -61,8 +84,59 @@ function toApiKeyDto(doc: ApiKeyDocument): ApiKeyDto {
   };
 }
 
+function toAdminUserDto(user: AdminUserRecord): AdminUserDto {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    roles: [...user.roles],
+    status: user.status,
+    tenantId: user.tenantId,
+    emailVerified: user.emailVerified,
+    providers: user.providers.map((p) => ({
+      type: p.type,
+      subject: p.subject,
+      email: p.email,
+      linkedAt: p.linkedAt.toISOString(),
+      lastLoginAt: p.lastLoginAt ? p.lastLoginAt.toISOString() : null,
+    })),
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+  };
+}
+
+function maskKey(key?: string | null): string | null {
+  if (!key) return null;
+  const trimmed = key.trim();
+  if (!trimmed) return null;
+  if (trimmed.length <= 8) return '****';
+  return `${trimmed.slice(0, 4)}...${trimmed.slice(-4)}`;
+}
+
+function resolveKeyStatus(dbKey?: string | null, envKey?: string | null): PlatformKeyStatusDto {
+  if (dbKey && dbKey.trim().length > 0) {
+    return {
+      configured: true,
+      source: 'db',
+      maskedKey: maskKey(dbKey),
+    };
+  }
+  if (envKey && envKey.trim().length > 0) {
+    return {
+      configured: true,
+      source: 'env',
+      maskedKey: maskKey(envKey),
+    };
+  }
+  return {
+    configured: false,
+    source: 'none',
+    maskedKey: null,
+  };
+}
+
 export function createAdminApi(deps: AdminApiDeps) {
-  const { tenants, apiKeys, settings, clock } = deps;
+  const { tenants, apiKeys, settings, users, hasher, clock } = deps;
 
   return {
     async listTenants(): Promise<TenantListResponse> {
@@ -137,10 +211,18 @@ export function createAdminApi(deps: AdminApiDeps) {
 
     async getSettings(): Promise<AdminSettingsResponse> {
       const active = await settings.getActiveLlmProvider();
+      const dbKeys = await settings.getPlatformKeys();
+      const currentEnv = env();
       return {
         modelSettings: {
           activeProvider: active,
           availableProviders: [...LLM_PROVIDERS],
+        },
+        platformKeys: {
+          gemini: resolveKeyStatus(dbKeys.geminiApiKey, currentEnv.GEMINI_API_KEY),
+          openai: resolveKeyStatus(dbKeys.openaiApiKey, currentEnv.OPENAI_API_KEY),
+          anthropic: resolveKeyStatus(dbKeys.anthropicApiKey, currentEnv.ANTHROPIC_API_KEY),
+          marketstack: resolveKeyStatus(dbKeys.marketstackAccessKey, currentEnv.MARKETSTACK_ACCESS_KEY),
         },
         systemHealth: {
           status: 'ok',
@@ -157,6 +239,63 @@ export function createAdminApi(deps: AdminApiDeps) {
         activeProvider: provider,
         availableProviders: [...LLM_PROVIDERS],
       };
+    },
+
+    async updatePlatformKeys(input: UpdatePlatformKeysRequest): Promise<PlatformKeysStatusDto> {
+      const keysToUpdate: Record<string, string | null> = {};
+      if (input.geminiApiKey !== undefined) {
+        keysToUpdate.geminiApiKey = input.geminiApiKey && input.geminiApiKey.trim().length > 0 ? input.geminiApiKey.trim() : null;
+      }
+      if (input.openaiApiKey !== undefined) {
+        keysToUpdate.openaiApiKey = input.openaiApiKey && input.openaiApiKey.trim().length > 0 ? input.openaiApiKey.trim() : null;
+      }
+      if (input.anthropicApiKey !== undefined) {
+        keysToUpdate.anthropicApiKey = input.anthropicApiKey && input.anthropicApiKey.trim().length > 0 ? input.anthropicApiKey.trim() : null;
+      }
+      if (input.marketstackAccessKey !== undefined) {
+        keysToUpdate.marketstackAccessKey = input.marketstackAccessKey && input.marketstackAccessKey.trim().length > 0 ? input.marketstackAccessKey.trim() : null;
+      }
+      await settings.updatePlatformKeys(keysToUpdate);
+      const updated = await settings.getPlatformKeys();
+      const currentEnv = env();
+      return {
+        gemini: resolveKeyStatus(updated.geminiApiKey, currentEnv.GEMINI_API_KEY),
+        openai: resolveKeyStatus(updated.openaiApiKey, currentEnv.OPENAI_API_KEY),
+        anthropic: resolveKeyStatus(updated.anthropicApiKey, currentEnv.ANTHROPIC_API_KEY),
+        marketstack: resolveKeyStatus(updated.marketstackAccessKey, currentEnv.MARKETSTACK_ACCESS_KEY),
+      };
+    },
+
+    async getPlatformKey(name: 'gemini' | 'openai' | 'anthropic' | 'marketstack'): Promise<string | undefined> {
+      const dbKeys = await settings.getPlatformKeys();
+      const currentEnv = env();
+      if (name === 'gemini') {
+        if (dbKeys.geminiApiKey && dbKeys.geminiApiKey.trim().length > 0) return dbKeys.geminiApiKey.trim();
+        return currentEnv.GEMINI_API_KEY;
+      }
+      if (name === 'openai') {
+        if (dbKeys.openaiApiKey && dbKeys.openaiApiKey.trim().length > 0) return dbKeys.openaiApiKey.trim();
+        return currentEnv.OPENAI_API_KEY;
+      }
+      if (name === 'anthropic') {
+        if (dbKeys.anthropicApiKey && dbKeys.anthropicApiKey.trim().length > 0) return dbKeys.anthropicApiKey.trim();
+        return currentEnv.ANTHROPIC_API_KEY;
+      }
+      if (name === 'marketstack') {
+        if (dbKeys.marketstackAccessKey && dbKeys.marketstackAccessKey.trim().length > 0) return dbKeys.marketstackAccessKey.trim();
+        return currentEnv.MARKETSTACK_ACCESS_KEY;
+      }
+      return undefined;
+    },
+
+    async getPlatformKeys(): Promise<{ gemini?: string; openai?: string; anthropic?: string; marketstack?: string }> {
+      const [gemini, openai, anthropic, marketstack] = await Promise.all([
+        this.getPlatformKey('gemini'),
+        this.getPlatformKey('openai'),
+        this.getPlatformKey('anthropic'),
+        this.getPlatformKey('marketstack'),
+      ]);
+      return { gemini, openai, anthropic, marketstack };
     },
 
     async findTenantById(id: string) {
@@ -177,6 +316,100 @@ export function createAdminApi(deps: AdminApiDeps) {
 
     async getActiveProvider(): Promise<LlmProvider> {
       return settings.getActiveLlmProvider();
+    },
+
+    async listUsers(query?: AdminUserQueryRequest): Promise<AdminUserListResponse> {
+      if (!users) return { users: [], total: 0 };
+      const all = await users.findAll({
+        query: query?.q,
+        role: query?.role,
+        status: query?.status,
+        tenantId: query?.tenantId,
+      });
+      return {
+        users: all.map(toAdminUserDto),
+        total: all.length,
+      };
+    },
+
+    async getUser(id: string): Promise<AdminUserDto> {
+      if (!users) throw AdminErrors.userNotFound(id);
+      const user = await users.findById(id);
+      if (!user) throw AdminErrors.userNotFound(id);
+      return toAdminUserDto(user);
+    },
+
+    async createUser(input: CreateAdminUserRequest): Promise<AdminUserDto> {
+      if (!users) throw AdminErrors.invariantViolated('user repository unconfigured');
+      const existing = await users.findByEmail(input.email);
+      if (existing) throw AdminErrors.emailTaken(input.email);
+
+      if (input.tenantId) {
+        const tenant = await tenants.findById(input.tenantId);
+        if (!tenant) throw AdminErrors.tenantNotFound(input.tenantId);
+      }
+
+      const passwordHash = hasher
+        ? await hasher.hash(input.password)
+        : sha256Hex(input.password);
+
+      const created = await users.create({
+        email: input.email,
+        displayName: input.displayName ?? null,
+        passwordHash,
+        roles: (input.roles as Role[]) ?? ['USER'],
+        tenantId: input.tenantId ?? null,
+      });
+
+      return toAdminUserDto(created);
+    },
+
+    async updateUser(id: string, input: UpdateAdminUserRequest): Promise<AdminUserDto> {
+      if (!users) throw AdminErrors.userNotFound(id);
+      const existing = await users.findById(id);
+      if (!existing) throw AdminErrors.userNotFound(id);
+
+      if (input.tenantId) {
+        const tenant = await tenants.findById(input.tenantId);
+        if (!tenant) throw AdminErrors.tenantNotFound(input.tenantId);
+      }
+
+      const updated = await users.update(id, {
+        displayName: input.displayName,
+        roles: input.roles as Role[],
+        status: input.status,
+        tenantId: input.tenantId,
+        emailVerified: input.emailVerified,
+      });
+
+      if (!updated) throw AdminErrors.userNotFound(id);
+      return toAdminUserDto(updated);
+    },
+
+    async deleteUser(id: string, currentAdminUserId?: string): Promise<void> {
+      if (!users) throw AdminErrors.userNotFound(id);
+      if (currentAdminUserId && currentAdminUserId === id) {
+        throw AdminErrors.cannotDeleteSelf();
+      }
+      const existing = await users.findById(id);
+      if (!existing) throw AdminErrors.userNotFound(id);
+      const ok = await users.delete(id);
+      if (!ok) throw AdminErrors.userNotFound(id);
+    },
+
+    async resetUserPassword(id: string, input: AdminResetPasswordRequest): Promise<AdminUserDto> {
+      if (!users) throw AdminErrors.userNotFound(id);
+      const existing = await users.findById(id);
+      if (!existing) throw AdminErrors.userNotFound(id);
+
+      const passwordHash = hasher
+        ? await hasher.hash(input.password)
+        : sha256Hex(input.password);
+
+      await users.updatePassword(id, passwordHash);
+      const refreshed = await users.findById(id);
+      if (!refreshed) throw AdminErrors.userNotFound(id);
+      return toAdminUserDto(refreshed);
     },
   };
 }

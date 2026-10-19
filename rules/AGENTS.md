@@ -41,7 +41,7 @@ rules/src/permission-tier.rule.ts : PERMISSION_TIERS, PermissionTier, isPermissi
 rules/src/portfolio-optimizer.rule.ts : RISK_TIERS, TIER_COMPOSITE_WEIGHTS, calculateCompositeSecurityScore, solveConstrainedPortfolio, runMonteCarloSimulation, runPortfolioStressTests, constructOptimalPortfolio
 rules/src/profiling.rule.ts : PROFILING_QUESTIONS, per-currency holdings, calculateBaseRiskScore, mapStressAnswerToRiskBand, deriveTimeHorizonYears, deriveCorridorCurrencies
 rules/src/refresh-token.rule.ts : byte count, base64url pattern, isRefreshToken
-rules/src/role.rule.ts : ROLES, Role, ADMIN_ROLE, DEFAULT_ROLES
+rules/src/role.rule.ts : ROLES (USER, ADVISOR, ADMIN), Role, ADVISOR_ROLE, ADMIN_ROLE, DEFAULT_ROLES, USER_STATUSES, UserStatus, hasAdvisorRole
 rules/src/technical-analysis.rule.ts : TECHNICAL_INDICATOR_WEIGHTS, normalizeRsi, normalizeMovingAverages, normalizeMacd, normalizeBollinger, normalizeAdx, calculateTechnicalScore
 rules/src/tenant.rule.ts : TENANT_PLANS, TENANT_STATUSES, API_KEY_PERMISSIONS, API_KEY_STATUSES
 rules/src/validation-keys.ts : VALIDATION_KEYS, ValidationKey, isValidationKey

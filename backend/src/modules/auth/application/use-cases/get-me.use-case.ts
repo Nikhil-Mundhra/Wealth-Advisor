@@ -25,6 +25,7 @@ export class GetMeUseCase implements UseCase<GetMeQuery, UserProfileResult> {
       displayName: user.displayName,
       roles: [...user.roles],
       emailVerified: user.isEmailVerified,
+      advisorId: user.advisorId,
       createdAt: user.createdAt,
     };
   }

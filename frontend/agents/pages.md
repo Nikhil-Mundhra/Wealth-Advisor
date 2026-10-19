@@ -19,10 +19,15 @@ frontend/src/app/route-guards.test.tsx : admins pass, other roles redirect home
 frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status; AdminRoute checks the admin role
 frontend/src/app/router.tsx : route table: /home (public); /signup, /login (guest); / (root HomePage or Dashboard); /onboarding /portfolio /cashflow /advisory /evidence /settings/security /settings/ledger /settings/ai /admin* (protected); /share/:token (public)
 frontend/src/app/routes/admin-api-keys-page.tsx : API key issuance placeholder pending the tenant module
+frontend/src/app/routes/admin-credentials-page.tsx : demo persona accounts and credentials reference tab
+frontend/src/app/routes/admin-login-page.tsx : operator authentication portal for platform administrators
 frontend/src/app/routes/admin-models-page.tsx : runtime LLM provider list with the mock active
 frontend/src/app/routes/admin-page.tsx : admin overview linking tenants, API keys, models
 frontend/src/app/routes/admin-pages.test.tsx : overview links and provider list
 frontend/src/app/routes/admin-tenants-page.tsx : tenant provisioning placeholder pending the tenant module
+frontend/src/app/routes/admin-users-page.tsx : admin user account management, filtering, and role/status mutations
+frontend/src/app/routes/advisor-login-page.tsx : institutional login terminal for fiduciary wealth analysts
+frontend/src/app/routes/advisor-workstation-page.tsx : wealth analyst workstation with client roster, AUM summaries, and invitation links
 frontend/src/app/routes/advisory-page.test.tsx : thread, step-up gate, and no-auth degradation
 frontend/src/app/routes/advisory-page.tsx : copilot thread, rebalance card, biometric step-up modal
 frontend/src/app/routes/ai-settings-page.test.tsx : user API key input, model selection, toast notification, and persistence tests
@@ -58,11 +63,24 @@ frontend/src/assets/auth-portrait-5.jpg : auth panel portrait photo 5 (collabora
 frontend/src/assets/logo-dark.png : institutional network graph logo mark for dark theme
 frontend/src/assets/logo.png : institutional network graph logo mark for light theme
 frontend/src/assets/market-shock.jpg : late-night market downturn and volatility photo
+frontend/src/features/admin/components/admin-nav-tabs.tsx : horizontal navigation bar across Admin console pages
+frontend/src/features/admin/components/credentials-tab.tsx : demo persona accounts and credentials reference card with one-click copy and direct login links
+frontend/src/features/admin/components/platform-keys-card.tsx : platform keys management card with runtime DB configuration and system ENV fallback
+frontend/src/features/admin/components/user-management/admin-create-user-modal.tsx : modal dialog for creating new user accounts with roles and tenant assignments
+frontend/src/features/admin/components/user-management/admin-delete-user-modal.tsx : confirmation dialog for user account deletion
+frontend/src/features/admin/components/user-management/admin-edit-user-modal.tsx : modal dialog for editing user profile, roles, status, and tenant
+frontend/src/features/admin/components/user-management/admin-reset-password-modal.tsx : modal dialog for administrative password reset
+frontend/src/features/admin/components/user-management/admin-user-stat-cards.tsx : user account metrics and status breakdown cards
+frontend/src/features/admin/components/user-management/admin-users-filters.tsx : search bar and dropdown filters for role, status, and tenant
+frontend/src/features/admin/components/user-management/admin-users-table.tsx : table displaying user accounts, role badges, status chips, and action menus
 frontend/src/features/advisor/advisor-store.ts : reactive advisor store for active client selection using useSyncExternalStore
 frontend/src/features/advisor/clients-data.ts : seeded expat clients dataset with holdings, accounts, and pre-meeting briefs
+frontend/src/features/advisor/components/client-portfolio-modal.tsx : read-only client portfolio surveillance modal for wealth analysts
 frontend/src/features/advisor/components/client-roster.tsx : interactive advisor client book roster cards
 frontend/src/features/advisor/components/client-selector.tsx : header client switcher with household mode and quick actions
+frontend/src/features/advisor/components/connected-advisor-card.tsx : client settings card showing connected wealth analyst or invite delegation code entry
 frontend/src/features/advisor/components/instrument-comparison-modal.tsx : institutional UCITS instruments comparison matrix
+frontend/src/features/advisor/components/invite-client-modal.tsx : modal for generating unique client delegation onboarding links
 frontend/src/features/advisor/components/pre-meeting-brief-modal.tsx : 30-second advisor pre-meeting briefing modal
 frontend/src/features/advisor/instruments-data.ts : institutional UCITS etf and money market product comparison dataset
 frontend/src/features/advisor/types.ts : advisor domain types for clients, holdings, accounts, and briefs

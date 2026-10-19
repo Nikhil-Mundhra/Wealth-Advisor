@@ -18,12 +18,20 @@ const me = {
 describe('SecuritySettingsPage', () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    if (url.includes('/api/auth/me/advisor')) {
+      return new Response(JSON.stringify(null), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (url.includes('/api/auth/me') && init?.method === 'DELETE') {
+      return new Response(null, { status: 204 });
+    }
+    return new Response(JSON.stringify(me), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+
   it('shows the session, the tier ladder, and the passkey empty state', async () => {
     setLocale('en');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(JSON.stringify(me), { status: 200, headers: { 'content-type': 'application/json' } })),
-    );
+    vi.stubGlobal('fetch', mockFetch);
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter>
@@ -43,10 +51,7 @@ describe('SecuritySettingsPage', () => {
 
   it('allows configuring global reporting currency', async () => {
     setLocale('en');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(JSON.stringify(me), { status: 200, headers: { 'content-type': 'application/json' } })),
-    );
+    vi.stubGlobal('fetch', mockFetch);
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter>
@@ -69,14 +74,7 @@ describe('SecuritySettingsPage', () => {
     window.localStorage.setItem('dewa_preferred_currency_elena@example.eu', 'EUR');
     window.sessionStorage.setItem('dewa_profile_draft_elena@example.eu', JSON.stringify({ draft: true }));
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input.toString();
-      if (url.includes('/api/auth/me') && init?.method === 'DELETE') {
-        return new Response(null, { status: 204 });
-      }
-      return new Response(JSON.stringify(me), { status: 200, headers: { 'content-type': 'application/json' } });
-    });
-    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('fetch', mockFetch);
 
     render(
       <QueryClientProvider client={new QueryClient()}>
@@ -102,14 +100,14 @@ describe('SecuritySettingsPage', () => {
     const cancelBtn = screen.getByRole('button', { name: 'Cancel' });
     await userEvent.click(cancelBtn);
     expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open');
-    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('/api/auth/me'), expect.objectContaining({ method: 'DELETE' }));
+    expect(mockFetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/auth/me'), expect.objectContaining({ method: 'DELETE' }));
 
     // Reopen and confirm
     await userEvent.click(deleteBtn);
     const confirmBtn = screen.getByRole('button', { name: 'Yes, delete account' });
     await userEvent.click(confirmBtn);
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/auth/me'),
       expect.objectContaining({ method: 'DELETE' }),
     );

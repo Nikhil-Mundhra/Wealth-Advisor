@@ -7,6 +7,7 @@ export interface UserRepositoryPort {
   insert(user: User): Promise<InsertUserOutcome>;
   findActiveByProvider(type: ProviderType, subject: string): Promise<User | null>;
   findActiveById(id: string): Promise<User | null>;
+  findClientsByAdvisorId(advisorId: string): Promise<User[]>;
   save(user: User): Promise<void>;
   deleteById(id: string): Promise<boolean>;
 }

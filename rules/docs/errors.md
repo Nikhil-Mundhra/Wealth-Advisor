@@ -42,6 +42,7 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `AU_1006` | 400 | email address is invalid |
 | `AU_1007` | 400 | password does not meet the password policy |
 | `AU_1008` | 401 | passkey verification failed |
+| `AU_1009` | 400 | advisor invitation code is invalid or expired |
 | `AU_1900` | 500 | auth invariant violated |
 | `AU_1901` | 503 | token signing keys are not configured |
 | `MK_1001` | 401 | cron secret missing or wrong |
@@ -56,6 +57,9 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `AD_1003` | 409 | a tenant with this `slug` already exists |
 | `AD_1004` | 403 | admin role required |
 | `AD_1005` | 400 | LLM provider not in `LLM_PROVIDERS` |
+| `AD_1006` | 404 | user not found |
+| `AD_1007` | 409 | a user with this email already exists |
+| `AD_1008` | 400 | cannot delete or withdraw self |
 | `AD_1900` | 500 | admin invariant violated |
 | `FN_1001` | 404 | account not found |
 | `FN_1002` | 400 | currency not supported |

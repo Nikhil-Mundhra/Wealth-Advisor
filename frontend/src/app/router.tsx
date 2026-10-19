@@ -1,9 +1,14 @@
 import { Navigate, createBrowserRouter } from 'react-router';
-import { AdminRoute, GuestRoute, ProtectedRoute } from './route-guards.tsx';
+import { AdminRoute, AdvisorRoute, GuestRoute, ProtectedRoute } from './route-guards.tsx';
 import { AdminApiKeysPage } from './routes/admin-api-keys-page.tsx';
+import { AdminCredentialsPage } from './routes/admin-credentials-page.tsx';
+import { AdminLoginPage } from './routes/admin-login-page.tsx';
 import { AdminModelsPage } from './routes/admin-models-page.tsx';
 import { AdminPage } from './routes/admin-page.tsx';
 import { AdminTenantsPage } from './routes/admin-tenants-page.tsx';
+import { AdminUsersPage } from './routes/admin-users-page.tsx';
+import { AdvisorLoginPage } from './routes/advisor-login-page.tsx';
+import { AdvisorWorkstationPage } from './routes/advisor-workstation-page.tsx';
 import { AdvisoryPage } from './routes/advisory-page.tsx';
 import { CashflowPage } from './routes/cashflow-page.tsx';
 import { DashboardPage } from './routes/dashboard-page.tsx';
@@ -22,6 +27,8 @@ import { AppShell } from '../components/layout/app-shell.tsx';
 
 export const router = createBrowserRouter([
   { path: '/home', element: <HomePage />, errorElement: <RouteErrorBoundary /> },
+  { path: '/admin/login', element: <AdminLoginPage />, errorElement: <RouteErrorBoundary /> },
+  { path: '/advisor/login', element: <AdvisorLoginPage />, errorElement: <RouteErrorBoundary /> },
   {
     element: <GuestRoute />,
     errorElement: <RouteErrorBoundary />,
@@ -54,9 +61,15 @@ export const router = createBrowserRouter([
           { path: '/settings/ledger', element: <SettingsLedgerPage /> },
           { path: '/settings/ai', element: <AiSettingsPage /> },
           {
+            element: <AdvisorRoute />,
+            children: [{ path: '/advisor', element: <AdvisorWorkstationPage /> }],
+          },
+          {
             element: <AdminRoute />,
             children: [
               { path: '/admin', element: <AdminPage /> },
+              { path: '/admin/users', element: <AdminUsersPage /> },
+              { path: '/admin/credentials', element: <AdminCredentialsPage /> },
               { path: '/admin/tenants', element: <AdminTenantsPage /> },
               { path: '/admin/api-keys', element: <AdminApiKeysPage /> },
               { path: '/admin/models', element: <AdminModelsPage /> },

@@ -1,14 +1,22 @@
 import type { MiddlewareHandler } from 'hono';
 import {
   AdminModelSettingDto,
+  AdminResetPasswordRequest,
   AdminSettingsResponse,
+  AdminUserDto,
+  AdminUserListResponse,
+  AdminUserQueryRequest,
   ApiKeyCreatedResponse,
   ApiKeyListResponse,
+  CreateAdminUserRequest,
   CreateApiKeyRequest,
   CreateTenantRequest,
+  PlatformKeysStatusDto,
   TenantDto,
   TenantListResponse,
   UpdateAdminModelRequest,
+  UpdateAdminUserRequest,
+  UpdatePlatformKeysRequest,
 } from '@wealth-advisor/contracts';
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
 import type { AdminApi } from '../../admin.api.ts';
@@ -63,5 +71,48 @@ export function adminRoutes(deps: AdminRoutesDeps): readonly RouteDefinition[] {
       .body(UpdateAdminModelRequest)
       .responds(AdminModelSettingDto)
       .handle(async ({ body }) => api.updateModelProvider(body.provider)),
+
+    RouteBuilder.patch('/models/keys')
+      .use(...guard)
+      .body(UpdatePlatformKeysRequest)
+      .responds(PlatformKeysStatusDto)
+      .handle(async ({ body }) => api.updatePlatformKeys(body)),
+
+    RouteBuilder.get('/users')
+      .use(...guard)
+      .query(AdminUserQueryRequest)
+      .responds(AdminUserListResponse)
+      .handle(async ({ query }) => api.listUsers(query)),
+
+    RouteBuilder.post('/users')
+      .use(...guard)
+      .body(CreateAdminUserRequest)
+      .responds(AdminUserDto, 201)
+      .handle(async ({ body }) => api.createUser(body)),
+
+    RouteBuilder.get('/users/:id')
+      .use(...guard)
+      .responds(AdminUserDto)
+      .handle(async ({ c }) => api.getUser(c.req.param('id') ?? '')),
+
+    RouteBuilder.patch('/users/:id')
+      .use(...guard)
+      .body(UpdateAdminUserRequest)
+      .responds(AdminUserDto)
+      .handle(async ({ c, body }) => api.updateUser(c.req.param('id') ?? '', body)),
+
+    RouteBuilder.delete('/users/:id')
+      .use(...guard)
+      .handle(async ({ c }) => {
+        const principal = c.get('principal');
+        const id = c.req.param('id') ?? '';
+        await api.deleteUser(id, principal?.userId);
+      }),
+
+    RouteBuilder.post('/users/:id/reset-password')
+      .use(...guard)
+      .body(AdminResetPasswordRequest)
+      .responds(AdminUserDto)
+      .handle(async ({ c, body }) => api.resetUserPassword(c.req.param('id') ?? '', body)),
   ];
 }

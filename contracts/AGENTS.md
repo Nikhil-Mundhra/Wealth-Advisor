@@ -16,6 +16,8 @@
 ```
 contracts/package.json : exports src/index.ts directly (no build step)
 contracts/src/admin/admin-settings.contract.ts : admin settings and model provider contracts
+contracts/src/admin/admin-user.contract.ts : admin user management DTOs, query, create, update, and reset password contracts
+contracts/src/advisor/advisor-invite.contract.ts : wealth analyst client invitations and delegation connection contracts
 contracts/src/advisory/advisory-chat.contract.ts : advisory copilot chat request and response contracts
 contracts/src/analytics/snapshot.contract.ts : market snapshot query (optional asOf) and response (asOf, symbols, annualized means, volatilities, covariance, window)
 contracts/src/auth/login.contract.ts : login request (email, password, clientType default WEB, rememberMe)

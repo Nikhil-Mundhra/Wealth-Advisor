@@ -1,5 +1,6 @@
 import { DEFAULT_TENANT_ID, DEFAULT_USER_ID } from '#core/db/document-id.ts';
 import { ObjectId } from 'mongodb';
+import { type Currency } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
 import { closeMongoClient, getDb } from '#core/db/connection/mongo-client.ts';
 import { objectIdGenerator } from '#core/db/ids/object-id-generator.ts';
@@ -8,7 +9,7 @@ import { type TenantDocument, TENANTS_COLLECTION } from '#modules/admin/infrastr
 import { ScryptPasswordHasher } from '#modules/auth/infrastructure/crypto/scrypt-password-hasher.ts';
 import { type UserDocument, USERS_COLLECTION } from '#modules/auth/infrastructure/db/documents/user.document.ts';
 import { MongoUserRepository } from '#modules/auth/infrastructure/db/repositories/mongo-user.repository.ts';
-import { DEMO_EMAIL, seedDemoUser } from '#modules/auth/infrastructure/db/seed/demo-user.seed.ts';
+import { DEMO_ACCOUNTS, DEMO_EMAIL, seedDemoUser } from '#modules/auth/infrastructure/db/seed/demo-user.seed.ts';
 import { type AccountDocument, ACCOUNTS_COLLECTION } from '#modules/finance/infrastructure/db/documents/account.document.ts';
 import { type TransactionDocument, TRANSACTIONS_COLLECTION } from '#modules/finance/infrastructure/db/documents/transaction.document.ts';
 import { type SharedPlanDocument, SHARED_PLANS_COLLECTION } from '#modules/sharing/infrastructure/db/documents/shared-plan.document.ts';
@@ -25,10 +26,13 @@ const now = systemClock.now();
 const defaultTenantId = new ObjectId(DEFAULT_TENANT_ID);
 const demoUserId = new ObjectId(DEFAULT_USER_ID);
 
-// 1. Seed demo user
+// 1. Seed demo user accounts (Admin, Advisors, Clients)
 const users = new MongoUserRepository(async () => db.collection<UserDocument>(USERS_COLLECTION), systemClock);
 const outcome = await seedDemoUser(users, new ScryptPasswordHasher(), objectIdGenerator, systemClock);
-console.log(`demo account ${outcome === 'created' ? 'created' : 'already exists'}: ${DEMO_EMAIL}`);
+console.log(`demo accounts ${outcome === 'created' ? 'created' : 'upserted'}:`);
+for (const acc of DEMO_ACCOUNTS) {
+  console.log(`  - [${acc.roles.join(', ')}] ${acc.displayName} <${acc.email}> : ${acc.password}`);
+}
 
 // 2. Seed demo tenant
 const tenantsCol = db.collection<TenantDocument>(TENANTS_COLLECTION);
@@ -238,20 +242,16 @@ if ((await productsCol.countDocuments()) === 0) {
   console.log('demo asset products created');
 }
 
-// 6. Seed portfolio
+// 6. Seed portfolios
 const portfoliosCol = db.collection<PortfolioDocument>(PORTFOLIOS_COLLECTION);
-if ((await portfoliosCol.countDocuments()) === 0) {
-  await portfoliosCol.insertOne({
-    _id: new ObjectId(),
-    tenantId: defaultTenantId,
-    userId: demoUserId,
+const clientPortfolios = [
+  {
+    userId: demoUserId, // Elena Vance (500000000000000000000001)
     baseCurrency: 'EUR',
     totalValuationBase: 9500000,
     baseRiskScore: 7.0,
     effectiveRiskScore: 4.0,
     burnRateRunwayMonths: 3.2,
-    lastRebalancedAt: null,
-    updatedAt: now,
     holdings: [
       {
         assetSymbol: 'CSPX.LSE',
@@ -290,8 +290,129 @@ if ((await portfoliosCol.countDocuments()) === 0) {
         targetWeight: 0.25,
       },
     ],
-  });
-  console.log('demo portfolio created');
+  },
+  {
+    userId: new ObjectId('500000000000000000000002'), // Marcus Vance
+    baseCurrency: 'EUR',
+    totalValuationBase: 3250000,
+    baseRiskScore: 6.0,
+    effectiveRiskScore: 5.0,
+    burnRateRunwayMonths: 8.5,
+    holdings: [
+      {
+        assetSymbol: 'VWRL.AS',
+        assetName: 'Vanguard FTSE All-World',
+        assetClass: 'EQUITY_GLOBAL',
+        currency: 'EUR',
+        quantity: 180,
+        averageCostBasis: 10500,
+        currentPrice: 11800,
+        marketValueBase: 2125000,
+        currentWeight: 0.65,
+        targetWeight: 0.6,
+      },
+      {
+        assetSymbol: 'IEAC.LSE',
+        assetName: 'iShares Core EUR Corp Bond',
+        assetClass: 'FIXED_INCOME_GOV',
+        currency: 'EUR',
+        quantity: 90,
+        averageCostBasis: 12500,
+        currentPrice: 12500,
+        marketValueBase: 1125000,
+        currentWeight: 0.35,
+        targetWeight: 0.4,
+      },
+    ],
+  },
+  {
+    userId: new ObjectId('500000000000000000000003'), // Mei-Ling Chen
+    baseCurrency: 'USD',
+    totalValuationBase: 4800000,
+    baseRiskScore: 8.0,
+    effectiveRiskScore: 6.5,
+    burnRateRunwayMonths: 12.0,
+    holdings: [
+      {
+        assetSymbol: 'CSPX.LSE',
+        assetName: 'iShares Core S&P 500',
+        assetClass: 'EQUITY_US',
+        currency: 'USD',
+        quantity: 75,
+        averageCostBasis: 48000,
+        currentPrice: 51800,
+        marketValueBase: 3885000,
+        currentWeight: 0.81,
+        targetWeight: 0.65,
+      },
+      {
+        assetSymbol: 'XEON.XETRA',
+        assetName: 'Xtrackers EUR Overnight MMF',
+        assetClass: 'MONEY_MARKET',
+        currency: 'EUR',
+        quantity: 64,
+        averageCostBasis: 14250,
+        currentPrice: 14250,
+        marketValueBase: 915000,
+        currentWeight: 0.19,
+        targetWeight: 0.35,
+      },
+    ],
+  },
+  {
+    userId: new ObjectId('500000000000000000000004'), // Rahul Sharma
+    baseCurrency: 'EUR',
+    totalValuationBase: 1150000,
+    baseRiskScore: 3.0,
+    effectiveRiskScore: 2.5,
+    burnRateRunwayMonths: 18.0,
+    holdings: [
+      {
+        assetSymbol: 'IEAC.LSE',
+        assetName: 'iShares Core EUR Corp Bond',
+        assetClass: 'FIXED_INCOME_GOV',
+        currency: 'EUR',
+        quantity: 55,
+        averageCostBasis: 12500,
+        currentPrice: 12500,
+        marketValueBase: 687500,
+        currentWeight: 0.6,
+        targetWeight: 0.5,
+      },
+      {
+        assetSymbol: 'XEON.XETRA',
+        assetName: 'Xtrackers EUR Overnight MMF',
+        assetClass: 'MONEY_MARKET',
+        currency: 'EUR',
+        quantity: 32,
+        averageCostBasis: 14250,
+        currentPrice: 14250,
+        marketValueBase: 462500,
+        currentWeight: 0.4,
+        targetWeight: 0.5,
+      },
+    ],
+  },
+];
+
+for (const p of clientPortfolios) {
+  const existing = await portfoliosCol.findOne({ userId: p.userId });
+  if (!existing) {
+    await portfoliosCol.insertOne({
+      _id: new ObjectId(),
+      tenantId: defaultTenantId,
+      userId: p.userId,
+      baseCurrency: p.baseCurrency as Currency,
+      totalValuationBase: p.totalValuationBase,
+      baseRiskScore: p.baseRiskScore,
+      effectiveRiskScore: p.effectiveRiskScore,
+      burnRateRunwayMonths: p.burnRateRunwayMonths,
+      lastRebalancedAt: null,
+      updatedAt: now,
+      holdings: p.holdings as any,
+    });
+    console.log(`demo portfolio created for user: ${p.userId}`);
+  }
 }
 
 // 7. Seed shared plan

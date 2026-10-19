@@ -4,9 +4,13 @@ import { resolveDataStore } from '#core/db/connection/data-store.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import type { TokenConfig } from './application/config/token-config.ts';
+import { AdvisorInvitesUseCase } from './application/use-cases/advisor-invites.use-case.ts';
+import { ConnectAdvisorUseCase } from './application/use-cases/connect-advisor.use-case.ts';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case.ts';
+import { GetConnectedAdvisorUseCase } from './application/use-cases/get-connected-advisor.use-case.ts';
 import { GetMeUseCase } from './application/use-cases/get-me.use-case.ts';
 import { TokenPairIssuer } from './application/use-cases/issue-token-pair.ts';
+import { ListAdvisorClientsUseCase } from './application/use-cases/list-advisor-clients.use-case.ts';
 import { LoginUseCase } from './application/use-cases/login.use-case.ts';
 import { LogoutUseCase } from './application/use-cases/logout.use-case.ts';
 import { RefreshTokensUseCase } from './application/use-cases/refresh-tokens.use-case.ts';
@@ -27,10 +31,20 @@ import { meRoutes } from './presentation/routes/me.routes.ts';
 
 import { optionalAuth, requireAuth } from './presentation/middleware/require-auth.ts';
 
+export interface AuthModuleOptions {
+  sharedUserDocs?: Map<string, any>;
+}
+
 // Composition root: the only file that knows which concrete class implements each port.
 export function createAuthModule(
   context: ModuleContext,
-): { manifest: ModuleManifest; authGuard: import('hono').MiddlewareHandler; optionalAuthGuard: import('hono').MiddlewareHandler } {
+  options?: AuthModuleOptions,
+): {
+  manifest: ModuleManifest;
+  authGuard: import('hono').MiddlewareHandler;
+  optionalAuthGuard: import('hono').MiddlewareHandler;
+  hasher: import('./application/ports/password-hasher.port.ts').PasswordHasherPort;
+} {
   const { db, clock, ids, events } = context;
   const config = env();
   const tokenConfig: TokenConfig = {
@@ -41,7 +55,7 @@ export function createAuthModule(
   const hasher = new ScryptPasswordHasher();
   const memory = resolveDataStore(config) === 'memory';
   const users = memory
-    ? new MemoryUserRepository()
+    ? new MemoryUserRepository(options?.sharedUserDocs)
     : new MongoUserRepository(async () => (await db()).collection<UserDocument>(USERS_COLLECTION), clock);
   const sessions = memory
     ? new MemorySessionRepository()
@@ -80,6 +94,10 @@ export function createAuthModule(
       ...meRoutes({
         getMe: new GetMeUseCase({ users }),
         deleteAccount: new DeleteAccountUseCase({ users, sessions }),
+        connectAdvisor: new ConnectAdvisorUseCase({ users, clock }),
+        getConnectedAdvisor: new GetConnectedAdvisorUseCase({ users }),
+        listClients: new ListAdvisorClientsUseCase({ users }),
+        advisorInvites: new AdvisorInvitesUseCase({ users, clock }),
         signer,
       }),
     ],
@@ -89,5 +107,6 @@ export function createAuthModule(
     manifest,
     authGuard: requireAuth(signer),
     optionalAuthGuard: optionalAuth(signer),
+    hasher,
   };
 }

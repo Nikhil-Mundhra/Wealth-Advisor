@@ -1,5 +1,5 @@
-import { ADMIN_ROLE } from '@wealth-advisor/rules';
-import { ArrowLeftRight, LayoutDashboard, MessagesSquare, ScrollText, Settings, Shield } from 'lucide-react';
+import { ADMIN_ROLE, ADVISOR_ROLE } from '@wealth-advisor/rules';
+import { ArrowLeftRight, Briefcase, LayoutDashboard, MessagesSquare, ScrollText, Settings, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { useMe } from '../../features/auth/api/use-me.ts';
@@ -31,6 +31,7 @@ export function AppShell() {
   const me = useMe();
   const navigate = useNavigate();
   const isAdmin = Boolean(me.data?.roles.includes(ADMIN_ROLE));
+  const isAdvisor = Boolean(me.data?.roles.some((r) => r === ADVISOR_ROLE || r === ADMIN_ROLE));
 
   const [briefOpen, setBriefOpen] = useState(false);
   const [instrumentsOpen, setInstrumentsOpen] = useState(false);
@@ -57,6 +58,12 @@ export function AppShell() {
               {strings[key]}
             </NavLink>
           ))}
+          {isAdvisor && (
+            <NavLink to="/advisor" className={linkClass}>
+              <Briefcase aria-hidden className="size-5 text-gold" />
+              {strings['nav.advisor']}
+            </NavLink>
+          )}
           {isAdmin && (
             <NavLink to="/admin" className={linkClass}>
               <Shield aria-hidden className="size-5 text-gold" />
@@ -88,6 +95,15 @@ export function AppShell() {
           <div className="flex items-center gap-2">
             <LanguageSelect />
             <ThemeToggle />
+            {isAdvisor && (
+              <NavLink
+                to="/advisor"
+                aria-label={strings['nav.advisor']}
+                className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
+              >
+                <Briefcase aria-hidden className="size-5 text-gold" />
+              </NavLink>
+            )}
             {isAdmin && (
               <NavLink
                 to="/admin"

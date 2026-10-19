@@ -40,7 +40,9 @@ backend/src/core/db/schema/nullable.ts : $jsonSchema type that also allows null
 backend/src/modules/admin/infrastructure/db/documents/admin-settings.document.ts : stored shape of admin_settings
 backend/src/modules/admin/infrastructure/db/documents/api-key.document.ts : stored shape of api_keys
 backend/src/modules/admin/infrastructure/db/documents/tenant.document.ts : stored shape of tenants
+backend/src/modules/admin/infrastructure/db/memory/memory-admin-user.repository.ts : admin user management repository in memory
 backend/src/modules/admin/infrastructure/db/memory/memory-admin.repository.ts : tenant, api-key and admin-settings repositories in memory
+backend/src/modules/admin/infrastructure/db/repositories/mongo-admin-user.repository.ts : admin user management repository on Mongo
 backend/src/modules/admin/infrastructure/db/repositories/mongo-admin.repository.ts : tenant, api-key and admin-settings repositories on Mongo
 backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts : the admin module's collection definitions
 backend/src/modules/analytics/infrastructure/db/documents/market-snapshot.document.ts : stored shape of market_snapshots

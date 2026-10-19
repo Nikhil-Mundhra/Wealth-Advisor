@@ -91,6 +91,12 @@ export class MemoryApiKeyRepository implements ApiKeyRepository {
 
 export class MemoryAdminSettingsRepository implements AdminSettingsRepository {
   private activeProvider: LlmProvider = 'mock';
+  private platformKeys: {
+    geminiApiKey?: string | null;
+    openaiApiKey?: string | null;
+    anthropicApiKey?: string | null;
+    marketstackAccessKey?: string | null;
+  } = {};
 
   async getActiveLlmProvider(): Promise<LlmProvider> {
     return this.activeProvider;
@@ -98,5 +104,26 @@ export class MemoryAdminSettingsRepository implements AdminSettingsRepository {
 
   async setActiveLlmProvider(provider: LlmProvider): Promise<void> {
     this.activeProvider = provider;
+  }
+
+  async getPlatformKeys() {
+    return {
+      geminiApiKey: this.platformKeys.geminiApiKey ?? null,
+      openaiApiKey: this.platformKeys.openaiApiKey ?? null,
+      anthropicApiKey: this.platformKeys.anthropicApiKey ?? null,
+      marketstackAccessKey: this.platformKeys.marketstackAccessKey ?? null,
+    };
+  }
+
+  async updatePlatformKeys(keys: {
+    geminiApiKey?: string | null;
+    openaiApiKey?: string | null;
+    anthropicApiKey?: string | null;
+    marketstackAccessKey?: string | null;
+  }): Promise<void> {
+    if (keys.geminiApiKey !== undefined) this.platformKeys.geminiApiKey = keys.geminiApiKey;
+    if (keys.openaiApiKey !== undefined) this.platformKeys.openaiApiKey = keys.openaiApiKey;
+    if (keys.anthropicApiKey !== undefined) this.platformKeys.anthropicApiKey = keys.anthropicApiKey;
+    if (keys.marketstackAccessKey !== undefined) this.platformKeys.marketstackAccessKey = keys.marketstackAccessKey;
   }
 }

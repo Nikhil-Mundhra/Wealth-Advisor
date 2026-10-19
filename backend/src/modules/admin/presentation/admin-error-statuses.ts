@@ -6,5 +6,8 @@ export const ADMIN_ERROR_STATUSES: Readonly<Record<AdminErrorCode, number>> = {
   [ADMIN_ERROR_CODES.slugTaken]: 409,
   [ADMIN_ERROR_CODES.unauthorized]: 403,
   [ADMIN_ERROR_CODES.invalidProvider]: 400,
+  [ADMIN_ERROR_CODES.userNotFound]: 404,
+  [ADMIN_ERROR_CODES.emailTaken]: 409,
+  [ADMIN_ERROR_CODES.cannotDeleteSelf]: 400,
   [ADMIN_ERROR_CODES.invariantViolated]: 500,
 };

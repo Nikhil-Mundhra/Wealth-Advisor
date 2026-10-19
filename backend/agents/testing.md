@@ -14,6 +14,7 @@ backend/test/fixtures/market/marketstack-eod-page-1.json : Marketstack v2 /eod p
 backend/test/fixtures/market/marketstack-eod-page-2.json : Marketstack v2 /eod page 2 of 2; one row without adj_close
 backend/test/fixtures/market/marketstack-error-invalid-key.json : recorded Marketstack error body (invalid_access_key)
 backend/test/fixtures/market/marketstack-error-usage-limit.json : Marketstack error body (usage_limit_reached)
+backend/test/integration/admin/admin-routes.memory.test.ts : admin console endpoints, model key updates, and settings on memory store
 backend/test/integration/analytics/analytics-snapshot.memory.test.ts : runs the analytics-snapshot suite on the memory store
 backend/test/integration/analytics/analytics-snapshot.suite.ts : AN_1001 before refresh; cron refresh → event → snapshot route; re-run converges; asOf query
 backend/test/integration/analytics/analytics-snapshot.test.ts : runs the analytics-snapshot suite on mongod
@@ -34,12 +35,15 @@ backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders, weekdays, generated Marketstack pages
 backend/test/support/test-app.ts : boots the real app on a throwaway mongod or the memory store; fake clock, env, outbound http (offline by default)
 backend/test/unit/admin/admin-api.test.ts : tenant provisioning, key revocation, and model switching
+backend/test/unit/admin/admin-platform-keys.test.ts : platform keys management and ENV fallback resolution
+backend/test/unit/admin/admin-users-api.test.ts : admin user management API, roles, statuses, and pagination
 backend/test/unit/advisory/advisory-api.test.ts : multilingual copilot responses, unreachable-provider fallback, live model replies held to engine numbers, action cards
 backend/test/unit/advisory/calculation-shield.test.ts : grounded, rounded, decimal-comma and invented numbers; missing candidates
 backend/test/unit/analytics/market-snapshot.test.ts : MarketSnapshot invariants; measureSnapshot threshold and window
 backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns, annualization and covariance against a hand-computed series
 backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
 backend/test/unit/analytics/snapshot-inputs.test.ts : one price basis per symbol: adjusted only when every close has one
+backend/test/unit/auth/advisor-client-flow.test.ts : B2B2C advisor invite generation, delegation connection, and client listing
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts

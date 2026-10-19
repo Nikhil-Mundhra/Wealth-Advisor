@@ -32,7 +32,8 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
       .responds(PortfolioResponse)
       .handle(async ({ c }) => {
         const { tenantId, userId } = scope(c);
-        return api.getPortfolio(tenantId, userId);
+        const targetUserId = c.req.query('clientId') || userId;
+        return api.getPortfolio(tenantId, targetUserId);
       }),
 
     RouteBuilder.post('/optimize')
@@ -40,7 +41,8 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
       .responds(RebalanceProposalResponse)
       .handle(async ({ c }) => {
         const { tenantId, userId } = scope(c);
-        return api.optimizePortfolio(tenantId, userId);
+        const targetUserId = c.req.query('clientId') || userId;
+        return api.optimizePortfolio(tenantId, targetUserId);
       }),
 
     RouteBuilder.post('/construct')

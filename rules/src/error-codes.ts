@@ -30,6 +30,7 @@ export const AUTH_ERROR_CODES = {
   invalidEmail: 'AU_1006',
   weakPassword: 'AU_1007',
   passkeyFailed: 'AU_1008',
+  invalidAdvisorCode: 'AU_1009',
   invariantViolated: 'AU_1900',
   signingKeysMissing: 'AU_1901',
 } as const;
@@ -53,6 +54,9 @@ export const ADMIN_ERROR_CODES = {
   slugTaken: 'AD_1003',
   unauthorized: 'AD_1004',
   invalidProvider: 'AD_1005',
+  userNotFound: 'AD_1006',
+  emailTaken: 'AD_1007',
+  cannotDeleteSelf: 'AD_1008',
   invariantViolated: 'AD_1900',
 } as const;
 

@@ -30,3 +30,27 @@ Every admin route requires a Bearer access token (`backend/docs/auth-token.md` `
 ## POST /api/admin/models
 - responsibility: set the platform-wide active LLM provider used by `POST /api/advisory/chat`
 - contract: request `UpdateAdminModelRequest`, response `AdminModelSettingDto` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `AD_1005`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## GET /api/admin/users
+- responsibility: return list of registered user accounts, with optional filtering by query string, role, status, or tenant
+- contract: query `AdminUserQueryRequest`, response `AdminUserListResponse` 200, errors `AU_1005`, `AU_1901`, `AD_1004`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## POST /api/admin/users
+- responsibility: create a new user account with hashed password and initial role/tenant assignment
+- contract: request `CreateAdminUserRequest`, response `AdminUserDto` 201, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `AD_1001`, `AD_1004`, `AD_1007`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## GET /api/admin/users/:id
+- responsibility: return full details of a specific user account
+- contract: request none, response `AdminUserDto` 200, errors `AU_1005`, `AU_1901`, `AD_1004`, `AD_1006`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## PATCH /api/admin/users/:id
+- responsibility: update a user's display name, roles, status, or tenant assignment
+- contract: request `UpdateAdminUserRequest`, response `AdminUserDto` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `AD_1001`, `AD_1004`, `AD_1006`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## DELETE /api/admin/users/:id
+- responsibility: delete a user account; cannot delete the currently authenticated admin
+- contract: request none, response none 204, errors `AU_1005`, `AU_1901`, `AD_1004`, `AD_1006`, `AD_1008`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## POST /api/admin/users/:id/reset-password
+- responsibility: reset a user's password
+- contract: request `AdminResetPasswordRequest`, response `AdminUserDto` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `AD_1004`, `AD_1006`, `CORE_DB_UNCONFIGURED`; auth Bearer

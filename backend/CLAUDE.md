@@ -78,9 +78,9 @@ backend/src/core/module/module-registry.ts : collects manifests; mounts routes, 
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
 backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
-backend/src/modules/admin/admin.api.ts : createAdminApi: tenants, api keys, model provider settings
-backend/src/modules/admin/admin.module.ts : composition root: store-selected tenant/key repos → api, routes, manifest
-backend/src/modules/admin/application/ports.ts : TenantRepository, ApiKeyRepository, AdminSettingsRepository ports
+backend/src/modules/admin/admin.api.ts : createAdminApi: tenants, api keys, user accounts, model provider settings
+backend/src/modules/admin/admin.module.ts : composition root: store-selected tenant/key/user repos → api, routes, manifest
+backend/src/modules/admin/application/ports.ts : TenantRepository, ApiKeyRepository, AdminSettingsRepository, AdminUserRepository ports
 backend/src/modules/admin/public.ts : the admin surface other modules may import
 backend/src/modules/advisory/advisory.api.ts : createAdvisoryApi: multilingual copilot chat, proposal cards, calculation shield
 backend/src/modules/advisory/advisory.module.ts : composition root: llm gateway, mock adapter → api, routes, manifest

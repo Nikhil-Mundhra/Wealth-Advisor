@@ -23,6 +23,7 @@ export function toMeResponse(result: UserProfileResult): MeResponse {
     displayName: result.displayName,
     roles: [...result.roles],
     emailVerified: result.emailVerified,
+    advisorId: result.advisorId ?? null,
     createdAt: result.createdAt.toISOString(),
   };
 }

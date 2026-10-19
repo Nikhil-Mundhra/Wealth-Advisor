@@ -12,8 +12,8 @@ import { apiRequest } from '../../../lib/api-client.ts';
 
 // Fiduciary and portfolio execution endpoints, typed by contracts.
 export const wealthApi = {
-  getPortfolio: () =>
-    apiRequest('/wealth/portfolio', {
+  getPortfolio: (clientId?: string) =>
+    apiRequest(clientId ? `/wealth/portfolio?clientId=${encodeURIComponent(clientId)}` : '/wealth/portfolio', {
       response: PortfolioResponse,
       authenticated: true,
     }),

@@ -142,22 +142,25 @@ function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, pr
 
 const ADVISORY_HTTP_TIMEOUT_MS = 8000;
 
+export type ApiKeyResolver = string | (() => Promise<string | undefined> | string | undefined);
+
 export class GeminiLlmAdapter implements LlmAdapter {
-  private readonly apiKey: string | undefined;
+  private readonly apiKey: ApiKeyResolver | undefined;
   private readonly fallback: LlmAdapter;
   private readonly http: HttpClient;
 
-  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
+  constructor(apiKey?: ApiKeyResolver, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
     this.apiKey = apiKey;
     this.fallback = fallback;
     this.http = http;
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
-    if (!this.apiKey) return this.fallback.chat(context);
+    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    if (!key) return this.fallback.chat(context);
     try {
       const base = await this.fallback.chat(context);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
       const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
 Current Portfolio:
 - Valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}
@@ -198,18 +201,19 @@ Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered b
 }
 
 export class OpenAiLlmAdapter implements LlmAdapter {
-  private readonly apiKey: string | undefined;
+  private readonly apiKey: ApiKeyResolver | undefined;
   private readonly fallback: LlmAdapter;
   private readonly http: HttpClient;
 
-  constructor(apiKey?: string, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
+  constructor(apiKey?: ApiKeyResolver, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
     this.apiKey = apiKey;
     this.fallback = fallback;
     this.http = http;
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
-    if (!this.apiKey) return this.fallback.chat(context);
+    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    if (!key) return this.fallback.chat(context);
     try {
       const base = await this.fallback.chat(context);
       const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
@@ -230,7 +234,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
         {
           timeoutMs: ADVISORY_HTTP_TIMEOUT_MS,
           headers: {
-            authorization: `Bearer ${this.apiKey}`,
+            authorization: `Bearer ${key}`,
           },
         },
       )) as any;
@@ -245,9 +249,9 @@ export class OpenAiLlmAdapter implements LlmAdapter {
 }
 
 export interface LlmGatewayConfig {
-  geminiApiKey?: string;
-  openaiApiKey?: string;
-  anthropicApiKey?: string;
+  geminiApiKey?: ApiKeyResolver;
+  openaiApiKey?: ApiKeyResolver;
+  anthropicApiKey?: ApiKeyResolver;
   http?: HttpClient;
 }
 

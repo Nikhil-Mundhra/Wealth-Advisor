@@ -22,6 +22,18 @@ export class AdminErrors {
     return new DomainError(ADMIN_ERROR_CODES.invalidProvider, `invalid llm provider ${provider}`);
   }
 
+  static userNotFound(id: string): DomainError {
+    return new DomainError(ADMIN_ERROR_CODES.userNotFound, `user ${id} not found`);
+  }
+
+  static emailTaken(email: string): DomainError {
+    return new DomainError(ADMIN_ERROR_CODES.emailTaken, `email ${email} is already in use`);
+  }
+
+  static cannotDeleteSelf(): DomainError {
+    return new DomainError(ADMIN_ERROR_CODES.cannotDeleteSelf, 'cannot delete or withdraw the currently logged-in admin user');
+  }
+
   static invariantViolated(detail: string): DomainError {
     return new DomainError(ADMIN_ERROR_CODES.invariantViolated, detail);
   }

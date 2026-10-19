@@ -27,8 +27,12 @@ backend/src/modules/auth/application/dto/signup.command.ts : signup input
 backend/src/modules/auth/application/dto/signup.result.ts : signup output
 backend/src/modules/auth/application/dto/token-pair.result.ts : access + refresh token, delivery hints
 backend/src/modules/auth/application/dto/user-profile.result.ts : public user view
+backend/src/modules/auth/application/use-cases/advisor-invites.use-case.ts : create and list institutional client invitation links
+backend/src/modules/auth/application/use-cases/connect-advisor.use-case.ts : connect end client to wealth analyst via invitation code
 backend/src/modules/auth/application/use-cases/delete-account.use-case.ts : delete user record and drop all user sessions
+backend/src/modules/auth/application/use-cases/get-connected-advisor.use-case.ts : get client's connected advisor profile
 backend/src/modules/auth/application/use-cases/get-me.use-case.ts : current user profile
+backend/src/modules/auth/application/use-cases/list-advisor-clients.use-case.ts : list clients connected to wealth analyst
 backend/src/modules/auth/application/use-cases/signup.use-case.ts : create an email account; duplicate email is rejected
 backend/src/modules/auth/domain/entities/user.entity.ts : User with embedded providers/roles; invariants in postInit
 backend/src/modules/auth/domain/events/user-signed-up.event.ts : emitted after signup

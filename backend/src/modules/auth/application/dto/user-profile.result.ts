@@ -4,5 +4,6 @@ export interface UserProfileResult {
   readonly displayName: string | null;
   readonly roles: readonly string[];
   readonly emailVerified: boolean;
+  readonly advisorId?: string | null;
   readonly createdAt: Date;
 }

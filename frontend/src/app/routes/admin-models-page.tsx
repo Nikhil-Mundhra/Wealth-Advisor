@@ -3,6 +3,8 @@ import { LLM_PROVIDERS, type LlmProvider } from '@wealth-advisor/rules';
 import { cardClassName } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { fetchAdminModels, updateAdminModel } from '../../features/admin/api/admin-api.ts';
+import { AdminNavTabs } from '../../features/admin/components/admin-nav-tabs.tsx';
+import { PlatformKeysCard } from '../../features/admin/components/platform-keys-card.tsx';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 
@@ -26,7 +28,11 @@ export function AdminModelsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageTitle>{strings['admin.models']}</PageTitle>
+      <div>
+        <PageTitle>{strings['admin.models']}</PageTitle>
+        <p className="mt-1 text-xs text-subtle">Configure active LLM provider, manage platform keys, and view diagnostics.</p>
+      </div>
+      <AdminNavTabs />
       <div className="flex flex-col gap-4">
         <ul className={cn(cardClassName, 'flex flex-col gap-2 text-sm')}>
           {LLM_PROVIDERS.map((provider) => {
@@ -52,6 +58,7 @@ export function AdminModelsPage() {
             );
           })}
         </ul>
+        <PlatformKeysCard platformKeys={data?.platformKeys} />
         {data?.systemHealth && (
           <div className={cn(cardClassName, 'flex flex-col gap-1 text-xs text-subtle')}>
             <p className="font-medium text-ink">System Diagnostics</p>

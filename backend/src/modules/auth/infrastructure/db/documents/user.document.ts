@@ -6,6 +6,7 @@ export const USERS_COLLECTION = 'users';
 export interface UserDocument {
   _id: ObjectId;
   tenantId?: ObjectId | null;
+  advisorId?: ObjectId | null;
   email: string;
   emailVerifiedAt: Date | null;
   passwordHash: string | null;
