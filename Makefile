@@ -61,8 +61,8 @@ logs:  ## Tail frontend + backend logs
 build:  ## Build the frontend into frontend/dist
 	npm run build
 
-test:  ## Run every workspace's tests (backend starts a throwaway mongod)
-	npm test
+test: | $(RUN_DIR)  ## Run every workspace's tests with concise terminal output and logs in $(RUN_DIR)/test.log
+	node scripts/run-tests.mjs
 
 db-indexes:  ## Apply collection validators and indexes to MONGODB_URI (deploy step)
 	npm run db:indexes -w backend

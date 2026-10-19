@@ -31,4 +31,5 @@
 
 ```
 scripts/docs-lint.mjs : fails on docs → guides links, missing referenced paths, a path in two maps, unsorted maps, unmapped source files, docs folders without index.md, .md unreachable from the root AGENTS.md, a CLAUDE.md differing from the AGENTS.md beside it
+scripts/run-tests.mjs : runs workspace tests with concise terminal summaries while logging full outputs to gitignored .run/test.log
 ```

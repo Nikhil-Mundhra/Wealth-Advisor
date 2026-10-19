@@ -8,3 +8,4 @@ dist/
 REQS.md
 .agents/
 skills-lock.json
+*.log
