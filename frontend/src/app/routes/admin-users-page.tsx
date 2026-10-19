@@ -18,7 +18,6 @@ import {
   resetAdminUserPassword,
   updateAdminUser,
 } from '../../features/admin/api/admin-api.ts';
-import { AdminNavTabs } from '../../features/admin/components/admin-nav-tabs.tsx';
 import { CredentialsTab } from '../../features/admin/components/credentials-tab.tsx';
 import { AdminCreateUserModal } from '../../features/admin/components/user-management/admin-create-user-modal.tsx';
 import { AdminDeleteUserModal } from '../../features/admin/components/user-management/admin-delete-user-modal.tsx';
@@ -142,8 +141,6 @@ export function AdminUsersPage() {
           </Button>
         )}
       </div>
-
-      <AdminNavTabs />
 
       {/* View Switcher: Directory vs Demo Credentials */}
       <div className="flex items-center gap-2 border-b border-line pb-1">

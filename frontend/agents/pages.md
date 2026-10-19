@@ -63,7 +63,6 @@ frontend/src/assets/auth-portrait-5.jpg : auth panel portrait photo 5 (collabora
 frontend/src/assets/logo-dark.png : institutional network graph logo mark for dark theme
 frontend/src/assets/logo.png : institutional network graph logo mark for light theme
 frontend/src/assets/market-shock.jpg : late-night market downturn and volatility photo
-frontend/src/features/admin/components/admin-nav-tabs.tsx : horizontal navigation bar across Admin console pages
 frontend/src/features/admin/components/credentials-tab.tsx : demo persona accounts and credentials reference card with one-click copy and direct login links
 frontend/src/features/admin/components/platform-keys-card.tsx : platform keys management card with runtime DB configuration and system ENV fallback
 frontend/src/features/admin/components/user-management/admin-create-user-modal.tsx : modal dialog for creating new user accounts with roles and tenant assignments

@@ -3,7 +3,6 @@ import { cardClassName } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { fetchTenants } from '../../features/admin/api/admin-api.ts';
-import { AdminNavTabs } from '../../features/admin/components/admin-nav-tabs.tsx';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 
@@ -22,7 +21,6 @@ export function AdminTenantsPage() {
         <PageTitle>{strings['admin.tenants']}</PageTitle>
         <p className="mt-1 text-xs text-subtle">Configure organizations, multi-currency baselines, and participant caps.</p>
       </div>
-      <AdminNavTabs />
       {isLoading ? (
         <div className="flex py-8 justify-center">
           <Spinner label="Loading tenants" />

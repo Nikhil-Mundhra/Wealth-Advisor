@@ -1,5 +1,4 @@
 import { PageTitle } from '../../components/ui/page-title.tsx';
-import { AdminNavTabs } from '../../features/admin/components/admin-nav-tabs.tsx';
 import { CredentialsTab } from '../../features/admin/components/credentials-tab.tsx';
 
 export function AdminCredentialsPage() {
@@ -11,8 +10,6 @@ export function AdminCredentialsPage() {
           Quick-access credentials for testing the multi-persona B2B2C workflow (Admins, Wealth Advisors, and Clients).
         </p>
       </div>
-
-      <AdminNavTabs />
 
       <CredentialsTab />
     </div>
