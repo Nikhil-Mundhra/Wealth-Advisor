@@ -98,12 +98,6 @@ export function AdvisorLoginPage() {
               Personal Client Portal <ChevronRight aria-hidden className="size-3" />
             </Link>
           </div>
-          <div className="flex items-center justify-between text-subtle border-t border-line/60 pt-2 text-[11px]">
-            <span>Operator Access</span>
-            <Link to="/admin/login" className="hover:text-ink hover:underline">
-              System Admin Console
-            </Link>
-          </div>
         </div>
       </div>
     </div>
