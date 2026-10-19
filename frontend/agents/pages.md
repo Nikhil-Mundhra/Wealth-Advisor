@@ -103,6 +103,8 @@ frontend/src/features/marketing/components/homepage-nav.tsx : sticky navigation 
 frontend/src/features/marketing/components/knowledge-graph-section.tsx : client knowledge graph engine with Complex Event Processing
 frontend/src/features/marketing/components/mit-sloan-shock-section.tsx : MIT Sloan quantitative rigor section analyzing income shocks and demographic bias
 frontend/src/features/marketing/components/neuro-symbolic-simulator.tsx : interactive simulator playground comparing raw LLM vs neuro-symbolic engine
+frontend/src/features/marketing/components/particles-background.test.tsx : unit test verifying decorative canvas rendering and lifecycle cleanup
+frontend/src/features/marketing/components/particles-background.tsx : theme-aware browser-side canvas particle background with gentle repulsion and link physics
 frontend/src/features/marketing/components/positioning-matrix-section.tsx : strategic positioning comparison matrix for B2B2C vs B2C
 frontend/src/features/marketing/components/triad-overview-section.tsx : overview of the triad architecture (Workflow OS, Semantic Graph, MIT Sloan)
 frontend/src/features/marketing/data/highlights.ts : highlight copy

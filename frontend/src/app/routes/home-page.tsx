@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { DocumentationSection, type DocSubtab } from '../../features/marketing/components/documentation-section.tsx';
@@ -7,6 +7,12 @@ import { HomepageHero } from '../../features/marketing/components/homepage-hero.
 import { HomepageNav } from '../../features/marketing/components/homepage-nav.tsx';
 import { NeuroSymbolicSimulator } from '../../features/marketing/components/neuro-symbolic-simulator.tsx';
 import { TriadOverviewSection } from '../../features/marketing/components/triad-overview-section.tsx';
+
+const ParticlesBackground = lazy(() =>
+  import('../../features/marketing/components/particles-background.tsx').then((m) => ({
+    default: m.ParticlesBackground,
+  }))
+);
 
 export function HomePage() {
   const [activeDocSubtab, setActiveDocSubtab] = useState<DocSubtab>('lifecycle');
@@ -27,7 +33,12 @@ export function HomePage() {
       <HomepageNav onNavigateSection={handleNavigate} />
 
       {/* Main Page Flow */}
-      <main>
+      <main className="relative">
+        {/* Lazy-loaded browser-side compute particle network */}
+        <Suspense fallback={null}>
+          <ParticlesBackground />
+        </Suspense>
+
         {/* Hero Section */}
         <HomepageHero onScrollTo={(id) => handleNavigate(id)} />
 
