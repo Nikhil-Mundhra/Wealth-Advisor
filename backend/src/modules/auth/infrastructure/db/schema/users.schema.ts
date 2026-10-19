@@ -27,6 +27,7 @@ export const usersSchema: CollectionDefinition = {
       ],
       properties: {
         tenantId: nullable('objectId'),
+        advisorId: nullable('objectId'),
         email: { bsonType: 'string', maxLength: EMAIL_MAX_LENGTH },
         emailVerifiedAt: nullable('date'),
         passwordHash: nullable('string'),
