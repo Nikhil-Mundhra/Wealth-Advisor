@@ -1,32 +1,51 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import {
+  AlertTriangle,
+  ArrowRight,
   Briefcase,
+  CheckCircle2,
   Copy,
   ExternalLink,
   Eye,
-  Link as LinkIcon,
+  Layers,
   Plus,
   Shield,
+  Sparkles,
   TrendingUp,
+  User,
   UserCheck,
   Users,
 } from 'lucide-react';
 import type { AdvisorClientSummaryDto } from '@wealth-advisor/contracts';
 import { Button } from '../../components/ui/button.tsx';
-import { cardClassName } from '../../components/ui/card.tsx';
+import { Card, cardClassName } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { authApi } from '../../features/auth/api/auth-api.ts';
+import { useActiveClient, useAdvisorClients, setActiveClient } from '../../features/advisor/advisor-store.ts';
+import type { AdvisorClient } from '../../features/advisor/types.ts';
 import { ClientPortfolioModal } from '../../features/advisor/components/client-portfolio-modal.tsx';
 import { InviteClientModal } from '../../features/advisor/components/invite-client-modal.tsx';
+import { PreMeetingBriefModal } from '../../features/advisor/components/pre-meeting-brief-modal.tsx';
+import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
+import { ClientRoster } from '../../features/advisor/components/client-roster.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 
 export function AdvisorWorkstationPage() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'overview' | 'active' | 'invites'>('overview');
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<AdvisorClientSummaryDto | null>(null);
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [briefClient, setBriefClient] = useState<AdvisorClient | null>(null);
+  const [instrumentsOpen, setInstrumentsOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const activeClient = useActiveClient();
+  const allClients = useAdvisorClients();
 
   const { data: clientsData, isLoading: loadingClients } = useQuery({
     queryKey: ['advisor', 'clients'],
@@ -38,10 +57,11 @@ export function AdvisorWorkstationPage() {
     queryFn: authApi.listAdvisorInvites,
   });
 
-  const clients = clientsData?.clients ?? [];
+  const dbClients = clientsData?.clients ?? [];
   const invites = invitesData?.invites ?? [];
 
-  const totalAum = clients.reduce((sum, c) => sum + c.totalValuationBase, 0);
+  // Aggregated valuation across seeded + database clients
+  const totalAum = allClients.reduce((sum, c) => sum + c.netWorth, 0);
 
   const handleCopyLink = async (url: string, id: string) => {
     await navigator.clipboard.writeText(url);
@@ -49,8 +69,14 @@ export function AdvisorWorkstationPage() {
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
+  const handleOpenBrief = (client?: AdvisorClient) => {
+    setBriefClient(client ?? activeClient);
+    setBriefOpen(true);
+  };
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div>
           <div className="flex items-center gap-2">
@@ -65,198 +91,395 @@ export function AdvisorWorkstationPage() {
           </p>
         </div>
 
-        <Button
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setInstrumentsOpen(true)}
+            className="text-xs"
+          >
+            <Layers aria-hidden className="mr-1.5 size-3.5" />
+            Compare Instruments
+          </Button>
+
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => setInviteModalOpen(true)}
+            className="text-xs"
+          >
+            <Plus aria-hidden className="mr-1.5 size-3.5" />
+            Invite Client
+          </Button>
+        </div>
+      </div>
+
+      {/* Advisor View Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-line pb-2" role="tablist" aria-label="Advisor Workstation Tabs">
+        <button
           type="button"
-          variant="primary"
-          onClick={() => setInviteModalOpen(true)}
-          className="self-start sm:self-auto"
+          role="tab"
+          aria-selected={activeTab === 'overview'}
+          onClick={() => setActiveTab('overview')}
+          className={cn(
+            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
+            activeTab === 'overview'
+              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
+              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
+          )}
         >
-          <Plus aria-hidden className="mr-1.5 size-4" />
-          Invite Client
-        </Button>
+          <Users aria-hidden className="size-3.5" />
+          <span>All Clients Overview ({allClients.length})</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'active'}
+          onClick={() => setActiveTab('active')}
+          className={cn(
+            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
+            activeTab === 'active'
+              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
+              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
+          )}
+        >
+          <User aria-hidden className="size-3.5" />
+          <span>Active Client: {activeClient.name}</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'invites'}
+          onClick={() => setActiveTab('invites')}
+          className={cn(
+            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
+            activeTab === 'invites'
+              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
+              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
+          )}
+        >
+          <UserCheck aria-hidden className="size-3.5" />
+          <span>Onboarding & Invites ({invites.length})</span>
+        </button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className={cn(cardClassName, 'flex flex-col gap-1')}>
-          <div className="flex items-center justify-between text-subtle">
-            <span className="text-xs font-medium">Assigned Clients</span>
-            <Users aria-hidden className="size-4 text-brand-600 dark:text-brand-400" />
-          </div>
-          <span className="font-serif text-2xl font-bold text-ink">{clients.length}</span>
-          <span className="text-[11px] text-subtle">Active delegation access</span>
-        </div>
+      {/* TAB 1: ALL CLIENTS OVERVIEW */}
+      {activeTab === 'overview' && (
+        <div className="flex flex-col gap-6">
+          {/* KPI Summary Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <div className="flex items-center justify-between text-subtle">
+                <span className="text-xs font-medium">Assigned Clients</span>
+                <Users aria-hidden className="size-4 text-brand-600 dark:text-brand-400" />
+              </div>
+              <span className="font-serif text-2xl font-bold text-ink">{allClients.length}</span>
+              <span className="text-[11px] text-subtle">Active fiduciary relationships</span>
+            </div>
 
-        <div className={cn(cardClassName, 'flex flex-col gap-1')}>
-          <div className="flex items-center justify-between text-subtle">
-            <span className="text-xs font-medium">AUM Surveillance</span>
-            <TrendingUp aria-hidden className="size-4 text-gold dark:text-gold-light" />
-          </div>
-          <span className="font-serif text-2xl font-bold text-ink">
-            {formatMoney(totalAum, 'EUR')}
-          </span>
-          <span className="text-[11px] text-subtle">Aggregated client net worth</span>
-        </div>
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <div className="flex items-center justify-between text-subtle">
+                <span className="text-xs font-medium">AUM Surveillance</span>
+                <TrendingUp aria-hidden className="size-4 text-gold dark:text-gold-light" />
+              </div>
+              <span className="font-serif text-2xl font-bold text-ink">
+                {formatMoney(totalAum, 'EUR')}
+              </span>
+              <span className="text-[11px] text-subtle">Total client book valuation</span>
+            </div>
 
-        <div className={cn(cardClassName, 'flex flex-col gap-1')}>
-          <div className="flex items-center justify-between text-subtle">
-            <span className="text-xs font-medium">Avg Liquid Runway</span>
-            <Briefcase aria-hidden className="size-4 text-brand-600 dark:text-brand-400" />
-          </div>
-          <span className="font-serif text-2xl font-bold text-ink">18.4 Mo</span>
-          <span className="text-[11px] text-subtle">Emergency liquidity cushion</span>
-        </div>
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <div className="flex items-center justify-between text-subtle">
+                <span className="text-xs font-medium">Avg Liquid Runway</span>
+                <Briefcase aria-hidden className="size-4 text-brand-600 dark:text-brand-400" />
+              </div>
+              <span className="font-serif text-2xl font-bold text-ink">18.4 Mo</span>
+              <span className="text-[11px] text-subtle">Liquidity cushion across book</span>
+            </div>
 
-        <div className={cn(cardClassName, 'flex flex-col gap-1')}>
-          <div className="flex items-center justify-between text-subtle">
-            <span className="text-xs font-medium">Active Invitations</span>
-            <UserCheck aria-hidden className="size-4 text-emerald-600 dark:text-emerald-400" />
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <div className="flex items-center justify-between text-subtle">
+                <span className="text-xs font-medium">Active Invitations</span>
+                <UserCheck aria-hidden className="size-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <span className="font-serif text-2xl font-bold text-ink">{invites.length}</span>
+              <span className="text-[11px] text-subtle">Pending delegation registrations</span>
+            </div>
           </div>
-          <span className="font-serif text-2xl font-bold text-ink">{invites.length}</span>
-          <span className="text-[11px] text-subtle">Pending client onboarding</span>
-        </div>
-      </div>
 
-      {/* Client Roster Table */}
-      <div className={cn(cardClassName, 'flex flex-col gap-3')}>
-        <div className="flex items-center justify-between border-b border-line pb-3">
-          <div>
-            <h3 className="font-semibold text-ink">Connected Client Roster</h3>
-            <p className="text-xs text-subtle">
-              Clients who have delegated read-only surveillance to your institutional analyst profile.
-            </p>
+          {/* All Clients Book Grid: Switch active client, open 30s brief */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-ink">Advisor Client Book</h3>
+                <p className="text-xs text-subtle">
+                  Select any client to switch active surveillance or launch their 30-second pre-meeting brief.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-gold font-medium">
+                Active Client: {activeClient.name}
+              </span>
+            </div>
+
+            <ClientRoster
+              onOpenBriefForClient={(c) => handleOpenBrief(c)}
+              onNavigateToAdvisory={() => setActiveTab('active')}
+            />
+          </div>
+
+          {/* Connected Database Accounts Table */}
+          {dbClients.length > 0 && (
+            <div className={cn(cardClassName, 'flex flex-col gap-3')}>
+              <div className="flex items-center justify-between border-b border-line pb-3">
+                <div>
+                  <h3 className="font-semibold text-ink">Live Connected Client Accounts</h3>
+                  <p className="text-xs text-subtle">
+                    Real-time accounts synchronized from MongoDB with delegated surveillance tokens.
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-field border border-line">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-surface-subtle border-b border-line text-subtle">
+                    <tr>
+                      <th className="px-3 py-2.5 font-medium">Client</th>
+                      <th className="px-3 py-2.5 font-medium">Net Worth</th>
+                      <th className="px-3 py-2.5 font-medium">Runway</th>
+                      <th className="px-3 py-2.5 font-medium">Risk Profile</th>
+                      <th className="px-3 py-2.5 font-medium">Connected</th>
+                      <th className="px-3 py-2.5 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line text-ink">
+                    {dbClients.map((c) => (
+                      <tr key={c.id} className="hover:bg-surface-subtle/50 transition-colors">
+                        <td className="px-3 py-3">
+                          <div className="font-medium text-ink">{c.displayName ?? 'Private Client'}</div>
+                          <div className="text-subtle text-[11px] font-mono">{c.email}</div>
+                        </td>
+                        <td className="px-3 py-3 font-mono font-semibold tabular-nums">
+                          {formatMoney(c.totalValuationBase, c.currency as any)}
+                        </td>
+                        <td className="px-3 py-3 font-mono tabular-nums text-brand-600 dark:text-brand-400">
+                          {c.runwayMonths} Mo
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="rounded bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-subtle border border-line">
+                            {c.riskBand}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-subtle text-[11px]">
+                          {new Date(c.connectedAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-8 px-2.5 text-xs"
+                            onClick={() => setSelectedClient(c)}
+                          >
+                            <Eye aria-hidden className="mr-1 size-3.5" />
+                            Inspect Portfolio
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: ACTIVE CLIENT FOCUS */}
+      {activeTab === 'active' && (
+        <div className="flex flex-col gap-6">
+          {/* Active Client Spotlight Hero */}
+          <div className={cn(cardClassName, 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-l-4 border-l-gold')}>
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-full bg-gold/20 font-bold text-gold text-base">
+                {activeClient.name.split(' ').map((n) => n[0]).join('')}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-ink">{activeClient.name}</h2>
+                  <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-subtle border border-line">
+                    {activeClient.householdMode === 'FAMILY_HOUSEHOLD' ? 'Family Household' : 'Individual'}
+                  </span>
+                </div>
+                <p className="text-xs text-subtle">
+                  {activeClient.location} · Base Currency: <strong className="text-ink">{activeClient.baseCurrency}</strong> · Risk Score: {activeClient.riskScore}/10 ({activeClient.riskBand})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenBrief(activeClient)}
+                className="text-xs"
+              >
+                <Sparkles aria-hidden className="mr-1.5 size-3.5 text-gold" />
+                30s Meeting Brief
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => navigate('/advisory')}
+                className="text-xs"
+              >
+                Launch Advisory Session
+              </Button>
+            </div>
+          </div>
+
+          {/* Active Client Key Metrics */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <span className="text-xs text-subtle">Net Worth Valuation</span>
+              <span className="font-serif text-2xl font-bold text-ink">
+                {formatMoney(activeClient.netWorth, activeClient.baseCurrency)}
+              </span>
+              <span className="text-[11px] text-subtle">Multi-currency consolidated</span>
+            </div>
+
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <span className="text-xs text-subtle">Liquid Cash Runway</span>
+              <span className="font-serif text-2xl font-bold text-brand-600 dark:text-brand-400">
+                {activeClient.runwayMonths.toFixed(1)} Months
+              </span>
+              <span className="text-[11px] text-subtle">Monthly burn: {formatMoney(activeClient.monthlyBurn, activeClient.baseCurrency)}</span>
+            </div>
+
+            <div className={cn(cardClassName, 'flex flex-col gap-1')}>
+              <span className="text-xs text-subtle">Corridor Drift Status</span>
+              <span className="font-serif text-base font-semibold text-ink">
+                {activeClient.driftAlert ?? 'Within ±5% corridor target'}
+              </span>
+              <span className="text-[11px] text-subtle">Target rebalancing suggested</span>
+            </div>
+          </div>
+
+          {/* Holdings Table for Active Client */}
+          <div className={cn(cardClassName, 'flex flex-col gap-3')}>
+            <h3 className="font-semibold text-ink text-sm">Portfolio Holdings Allocation</h3>
+            <div className="overflow-x-auto rounded-field border border-line">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-surface-subtle border-b border-line text-subtle">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Asset</th>
+                    <th className="px-3 py-2 font-medium">Class</th>
+                    <th className="px-3 py-2 font-medium">Currency</th>
+                    <th className="px-3 py-2 font-medium text-right">Value</th>
+                    <th className="px-3 py-2 font-medium text-right">Current %</th>
+                    <th className="px-3 py-2 font-medium text-right">Target %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line text-ink">
+                  {activeClient.holdings.map((h, i) => (
+                    <tr key={`${h.symbol}-${i}`} className="hover:bg-surface-subtle/50 transition-colors">
+                      <td className="px-3 py-2.5 font-medium">{h.label} ({h.symbol})</td>
+                      <td className="px-3 py-2.5 text-subtle">{h.assetClass}</td>
+                      <td className="px-3 py-2.5 font-mono">{h.currency}</td>
+                      <td className="px-3 py-2.5 font-mono text-right font-semibold">{formatMoney(h.value, h.currency)}</td>
+                      <td className="px-3 py-2.5 font-mono text-right">{(h.weight * 100).toFixed(1)}%</td>
+                      <td className="px-3 py-2.5 font-mono text-right text-brand-600 dark:text-brand-400">{(h.targetWeight * 100).toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      )}
 
-        {loadingClients ? (
-          <div className="flex justify-center p-8 text-brand-600">
-            <Spinner label="Loading client roster..." />
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="rounded-field bg-surface-subtle p-8 text-center">
-            <Users aria-hidden className="mx-auto size-8 text-subtle mb-2" />
-            <p className="font-medium text-ink text-sm">No clients connected yet</p>
-            <p className="mt-1 text-xs text-subtle max-w-sm mx-auto">
-              Share your delegation invite link with prospective clients. When they sign up or connect your code, their portfolio appears here automatically.
-            </p>
+      {/* TAB 3: CLIENT INVITATIONS & ONBOARDING */}
+      {activeTab === 'invites' && (
+        <div className={cn(cardClassName, 'flex flex-col gap-4')}>
+          <div className="flex items-center justify-between border-b border-line pb-3">
+            <div>
+              <h3 className="font-semibold text-ink">Active Client Invitations</h3>
+              <p className="text-xs text-subtle">
+                Direct delegation links your clients can use to register and automatically link to your analyst profile.
+              </p>
+            </div>
             <Button
               type="button"
-              variant="outline"
-              className="mt-4 h-9 px-3 text-xs"
+              variant="primary"
               onClick={() => setInviteModalOpen(true)}
+              className="text-xs"
             >
-              Generate First Invite Link
+              <Plus aria-hidden className="mr-1.5 size-3.5" />
+              Create New Invite
             </Button>
           </div>
-        ) : (
-          <div className="overflow-x-auto rounded-field border border-line">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-surface-subtle border-b border-line text-subtle">
-                <tr>
-                  <th className="px-3 py-2.5 font-medium">Client</th>
-                  <th className="px-3 py-2.5 font-medium">Net Worth</th>
-                  <th className="px-3 py-2.5 font-medium">Runway</th>
-                  <th className="px-3 py-2.5 font-medium">Risk Profile</th>
-                  <th className="px-3 py-2.5 font-medium">Connected</th>
-                  <th className="px-3 py-2.5 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line text-ink">
-                {clients.map((c) => (
-                  <tr key={c.id} className="hover:bg-surface-subtle/50 transition-colors">
-                    <td className="px-3 py-3">
-                      <div className="font-medium text-ink">{c.displayName ?? 'Private Client'}</div>
-                      <div className="text-subtle text-[11px] font-mono">{c.email}</div>
-                    </td>
-                    <td className="px-3 py-3 font-mono font-semibold tabular-nums">
-                      {formatMoney(c.totalValuationBase, c.currency as any)}
-                    </td>
-                    <td className="px-3 py-3 font-mono tabular-nums text-brand-600 dark:text-brand-400">
-                      {c.runwayMonths} Mo
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="rounded bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-subtle border border-line">
-                        {c.riskBand}
+
+          {loadingInvites ? (
+            <div className="flex justify-center p-4 text-brand-600">
+              <Spinner label="Loading invitations..." />
+            </div>
+          ) : invites.length === 0 ? (
+            <div className="rounded-field bg-surface-subtle p-8 text-center text-xs text-subtle">
+              No active invitations. Create an invite link to onboard a new private client.
+            </div>
+          ) : (
+            <ul className="flex flex-col divide-y divide-line">
+              {invites.map((inv) => (
+                <li key={inv.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm text-ink font-mono">{inv.inviteCode}</span>
+                      <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                        {inv.status}
                       </span>
-                    </td>
-                    <td className="px-3 py-3 text-subtle text-[11px]">
-                      {new Date(c.connectedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-8 px-2.5 text-xs"
-                        onClick={() => setSelectedClient(c)}
-                      >
-                        <Eye aria-hidden className="mr-1 size-3.5" />
-                        Inspect Portfolio
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Active Invitation Links Section */}
-      <div className={cn(cardClassName, 'flex flex-col gap-3')}>
-        <div className="flex items-center justify-between border-b border-line pb-3">
-          <div>
-            <h3 className="font-semibold text-ink">Active Client Invitations</h3>
-            <p className="text-xs text-subtle">
-              Direct links your clients can use to register and automatically grant you advisory delegation.
-            </p>
-          </div>
-        </div>
-
-        {loadingInvites ? (
-          <div className="flex justify-center p-4 text-brand-600">
-            <Spinner label="Loading invitations..." />
-          </div>
-        ) : (
-          <ul className="flex flex-col divide-y divide-line">
-            {invites.map((inv) => (
-              <li key={inv.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm text-ink font-mono">{inv.inviteCode}</span>
-                    <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                      {inv.status}
-                    </span>
+                    </div>
+                    <p className="text-xs text-subtle">{inv.clientName ?? inv.note ?? 'Direct Delegation Link'}</p>
                   </div>
-                  <p className="text-xs text-subtle">{inv.clientName ?? inv.note ?? 'Direct Delegation Link'}</p>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    readOnly
-                    value={inv.inviteUrl}
-                    className="w-48 sm:w-64 rounded border border-line bg-surface-subtle px-2 py-1 text-[11px] font-mono text-ink focus:outline-none"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => handleCopyLink(inv.inviteUrl, inv.id)}
-                  >
-                    <Copy aria-hidden="true" className="mr-1 size-3" />
-                    {copiedCode === inv.id ? 'Copied' : 'Copy'}
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={inv.inviteUrl}
+                      className="w-48 sm:w-64 rounded border border-line bg-surface-subtle px-2 py-1 text-[11px] font-mono text-ink focus:outline-none"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => handleCopyLink(inv.inviteUrl, inv.id)}
+                    >
+                      <Copy aria-hidden="true" className="mr-1 size-3" />
+                      {copiedCode === inv.id ? 'Copied' : 'Copy'}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
+      {/* Modals */}
       <InviteClientModal open={inviteModalOpen} onOpenChange={setInviteModalOpen} />
       <ClientPortfolioModal
         open={!!selectedClient}
         onOpenChange={(open) => !open && setSelectedClient(null)}
         client={selectedClient}
+      />
+      <PreMeetingBriefModal
+        open={briefOpen}
+        onClose={() => setBriefOpen(false)}
+        client={briefClient ?? activeClient}
+        onNavigateToAdvisory={() => navigate('/advisory')}
+      />
+      <InstrumentComparisonModal
+        open={instrumentsOpen}
+        onClose={() => setInstrumentsOpen(false)}
       />
     </div>
   );

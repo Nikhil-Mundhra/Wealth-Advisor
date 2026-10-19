@@ -1,4 +1,3 @@
-import { ADMIN_ROLE, ADVISOR_ROLE } from '@wealth-advisor/rules';
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -14,23 +13,34 @@ import {
   Shield,
   Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
-import { useMe } from '../../features/auth/api/use-me.ts';
+import { useQueryClient } from '@tanstack/react-query';
+import { ME_QUERY_KEY } from '../../features/auth/api/use-me.ts';
+import {
+  getAdminActingSession,
+  returnToAdminSession,
+  type ActingSessionInfo,
+} from '../../features/auth/session/acting-session.ts';
 import { ClientSelector } from '../../features/advisor/components/client-selector.tsx';
-import { PreMeetingBriefModal } from '../../features/advisor/components/pre-meeting-brief-modal.tsx';
-import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { LanguageSelect } from '../ui/language-select.tsx';
 import { ThemeToggle } from '../ui/theme-toggle.tsx';
 
-const TABS = [
+// Client Den Navigation (Strictly private personal wealth management)
+const CLIENT_TABS = [
   { to: '/', key: 'nav.dashboard', Icon: LayoutDashboard, end: true },
   { to: '/cashflow', key: 'nav.cashflow', Icon: ArrowLeftRight },
   { to: '/advisory', key: 'nav.advisory', Icon: MessagesSquare },
 ] as const;
 
+// Advisor Workstation Navigation (Institutional oversight of client book)
+const ADVISOR_NAV_ITEMS = [
+  { to: '/advisor', label: 'Client Overview', Icon: Users, end: true },
+] as const;
+
+// System Admin Console Navigation (Supervisory operators)
 const ADMIN_NAV_ITEMS = [
   { to: '/admin', label: 'Overview', Icon: Shield, end: true },
   { to: '/admin/users', label: 'User Accounts', Icon: Users },
@@ -41,43 +51,79 @@ const ADMIN_NAV_ITEMS = [
 ] as const;
 
 function linkClass({ isActive }: { isActive: boolean }): string {
-  return cn('flex min-h-11 items-center gap-3 rounded-field px-3 text-sm', isActive ? 'bg-surface-subtle text-ink font-medium' : 'text-subtle hover:text-ink');
+  return cn(
+    'flex min-h-11 items-center gap-3 rounded-field px-3 text-sm transition-colors',
+    isActive ? 'bg-surface-subtle text-ink font-medium' : 'text-subtle hover:text-ink'
+  );
 }
 
 function tabClass({ isActive }: { isActive: boolean }): string {
-  return cn('flex min-h-11 flex-col items-center justify-center gap-1 text-xs', isActive ? 'text-brand-600 dark:text-brand-700 font-medium' : 'text-subtle');
+  return cn(
+    'flex min-h-11 flex-col items-center justify-center gap-1 text-xs transition-colors',
+    isActive ? 'text-brand-600 dark:text-brand-700 font-medium' : 'text-subtle'
+  );
 }
 
-// Signed-in frame: top header on every viewport, sidebar on desktop, bottom tabs on mobile.
+// Banner displayed ONLY when an administrator is actively testing a demo persona
+function ActingBanner() {
+  const [acting, setActing] = useState<ActingSessionInfo | null>(() => getAdminActingSession());
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const handleCheck = () => setActing(getAdminActingSession());
+    window.addEventListener('storage', handleCheck);
+    return () => window.removeEventListener('storage', handleCheck);
+  }, []);
+
+  if (!acting) return null;
+
+  const handleReturn = async () => {
+    const success = returnToAdminSession();
+    if (success) {
+      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+      navigate('/admin/credentials');
+    }
+  };
+
+  return (
+    <aside
+      aria-label="Admin demo session active"
+      className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-gold/40 bg-gold/15 px-4 py-2 text-xs backdrop-blur-sm"
+    >
+      <div className="flex items-center gap-2 text-ink">
+        <Shield aria-hidden className="size-4 text-gold shrink-0" />
+        <span className="font-semibold text-gold-dark dark:text-gold-light">
+          Admin Acting Mode:
+        </span>
+        <span className="text-subtle">
+          Acting as <strong className="text-ink font-semibold">{acting.name}</strong> ({acting.roleBadge} · {acting.category})
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={handleReturn}
+        className="flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/20 px-3 py-1 font-semibold text-xs text-ink hover:bg-gold/30 transition-colors cursor-pointer"
+      >
+        <ArrowLeft aria-hidden className="size-3 text-gold" />
+        <span>Return to Admin Console</span>
+      </button>
+    </aside>
+  );
+}
+
+// Signed-in frame: Clean separation between Client Den, Advisor Workstation, and Admin Console.
 export function AppShell() {
   const strings = useStrings();
-  const me = useMe();
-  const navigate = useNavigate();
   const location = useLocation();
 
-  const isAdmin = Boolean(me.data?.roles.includes(ADMIN_ROLE));
-  const isAdvisor = Boolean(me.data?.roles.some((r) => r === ADVISOR_ROLE || r === ADMIN_ROLE));
   const isAdminSection = location.pathname.startsWith('/admin');
-
-  const [briefOpen, setBriefOpen] = useState(false);
-  const [instrumentsOpen, setInstrumentsOpen] = useState(false);
+  const isAdvisorSection = location.pathname.startsWith('/advisor');
 
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">
-      {/* Advisor Modals (Only rendered when not in Admin section) */}
-      {!isAdminSection && (
-        <>
-          <PreMeetingBriefModal
-            open={briefOpen}
-            onClose={() => setBriefOpen(false)}
-            onNavigateToAdvisory={() => navigate('/advisory')}
-          />
-          <InstrumentComparisonModal
-            open={instrumentsOpen}
-            onClose={() => setInstrumentsOpen(false)}
-          />
-        </>
-      )}
+      {/* Impersonation Banner for Operators */}
+      <ActingBanner />
 
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface md:flex">
@@ -89,8 +135,15 @@ export function AppShell() {
               <span className="font-semibold text-[11px] uppercase tracking-wider text-gold">Admin Console</span>
             </div>
           )}
+          {isAdvisorSection && (
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className="flex size-1.5 rounded-full bg-gold" />
+              <span className="font-semibold text-[11px] uppercase tracking-wider text-gold">Advisor Workstation</span>
+            </div>
+          )}
         </div>
 
+        {/* 1. Admin Console Sidebar */}
         {isAdminSection ? (
           <nav aria-label="Admin console navigation" className="flex flex-col gap-1 px-3 mt-2">
             {ADMIN_NAV_ITEMS.map(({ to, label, Icon, ...rest }) => (
@@ -104,33 +157,40 @@ export function AppShell() {
               <ArrowLeft aria-hidden className="size-5 text-subtle" />
               <span>Exit to Client App</span>
             </NavLink>
-            {isAdvisor && (
-              <NavLink to="/advisor" className={linkClass}>
-                <Briefcase aria-hidden className="size-5 text-gold" />
-                <span>Advisor Workstation</span>
+            <NavLink to="/advisor" className={linkClass}>
+              <Briefcase aria-hidden className="size-5 text-gold" />
+              <span>Advisor Workstation</span>
+            </NavLink>
+          </nav>
+        ) : isAdvisorSection ? (
+          /* 2. Advisor Workstation Sidebar */
+          <nav aria-label="Advisor workstation navigation" className="flex flex-col gap-1 px-3 mt-2">
+            {ADVISOR_NAV_ITEMS.map(({ to, label, Icon, ...rest }) => (
+              <NavLink key={to} to={to} {...rest} className={linkClass}>
+                <Icon aria-hidden className="size-5 text-gold" />
+                <span>{label}</span>
               </NavLink>
-            )}
+            ))}
+            <div className="my-2 border-t border-line" />
+            <NavLink to="/settings/security" className={linkClass}>
+              <Settings aria-hidden className="size-5" />
+              {strings['settings.security']}
+            </NavLink>
+            <div className="my-3 border-t border-line" />
+            <NavLink to="/" className={linkClass}>
+              <ArrowLeft aria-hidden className="size-5 text-subtle" />
+              <span>Exit to Client App</span>
+            </NavLink>
           </nav>
         ) : (
+          /* 3. Client's Den Sidebar (Strictly personal portfolio, NO admin or advisor tabs) */
           <nav aria-label={strings['nav.main']} className="flex flex-col gap-1 px-3 mt-2">
-            {TABS.map(({ to, key, Icon, ...rest }) => (
+            {CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
               <NavLink key={to} to={to} {...rest} className={linkClass}>
                 <Icon aria-hidden className="size-5" />
                 {strings[key]}
               </NavLink>
             ))}
-            {isAdvisor && (
-              <NavLink to="/advisor" className={linkClass}>
-                <Briefcase aria-hidden className="size-5 text-gold" />
-                {strings['nav.advisor']}
-              </NavLink>
-            )}
-            {isAdmin && (
-              <NavLink to="/admin" className={linkClass}>
-                <Shield aria-hidden className="size-5 text-gold" />
-                {strings['admin.overview']}
-              </NavLink>
-            )}
             <div className="my-2 border-t border-line" />
             <NavLink to="/settings/security" className={linkClass}>
               <Settings aria-hidden className="size-5" />
@@ -156,11 +216,15 @@ export function AppShell() {
                   Operator Mode
                 </span>
               </div>
-            ) : isAdvisor ? (
-              <ClientSelector
-                onOpenBrief={() => setBriefOpen(true)}
-                onOpenInstruments={() => setInstrumentsOpen(true)}
-              />
+            ) : isAdvisorSection ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-gold/10 px-2.5 py-1 text-xs font-semibold text-gold border border-gold/20">
+                  <Briefcase aria-hidden className="size-3.5" />
+                  <span>Institutional</span>
+                </div>
+                {/* Advisor can switch between clients in the workstation */}
+                <ClientSelector />
+              </div>
             ) : null}
           </div>
 
@@ -176,34 +240,22 @@ export function AppShell() {
                 <ArrowLeft aria-hidden className="size-3.5 text-subtle" />
                 <span>Exit Admin</span>
               </NavLink>
+            ) : isAdvisorSection ? (
+              <NavLink
+                to="/settings/security"
+                aria-label={strings['header.settings']}
+                className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
+              >
+                <Settings aria-hidden className="size-5" />
+              </NavLink>
             ) : (
-              <>
-                {isAdvisor && (
-                  <NavLink
-                    to="/advisor"
-                    aria-label={strings['nav.advisor']}
-                    className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-                  >
-                    <Briefcase aria-hidden className="size-5 text-gold" />
-                  </NavLink>
-                )}
-                {isAdmin && (
-                  <NavLink
-                    to="/admin"
-                    aria-label="Admin"
-                    className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-                  >
-                    <Shield aria-hidden className="size-5 text-gold" />
-                  </NavLink>
-                )}
-                <NavLink
-                  to="/settings/security"
-                  aria-label={strings['header.settings']}
-                  className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-                >
-                  <Settings aria-hidden className="size-5" />
-                </NavLink>
-              </>
+              <NavLink
+                to="/settings/security"
+                aria-label={strings['header.settings']}
+                className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
+              >
+                <Settings aria-hidden className="size-5" />
+              </NavLink>
             )}
           </div>
         </div>
@@ -219,7 +271,7 @@ export function AppShell() {
         aria-label={strings['header.nav.mobile']}
         className={cn(
           'fixed inset-x-0 bottom-0 z-10 grid border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden',
-          isAdminSection ? 'grid-cols-5' : 'grid-cols-3'
+          isAdminSection ? 'grid-cols-5' : isAdvisorSection ? 'grid-cols-3' : 'grid-cols-3'
         )}
       >
         {isAdminSection ? (
@@ -245,8 +297,23 @@ export function AppShell() {
               <span>Exit</span>
             </NavLink>
           </>
+        ) : isAdvisorSection ? (
+          <>
+            <NavLink to="/advisor" end className={tabClass}>
+              <Users aria-hidden className="size-5" />
+              <span>Clients</span>
+            </NavLink>
+            <NavLink to="/settings/security" className={tabClass}>
+              <Settings aria-hidden className="size-5" />
+              <span>Security</span>
+            </NavLink>
+            <NavLink to="/" className={tabClass}>
+              <ArrowLeft aria-hidden className="size-5" />
+              <span>Exit</span>
+            </NavLink>
+          </>
         ) : (
-          TABS.map(({ to, key, Icon, ...rest }) => (
+          CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
             <NavLink key={to} to={to} {...rest} className={tabClass}>
               <Icon aria-hidden className="size-5" />
               {strings[key]}

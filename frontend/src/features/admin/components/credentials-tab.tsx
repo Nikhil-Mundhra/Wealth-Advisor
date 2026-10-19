@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Briefcase,
   Check,
@@ -7,12 +8,19 @@ import {
   ExternalLink,
   KeyRound,
   Lock,
+  Play,
   Shield,
   Sparkles,
   User,
 } from 'lucide-react';
+import { Button } from '../../../components/ui/button.tsx';
+import { Spinner } from '../../../components/ui/spinner.tsx';
 import { cardClassName } from '../../../components/ui/card.tsx';
 import { cn } from '../../../lib/cn.ts';
+import { authApi } from '../../auth/api/auth-api.ts';
+import { ME_QUERY_KEY, useMe } from '../../auth/api/use-me.ts';
+import { getAccessToken, setAccessToken } from '../../auth/session/session-store.ts';
+import { saveAdminActingSession } from '../../auth/session/acting-session.ts';
 
 export interface DemoPersona {
   id: string;
@@ -122,6 +130,58 @@ export const DEMO_PERSONAS: DemoPersona[] = [
 export function CredentialsTab() {
   const [filter, setFilter] = useState<'ALL' | 'ADMIN' | 'ADVISOR' | 'CLIENT'>('ALL');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const me = useMe();
+
+  const handleLaunchSession = async (persona: DemoPersona) => {
+    try {
+      setLaunchingId(persona.id);
+      setErrorMsg(null);
+      const currentToken = getAccessToken();
+      const currentEmail = me.data?.email ?? 'Shenzhen@Fintechathon.com';
+
+      // Save admin session state so the operator can cleanly return back to /admin
+      if (currentToken) {
+        saveAdminActingSession(currentToken, currentEmail, {
+          id: persona.id,
+          name: persona.name,
+          email: persona.email,
+          roleBadge: persona.roleBadge,
+          category: persona.category,
+        });
+      }
+
+      // Log into the demo persona account
+      const tokens = await authApi.login({
+        email: persona.email,
+        password: persona.password,
+        clientType: 'WEB',
+        rememberMe: false,
+      });
+
+      // Switch active in-memory session token to the demo persona
+      setAccessToken(tokens.accessToken);
+      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+
+      // Navigate to the persona's respective portal
+      if (persona.category === 'CLIENT') {
+        navigate('/');
+      } else if (persona.category === 'ADVISOR') {
+        navigate('/advisor');
+      } else {
+        navigate('/admin');
+      }
+    } catch (err) {
+      console.error('Failed to launch demo session', err);
+      setErrorMsg(`Failed to launch session for ${persona.name}. Please try again.`);
+    } finally {
+      setLaunchingId(null);
+    }
+  };
 
   const handleCopy = (text: string, key: string) => {
     void navigator.clipboard.writeText(text);
@@ -297,13 +357,31 @@ export function CredentialsTab() {
                   </button>
                 </div>
 
-                {/* Portal Link */}
+                {/* Launch Session / Act As Party */}
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={launchingId !== null}
+                  onClick={() => handleLaunchSession(persona)}
+                  className="mt-1 w-full text-xs justify-center gap-1.5"
+                >
+                  {launchingId === persona.id ? (
+                    <Spinner label={`Launching ${persona.name}...`} />
+                  ) : (
+                    <>
+                      <Play aria-hidden className="size-3 fill-current" />
+                      <span>Act as {persona.name.split(' ')[0]} ({persona.roleBadge})</span>
+                    </>
+                  )}
+                </Button>
+
+                {/* Direct Portal Link */}
                 <Link
                   to={persona.loginPath}
-                  className="mt-1 flex items-center justify-center gap-1.5 rounded bg-surface-subtle hover:bg-surface py-2 text-xs font-medium text-ink transition-colors border border-line"
+                  className="flex items-center justify-center gap-1.5 rounded bg-surface-subtle hover:bg-surface py-1 text-[11px] font-medium text-subtle hover:text-ink transition-colors border border-line"
                 >
-                  <span>Open {persona.loginPath}</span>
-                  <ExternalLink aria-hidden className="size-3.5 text-subtle" />
+                  <span>Manual Form: {persona.loginPath}</span>
+                  <ExternalLink aria-hidden className="size-3 text-subtle" />
                 </Link>
               </div>
             </div>

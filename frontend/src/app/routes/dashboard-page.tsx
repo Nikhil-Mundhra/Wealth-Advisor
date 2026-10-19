@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import {
   COUNTRY_CURRENCY_MAP,
   DEFAULT_FAMILY_BURN_ESTIMATE,
@@ -22,8 +22,6 @@ import { useProfile } from '../../features/profiling/profile-store.ts';
 import { PortfolioSection } from './portfolio-section.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
-import { ClientRoster } from '../../features/advisor/components/client-roster.tsx';
-import { PreMeetingBriefModal } from '../../features/advisor/components/pre-meeting-brief-modal.tsx';
 import {
   DEMO_BASELINE,
   DEMO_NET_WORTH_SERIES,
@@ -47,10 +45,8 @@ const BAND_TONE: Record<RunwayBand, string> = {
   healthy: 'text-ink',
 };
 
-// Net worth hero, client roster, runway gauge, rebalance CTA, trail chart, and target allocation.
 export function DashboardPage() {
   const strings = useStrings();
-  const navigate = useNavigate();
   const { data: me } = useMe();
   const activeClient = useActiveClient();
   const isDemo = !me || me.email === 'testing@example.com';
@@ -61,7 +57,6 @@ export function DashboardPage() {
     .reduce((total, holding) => total + holding.amount, 0);
   const [household, setHousehold] = useState<HouseholdMode>(activeClient.householdMode);
   const [profilingOpen, setProfilingOpen] = useState(false);
-  const [briefOpen, setBriefOpen] = useState(false);
 
   const primaryCurrency = isDemo
     ? activeClient.baseCurrency
@@ -229,32 +224,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {isDemo && (
-        <section aria-label="Advisor Client Portfolio Book" className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold tracking-tight text-ink">
-                Advisor Client Portfolio Book
-              </h2>
-              <p className="text-xs text-subtle">
-                Active Client: <span className="font-semibold text-brand-700 dark:text-brand-900">{activeClient.name}</span> ({activeClient.location}) · Risk: {activeClient.riskScore}/10 ({activeClient.riskBand})
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setBriefOpen(true)}
-              className="text-xs"
-            >
-              Open 30s Meeting Brief
-            </Button>
-          </div>
-          <ClientRoster
-            onOpenBriefForClient={() => setBriefOpen(true)}
-            onNavigateToAdvisory={() => navigate('/advisory')}
-          />
-        </section>
-      )}
-
       <div className="grid gap-4 sm:grid-cols-3">
         <Card aria-label={strings['dashboard.networth']} className="sm:col-span-1">
           <p className="text-sm text-subtle">{strings['dashboard.networth']}</p>
@@ -384,12 +353,6 @@ export function DashboardPage() {
         open={profilingOpen}
         onClose={() => setProfilingOpen(false)}
         email={me?.email}
-      />
-
-      <PreMeetingBriefModal
-        open={briefOpen}
-        onClose={() => setBriefOpen(false)}
-        client={activeClient}
       />
     </div>
   );
