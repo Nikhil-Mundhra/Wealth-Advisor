@@ -124,9 +124,9 @@ export function AppShell() {
   const showAdvisoryTab = !mePending && (!me || !hasAdvisorRole(me.roles));
   const clientTabs = CLIENT_TABS.filter((tab) => tab.to !== '/advisory' || showAdvisoryTab);
 
-  const isAdminSection = location.pathname.startsWith('/admin');
+  const isAdminSection = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isAdvisorSection =
-    location.pathname.startsWith('/advisor') ||
+    location.pathname === '/advisor' || location.pathname.startsWith('/advisor/') ||
     // Advisors reach /settings/* from the workstation sidebar; keep the advisor chrome there.
     // ADVISOR role only — admins keep the client chrome on settings as before.
     (location.pathname.startsWith('/settings') && (me?.roles.includes('ADVISOR') ?? false));

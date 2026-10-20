@@ -61,12 +61,57 @@ describe('Advisory route', () => {
     renderAdvisoryRoute(['USER'], 'testing@example.com');
     expect(await screen.findByRole('textbox', { name: 'Ask about your portfolio…' })).toBeVisible();
     expect(screen.queryByText('Workstation')).toBeNull();
+
+    // Sidebar stays on client tabs; no advisor chrome leaks onto /advisory.
+    for (const name of ['Dashboard', 'Cash Flow', 'Advisory']) {
+      expect(await screen.findAllByRole('link', { name })).not.toHaveLength(0);
+    }
+    expect(screen.queryByRole('link', { name: 'Client Overview' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Advisor Workstation' })).toBeNull();
+    expect(screen.queryByText('Advisor Workstation')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
   });
 
   it('redirects ADVISOR roles to the workstation', async () => {
     renderAdvisoryRoute(['USER', 'ADVISOR'], 'advisor@example.com');
     expect(await screen.findByText('Workstation')).toBeVisible();
     expect(screen.queryByRole('textbox', { name: 'Ask about your portfolio…' })).toBeNull();
+    expect(await screen.findByRole('link', { name: 'Client Overview' })).toBeVisible();
+  });
+
+  it('shows no advisor chrome while roles are unresolved', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    setAccessToken('test-token');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = createMemoryRouter(
+      [
+        {
+          element: <ProtectedRoute />,
+          children: [
+            {
+              element: <AppShell />,
+              children: [{ path: '/advisory', element: <AdvisoryPage /> }],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/advisory'] },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    // Advisory content waits for roles; the sidebar must not flash advisor chrome.
+    expect(await screen.findByRole('status')).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Client Overview' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Advisor Workstation' })).toBeNull();
+    expect(screen.queryByText('Advisor Workstation')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
   });
 
   it('redirects ADMIN roles to the workstation', async () => {
