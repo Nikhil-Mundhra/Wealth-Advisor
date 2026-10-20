@@ -50,15 +50,6 @@ export interface TrackPayload<E extends EngagementEvent = EngagementEvent> {
   data: EngagementEventPropsMap[E];
 }
 
-declare global {
-  interface Window {
-    va?: (
-      action: 'event' | 'beforeSend',
-      payload: { name: string; data?: Record<string, string | number | boolean> },
-    ) => void;
-  }
-}
-
 // Dispatches a typed, privacy-guaranteed analytics event to Vercel Web Analytics.
 // Fire-and-forget: swallows all errors so user actions never fail or block.
 export function track<E extends EngagementEvent>(
