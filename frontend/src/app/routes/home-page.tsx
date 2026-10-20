@@ -18,12 +18,21 @@ export function HomePage() {
   const [activeDocSubtab, setActiveDocSubtab] = useState<DocSubtab>('lifecycle');
 
   const handleNavigate = (id: string, subtab?: string) => {
-    if (subtab) {
-      setActiveDocSubtab(subtab as DocSubtab);
+    const docSubtabs: DocSubtab[] = ['lifecycle', 'mit-sloan', 'knowledge-graph', 'positioning', 'compliance', 'blueprint'];
+    let targetId = id;
+    let targetSubtab = subtab;
+
+    if (docSubtabs.includes(id as DocSubtab)) {
+      targetId = 'documentation';
+      targetSubtab = id as DocSubtab;
     }
-    const el = document.getElementById(id);
+
+    if (targetSubtab) {
+      setActiveDocSubtab(targetSubtab as DocSubtab);
+    }
+    const el = document.getElementById(targetId);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      el.scrollIntoView?.({ behavior: 'smooth' });
     }
   };
 
@@ -40,7 +49,7 @@ export function HomePage() {
         </Suspense>
 
         {/* Hero Section */}
-        <HomepageHero onScrollTo={(id) => handleNavigate(id)} />
+        <HomepageHero onScrollTo={handleNavigate} />
 
         {/* The 3 Core Pillars */}
         <TriadOverviewSection

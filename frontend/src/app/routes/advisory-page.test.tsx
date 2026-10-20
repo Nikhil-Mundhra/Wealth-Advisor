@@ -98,7 +98,7 @@ describe('AdvisoryPage', () => {
     renderAdvisory();
     const matches = await screen.findAllByText('Private Client');
     expect(matches.length).toBeGreaterThan(0);
-    for (const rosterName of ['Elena Vance', 'Marcus Thorne', 'Aisha Al-Mansoor', 'David Kim']) {
+    for (const rosterName of ['Elena Vance', 'Marcus Vance', 'Mei-Ling Chen', 'Rahul Sharma']) {
       expect(screen.queryByText(rosterName, { exact: false })).toBeNull();
     }
   });

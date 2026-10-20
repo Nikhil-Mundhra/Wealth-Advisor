@@ -63,7 +63,15 @@ export const router = createBrowserRouter([
           { path: '/settings/ai', element: <AiSettingsPage /> },
           {
             element: <AdvisorRoute />,
-            children: [{ path: '/advisor', element: <AdvisorWorkstationPage /> }],
+            children: [
+              { path: '/advisor', element: <AdvisorWorkstationPage /> },
+              { path: '/advisor/client', element: <AdvisorWorkstationPage /> },
+              { path: '/advisor/copilot', element: <AdvisorWorkstationPage /> },
+              { path: '/advisor/instruments', element: <AdvisorWorkstationPage /> },
+              { path: '/advisor/invites', element: <AdvisorWorkstationPage /> },
+              { path: '/advisor/evidence', element: <EvidencePage /> },
+              { path: '/advisor/settings', element: <SecuritySettingsPage /> },
+            ],
           },
           {
             element: <AdminRoute />,

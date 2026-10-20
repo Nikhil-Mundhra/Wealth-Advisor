@@ -27,11 +27,12 @@ frontend/src/app/routes/admin-pages.test.tsx : overview links and provider list
 frontend/src/app/routes/admin-tenants-page.tsx : tenant provisioning placeholder pending the tenant module
 frontend/src/app/routes/admin-users-page.tsx : admin user account management, filtering, and role/status mutations
 frontend/src/app/routes/advisor-login-page.tsx : institutional login terminal for fiduciary wealth analysts
-frontend/src/app/routes/advisor-workstation-page.tsx : wealth analyst workstation with client roster, AUM summaries, and invitation links
+frontend/src/app/routes/advisor-workstation-page.test.tsx : advisor roster scoping for Alex Morgan, one-click portfolio entry, and instrument matrix tab
+frontend/src/app/routes/advisor-workstation-page.tsx : wealth analyst workstation with client roster, AI advisory copilot, AUM summaries, and invitation links
 frontend/src/app/routes/advisory-page.test.tsx : thread, step-up gate, and no-auth degradation
 frontend/src/app/routes/advisory-page.tsx : copilot thread, rebalance card, biometric step-up modal
-frontend/src/app/routes/advisory-route.test.tsx : role-aware /advisory routing: client view versus advisor redirect
-frontend/src/app/routes/advisory-thread.tsx : store-free copilot thread shared by the client advisory view
+frontend/src/app/routes/advisory-route.test.tsx : /advisory routing renders personal portfolio copilot across roles
+frontend/src/app/routes/advisory-thread.tsx : store-free copilot thread shared by the client and advisor workstation views
 frontend/src/app/routes/ai-settings-page.test.tsx : user API key input, model selection, toast notification, and persistence tests
 frontend/src/app/routes/ai-settings-page.tsx : user AI API key configuration and FinanceBench model rankings page
 frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan render
@@ -48,8 +49,9 @@ frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire
 frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
 frontend/src/app/routes/portfolio-page.tsx : deep-link route wrapper rendering shared PortfolioSection
 frontend/src/app/routes/portfolio-section.tsx : shared portfolio holdings table rendered on the dashboard and as a deep link
-frontend/src/app/routes/role-login-mismatch.test.tsx : role mismatch keeps a signed-in session and GuestRoute redirects role portals
-frontend/src/app/routes/root-route.tsx : dual-mode root route: HomePage for anonymous visitors, AppShell with DashboardPage for authenticated users
+frontend/src/app/routes/role-login-mismatch.test.tsx : role mismatch keeps a signed-in session, client login rejects staff creds, GuestRoute redirects role portals
+frontend/src/app/routes/root-route.test.tsx : staff redirect to their portal, acting session stays on the client dashboard, GuestRoute bounce never lands analysts on it
+frontend/src/app/routes/root-route.tsx : dual-mode root route: HomePage for anonymous visitors, staff redirect to their portal, AppShell for clients
 frontend/src/app/routes/route-error-boundary.tsx : graceful error boundary with reload and navigation controls for uncaught route errors
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state
 frontend/src/app/routes/security-settings-page.tsx : session facts, tier ladder, passkeys, sign out

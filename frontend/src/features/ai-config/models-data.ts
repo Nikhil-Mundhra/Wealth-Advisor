@@ -21,12 +21,12 @@ export const FINANCE_BENCH_MODELS: AiModelSpec[] = [
     provider: 'openrouter',
     financeBenchScore: 88.5,
     isFree: true,
-    isDefault: false,
+    isDefault: true,
     contextWindow: '128k tokens',
     latency: '1.4s',
-    pricing: '$0.00 (Free Tier)',
-    tags: ['#1 Free Model', 'OpenRouter Free', 'Quant Tuned', 'FinanceBench Leader'],
-    description: 'Strictly ranked #1 Best Free Model on FinanceBench (88.5% Factual Correctness). Fine-tuned on financial reasoning, SEC disclosures, and quantitative problem solving.',
+    pricing: '$0.00 (Platform Default)',
+    tags: ['#1 Free Model', 'Platform Default', 'OpenRouter Free', 'Quant Tuned', 'FinanceBench Leader'],
+    description: 'Strictly ranked #1 Best Free Model on FinanceBench (88.5% Factual Correctness). Fine-tuned on financial reasoning, SEC disclosures, and quantitative problem solving. Default platform reasoning engine via OpenRouter.',
   },
   {
     id: 'openai/gpt-4o',
@@ -47,12 +47,12 @@ export const FINANCE_BENCH_MODELS: AiModelSpec[] = [
     provider: 'gemini',
     financeBenchScore: 84.1,
     isFree: false,
-    isDefault: true,
+    isDefault: false,
     contextWindow: '1M tokens',
     latency: '0.6s',
-    pricing: 'Platform Included (Default)',
-    tags: ['Platform Default', 'Sub-second Latency', '1M Context'],
-    description: 'Default platform fallback gateway. Ultra-low latency engine supporting massive document ingestion and multi-asset audit telemetry.',
+    pricing: '$0.075 / 1M tokens',
+    tags: ['Sub-second Latency', '1M Context'],
+    description: 'Ultra-low latency engine supporting massive document ingestion and multi-asset audit telemetry.',
   },
   {
     id: 'deepseek/deepseek-chat',
@@ -95,5 +95,5 @@ export const FINANCE_BENCH_MODELS: AiModelSpec[] = [
   },
 ];
 
-export const SYSTEM_DEFAULT_MODEL_ID = 'google/gemini-2.5-flash';
 export const TOP_FREE_MODEL_ID = 'nvidia/nemotron-3-ultra-550b-a55b:free';
+export const SYSTEM_DEFAULT_MODEL_ID = TOP_FREE_MODEL_ID;

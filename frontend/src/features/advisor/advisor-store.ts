@@ -6,6 +6,19 @@ import type { ProfilingAnswersInput } from '@wealth-advisor/rules';
 const STORAGE_KEY_CLIENT_ID = 'syntropy_advisor_active_client_id';
 
 let clients: AdvisorClient[] = [...SEEDED_CLIENTS];
+let currentAdvisorEmail: string | null = null;
+let currentAdvisorIsAdmin = false;
+let scopedClientsCache: AdvisorClient[] = clients;
+
+function recomputeScopedClients(): void {
+  if (currentAdvisorIsAdmin || !currentAdvisorEmail) {
+    scopedClientsCache = clients;
+    return;
+  }
+  const assigned = clients.filter((c) => c.advisorEmail?.toLowerCase() === currentAdvisorEmail);
+  scopedClientsCache = assigned.length > 0 ? assigned : clients;
+}
+
 let activeClientId: string = (() => {
   if (typeof window !== 'undefined' && window.localStorage) {
     const saved = window.localStorage.getItem(STORAGE_KEY_CLIENT_ID);
@@ -31,16 +44,30 @@ export function subscribeToAdvisorStore(listener: () => void): () => void {
   };
 }
 
+export function setAdvisorScope(advisorEmail?: string | null, isAdmin = false): void {
+  const normalized = advisorEmail ? advisorEmail.trim().toLowerCase() : null;
+  if (currentAdvisorEmail === normalized && currentAdvisorIsAdmin === isAdmin) {
+    return;
+  }
+  currentAdvisorEmail = normalized;
+  currentAdvisorIsAdmin = isAdmin;
+  recomputeScopedClients();
+  if (scopedClientsCache.length > 0 && !scopedClientsCache.some((c) => c.id === activeClientId)) {
+    activeClientId = scopedClientsCache[0]!.id;
+  }
+  notify();
+}
+
 export function getActiveClientId(): string {
   return activeClientId;
 }
 
-export function getActiveClient(): AdvisorClient {
-  return clients.find((c) => c.id === activeClientId) || clients[0]!;
+export function listAdvisorClients(): AdvisorClient[] {
+  return scopedClientsCache;
 }
 
-export function listAdvisorClients(): AdvisorClient[] {
-  return clients;
+export function getActiveClient(): AdvisorClient {
+  return scopedClientsCache.find((c) => c.id === activeClientId) || scopedClientsCache[0] || clients[0]!;
 }
 
 export function setActiveClient(clientId: string): void {
@@ -65,6 +92,7 @@ export function updateClientProfileAnswers(clientId: string, answers: ProfilingA
       profileAnswers: answers,
     };
   });
+  recomputeScopedClients();
   notify();
 }
 

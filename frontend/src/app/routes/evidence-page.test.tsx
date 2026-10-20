@@ -29,6 +29,19 @@ describe('EvidencePage', () => {
     expect(screen.getByRole('button', { name: /Download Audit JSON/i })).toBeInTheDocument();
   });
 
+  it('retains the settings tab bar', () => {
+    renderWithClient(
+      <MemoryRouter>
+        <EvidencePage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute('href', '/settings/security');
+    expect(screen.getByRole('link', { name: 'Sandbox ledger' })).toHaveAttribute('href', '/settings/ledger');
+    expect(screen.getByRole('link', { name: 'Evidence Explorer' })).toHaveAttribute('href', '/evidence');
+    expect(screen.getByRole('link', { name: 'AI & Models' })).toHaveAttribute('href', '/settings/ai');
+  });
+
   it('opens in-browser cryptographic verifier when clicking verify math', async () => {
     renderWithClient(
       <MemoryRouter>

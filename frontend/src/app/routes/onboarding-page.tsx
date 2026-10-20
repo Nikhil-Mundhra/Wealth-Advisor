@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
+import { ADVISOR_ROLE } from '@wealth-advisor/rules';
 import logoImg from '../../assets/logo.png';
 import logoDarkImg from '../../assets/logo-dark.png';
 import { LanguageSelect } from '../../components/ui/language-select.tsx';
@@ -12,6 +13,10 @@ export function OnboardingPage() {
   const navigate = useNavigate();
   const strings = useStrings();
   const { data: me } = useMe();
+
+  if (me?.roles.includes(ADVISOR_ROLE)) {
+    return <Navigate to="/advisor" replace />;
+  }
 
   return (
     <div className="min-h-dvh bg-surface text-ink">

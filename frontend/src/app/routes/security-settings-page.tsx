@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ShieldCheck } from 'lucide-react';
 import { COUNTRY_CURRENCY_MAP, CURRENCIES, PERMISSION_TIERS, type Currency } from '@wealth-advisor/rules';
@@ -21,7 +22,9 @@ import { SettingsNav } from './settings-nav.tsx';
 // Session facts, the tier ladder, passkey enrollment state, reporting currency, and account controls.
 export function SecuritySettingsPage() {
   const strings = useStrings();
+  const location = useLocation();
   const me = useMe();
+  const isAdvisorWorkstation = location.pathname === '/advisor' || location.pathname.startsWith('/advisor/');
   const isAdvisor = me.data?.roles.includes('ADVISOR') ?? false;
   const logout = useLogout();
   const profile = useProfile(me.data?.email);
@@ -63,7 +66,7 @@ export function SecuritySettingsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
         <PageTitle>{strings['header.settings']}</PageTitle>
-        <SettingsNav />
+        {!isAdvisorWorkstation && <SettingsNav />}
       </div>
 
       <Card aria-label={strings['security.session']}>

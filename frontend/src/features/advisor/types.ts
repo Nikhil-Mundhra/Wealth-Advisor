@@ -40,6 +40,7 @@ export interface AdvisorClient {
   id: string;
   name: string;
   email: string;
+  advisorEmail?: string | null;
   avatarIndex: number;
   location: string;
   householdMode: HouseholdMode;

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
@@ -9,6 +10,7 @@ import {
   ExternalLink,
   Eye,
   Layers,
+  MessagesSquare,
   Plus,
   Shield,
   Sparkles,
@@ -23,7 +25,14 @@ import { Card, cardClassName } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { authApi } from '../../features/auth/api/auth-api.ts';
-import { useActiveClient, useAdvisorClients, setActiveClient } from '../../features/advisor/advisor-store.ts';
+import { useMe } from '../../features/auth/api/use-me.ts';
+import {
+  useActiveClient,
+  useAdvisorClients,
+  setActiveClient,
+  setAdvisorScope,
+} from '../../features/advisor/advisor-store.ts';
+import { INSTITUTIONAL_INSTRUMENTS } from '../../features/advisor/instruments-data.ts';
 import type { AdvisorClient } from '../../features/advisor/types.ts';
 import { ClientPortfolioModal } from '../../features/advisor/components/client-portfolio-modal.tsx';
 import { InviteClientModal } from '../../features/advisor/components/invite-client-modal.tsx';
@@ -32,9 +41,49 @@ import { InstrumentComparisonModal } from '../../features/advisor/components/ins
 import { ClientRoster } from '../../features/advisor/components/client-roster.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatMoney } from '../../lib/format-money.ts';
+import { AdvisoryThread } from './advisory-thread.tsx';
+
+type WorkstationTab = 'overview' | 'active' | 'copilot' | 'instruments' | 'invites';
+
+const PATH_BY_TAB: Record<WorkstationTab, string> = {
+  overview: '/advisor',
+  active: '/advisor/client',
+  copilot: '/advisor/copilot',
+  instruments: '/advisor/instruments',
+  invites: '/advisor/invites',
+};
+
+function tabFromPath(pathname: string): WorkstationTab {
+  if (pathname === '/advisor/client') return 'active';
+  if (pathname === '/advisor/copilot') return 'copilot';
+  if (pathname === '/advisor/instruments') return 'instruments';
+  if (pathname === '/advisor/invites') return 'invites';
+  return 'overview';
+}
 
 export function AdvisorWorkstationPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'active' | 'invites'>('overview');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: me } = useMe();
+  const isAdmin = Boolean(me?.roles.includes('ADMIN'));
+
+  useEffect(() => {
+    setAdvisorScope(me?.email, isAdmin);
+  }, [me?.email, isAdmin]);
+
+  const [activeTab, setActiveTab] = useState<WorkstationTab>(() => tabFromPath(location.pathname));
+
+  useEffect(() => {
+    setActiveTab(tabFromPath(location.pathname));
+  }, [location.pathname]);
+
+  const selectTab = (tab: WorkstationTab) => {
+    setActiveTab(tab);
+    const targetPath = PATH_BY_TAB[tab];
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  };
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<AdvisorClientSummaryDto | null>(null);
   const [briefOpen, setBriefOpen] = useState(false);
@@ -113,12 +162,12 @@ export function AdvisorWorkstationPage() {
       </div>
 
       {/* Advisor View Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-line pb-2" role="tablist" aria-label="Advisor Workstation Tabs">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-2" role="tablist" aria-label="Advisor Workstation Tabs">
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === 'overview'}
-          onClick={() => setActiveTab('overview')}
+          onClick={() => selectTab('overview')}
           className={cn(
             'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
             activeTab === 'overview'
@@ -134,7 +183,7 @@ export function AdvisorWorkstationPage() {
           type="button"
           role="tab"
           aria-selected={activeTab === 'active'}
-          onClick={() => setActiveTab('active')}
+          onClick={() => selectTab('active')}
           className={cn(
             'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
             activeTab === 'active'
@@ -149,8 +198,40 @@ export function AdvisorWorkstationPage() {
         <button
           type="button"
           role="tab"
+          aria-selected={activeTab === 'copilot'}
+          onClick={() => selectTab('copilot')}
+          className={cn(
+            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
+            activeTab === 'copilot'
+              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
+              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
+          )}
+        >
+          <MessagesSquare aria-hidden className="size-3.5" />
+          <span>AI Advisory Copilot ({activeClient.name})</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'instruments'}
+          onClick={() => selectTab('instruments')}
+          className={cn(
+            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
+            activeTab === 'instruments'
+              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
+              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
+          )}
+        >
+          <Layers aria-hidden className="size-3.5" />
+          <span>Instrument Matrix</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeTab === 'invites'}
-          onClick={() => setActiveTab('invites')}
+          onClick={() => selectTab('invites')}
           className={cn(
             'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
             activeTab === 'invites'
@@ -223,7 +304,8 @@ export function AdvisorWorkstationPage() {
 
             <ClientRoster
               onOpenBriefForClient={(c) => handleOpenBrief(c)}
-              onNavigateToAdvisory={() => setActiveTab('active')}
+              onOpenClientPortfolio={() => selectTab('active')}
+              onOpenClientCopilot={() => selectTab('copilot')}
             />
           </div>
 
@@ -316,7 +398,6 @@ export function AdvisorWorkstationPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* shortcut: single entry to the brief; the duplicate launch opened the same modal. */}
               <Button
                 type="button"
                 variant="outline"
@@ -325,6 +406,15 @@ export function AdvisorWorkstationPage() {
               >
                 <Sparkles aria-hidden className="mr-1.5 size-3.5 text-gold" />
                 30s Meeting Brief
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => selectTab('copilot')}
+                className="text-xs"
+              >
+                <MessagesSquare aria-hidden className="mr-1.5 size-3.5" />
+                Launch Advisory Copilot
               </Button>
             </div>
           </div>
@@ -389,7 +479,92 @@ export function AdvisorWorkstationPage() {
         </div>
       )}
 
-      {/* TAB 3: CLIENT INVITATIONS & ONBOARDING */}
+      {/* TAB 3: AI ADVISORY COPILOT FOR ACTIVE CLIENT */}
+      {activeTab === 'copilot' && (
+        <AdvisoryThread
+          key={activeClient.id}
+          context={{
+            displayName: activeClient.name,
+            location: activeClient.location,
+            riskLabel: `${activeClient.riskScore}/10`,
+            riskBand: activeClient.riskBand,
+            baseCurrency: activeClient.baseCurrency,
+            householdMode: activeClient.householdMode,
+            runwayMonths: activeClient.runwayMonths,
+            monthlyBurn: activeClient.monthlyBurn,
+            corridors: activeClient.remittances.map((r) => r.corridor),
+            shareId: `${activeClient.id}_plan_2026`,
+          }}
+        />
+      )}
+
+      {/* TAB 4: INSTITUTIONAL INSTRUMENT MATRIX */}
+      {activeTab === 'instruments' && (
+        <div className={cn(cardClassName, 'flex flex-col gap-4')}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+            <div>
+              <h3 className="font-semibold text-ink">Institutional UCITS & Sovereign Instrument Matrix</h3>
+              <p className="text-xs text-subtle">
+                Approved cross-border ETFs, sovereign fixed income, and overnight money market instruments with withholding tax efficiency.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setInstrumentsOpen(true)}
+              className="text-xs"
+            >
+              <Layers aria-hidden className="mr-1.5 size-3.5" />
+              Side-by-Side Modal
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto rounded-field border border-line">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-subtle border-b border-line text-subtle">
+                <tr>
+                  <th className="px-3 py-2.5 font-medium">Ticker / ISIN</th>
+                  <th className="px-3 py-2.5 font-medium">Instrument</th>
+                  <th className="px-3 py-2.5 font-medium">Category</th>
+                  <th className="px-3 py-2.5 font-medium text-right">TER</th>
+                  <th className="px-3 py-2.5 font-medium text-right">Yield</th>
+                  <th className="px-3 py-2.5 font-medium text-right">AUM</th>
+                  <th className="px-3 py-2.5 font-medium">Domicile & Tax Note</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line text-ink">
+                {INSTITUTIONAL_INSTRUMENTS.map((inst) => (
+                  <tr key={inst.ticker} className="hover:bg-surface-subtle/50">
+                    <td className="px-3 py-3 font-mono">
+                      <span className="font-bold text-ink block">{inst.ticker}</span>
+                      <span className="text-[11px] text-subtle">{inst.isin}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="font-medium text-ink block">{inst.name}</span>
+                      <span className="text-[11px] text-subtle">{inst.bestFor}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="rounded bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-subtle border border-line">
+                        {inst.category}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 font-mono tabular-nums text-right">{inst.ter.toFixed(2)}%</td>
+                    <td className="px-3 py-3 font-mono tabular-nums text-right text-brand-600 dark:text-brand-400">
+                      {inst.yieldPct.toFixed(2)}%
+                    </td>
+                    <td className="px-3 py-3 font-mono tabular-nums text-right">€{inst.aumEurB.toFixed(1)}B</td>
+                    <td className="px-3 py-3 text-[11px] text-subtle">
+                      <strong className="text-ink">{inst.domicile} ({inst.distributionPolicy}):</strong> {inst.taxEfficiencyNote}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: CLIENT INVITATIONS & ONBOARDING */}
       {activeTab === 'invites' && (
         <div className={cn(cardClassName, 'flex flex-col gap-4')}>
           <div className="flex items-center justify-between border-b border-line pb-3">
@@ -466,7 +641,7 @@ export function AdvisorWorkstationPage() {
         open={briefOpen}
         onClose={() => setBriefOpen(false)}
         client={briefClient ?? activeClient}
-        onNavigateToAdvisory={() => setActiveTab('active')}
+        onNavigateToAdvisory={() => selectTab('copilot')}
       />
       <InstrumentComparisonModal
         open={instrumentsOpen}

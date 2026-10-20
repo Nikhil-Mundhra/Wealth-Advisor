@@ -4,8 +4,9 @@ import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Button } from '../../components/ui/button.tsx';
+import { Spinner } from '../../components/ui/spinner.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
-import { useProfile } from '../../features/profiling/profile-store.ts';
+import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
 import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
@@ -24,15 +25,27 @@ export interface PortfolioSectionProps {
 // Every target class renders for demo account; real accounts render user-configured assets from onboarding.
 export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
   const strings = useStrings();
-  const { data: me } = useMe();
+  const me = useMe();
   const activeClient = useActiveClient();
-  const isDemo = !me || me.email === 'testing@example.com';
-  const profile = useProfile(me?.email);
-  const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
+  const profile = useProfile(me.data?.email);
+  const { data: apiPortfolio } = usePortfolio(isDemoEmail(me.data?.email) && activeClient.id === 'elena-vance');
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
   const [constructionModalOpen, setConstructionModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const { ref, visible } = useReveal<HTMLDivElement>();
+
+  // Gate on the session like AdvisoryPage: while roles resolve, show a spinner, never the demo fixture.
+  if (me.isPending) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center text-brand-600">
+        <Spinner label="Loading" />
+      </div>
+    );
+  }
+  if (me.isError || !me.data) {
+    return <Navigate to="/login" replace />;
+  }
+  const isDemo = isDemoEmail(me.data.email);
 
   // Non-demo users without completed profiling must onboard first
   if (!isDemo && !profile.isCompleted && showTitle) {

@@ -139,10 +139,10 @@ export function AiSettingsPage() {
               <span>Configured API Key</span>
             </p>
             <p className="mt-1 font-mono text-[13px] font-semibold text-ink">
-              {currentConfig.isCustom ? currentConfig.maskedKey : 'Platform Managed Key'}
+              {currentConfig.isCustom ? currentConfig.maskedKey : 'Platform Managed Key (OpenRouter)'}
             </p>
             <p className="mt-0.5 text-[11px] text-subtle">
-              {currentConfig.isCustom ? 'Stored client-side in local vault' : 'Default fallback enabled'}
+              {currentConfig.isCustom ? 'Stored client-side in local vault' : 'Default OpenRouter gateway enabled'}
             </p>
           </div>
 

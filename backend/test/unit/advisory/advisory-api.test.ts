@@ -246,5 +246,57 @@ describe('AdvisoryApi', () => {
     assert.ok(notice, 'expected a NOTICE action card on optimizer failure');
     assert.equal(notice.payload.code, 'PROPOSAL_UNAVAILABLE');
   });
+
+  it('routes to OpenRouter with Nemotron model when openrouter is the active provider', async () => {
+    const { finance, wealth } = setupApis();
+    let requestedUrl = '';
+    let requestedBody: any = null;
+    let authHeader = '';
+
+    const gateway = new LlmGateway({
+      openrouterApiKey: 'sk-or-v1-test-nemotron-key',
+    });
+    const api = createAdvisoryApi({
+      finance,
+      wealth,
+      gateway,
+      getActiveProvider: async () => 'openrouter',
+    });
+
+    const realFetch = globalThis.fetch;
+    const modelOutput = {
+      reply: 'Nemotron reasoning verified under calculation shield.',
+      personalFinance: 'Runway is protected.',
+      crossBorder: 'Corridors hedged.',
+      wealthStrategy: 'Portfolio balanced with high confidence.',
+    };
+
+    globalThis.fetch = async (url: string | URL | Request, init?: RequestInit) => {
+      requestedUrl = url.toString();
+      requestedBody = init?.body ? JSON.parse(init.body.toString()) : null;
+      authHeader = (init?.headers as Record<string, string> | undefined)?.authorization ?? '';
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: JSON.stringify(modelOutput) } }],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    };
+
+    try {
+      const res = await api.chat('default', 'default', {
+        message: 'How should my portfolio adapt?',
+        locale: 'en',
+        householdMode: 'INDIVIDUAL',
+      });
+
+      assert.equal(requestedUrl, 'https://openrouter.ai/api/v1/chat/completions');
+      assert.equal(requestedBody?.model, 'nvidia/nemotron-3-ultra-550b-a55b:free');
+      assert.equal(authHeader, 'Bearer sk-or-v1-test-nemotron-key');
+      assert.ok(res.reply.includes('Nemotron reasoning'));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
 });
 

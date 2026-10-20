@@ -61,17 +61,62 @@ describe('Advisory route', () => {
     renderAdvisoryRoute(['USER'], 'testing@example.com');
     expect(await screen.findByRole('textbox', { name: 'Ask about your portfolio…' })).toBeVisible();
     expect(screen.queryByText('Workstation')).toBeNull();
+
+    // Sidebar stays on client tabs; no advisor chrome leaks onto /advisory.
+    for (const name of ['Dashboard', 'Cash Flow', 'Advisory']) {
+      expect(await screen.findAllByRole('link', { name })).not.toHaveLength(0);
+    }
+    expect(screen.queryByRole('link', { name: 'Client Overview' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Advisor Workstation' })).toBeNull();
+    expect(screen.queryByText('Advisor Workstation')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
   });
 
-  it('redirects ADVISOR roles to the workstation', async () => {
-    renderAdvisoryRoute(['USER', 'ADVISOR'], 'advisor@example.com');
-    expect(await screen.findByText('Workstation')).toBeVisible();
-    expect(screen.queryByRole('textbox', { name: 'Ask about your portfolio…' })).toBeNull();
+  it('renders the personal portfolio copilot for ADVISOR roles in the client app', async () => {
+    renderAdvisoryRoute(['USER', 'ADVISOR'], 'advisor.morgan@syntropy.ch');
+    expect(await screen.findByRole('textbox', { name: 'Ask about your portfolio…' })).toBeVisible();
+    expect(screen.queryByText('Workstation')).toBeNull();
   });
 
-  it('redirects ADMIN roles to the workstation', async () => {
-    renderAdvisoryRoute(['ADMIN'], 'admin@example.com');
-    expect(await screen.findByText('Workstation')).toBeVisible();
-    expect(screen.queryByRole('textbox', { name: 'Ask about your portfolio…' })).toBeNull();
+  it('shows no advisor chrome while roles are unresolved', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => {})),
+    );
+    setAccessToken('test-token');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = createMemoryRouter(
+      [
+        {
+          element: <ProtectedRoute />,
+          children: [
+            {
+              element: <AppShell />,
+              children: [{ path: '/advisory', element: <AdvisoryPage /> }],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/advisory'] },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    // While roles resolve, a neutral loading frame replaces all chrome: no client tabs, no advisor links, no demo data.
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Client Overview' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Advisor Workstation' })).toBeNull();
+    expect(screen.queryByText('Advisor Workstation')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
+  });
+
+  it('renders the personal portfolio copilot for ADMIN roles in the client app', async () => {
+    renderAdvisoryRoute(['ADMIN'], 'shenzhen@fintechathon.com');
+    expect(await screen.findByRole('textbox', { name: 'Ask about your portfolio…' })).toBeVisible();
+    expect(screen.queryByText('Workstation')).toBeNull();
   });
 });

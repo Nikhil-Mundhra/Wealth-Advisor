@@ -82,27 +82,42 @@ export const INITIAL_EMPTY_PROFILE: ProfilingAnswersInput = {
   stressResponse: 'STAY_INVESTED',
 };
 
+const SEEDED_DEMO_EMAILS = new Set([
+  'testing@example.com',
+  'marcus.vance@example.com',
+  'meiling.chen@example.com',
+  'rahul.sharma@example.com',
+  'advisor.morgan@syntropy.ch',
+  'advisor.jenkins@syntropy.ch',
+  'shenzhen@fintechathon.com',
+]);
+
 export function isDemoEmail(email?: string | null): boolean {
+  if (!email) return true;
+  return SEEDED_DEMO_EMAILS.has(email.trim().toLowerCase());
+}
+
+function isDefaultDemoAccount(email?: string | null): boolean {
   if (!email) return true;
   return email.trim().toLowerCase() === 'testing@example.com';
 }
 
 export function getProfileStorageKey(email?: string | null): string {
-  if (isDemoEmail(email)) {
+  if (isDefaultDemoAccount(email)) {
     return 'dewa_profile_answers_demo';
   }
   return `dewa_profile_answers_${email!.trim().toLowerCase()}`;
 }
 
 export function getDraftStorageKey(email?: string | null): string {
-  if (isDemoEmail(email)) {
+  if (isDefaultDemoAccount(email)) {
     return 'dewa_profile_draft_demo';
   }
   return `dewa_profile_draft_${email!.trim().toLowerCase()}`;
 }
 
 export function getPreferredCurrencyStorageKey(email?: string | null): string {
-  if (isDemoEmail(email)) {
+  if (isDefaultDemoAccount(email)) {
     return 'dewa_preferred_currency_demo';
   }
   return `dewa_preferred_currency_${email!.trim().toLowerCase()}`;

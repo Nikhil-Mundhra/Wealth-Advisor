@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, createMemoryRouter, RouterProvider } from 'react-router';
 import { authApi } from '../../features/auth/api/auth-api.ts';
 import { clearSession, getAccessToken, setAccessToken } from '../../features/auth/session/session-store.ts';
+import { LoginForm } from '../../features/auth/components/login-form.tsx';
 import { GuestRoute } from '../route-guards.tsx';
 import { AdminLoginPage } from './admin-login-page.tsx';
 import { AdvisorLoginPage } from './advisor-login-page.tsx';
@@ -23,6 +24,17 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 function meAsUser() {
   return { id: 'u-1', email: 'user@example.com', displayName: null, roles: ['USER'], emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' };
+}
+
+function meAsStaff(roles: string[]) {
+  return { id: 'a-1', email: 'advisor.morgan@syntropy.ch', displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' };
+}
+
+async function submitClientForm(onSuccess: () => void) {
+  render(<LoginForm onSuccess={onSuccess} />, { wrapper });
+  await userEvent.type(screen.getByLabelText('Email address'), 'advisor.morgan@syntropy.ch');
+  await userEvent.type(screen.getByLabelText('Password'), 'correct-horse-1');
+  await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 }
 
 async function submitAdvisorForm() {
@@ -104,5 +116,37 @@ describe('role login mismatch keeps the existing session', () => {
   it('GuestRoute sends signed-in users away from the role portals', async () => {
     renderGuest('/advisor/login');
     expect(await screen.findByText('Home')).toBeVisible();
+  });
+
+  it('client login rejects advisor creds: stays signed out, shows the portal error, never navigates', async () => {
+    clearSession();
+    vi.mocked(authApi.me).mockResolvedValue(meAsStaff(['USER', 'ADVISOR']));
+    const onSuccess = vi.fn();
+    await submitClientForm(onSuccess);
+    expect(await screen.findByText(/Wealth Analyst Workstation at \/advisor\/login/i)).toBeInTheDocument();
+    expect(authApi.logout).toHaveBeenCalledTimes(1);
+    expect(getAccessToken()).toBeNull();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('client login rejects admin creds and points at the operator console', async () => {
+    clearSession();
+    vi.mocked(authApi.me).mockResolvedValue(meAsStaff(['USER', 'ADMIN']));
+    const onSuccess = vi.fn();
+    await submitClientForm(onSuccess);
+    expect(await screen.findByText(/Operator Console at \/admin\/login/i)).toBeInTheDocument();
+    expect(authApi.logout).toHaveBeenCalledTimes(1);
+    expect(getAccessToken()).toBeNull();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('client login signs in a pure USER and navigates', async () => {
+    clearSession();
+    vi.mocked(authApi.me).mockResolvedValue(meAsUser());
+    const onSuccess = vi.fn();
+    await submitClientForm(onSuccess);
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(authApi.logout).not.toHaveBeenCalled();
+    expect(getAccessToken()).not.toBeNull();
   });
 });

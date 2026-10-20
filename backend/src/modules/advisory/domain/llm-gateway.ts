@@ -329,6 +329,64 @@ export class ClaudeLlmAdapter implements LlmAdapter {
   }
 }
 
+export class OpenRouterLlmAdapter implements LlmAdapter {
+  private readonly apiKey: ApiKeyResolver | undefined;
+  private readonly fallback: LlmAdapter;
+  private readonly http: HttpClient;
+  private readonly model: string;
+
+  constructor(
+    apiKey?: ApiKeyResolver,
+    fallback: LlmAdapter = new MockLlmAdapter(),
+    http: HttpClient = createHttpClient(),
+    model: string = 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  ) {
+    this.apiKey = apiKey;
+    this.fallback = fallback;
+    this.http = http;
+    this.model = model;
+  }
+
+  async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
+    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    if (!key) return this.fallback.chat(context);
+    try {
+      const base = await this.fallback.chat(context);
+      const mix = summarizeProposal(context.proposalHoldings);
+      const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+      const data = (await this.http.postJson(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          model: this.model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            { role: 'user', content: context.message },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.2,
+        },
+        {
+          timeoutMs: ADVISORY_HTTP_TIMEOUT_MS,
+          headers: {
+            authorization: `Bearer ${key}`,
+            'http-referer': 'https://syntropy.finance',
+            'x-title': 'Syntropy Wealth Advisor',
+          },
+        },
+      )) as any;
+
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) return base;
+      return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt);
+    } catch {
+      return this.fallback.chat(context);
+    }
+  }
+}
+
 export interface LlmGatewayConfig {
   geminiApiKey?: ApiKeyResolver;
   openaiApiKey?: ApiKeyResolver;
@@ -344,6 +402,7 @@ export class LlmGateway {
     const geminiKey = typeof config === 'string' ? config : config?.geminiApiKey;
     const openaiKey = typeof config === 'object' ? config.openaiApiKey : undefined;
     const anthropicKey = typeof config === 'object' ? config.anthropicApiKey : undefined;
+    const openrouterKey = typeof config === 'object' ? config.openrouterApiKey : undefined;
     const http = (typeof config === 'object' ? config.http : undefined) ?? createHttpClient();
 
     const mock = new MockLlmAdapter();
@@ -352,6 +411,7 @@ export class LlmGateway {
       gemini: new GeminiLlmAdapter(geminiKey, mock, http),
       claude: new ClaudeLlmAdapter(anthropicKey, mock, http),
       openai: new OpenAiLlmAdapter(openaiKey, mock, http),
+      openrouter: new OpenRouterLlmAdapter(openrouterKey, mock, http),
     };
   }
 
