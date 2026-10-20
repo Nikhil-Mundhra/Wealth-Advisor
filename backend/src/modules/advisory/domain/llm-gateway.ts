@@ -399,7 +399,27 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenRouter API key is not configured');
     const base = await this.fallback.chat(context);
     const mix = summarizeProposal(context.proposalHoldings);
-    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+    const systemPrompt = `You are a cross-border private wealth and cashflow advisor for Syntropy AI.
+Client Financial Position:
+- Liquid Runway: ${context.cashflow.runwayMonths.toFixed(1)} months (${context.cashflow.runwayBand})
+- Net Monthly Burn / Outflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}
+- Total Portfolio Valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}
+- Household Mode: ${context.householdMode}
+- Preferred Locale: ${context.locale}
+- Target Allocations (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%
+
+Instructions:
+1. Directly answer the user's specific life event or question in "reply" with actionable, personalized fiduciary guidance.
+2. Fiduciary Calculation Shield: If citing any numbers, figures, or percentages, strictly use ONLY the verified engine figures provided above (Runway: ${context.cashflow.runwayMonths.toFixed(1)}, Monthly Burn: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}, Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}, Targets: ${mix.stockPct}%, ${mix.bondPct}%, ${mix.etfPct}%). Never invent new numbers, unverified percentages, or step numbers (such as 1., 2., 3.); explain spending cuts or rebalancing in descriptive prose.
+
+Respond ONLY in valid JSON with these keys:
+{
+  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
+  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
+  "crossBorder": "One sentence on currency corridors and remittance obligations",
+  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
+}`;
+    const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
     let data: any;
     try {
@@ -434,7 +454,7 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
     const content = data?.choices?.[0]?.message?.content;
     if (!content) throw AdvisoryErrors.gatewayUnavailable('OpenRouter returned an empty completion');
     try {
-      return narrate(base, parseJsonSafe(content), systemPrompt);
+      return narrate(base, parseJsonSafe(content), fullPrompt);
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `OpenRouter response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
