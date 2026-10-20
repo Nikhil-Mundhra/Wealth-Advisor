@@ -47,8 +47,8 @@ async function authenticateClient(email, password, baseUrl) {
 
 async function sendAdvisoryChat({
   message,
-  email = DEFAULT_EMAIL,
-  password = DEFAULT_PASSWORD,
+  email,
+  password,
   token,
   householdMode = 'INDIVIDUAL',
   locale = 'en',
@@ -73,7 +73,7 @@ async function sendAdvisoryChat({
   }
 
   const chatUrl = `${cleanUrl}/api/advisory/chat`;
-  const res = await fetch(chatUrl, {
+  let res = await fetch(chatUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -84,6 +84,19 @@ async function sendAdvisoryChat({
   }).catch((err) => {
     throw new Error(`Connection to advisory AI failed (${chatUrl}): ${err.message}`);
   });
+
+  // If authenticated user has no portfolio record on remote db, fallback to client demo account
+  if (res.status === 404 && activeToken) {
+    res = await fetch(chatUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        locale,
+        householdMode,
+      }),
+    });
+  }
 
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
