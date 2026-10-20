@@ -279,13 +279,13 @@ sequenceDiagram
 #### 1.2 Shared Contracts (`contracts/src/`)
 - [x] `profiling/profile-answers.contract.ts`: Zod schema for the 7 questions and profile summary.
 - [x] `profiling/fundamental-ratios.contract.ts`: Zod schema for asset fundamental metrics and classification results.
-- [ ] `auth/passkey/`: Registration & authentication challenge/verify contracts, step-up assertion contracts.
-- [ ] `sharing/`: `create-share-link.contract.ts`, `shared-plan-view.contract.ts`.
-- [ ] `tenant/`: `tenant.contract.ts`, `api-key.contract.ts`.
-- [ ] `finance/`: `account.contract.ts`, `transaction.contract.ts`, `cashflow-summary.contract.ts` (with `householdMode` flag).
-- [ ] `wealth/`: `asset-product.contract.ts`, `portfolio.contract.ts`, `rebalance-proposal.contract.ts`.
-- [ ] `advisory/`: `advisory-chat.contract.ts`, `sandbox-execution.contract.ts`.
-- [ ] `admin/`: `admin-settings.contract.ts`.
+- [x] `auth/passkey/`: Registration & authentication challenge/verify contracts, step-up assertion contracts.
+- [x] `sharing/`: `create-share-link.contract.ts`, `shared-plan-view.contract.ts`.
+- [x] `tenant/`: `tenant.contract.ts`, `api-key.contract.ts`.
+- [x] `finance/`: `account.contract.ts`, `transaction.contract.ts`, `cashflow-summary.contract.ts` (with `householdMode` flag).
+- [x] `wealth/`: `asset-product.contract.ts`, `portfolio.contract.ts`, `rebalance-proposal.contract.ts`.
+- [x] `advisory/`: `advisory-chat.contract.ts`, `sandbox-execution.contract.ts`.
+- [x] `admin/`: `admin-settings.contract.ts`.
 
 #### 1.4 Modelling Citations, Judges' Published Research & Fundamental Ratios (#12 & #13)
 * **Modelling Citations:**
@@ -293,6 +293,8 @@ sequenceDiagram
   * **Household Mode Reserve Multipliers:** OECD Family Database (2021) and Vanguard Life-Cycle Research (2019) on dependent liability pooling establishing 1.0x (3 months) for individuals vs 2.0x (6 months) for family households.
   * **Behavioral Risk Scoring & Stress Reaction:** Kahneman & Tversky (1979) *Prospect Theory: An Analysis of Decision under Risk* (loss aversion coefficient $\lambda \approx 2.25$ explaining asymmetric panic during 25% drawdowns); Grable & Lytton (1999) *Financial Risk Tolerance Assessment*.
   * **Portfolio Rebalance Drift Corridor:** Vanguard Research (Zilbering et al., 2015) demonstrating a 5% corridor balances transaction costs against risk tracking error.
+  * **Bond Duration & Convexity:** Hull (2008) *Options, Futures, and Other Derivatives* for Macaulay duration, convexity adjustments, and yield-curve bootstrapping in bond valuation.
+  * **Technical Indicator Specification:** Bollinger (2001) *Bollinger on Bollinger Bands* for %B normalization; Murphy (1999) *Technical Analysis of Financial Markets* for trend and momentum indicator definitions.
 * **Judges' Published Research Alignment:**
   * WeBank AI Lab research on Trustworthy AI and Federated FinTech (Yang et al., ACM TIST 2019) emphasizes verifiable, audit-proof financial AI systems. DEWA embodies this via deterministic calculation shields preventing hallucination and biometric step-up execution gates (FIDO2 WebAuthn).
 * **Fundamental Ratios Driving Allocation:**
@@ -317,6 +319,7 @@ sequenceDiagram
   1. **Liquidity-Carve-Out Black-Litterman / Mean-Variance Optimization (Markowitz 1952; Black & Litterman 1992):** Blends equilibrium market weights (`DEMO_TARGET_WEIGHTS`) with annualized sample covariance from `market_snapshots` (`measureSnapshot`) while ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) into short-term cash and money-market buckets.
   2. **Volatility-Parity / Equal Risk Contribution (Maillard, Roncalli & Teiletche 2010):** Scales risky sleeve weights inversely to their 365-day realized volatility from `market_snapshots`, preventing high-volatility equity drawdowns from dominating household risk capacity during monthly rebalance intervals.
   3. **Constant-Proportion Portfolio Insurance (CPPI) Runway Floor (Black & Jones 1987):** Imposes a non-negotiable floor equal to the household emergency reserve target (3 months for `INDIVIDUAL`, 6 months for `FAMILY_HOUSEHOLD`), dynamically scaling risky asset exposure as $E = m \cdot \max(0, W - F)$ to protect living expenses from market drawdowns.
+  4. **Composite-Score Constrained Allocation:** Each candidate security carries `CompositeScore = w_T * T + w_F * F + w_Q * Q` (technical, fundamental-or-valuation, quality); risk-tier weights are Conservative `(0.2, 0.6, 0.2)` and Aggressive `(0.5, 0.3, 0.2)`. Allocation maximizes $U = \mu^T w - \lambda w^T \Sigma w$ subject to full investment, per-security caps, sector caps, duration-weighted bond limits, Sharia flags, and a 0.7 liquidity-factor floor, solved in the deterministic engine.
 * **Deliberately Rejected Algorithms:**
   * *High-Frequency Statistical Arbitrage / Pairs Trading:* Edge decays within minutes or hours; ineffective and fee-prohibitive at monthly rebalance frequencies with EOD prices.
   * *Deep Reinforcement Learning / Black-Box Neural Allocators:* Opaque decision rationale, prone to overfitting on 365-day windows, and incompatible with audit digest verification.
@@ -339,9 +342,9 @@ sequenceDiagram
   6. **Fundamental Solvency & Valuation Guardrails (`G_BOND_SOLVENCY`, `G_VALUATION_TILT`, `G_FX_MISMATCH`, `G_FCF_PAYOUT`):** `TIER_1_ADVISORY` & `TIER_2_SIMULATE` | **Hard Block** on corporate bonds with $\text{ICR} < 3.0\times$ or $\text{Net Debt/EBITDA} > 3.5\times$ and equities with $\text{FCF Payout} > 90\%$; **Warning / Currency Hedge Recommendation** on $>30\%$ foreign revenue mismatch or $\ge 85\text{th}$ valuation percentile | **Platform-Invariant**.
 
 #### 1.9 Deterministic Financial Engines (`backend/src/modules/`)
-- [ ] **`BurnRateCalculator`:** Aggregates multi-currency transactions converted to baseline currency; adapts emergency reserve targets based on Individual vs. Family Household mode.
+- [x] **`BurnRateCalculator`:** Aggregates multi-currency transactions converted to baseline currency; adapts emergency reserve targets based on Individual vs. Family Household mode.
 - [ ] **`ExpatRiskProfiler`:** Recalibrates base risk score dynamically based on liquidity runway and foreign currency mismatch.
-- [ ] **`PortfolioOptimizer`:** Computes target asset allocation adapting to the effective risk score and ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) as non-negotiable liquidity carve-outs into matching short-term cash/money-market buckets.
+- [x] **`PortfolioOptimizer`:** Computes target asset allocation adapting to the effective risk score and ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) as non-negotiable liquidity carve-outs into matching short-term cash/money-market buckets.
 - [ ] **Unit Tests:** 100% test coverage for calculations under Elena's family cashflow squeeze scenario and student tuition shock tests.
 
 ---
@@ -360,24 +363,24 @@ sequenceDiagram
   - `POST /api/auth/passkey/step-up-challenge`
 
 #### 2.2 Multi-Tenant & API Key Module (`backend/src/modules/admin/`)
-- [ ] Implement `tenant.module.ts`:
+- [x] Implement `tenant.module.ts`:
   - Collections: `tenants` and `api_keys` with partial unique indexes.
   - Multi-tenant middleware: Scopes database queries to `tenantId` from JWT or API key header (`X-API-Key`).
   - API Key hashing & verification: Validates key prefix, hash, and permission tier.
-- [ ] Implement `admin.module.ts`:
+- [x] Implement `admin.module.ts`:
   - Routes: `GET /api/admin/tenants`, `POST /api/admin/tenants`, `GET /api/admin/api-keys`, `POST /api/admin/api-keys`, `GET /api/admin/models`, `POST /api/admin/models`.
 
 #### 2.3 Finance & Wealth Modules (backend/src/modules/finance & `wealth`)
-- [ ] Implement `finance.module.ts`:
+- [x] Implement `finance.module.ts`:
   - Collections: `accounts`, `transactions` (tenant-scoped).
   - Support Individual vs. Family Household mode cashflow filtering.
   - Pre-seeded Elena demo scenario (European income + Asian remittances).
-- [ ] Implement `wealth.module.ts`:
+- [x] Implement `wealth.module.ts`:
   - Collections: `portfolios`, `asset_products` (tenant-scoped).
   - Routes: `GET /api/wealth/portfolio`, `GET /api/wealth/products`, `POST /api/wealth/optimize`.
 
 #### 2.4 Plan Sharing Module (backend/src/modules/sharing)
-- [ ] Implement `sharing.module.ts`:
+- [x] Implement `sharing.module.ts`:
   - Collection: `shared_plans` (token, planSnapshot, masked, expiresAt).
   - Endpoints: `POST /api/sharing/create` (generates unguessable token with TTL and privacy masking), `GET /api/sharing/:token` (public read-only strategy presentation).
 
@@ -387,7 +390,7 @@ sequenceDiagram
   - `ClaudeAdapter` (`@anthropic-ai/sdk` or REST)
   - `OpenAiAdapter` (`openai` or REST)
   - `MockLlmAdapter` (deterministic offline engine with canned tool calling & explainability)
-- [ ] Registered Agent Tools:
+- [x] Registered Agent Tools:
   1. `get_cashflow_and_runway` (with Individual vs. Family mode)
   2. `get_currency_exposure`
   3. `calculate_adaptive_portfolio`
@@ -396,12 +399,12 @@ sequenceDiagram
   6. `execute_sandbox_trade` (Requires Passkey verification proof)
 
 #### 2.6 Tier 3 Gatekeeper & Sandbox Audit Ledger
-- [ ] **Passkey-Enforced Execution Gate:** Rejects `execute_sandbox_trade` unless accompanied by a verified Passkey step-up assertion.
-- [ ] **Sandbox Ledger (`sandbox_ledgers` collection):**
+- [x] **Passkey-Enforced Execution Gate:** Rejects `execute_sandbox_trade` unless accompanied by a verified Passkey step-up assertion.
+- [x] **Sandbox Ledger (`sandbox_ledgers` collection):**
   - Records every simulated execution with:
     $$\text{Audit Digest} = \text{SHA256}(\text{userId} + ":" + \text{tenantId} + ":" + \text{timestamp} + ":" + \text{passkeySignature} + ":" + \text{tradeDiff})$$
   - Generates immutable operation logs matching FinTechathon submission criteria.
-- [ ] **Three-Pillar Explainability Formatter:**
+- [x] **Three-Pillar Explainability Formatter:**
   - Formats structured explanations across Personal Finance, Cross-Border FX, and Wealth Strategy in the user's active language (`en`, `zh-CN`, `zh-HK`, `de`).
   - Automatically appends cross-border compliance disclaimers.
 
@@ -411,31 +414,31 @@ sequenceDiagram
 **Objective:** Deliver an intuitive, responsive, and visually compelling user interface with mobile web optimization, dark mode, multi-language support, public shareable plan views, Passkey biometric authorization, and Admin console.
 
 #### 3.1 Design System, Dark Mode, Mobile Web & i18n Foundations
-- [ ] **Dark Mode:** Configure Tailwind v4 `@theme` with CSS variables for dark surface/line/ink tokens. Implement `ThemeToggle` with system preference auto-detection.
-- [ ] **Mobile Web Optimization:** Implement responsive viewport rules (`min-h-dvh`, safe-area insets, touch hit targets $\ge 44\text{px}$, responsive bottom navigation bar on mobile).
-- [ ] **i18n:** Lightweight translation dictionary provider supporting `en`, `zh-CN`, `zh-HK`, `de`. Implement `LanguageSelect` dropdown in navbar.
+- [x] **Dark Mode:** Configure Tailwind v4 `@theme` with CSS variables for dark surface/line/ink tokens. Implement `ThemeToggle` with system preference auto-detection.
+- [x] **Mobile Web Optimization:** Implement responsive viewport rules (`min-h-dvh`, safe-area insets, touch hit targets $\ge 44\text{px}$, responsive bottom navigation bar on mobile).
+- [x] **i18n:** Lightweight translation dictionary provider supporting `en`, `zh-CN`, `zh-HK`, `de`. Implement `LanguageSelect` dropdown in navbar.
 
 #### 3.2 Passkey Integration & Security Settings (`/settings/security`)
 - [ ] 1-Click Passkey login and enrollment flows using `@simplewebauthn/browser` (supports FaceID on iOS Safari and TouchID on Android Chrome).
 - [ ] `SecuritySettingsPage` (`/settings/security`): Manage enrolled Passkeys, device names, active sessions, and permission tiers.
 
 #### 3.3 Expat Wealth Dashboard & Cashflow Views (`/`, `/portfolio`, `/cashflow`)
-- [ ] **Dashboard (`/`):** Multi-currency net worth cards, Individual vs. Family Household toggle, burn-rate health gauge, target vs current allocation. Responsive single-column mobile layout.
+- [x] **Dashboard (`/`):** Multi-currency net worth cards, Individual vs. Family Household toggle, burn-rate health gauge, target vs current allocation. Responsive single-column mobile layout.
 - [ ] **Portfolio Page (`/portfolio`):** Asset holdings, rebalancing drift visualizer, and "Share Strategy URL" modal with privacy balance masking toggle.
-- [ ] **Cashflow Page (`/cashflow`):** Multi-currency accounts, recurring bills, Asian remittance corridor planner.
+- [x] **Cashflow Page (`/cashflow`):** Multi-currency accounts, recurring bills, Asian remittance corridor planner.
 
 #### 3.4 AI Advisory Copilot & Biometric Execution Modal (`/advisory`)
-- [ ] **Conversational Interface:** Full-height streaming dialogue panel with touch-optimized mobile chat drawer and multilingual responses.
-- [ ] **Generative UI Action Cards:** Product Comparison, Dynamic Risk Recalibration, and Rebalance Proposal cards.
+- [x] **Conversational Interface:** Full-height streaming dialogue panel with touch-optimized mobile chat drawer and multilingual responses.
+- [x] **Generative UI Action Cards:** Product Comparison, Dynamic Risk Recalibration, and Rebalance Proposal cards.
 - [ ] **Tier 3 Biometric Step-Up Modal:** Triggers browser Passkey prompt (TouchID/FaceID) to sign transaction before submission.
 
 #### 3.5 Public Shared Plan View (`/share/:token`)
 - [ ] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile.
-- [ ] Privacy toggle: view as exact amounts or relative percentages.
+- [x] Privacy toggle: view as exact amounts or relative percentages.
 
 #### 3.6 Evidence Explorer & Admin Console (`/evidence`, `/admin/*`)
 - [ ] **Evidence Page (`/evidence`):** Sandbox audit table, before/after diffs, Passkey signature proofs, SHA-256 hashes, JSON download.
-- [ ] **Admin Console (`/admin`, `/admin/tenants`, `/admin/api-keys`, `/admin/models`):**
+- [x] **Admin Console (`/admin`, `/admin/tenants`, `/admin/api-keys`, `/admin/models`):**
   - Organization and tenant management table.
   - API key issuance with permission tier checkboxes.
   - Runtime LLM switcher: Google Gemini $\leftrightarrow$ Claude $\leftrightarrow$ OpenAI $\leftrightarrow$ Deterministic Mock.
