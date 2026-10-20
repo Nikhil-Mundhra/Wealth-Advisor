@@ -327,7 +327,8 @@ describe('PortfolioConstructionModal', () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Stress Tests & What-If Calculator' }));
-    const slider = await screen.findByRole('slider');
+    // The flanking "-200 bps" / "+200 bps" text is not a label, so the slider names itself.
+    const slider = await screen.findByRole('slider', { name: 'Policy rate shift in basis points' });
 
     // duration 5.5y: -(5.5 * bps/10000) * 100
     expect(screen.getByText('+0.00%')).toBeInTheDocument();

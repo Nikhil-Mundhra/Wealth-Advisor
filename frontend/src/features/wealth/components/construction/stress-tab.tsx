@@ -105,6 +105,7 @@ export function StressTab({
           <span className="text-xs font-mono w-16 text-right">-200 bps</span>
           <input
             type="range"
+            aria-label="Policy rate shift in basis points"
             min="-200"
             max="200"
             step="25"
