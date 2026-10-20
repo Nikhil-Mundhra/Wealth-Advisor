@@ -12,6 +12,6 @@ export const AuthErrors = {
   weakPassword: () => new DomainError(C.weakPassword, 'password does not meet the password policy'),
   invalidAdvisorCode: () => new DomainError(C.invalidAdvisorCode, 'advisor invitation code is invalid or expired'),
   signingKeysMissing: () => new DomainError(C.signingKeysMissing, 'token signing keys are not configured'),
-  passkeyFailed: () => new DomainError(C.passkeyFailed, 'passkey verification or registration failed'),
+  passkeyFailed: (detail?: string) => new DomainError(C.passkeyFailed, detail ? `passkey ceremony failed: ${detail}` : 'passkey verification or registration failed'),
   invariantViolated: (detail: string) => new DomainError(C.invariantViolated, `auth invariant violated: ${detail}`),
 };

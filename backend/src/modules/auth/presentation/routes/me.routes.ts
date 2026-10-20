@@ -7,9 +7,14 @@ import {
   CreateAdvisorInviteRequest,
   ListPasskeysResponse,
   MeResponse,
+  PasskeyLoginOptionsRequest,
+  PasskeyLoginOptionsResponse,
+  PasskeyLoginVerifyWithEmailRequest,
   PasskeyRegisterVerifyRequest,
   PasskeyRegistrationOptionsResponse,
+  PasskeyStepUpChallengeResponse,
   PasskeyStepUpVerifyResponse,
+  TokenPairResponse,
 } from '@wealth-advisor/contracts';
 import { RouteBuilder, type RouteDefinition } from '#core/http/route-builder.ts';
 import type { AccessTokenSignerPort } from '../../application/ports/access-token-signer.port.ts';
@@ -20,6 +25,7 @@ import type { GetConnectedAdvisorUseCase } from '../../application/use-cases/get
 import type { GetMeUseCase } from '../../application/use-cases/get-me.use-case.ts';
 import type { ListAdvisorClientsUseCase } from '../../application/use-cases/list-advisor-clients.use-case.ts';
 import type { PasskeyUseCase } from '../../application/use-cases/passkey.use-case.ts';
+import { deliverTokens } from '../delivery/token-delivery.ts';
 import { clearRefreshCookie } from '../cookies/refresh-cookie.ts';
 import { toMeResponse } from '../mappers/result-to-contract.mapper.ts';
 import { getPrincipal, requireAuth } from '../middleware/require-auth.ts';
@@ -94,7 +100,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
         return deps.advisorInvites.createInvite(getPrincipal(c).userId, body, origin);
       }),
 
-    RouteBuilder.get('/passkeys/register/options')
+    RouteBuilder.post('/passkeys/register/options')
       .use(authenticated)
       .responds(PasskeyRegistrationOptionsResponse)
       .handle(async ({ c }) => {
@@ -111,6 +117,30 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
         const { userId, tenantId } = getPrincipal(c);
         const res = await deps.passkeys.verifyRegistration(userId, tenantId ?? 'default', body);
         return { verified: res.verified, assertionProof: body.credentialId };
+      }),
+
+    RouteBuilder.post('/passkeys/login-options')
+      .body(PasskeyLoginOptionsRequest)
+      .responds(PasskeyLoginOptionsResponse)
+      .handle(async ({ body }) => {
+        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        return deps.passkeys.loginOptions(body.email);
+      }),
+
+    RouteBuilder.post('/passkeys/login-verify')
+      .body(PasskeyLoginVerifyWithEmailRequest)
+      .responds(TokenPairResponse)
+      .handle(async ({ c, body }) => {
+        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        return deliverTokens(c, await deps.passkeys.verifyLogin(body.email, body));
+      }),
+
+    RouteBuilder.post('/passkeys/step-up-challenge')
+      .use(authenticated)
+      .responds(PasskeyStepUpChallengeResponse)
+      .handle(async ({ c }) => {
+        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        return deps.passkeys.stepUpChallenge(getPrincipal(c).userId);
       }),
 
     RouteBuilder.get('/passkeys')

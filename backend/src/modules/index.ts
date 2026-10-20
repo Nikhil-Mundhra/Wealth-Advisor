@@ -1,6 +1,13 @@
 import { env } from '#core/config/env.ts';
 import { resolveDataStore } from '#core/db/connection/data-store.ts';
-import { createPasskeyService, MemoryPasskeyStore, MongoPasskeyStore } from '#core/crypto/passkey-verifier.ts';
+import {
+  createPasskeyService,
+  defaultRpId,
+  MemoryPasskeyChallengeStore,
+  MemoryPasskeyStore,
+  MongoPasskeyChallengeStore,
+  MongoPasskeyStore,
+} from '#core/crypto/passkey-verifier.ts';
 import type { ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { createAdminModule } from './admin/admin.module.ts';
@@ -17,7 +24,13 @@ import { createWealthModule } from './wealth/wealth.module.ts';
 export function buildModules(context: ModuleContext): ModuleManifest[] {
   const store = resolveDataStore(env());
   const passkeyStore = store === 'memory' ? new MemoryPasskeyStore() : new MongoPasskeyStore(context.db);
-  const passkeyService = createPasskeyService(passkeyStore);
+  const passkeyChallenges = store === 'memory' ? new MemoryPasskeyChallengeStore() : new MongoPasskeyChallengeStore(context.db);
+  const passkeyService = createPasskeyService(passkeyStore, {
+    challenges: passkeyChallenges,
+    clock: context.clock,
+    rpId: defaultRpId(env().PASSKEY_RP_ID),
+    challengeTtlSeconds: env().PASSKEY_CHALLENGE_TTL_SECONDS,
+  });
 
   const sharedUserDocs = new Map<string, any>();
   let wealthApiRef: any = null;

@@ -12,6 +12,7 @@ import { InstrumentComparisonModal } from '../../features/advisor/components/ins
 import { getActiveModelSpec, useAiConfig } from '../../features/ai-config/ai-settings-store.ts';
 import { TOP_FREE_MODEL_ID } from '../../features/ai-config/models-data.ts';
 import { createPasskeyAssertion } from '../../features/auth/api/passkey-client.ts';
+import { authApi } from '../../features/auth/api/auth-api.ts';
 import { wealthApi } from '../../features/wealth/api/wealth-api.ts';
 import { apiRequest } from '../../lib/api-client.ts';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
@@ -221,7 +222,8 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     });
     void (async () => {
       try {
-        const assertion = await createPasskeyAssertion();
+        const { challenge } = await authApi.passkeyStepUpChallenge();
+        const assertion = await createPasskeyAssertion(undefined, challenge);
         const res = await wealthApi.executeTrade({
           orderType: 'PORTFOLIO_REBALANCE',
           trades: [
