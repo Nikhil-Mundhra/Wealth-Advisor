@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { ProposalPayloadDto } from '@wealth-advisor/contracts';
 import { createAdvisoryApi } from '../../../src/modules/advisory/advisory.api.ts';
 import { LlmGateway } from '../../../src/modules/advisory/domain/llm-gateway.ts';
 import { createFinanceApi } from '../../../src/modules/finance/finance.api.ts';
@@ -158,6 +159,39 @@ describe('AdvisoryApi', () => {
     }
   });
 
+  it('serves a multi-asset PROPOSAL card with stocks, bonds and ETFs', async () => {
+    const { api } = setup();
+    const res = await api.chat('default', 'default', {
+      message: 'How should my portfolio adapt?',
+      locale: 'en',
+      householdMode: 'FAMILY_HOUSEHOLD',
+    });
+
+    const proposal = res.actionCards.find((card) => card.cardType === 'PROPOSAL');
+    assert.ok(proposal, 'expected a PROPOSAL action card');
+    const payload = ProposalPayloadDto.parse(proposal.payload);
+    const types = new Set(payload.holdings.map((h) => h.securityType));
+    assert.ok(types.has('STOCK'), `expected a STOCK holding, got ${[...types]}`);
+    assert.ok(types.has('BOND'), `expected a BOND holding, got ${[...types]}`);
+    assert.ok(types.has('MUTUAL_FUND_ETF'), `expected a MUTUAL_FUND_ETF holding, got ${[...types]}`);
+    const totalWeight = payload.holdings.reduce((sum, h) => sum + h.weight, 0);
+    assert.ok(Math.abs(totalWeight - 1.0) < 0.001, `weights sum to ${totalWeight}`);
+    // The proposal holdings ARE the proposal: targetWeights must mirror them exactly.
+    assert.deepEqual(Object.keys(payload.targetWeights).sort(), payload.holdings.map((h) => h.symbol).sort());
+  });
+
+  it('appends the optimizer mix line to non-English replies', async () => {
+    const { api } = setup();
+    for (const locale of ['zh-CN', 'zh-HK', 'de'] as const) {
+      const res = await api.chat('default', 'default', {
+        message: '汇率波动怎么办？',
+        locale,
+        householdMode: 'FAMILY_HOUSEHOLD',
+      });
+      assert.ok(res.reply.includes('ETF'), `expected optimizer mix in ${locale} reply`);
+    }
+  });
+
   it('reports 0% equities for a portfolio holding no equities, avoiding falsy-zero default', async () => {
     const { finance, wealth } = setupApis();
     const api = createAdvisoryApi({
@@ -189,6 +223,28 @@ describe('AdvisoryApi', () => {
       householdMode: 'INDIVIDUAL',
     });
     assert.ok(res.threePillarRationale.wealthStrategy.includes('from 0% equities'));
+  });
+
+  it('surfaces an optimizer failure as a NOTICE card instead of silent empty holdings', async () => {
+    const { finance, wealth } = setupApis();
+    const api = createAdvisoryApi({
+      finance,
+      wealth: {
+        ...wealth,
+        constructPortfolio: async () => {
+          throw new Error('optimizer down');
+        },
+      },
+      gateway: new LlmGateway(),
+    });
+    const res = await api.chat('default', 'default', {
+      message: 'How should my portfolio adapt?',
+      locale: 'en',
+      householdMode: 'FAMILY_HOUSEHOLD',
+    });
+    const notice = res.actionCards.find((card) => card.cardType === 'NOTICE');
+    assert.ok(notice, 'expected a NOTICE action card on optimizer failure');
+    assert.equal(notice.payload.code, 'PROPOSAL_UNAVAILABLE');
   });
 });
 

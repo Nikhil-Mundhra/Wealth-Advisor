@@ -32,6 +32,11 @@
   --color-chart-3: #2563eb;
   --color-chart-4: #db2777;
   --color-chart-5: #7c3aed;
+  --color-chart-6: #0891b2;
+  --color-chart-7: #ea580c;
+  --color-chart-8: #b91c1c;
+  --color-chart-9: #4d7c0f;
+  --color-chart-10: #0f766e;
 
   --radius-field: 0.5rem;
 
@@ -75,6 +80,11 @@
   --color-chart-3: #60a5fa;
   --color-chart-4: #f472b6;
   --color-chart-5: #a78bfa;
+  --color-chart-6: #22d3ee;
+  --color-chart-7: #fb923c;
+  --color-chart-8: #f87171;
+  --color-chart-9: #a3e635;
+  --color-chart-10: #2dd4bf;
 
   color-scheme: dark;
 }

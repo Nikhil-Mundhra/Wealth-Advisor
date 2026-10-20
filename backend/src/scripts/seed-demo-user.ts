@@ -14,6 +14,7 @@ import { type AccountDocument, ACCOUNTS_COLLECTION } from '#modules/finance/infr
 import { type TransactionDocument, TRANSACTIONS_COLLECTION } from '#modules/finance/infrastructure/db/documents/transaction.document.ts';
 import { type SharedPlanDocument, SHARED_PLANS_COLLECTION } from '#modules/sharing/infrastructure/db/documents/shared-plan.document.ts';
 import { type AssetProductDocument, ASSET_PRODUCTS_COLLECTION } from '#modules/wealth/infrastructure/db/documents/asset-product.document.ts';
+import { upsertAssetProducts } from '#modules/wealth/infrastructure/db/seed/asset-product-seeds.ts';
 import { type PortfolioDocument, PORTFOLIOS_COLLECTION } from '#modules/wealth/infrastructure/db/documents/portfolio.document.ts';
 
 if (env().NODE_ENV === 'production') {
@@ -170,76 +171,11 @@ if ((await transactionsCol.countDocuments()) === 0) {
   console.log('demo transactions created');
 }
 
-// 5. Seed asset products
+// 5. Seed asset products (upsert per symbol: re-runs add instruments missing from older databases)
 const productsCol = db.collection<AssetProductDocument>(ASSET_PRODUCTS_COLLECTION);
-if ((await productsCol.countDocuments()) === 0) {
-  await productsCol.insertMany([
-    {
-      _id: new ObjectId(),
-      symbol: 'CSPX.LSE',
-      name: 'iShares Core S&P 500 UCITS ETF',
-      assetClass: 'EQUITY_US',
-      denominationCurrency: 'USD',
-      riskRating: 7,
-      expenseRatio: 0.0007,
-      annualizedYield: 0.013,
-      threeYearReturn: 0.32,
-      fiveYearReturn: 0.78,
-      domicileCountry: 'IE',
-      description: 'Physical accumulation ETF tracking the S&P 500 index.',
-      isActive: true,
-      updatedAt: now,
-    },
-    {
-      _id: new ObjectId(),
-      symbol: 'IEAC.LSE',
-      name: 'iShares Core EUR Corp Bond UCITS ETF',
-      assetClass: 'FIXED_INCOME_GOV',
-      denominationCurrency: 'EUR',
-      riskRating: 4,
-      expenseRatio: 0.002,
-      annualizedYield: 0.035,
-      threeYearReturn: 0.08,
-      fiveYearReturn: 0.12,
-      domicileCountry: 'IE',
-      description: 'Investment grade corporate bond exposure in EUR.',
-      isActive: true,
-      updatedAt: now,
-    },
-    {
-      _id: new ObjectId(),
-      symbol: 'XEON.XETRA',
-      name: 'Xtrackers EUR Overnight Rate Swap UCITS ETF',
-      assetClass: 'MONEY_MARKET',
-      denominationCurrency: 'EUR',
-      riskRating: 1,
-      expenseRatio: 0.001,
-      annualizedYield: 0.038,
-      threeYearReturn: 0.06,
-      fiveYearReturn: 0.07,
-      domicileCountry: 'LU',
-      description: 'Overnight interest rate tracker offering capital preservation.',
-      isActive: true,
-      updatedAt: now,
-    },
-    {
-      _id: new ObjectId(),
-      symbol: 'VWRL.AS',
-      name: 'Vanguard FTSE All-World UCITS ETF',
-      assetClass: 'EQUITY_GLOBAL',
-      denominationCurrency: 'EUR',
-      riskRating: 6,
-      expenseRatio: 0.0022,
-      annualizedYield: 0.018,
-      threeYearReturn: 0.24,
-      fiveYearReturn: 0.58,
-      domicileCountry: 'IE',
-      description: 'Global equity basket tracking developed and emerging markets.',
-      isActive: true,
-      updatedAt: now,
-    },
-  ]);
-  console.log('demo asset products created');
+{
+  const seedOutcome = await upsertAssetProducts(productsCol, now);
+  console.log(`demo asset products upserted (new: ${seedOutcome.inserted}, kept: ${seedOutcome.kept})`);
 }
 
 // 6. Seed portfolios

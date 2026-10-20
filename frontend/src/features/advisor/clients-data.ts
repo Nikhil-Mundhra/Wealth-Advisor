@@ -25,7 +25,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     ],
     holdings: [
       { assetClass: 'EQUITY_US', symbol: 'CSPX.LSE', label: 'US Tech Equities (CSPX.LSE)', weight: 60, targetWeight: 40, value: 57000, currency: 'EUR' },
-      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEAG.AMS', label: 'EUR Govt Bonds (IEAG.AMS)', weight: 25, targetWeight: 25, value: 23750, currency: 'EUR' },
+      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEGA.AS', label: 'EUR Govt Bonds (IEGA.AS)', weight: 25, targetWeight: 25, value: 23750, currency: 'EUR' },
       { assetClass: 'MONEY_MARKET', symbol: 'XEON.XET', label: 'EUR Overnight Cash (XEON.XET)', weight: 15, targetWeight: 25, value: 14250, currency: 'EUR' },
       { assetClass: 'FX_HEDGE', symbol: 'EUR-CNY-HEDGE', label: 'FX_HEDGE Currency Overlay', weight: 0, targetWeight: 10, value: 0, currency: 'EUR' },
     ],
@@ -69,7 +69,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
       proposedActions: [
         'Sell €19,000 of CSPX.LSE (US Equities)',
         'Allocate €9,500 into XEON (EUR Cash Buffer)',
-        'Allocate €9,500 into IEAG (Govt Sovereign Bonds)',
+        'Allocate €9,500 into IEGA (Govt Sovereign Bonds)',
       ],
     },
   },
@@ -97,7 +97,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     holdings: [
       { assetClass: 'EQUITY_GLOBAL', symbol: 'VWCE.DE', label: 'Vanguard FTSE All-World (Acc)', weight: 52, targetWeight: 50, value: 166400, currency: 'GBP' },
       { assetClass: 'EQUITY_US', symbol: 'CSPX.LSE', label: 'iShares Core S&P 500', weight: 30, targetWeight: 30, value: 96000, currency: 'GBP' },
-      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEAG.AMS', label: 'iShares Core EUR Govt Bond', weight: 10, targetWeight: 10, value: 32000, currency: 'GBP' },
+      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEGA.AS', label: 'iShares Core EUR Govt Bond', weight: 10, targetWeight: 10, value: 32000, currency: 'GBP' },
       { assetClass: 'MONEY_MARKET', symbol: 'XEON.XET', label: 'Euro Short-Term Rate Cash', weight: 8, targetWeight: 10, value: 25600, currency: 'GBP' },
     ],
     remittances: [
@@ -164,7 +164,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     ],
     holdings: [
       { assetClass: 'EQUITY_GLOBAL', symbol: 'VWCE.DE', label: 'Vanguard FTSE All-World', weight: 42, targetWeight: 30, value: 88200, currency: 'EUR' },
-      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEAG.AMS', label: 'iShares Core EUR Govt Bond', weight: 33, targetWeight: 45, value: 69300, currency: 'EUR' },
+      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEGA.AS', label: 'iShares Core EUR Govt Bond', weight: 33, targetWeight: 45, value: 69300, currency: 'EUR' },
       { assetClass: 'MONEY_MARKET', symbol: 'XEON.XET', label: 'Euro Short-Term Rate Cash', weight: 25, targetWeight: 25, value: 52500, currency: 'EUR' },
     ],
     remittances: [
@@ -199,12 +199,12 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
       driftAlert: 'Fixed Income is 33% vs 45% target (-12% drift breach). Equities are 42% vs 30% (+12% drift breach).',
       recommendedAgenda: [
         'Review 4-year tuition glidepath to lock in college tuition liabilities',
-        'Execute rebalancing: Rotate 12% (€25,200) from equities into short/intermediate sovereign bonds (IEAG)',
+        'Execute rebalancing: Rotate 12% (€25,200) from equities into short/intermediate sovereign bonds (IEGA)',
         'Check EUR/AED peg stability and Dubai property maintenance outflows',
       ],
       proposedActions: [
         'Trim €25,200 of VWCE.DE (Global Equities)',
-        'Reallocate €25,200 into IEAG.AMS (EUR Sovereign Bonds)',
+        'Reallocate €25,200 into IEGA.AS (EUR Sovereign Bonds)',
       ],
     },
   },
@@ -231,7 +231,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     ],
     holdings: [
       { assetClass: 'EQUITY_GLOBAL', symbol: 'VWCE.DE', label: 'Vanguard FTSE All-World', weight: 46, targetWeight: 60, value: 64400, currency: 'EUR' },
-      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEAG.AMS', label: 'iShares Core EUR Govt Bond', weight: 20, targetWeight: 20, value: 28000, currency: 'EUR' },
+      { assetClass: 'FIXED_INCOME_GOV', symbol: 'IEGA.AS', label: 'iShares Core EUR Govt Bond', weight: 20, targetWeight: 20, value: 28000, currency: 'EUR' },
       { assetClass: 'MONEY_MARKET', symbol: 'XEON.XET', label: 'Euro Short-Term Rate Cash', weight: 34, targetWeight: 20, value: 47600, currency: 'EUR' },
     ],
     remittances: [

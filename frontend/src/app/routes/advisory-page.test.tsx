@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as engagement from '../../lib/engagement.ts';
+import * as apiClient from '../../lib/api-client.ts';
 import { setLocale } from '../../lib/locale-store.ts';
 import { AdvisoryPage } from './advisory-page.tsx';
 
@@ -100,5 +101,64 @@ describe('AdvisoryPage', () => {
     for (const rosterName of ['Elena Vance', 'Marcus Thorne', 'Aisha Al-Mansoor', 'David Kim']) {
       expect(screen.queryByText(rosterName, { exact: false })).toBeNull();
     }
+  });
+
+  it('renders the PROPOSAL card from the action card holdings, not hardcoded sleeves', async () => {
+    const realApiRequest = apiClient.apiRequest;
+    const requestSpy = vi.spyOn(apiClient, 'apiRequest').mockImplementation(((path: string, options?: object) => {
+      if (path === '/advisory/chat') {
+        return Promise.resolve({
+          reply: 'Rebalanced into the optimizer mix.',
+          threePillarRationale: { personalFinance: 'p', crossBorder: 'c', wealthStrategy: 'w' },
+          actionCards: [
+            {
+              cardType: 'PROPOSAL',
+              payload: {
+                holdings: [
+                  { symbol: 'VWCE.DE', name: 'Vanguard FTSE All-World', securityType: 'MUTUAL_FUND_ETF', assetClass: 'EQUITY_GLOBAL', weight: 0.4 },
+                  { symbol: 'INFY.NSE', name: 'Infosys', securityType: 'STOCK', assetClass: 'EQUITY_INDIA', weight: 0.6 },
+                ],
+                currentWeights: { 'VWCE.DE': 0.6, 'INFY.NSE': 0.4 },
+                targetWeights: { 'VWCE.DE': 0.4, 'INFY.NSE': 0.6 },
+                valuationTotalBase: 9500000,
+              },
+            },
+          ],
+          complianceDisclaimer: 'd',
+        });
+      }
+      return (realApiRequest as (path: string, options?: object) => Promise<unknown>)(path, options);
+    }) as typeof apiClient.apiRequest);
+    renderAdvisory();
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Ask about your portfolio…' }), 'Rebalance?');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText(/VWCE.DE · MUTUAL_FUND_ETF/)).toBeVisible();
+    expect(screen.getByText(/INFY.NSE · STOCK/)).toBeVisible();
+    requestSpy.mockRestore();
+  });
+
+  it('shows the optimizer failure notice instead of silent empty holdings', async () => {
+    const realApiRequest = apiClient.apiRequest;
+    const requestSpy = vi.spyOn(apiClient, 'apiRequest').mockImplementation(((path: string, options?: object) => {
+      if (path === '/advisory/chat') {
+        return Promise.resolve({
+          reply: 'The optimizer is unavailable.',
+          threePillarRationale: { personalFinance: 'p', crossBorder: 'c', wealthStrategy: 'w' },
+          actionCards: [
+            {
+              cardType: 'NOTICE',
+              payload: { code: 'PROPOSAL_UNAVAILABLE', message: 'The optimizer could not build a proposal for this portfolio.' },
+            },
+          ],
+          complianceDisclaimer: 'd',
+        });
+      }
+      return (realApiRequest as (path: string, options?: object) => Promise<unknown>)(path, options);
+    }) as typeof apiClient.apiRequest);
+    renderAdvisory();
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Ask about your portfolio…' }), 'Rebalance?');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('The optimizer could not build a proposal for this portfolio.')).toBeVisible();
+    requestSpy.mockRestore();
   });
 });

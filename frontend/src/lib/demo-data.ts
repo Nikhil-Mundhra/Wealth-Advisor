@@ -42,10 +42,16 @@ export const DEMO_HOLDINGS: DemoHolding[] = [
 ];
 
 // Post-squeeze proposal: 20pts of US equities move into money-market and euro cash buffers.
+// Regional equity and sukuk sleeves hold no demo weight; they appear only through live proposals.
 export const DEMO_TARGET_WEIGHTS: Record<AssetClass, number> = {
   EQUITY_GLOBAL: 0,
   EQUITY_US: 40,
+  EQUITY_INDIA: 0,
+  EQUITY_UAE: 0,
   FIXED_INCOME_GOV: 25,
+  FIXED_INCOME_CORP: 0,
+  SUKUK_SOVEREIGN: 0,
+  SUKUK_CORP: 0,
   MONEY_MARKET: 25,
   FX_HEDGE: 10,
 };

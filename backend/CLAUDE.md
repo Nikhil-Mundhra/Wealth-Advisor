@@ -131,6 +131,7 @@ backend/src/modules/wealth/application/ports.ts : AssetProductRepository, Portfo
 backend/src/modules/wealth/domain/institutional-securities.ts : INSTITUTIONAL_CANDIDATE_SECURITIES catalog across Indian G-Secs, UAE Sukuk, global equities, and mutual funds
 backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts : PasskeyVerifier that refuses every assertion; no passkey registration exists
 backend/src/modules/wealth/infrastructure/db/documents/risk-profile.document.ts : RiskProfileDocument, RISK_PROFILES_COLLECTION
+backend/src/modules/wealth/infrastructure/db/seed/asset-product-seeds.ts : canonical asset-product catalog and insert-when-missing upsert shared by the Mongo seed and the memory repository
 backend/src/modules/wealth/public.ts : the wealth surface other modules may import
 backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, risk profile, optimizer, sandbox trade execution, ledger
 backend/src/modules/wealth/wealth.module.ts : composition root: store-selected wealth repos → api, routes, manifest

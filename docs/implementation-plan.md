@@ -265,7 +265,7 @@ sequenceDiagram
 
 #### 1.1 Shared Rules (`rules/src/`)
 - [x] `currency.rule.ts`: ISO currency codes (`EUR`, `GBP`, `USD`, `SGD`, `CNY`, `JPY`, `HKD`), baseline currency definitions, and remittance corridor pairs.
-- [x] `asset-class.rule.ts`: Categories (`EQUITY_GLOBAL`, `EQUITY_US`, `FIXED_INCOME_GOV`, `MONEY_MARKET`, `FX_HEDGE`), 5% rebalance drift corridor (Vanguard 2015 citation).
+- [x] `asset-class.rule.ts`: Categories (`EQUITY_GLOBAL`, `EQUITY_US`, `EQUITY_INDIA`, `EQUITY_UAE`, `FIXED_INCOME_GOV`, `FIXED_INCOME_CORP`, `SUKUK_SOVEREIGN`, `SUKUK_CORP`, `MONEY_MARKET`, `FX_HEDGE`), 5% rebalance drift corridor (Vanguard 2015 citation).
 - [x] `permission-tier.rule.ts`: Tier definitions (`TIER_0_READ`, `TIER_1_ADVISORY`, `TIER_2_SIMULATE`, `TIER_3_EXECUTE`).
 - [x] `household-mode.rule.ts`: Modes (`INDIVIDUAL`, `FAMILY_HOUSEHOLD`), reserve multiplier (Individual: 1.0x, Family: 2.0x, OECD/Vanguard citation).
 - [x] `burn-rate.rule.ts`: Runway thresholds (Critical: $<3$ months, Warning: $3$–$6$ months, Healthy: $>6$ months, CFP Board / Fed SHED citation).
@@ -378,6 +378,7 @@ sequenceDiagram
 - [x] Implement `wealth.module.ts`:
   - Collections: `portfolios`, `asset_products` (tenant-scoped).
   - Routes: `GET /api/wealth/portfolio`, `GET /api/wealth/products`, `POST /api/wealth/optimize`.
+  - Asset catalog serves stocks, bonds and ETFs with `securityType` (INFY, EMAAR, UAE/FAB sukuk, 7.18% GS 2033 alongside the ETF sleeves).
 
 #### 2.4 Plan Sharing Module (backend/src/modules/sharing)
 - [x] Implement `sharing.module.ts`:
@@ -397,6 +398,7 @@ sequenceDiagram
   4. `simulate_stress_test`
   5. `create_rebalance_proposal`
   6. `execute_sandbox_trade` (Requires Passkey verification proof)
+- [x] Advisory chat resolves `constructPortfolio` at the portfolio risk tier and passes the optimizer holdings into the LLM context; the PROPOSAL action card carries one entry per holding with security type, asset class and target weight (STOCK/BOND/MUTUAL_FUND_ETF), and prompts state per-type weights.
 
 #### 2.6 Tier 3 Gatekeeper & Sandbox Audit Ledger
 - [x] **Passkey-Enforced Execution Gate:** Rejects `execute_sandbox_trade` unless accompanied by a verified Passkey step-up assertion.

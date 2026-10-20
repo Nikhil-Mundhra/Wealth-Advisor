@@ -39,6 +39,11 @@ describe('WealthApi', () => {
 
     const prods = await api.getProducts();
     assert.ok(prods.products.length >= 4);
+    for (const p of prods.products) {
+      assert.ok(['STOCK', 'BOND', 'MUTUAL_FUND_ETF'].includes(p.securityType), `${p.symbol} lacks a security type`);
+    }
+    const types = new Set(prods.products.map((p) => p.securityType));
+    assert.deepEqual([...types].sort(), ['BOND', 'MUTUAL_FUND_ETF', 'STOCK']);
   });
 
   it('optimizes portfolio generating rebalance proposal', async () => {
@@ -265,6 +270,19 @@ describe('WealthApi', () => {
 
     const portfolio = await portfolios.findByUser('default', 'default');
     assert.equal(portfolio?.baseRiskScore, updated.summary.baseRiskScore);
+  });
+
+  it('constructs a moderate multi-asset portfolio with stocks, bonds and ETFs', async () => {
+    const { api } = setup();
+    const result = await api.constructPortfolio('default', 'default', { riskTier: 'moderate' });
+
+    const types = new Set(result.holdings.map((h) => h.securityType));
+    assert.ok(types.has('STOCK'), `expected a STOCK holding, got ${[...types]}`);
+    assert.ok(types.has('BOND'), `expected a BOND holding, got ${[...types]}`);
+    assert.ok(types.has('MUTUAL_FUND_ETF'), `expected a MUTUAL_FUND_ETF holding, got ${[...types]}`);
+
+    const totalWeight = result.holdings.reduce((sum, h) => sum + h.weight, 0);
+    assert.ok(Math.abs(totalWeight - 1.0) < 0.001, `weights sum to ${totalWeight}`);
   });
 
   it('constructs optimal portfolio integrating technical, fundamental, bond, and mutual fund analytics', async () => {

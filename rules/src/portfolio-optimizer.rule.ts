@@ -1,9 +1,13 @@
 // Portfolio optimizer and stress testing rule: composite scoring, mean-variance quadratic solver, and Monte Carlo stress testing.
 // Reference: Portfolio Construction Engine Spec Section 6.
 // Sources: Markowitz (1952) Portfolio Selection; Sharpe (1964) Capital Asset Prices.
+import type { AssetClass } from './asset-class.rule.ts';
 
 export const RISK_TIERS = ['conservative', 'moderate', 'aggressive', 'very_aggressive'] as const;
 export type RiskTier = (typeof RISK_TIERS)[number];
+
+export const SECURITY_TYPES = ['STOCK', 'BOND', 'MUTUAL_FUND_ETF'] as const;
+export type SecurityType = (typeof SECURITY_TYPES)[number];
 
 export const TIER_COMPOSITE_WEIGHTS: Record<RiskTier, { wT: number; wF: number; wQ: number; lambdaRiskAversion: number; maxDurationYears: number }> = {
   conservative: { wT: 0.20, wF: 0.60, wQ: 0.20, lambdaRiskAversion: 8.0, maxDurationYears: 3.5 },
@@ -15,9 +19,9 @@ export const TIER_COMPOSITE_WEIGHTS: Record<RiskTier, { wT: number; wF: number; 
 export interface CandidateSecurity {
   symbol: string;
   name: string;
-  assetClass: 'EQUITY_GLOBAL' | 'EQUITY_US' | 'EQUITY_INDIA' | 'EQUITY_UAE' | 'FIXED_INCOME_GOV' | 'FIXED_INCOME_CORP' | 'SUKUK_SOVEREIGN' | 'SUKUK_CORP' | 'MONEY_MARKET' | 'FX_HEDGE';
+  assetClass: AssetClass;
   sector: string;
-  securityType: 'STOCK' | 'BOND' | 'MUTUAL_FUND_ETF';
+  securityType: SecurityType;
   currentPrice: number;
   expectedAnnualReturn: number; // e.g. 0.09 for 9%
   annualVolatility: number; // e.g. 0.16 for 16%
@@ -45,9 +49,9 @@ export interface OptimizationConstraints {
 export interface AllocatedHoldingResult {
   symbol: string;
   name: string;
-  assetClass: string;
+  assetClass: AssetClass;
   sector: string;
-  securityType: string;
+  securityType: SecurityType;
   weight: number; // 0 to 1
   targetAmountBase: number;
   expectedReturn: number;

@@ -34,7 +34,7 @@ export const INSTITUTIONAL_INSTRUMENTS: InstitutionalInstrument[] = [
     taxEfficiencyNote: 'Accumulating share class avoids recurring dividend tax drag in European tax jurisdictions.',
   },
   {
-    ticker: 'IEAG',
+    ticker: 'IEGA',
     isin: 'IE00B4WXJJ64',
     name: 'iShares Core EUR Govt Bond UCITS ETF (Dist)',
     assetClass: 'FIXED_INCOME_GOV',
