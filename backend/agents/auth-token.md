@@ -21,7 +21,7 @@ backend/src/modules/auth/application/ports/password-hasher.port.ts : hash/verify
 backend/src/modules/auth/application/use-cases/issue-token-pair.ts : shared step: store session, sign access token
 backend/src/modules/auth/application/use-cases/login.use-case.ts : check credentials (uniform 401), start a token family
 backend/src/modules/auth/application/use-cases/logout.use-case.ts : revoke one session or all of a user's sessions
-backend/src/modules/auth/application/use-cases/passkey.use-case.ts : passkey registration options, verification, listing and deletion
+backend/src/modules/auth/application/use-cases/passkey.use-case.ts : passkey registration, passwordless login, step-up challenges, listing and deletion
 backend/src/modules/auth/application/use-cases/refresh-tokens.use-case.ts : apply the rotation policy and persist it
 backend/src/modules/auth/domain/entities/session.entity.ts : refresh session: start family, rotate, revoke
 backend/src/modules/auth/domain/policies/refresh-rotation.policy.ts : ROTATE | ALREADY_ROTATED | REUSE_DETECTED | INVALID

@@ -8,8 +8,12 @@ import {
   ListPasskeysResponse,
   type LoginRequest,
   MeResponse,
+  type PasskeyLoginOptionsRequest,
+  PasskeyLoginOptionsResponse,
+  type PasskeyLoginVerifyWithEmailRequest,
   PasskeyRegisterVerifyRequest,
   PasskeyRegistrationOptionsResponse,
+  PasskeyStepUpChallengeResponse,
   PasskeyStepUpVerifyResponse,
   type SignupRequest,
   SignupResponse,
@@ -37,11 +41,17 @@ export const authApi = {
   createAdvisorInvite: (body: CreateAdvisorInviteRequest) =>
     apiRequest('/auth/advisor/invites', { method: 'POST', body, response: AdvisorInviteDto, authenticated: true }),
   getPasskeyRegistrationOptions: () =>
-    apiRequest('/auth/passkeys/register/options', { response: PasskeyRegistrationOptionsResponse, authenticated: true }),
+    apiRequest('/auth/passkeys/register/options', { method: 'POST', response: PasskeyRegistrationOptionsResponse, authenticated: true }),
   verifyPasskeyRegistration: (body: PasskeyRegisterVerifyRequest) =>
     apiRequest('/auth/passkeys/register/verify', { method: 'POST', body, response: PasskeyStepUpVerifyResponse, authenticated: true }),
   listPasskeys: () =>
     apiRequest('/auth/passkeys', { response: ListPasskeysResponse, authenticated: true }),
   deletePasskey: (credentialId: string) =>
     apiRequest(`/auth/passkeys/${encodeURIComponent(credentialId)}`, { method: 'DELETE', authenticated: true }),
+  passkeyLoginOptions: (body: PasskeyLoginOptionsRequest) =>
+    apiRequest('/auth/passkeys/login-options', { method: 'POST', body, response: PasskeyLoginOptionsResponse }),
+  verifyPasskeyLogin: (body: PasskeyLoginVerifyWithEmailRequest) =>
+    apiRequest('/auth/passkeys/login-verify', { method: 'POST', body, response: TokenPairResponse }),
+  passkeyStepUpChallenge: () =>
+    apiRequest('/auth/passkeys/step-up-challenge', { method: 'POST', response: PasskeyStepUpChallengeResponse, authenticated: true }),
 };

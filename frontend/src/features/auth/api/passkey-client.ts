@@ -1,3 +1,4 @@
+import type { TokenPairResponse } from '@wealth-advisor/contracts';
 import { authApi } from './auth-api.ts';
 
 export function bufferToBase64url(buffer: ArrayBuffer | Uint8Array): string {
@@ -120,7 +121,10 @@ export async function enrollPasskey(deviceName = 'Biometric Sensor (TouchID / Fa
   return false;
 }
 
-export async function createPasskeyAssertion(credentialId?: string): Promise<{
+export async function createPasskeyAssertion(
+  credentialId?: string,
+  serverChallenge?: string,
+): Promise<{
   credentialId: string;
   clientDataJson: string;
   authenticatorData: string;
@@ -131,7 +135,7 @@ export async function createPasskeyAssertion(credentialId?: string): Promise<{
     (typeof window !== 'undefined' ? window.localStorage.getItem(LOCAL_KEY_STORAGE) : null) ||
     'demo_passkey_credential';
 
-  const challenge = `chal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const challenge = serverChallenge ?? `chal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   if (typeof window !== 'undefined' && window.crypto?.subtle) {
     const savedJwk = window.localStorage.getItem(`${LOCAL_KEY_STORAGE}_${activeCredId}`);
@@ -193,4 +197,41 @@ export async function createPasskeyAssertion(credentialId?: string): Promise<{
     authenticatorData: bufferToBase64url(new Uint8Array(37).fill(1)),
     signature: bufferToBase64url(new Uint8Array(64).fill(2)),
   };
+}
+
+// Passwordless sign-in: the server challenge binds the assertion, so a captured login cannot be replayed.
+export async function loginWithPasskey(email: string): Promise<TokenPairResponse> {
+  const options = await authApi.passkeyLoginOptions({ email });
+
+  if (typeof window !== 'undefined' && window.PublicKeyCredential && typeof navigator !== 'undefined' && navigator.credentials) {
+    try {
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge: base64urlToBuffer(options.challenge) as unknown as ArrayBuffer,
+          rpId: options.rpId,
+          allowCredentials: (options.allowCredentials ?? []).map((c) => ({
+            id: base64urlToBuffer(c.id) as unknown as ArrayBuffer,
+            type: 'public-key' as const,
+          })),
+          userVerification: 'preferred',
+          timeout: 60000,
+        },
+      })) as PublicKeyCredential | null;
+      if (assertion && 'response' in assertion) {
+        const resp = assertion.response as AuthenticatorAssertionResponse;
+        return authApi.verifyPasskeyLogin({
+          email,
+          credentialId: bufferToBase64url(assertion.rawId),
+          clientDataJson: bufferToBase64url(resp.clientDataJSON),
+          authenticatorData: bufferToBase64url(resp.authenticatorData),
+          signature: bufferToBase64url(resp.signature),
+        });
+      }
+    } catch {
+      // Fall through to the WebCrypto enclave fallback below.
+    }
+  }
+
+  const fallback = await createPasskeyAssertion(undefined, options.challenge);
+  return authApi.verifyPasskeyLogin({ email, ...fallback });
 }

@@ -41,7 +41,7 @@ backend/src/modules/auth/domain/value-objects/email.vo.ts : normalized, validate
 backend/src/modules/auth/presentation/mappers/contract-to-command.mapper.ts : request contract → command DTO
 backend/src/modules/auth/presentation/mappers/result-to-contract.mapper.ts : result DTO → response contract
 backend/src/modules/auth/presentation/routes/auth.routes.ts : signup, login, refresh, logout, logout-all
-backend/src/modules/auth/presentation/routes/me.routes.ts : GET /me, DELETE /me
+backend/src/modules/auth/presentation/routes/me.routes.ts : GET /me, DELETE /me, passkey register options/verify, login options/verify, step-up challenge, list and revoke
 backend/src/modules/finance/presentation/routes/finance.routes.ts : accounts, transactions, and cashflow summary routes
 backend/src/modules/market/presentation/mappers/result-to-contract.mapper.ts : market api results → quotes, fx-rates and refresh contracts
 backend/src/modules/market/presentation/routes/market.routes.ts : GET quotes, fx (query base, date), refresh (cron bearer)

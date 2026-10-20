@@ -27,3 +27,15 @@
 ## DELETE /api/auth/me
 - responsibility: permanently delete the caller's account and all associated sessions, and clear the refresh cookie
 - contract: request none, response none 204, errors `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## POST /api/auth/passkeys/login-options
+- responsibility: issue a one-time login challenge and list the caller's enrolled credential ids
+- contract: request `PasskeyLoginOptionsRequest`, response `PasskeyLoginOptionsResponse` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `CORE_DB_UNCONFIGURED`; auth none
+
+## POST /api/auth/passkeys/login-verify
+- responsibility: verify the passkey assertion against the pending login challenge and issue a token pair
+- contract: request `PasskeyLoginVerifyWithEmailRequest`, response `TokenPairResponse` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1002`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth none; delivery as login
+
+## POST /api/auth/passkeys/step-up-challenge
+- responsibility: issue a one-time Tier 3 step-up challenge the next trade assertion must sign
+- contract: request none, response `PasskeyStepUpChallengeResponse` 200, errors `AU_1005`, `AU_1008`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer

@@ -353,14 +353,16 @@ sequenceDiagram
 **Objective:** Build the Passkey/WebAuthn service, multi-tenant scoping, plan sharing module, API key manager, multi-provider LLM gateway, and auditable sandbox ledger.
 
 #### 2.1 Passkey / WebAuthn & Auth Extension (`backend/src/modules/auth`)
-- [ ] Integrate WebAuthn verification adapter (`@simplewebauthn/server` or native WebCrypto).
-- [ ] Extend user entity with embedded Passkey credentials (`credentialId`, `publicKey`, `counter`, `transports`).
-- [ ] Endpoints:
-  - `POST /api/auth/passkey/register-options`
-  - `POST /api/auth/passkey/register-verify`
-  - `POST /api/auth/passkey/login-options`
-  - `POST /api/auth/passkey/login-verify`
-  - `POST /api/auth/passkey/step-up-challenge`
+- [x] Integrate WebAuthn verification adapter (`backend/src/core/crypto/passkey-verifier.ts` on `node:crypto`: signature, origin, challenge and counter checks).
+- [x] Store Passkey credentials (`credentialId`, `publicKeySpki`, `counter`, `transports`, `deviceName`, `lastUsedAt`) in the dedicated `passkeys` store (`MemoryPasskeyStore` / `MongoPasskeyStore` in `backend/src/core/crypto/passkey-verifier.ts`).
+- [x] Single-use challenges with TTL (`MemoryPasskeyChallengeStore` / `MongoPasskeyChallengeStore` in `backend/src/core/crypto/passkey-verifier.ts`; `PASSKEY_RP_ID`, `PASSKEY_RP_NAME`, `PASSKEY_CHALLENGE_TTL_SECONDS` in `backend/src/core/config/env.ts`).
+- [x] Endpoints (`backend/src/modules/auth/presentation/routes/me.routes.ts`, wired in `backend/src/modules/auth/application/use-cases/passkey.use-case.ts`):
+  - `POST /api/auth/passkeys/register-options`
+  - `POST /api/auth/passkeys/register-verify`
+  - `POST /api/auth/passkeys/login-options`
+  - `POST /api/auth/passkeys/login-verify`
+  - `POST /api/auth/passkeys/step-up-challenge`
+  - plus `GET /api/auth/passkeys` (list) and `DELETE /api/auth/passkeys/:credentialId` (revoke) for device management.
 
 #### 2.2 Multi-Tenant & API Key Module (`backend/src/modules/admin/`)
 - [x] Implement `tenant.module.ts`:

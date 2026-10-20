@@ -30,6 +30,11 @@ export const ListPasskeysResponse = z.object({
 });
 export type ListPasskeysResponse = z.infer<typeof ListPasskeysResponse>;
 
+export const PasskeyLoginOptionsRequest = z.object({
+  email: z.string().min(1),
+});
+export type PasskeyLoginOptionsRequest = z.infer<typeof PasskeyLoginOptionsRequest>;
+
 export const PasskeyLoginOptionsResponse = z.object({
   challenge: z.string(),
   rpId: z.string(),
@@ -44,6 +49,11 @@ export const PasskeyLoginVerifyRequest = z.object({
   signature: z.string(),
 });
 export type PasskeyLoginVerifyRequest = z.infer<typeof PasskeyLoginVerifyRequest>;
+
+export const PasskeyLoginVerifyWithEmailRequest = PasskeyLoginVerifyRequest.extend({
+  email: z.string().min(1),
+});
+export type PasskeyLoginVerifyWithEmailRequest = z.infer<typeof PasskeyLoginVerifyWithEmailRequest>;
 
 export const PasskeyStepUpChallengeResponse = z.object({
   challenge: z.string(),
