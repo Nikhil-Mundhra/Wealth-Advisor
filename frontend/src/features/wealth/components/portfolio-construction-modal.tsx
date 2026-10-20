@@ -152,10 +152,11 @@ export function PortfolioConstructionModal({
         {/* Controls Bar: Risk Tier, Jurisdiction, Sharia Filter */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3.5 rounded-field border border-line bg-surface-subtle/70">
           <div>
-            <label className="block text-[11px] font-semibold text-subtle uppercase mb-1">
+            <label htmlFor="pc-construction-risk-tier" className="block text-[11px] font-semibold text-subtle uppercase mb-1">
               Client Risk Tier
             </label>
             <select
+              id="pc-construction-risk-tier"
               value={riskTier}
               onChange={(e) => setRiskTier(e.target.value as RiskTierEnum)}
               className="w-full text-xs rounded border border-line bg-surface px-2.5 py-1.5 font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -168,10 +169,11 @@ export function PortfolioConstructionModal({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-subtle uppercase mb-1">
+            <label htmlFor="pc-construction-jurisdiction" className="block text-[11px] font-semibold text-subtle uppercase mb-1">
               Market Jurisdiction
             </label>
             <select
+              id="pc-construction-jurisdiction"
               value={jurisdiction}
               onChange={(e) => setJurisdiction(e.target.value as JurisdictionEnum)}
               className="w-full text-xs rounded border border-line bg-surface px-2.5 py-1.5 font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -183,9 +185,10 @@ export function PortfolioConstructionModal({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-subtle uppercase mb-1">
+            {/* Caption, not a label: a <label for> here would replace the toggle's own state-bearing name. */}
+            <span className="block text-[11px] font-semibold text-subtle uppercase mb-1">
               Sharia Compliance Filter
-            </label>
+            </span>
             <button
               type="button"
               onClick={() => setShariaOnly(!shariaOnly)}

@@ -143,6 +143,17 @@ describe('PortfolioConstructionModal', () => {
     expect(screen.getByRole('heading', { name: 'Fiduciary Portfolio Construction: Elena Vance' })).toBeInTheDocument();
   });
 
+  it('names each toolbar control with the caption above it', async () => {
+    renderModal();
+    await screen.findByRole('dialog');
+
+    expect(screen.getByRole('combobox', { name: 'Client Risk Tier' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Market Jurisdiction' })).toBeInTheDocument();
+
+    // The toggle keeps its own state-bearing text as its name, so its caption stays a plain caption.
+    expect(screen.getByRole('button', { name: 'All Asset Types (Conventional & Sukuk)' })).toBeInTheDocument();
+  });
+
   it('solves once on open with minor-unit value and the default controls', async () => {
     renderModal();
     await vi.waitFor(() =>

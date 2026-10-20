@@ -20,6 +20,9 @@ export function SettingsNav() {
       <NavLink to="/settings/ledger" className={linkClass}>
         {strings['settings.ledger']}
       </NavLink>
+      <NavLink to="/evidence" className={linkClass}>
+        Evidence Explorer
+      </NavLink>
       <NavLink to="/settings/ai" className={linkClass}>
         {strings['settings.ai']}
       </NavLink>

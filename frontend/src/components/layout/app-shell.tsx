@@ -11,6 +11,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -210,6 +211,10 @@ export function AppShell() {
                 {strings[key]}
               </NavLink>
             ))}
+            <NavLink to="/evidence" className={linkClass}>
+              <ShieldCheck aria-hidden className="size-5 text-emerald-600 dark:text-emerald-400" />
+              <span>Evidence & Audit</span>
+            </NavLink>
             <div className="my-2 border-t border-line" />
             <NavLink to="/settings/security" className={linkClass}>
               <Settings aria-hidden className="size-5" />

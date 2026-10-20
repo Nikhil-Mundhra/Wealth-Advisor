@@ -38,6 +38,8 @@ frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan re
 frontend/src/app/routes/cashflow-page.tsx : multi-currency balances and remittance corridor plan
 frontend/src/app/routes/dashboard-page.test.tsx : net worth, runway gauge, trail chart, rebalance link, household toggle
 frontend/src/app/routes/dashboard-page.tsx : net worth hero, runway gauge, household toggle, rebalance CTA, trail chart, target allocation, portfolio holdings
+frontend/src/app/routes/evidence-page.test.tsx : in-browser SHA-256 verification and CSV export trigger tests
+frontend/src/app/routes/evidence-page.tsx : institutional evidence explorer with W3C WebAuthn verification and tamper-evident audit ledger
 frontend/src/app/routes/home-page.test.tsx : home page rendering and interactive simulation tests
 frontend/src/app/routes/home-page.tsx : market-ready homepage presenting the triad architecture, advisor OS, MIT Sloan quant rigor, knowledge graph, and interactive simulator
 frontend/src/app/routes/login-page.tsx : login page: highlight panel + login form; account-created notice after a partial signup
