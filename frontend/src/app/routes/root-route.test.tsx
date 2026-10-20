@@ -78,7 +78,7 @@ describe('RootRoute role redirect', () => {
 
   it('lets an acting admin session reach the client dashboard', async () => {
     setAccessToken('token');
-    stubMe(200, ['USER']);
+    stubMe(200, ['USER', 'ADMIN'], 'admin@example.com');
     saveAdminActingSession('fake-admin-token', 'admin@example.com', {
       id: 'client-1',
       name: 'Elena Vance',

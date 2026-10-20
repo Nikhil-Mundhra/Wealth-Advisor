@@ -5,12 +5,23 @@ import { AppShell } from './app-shell.tsx';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { saveAdminActingSession } from '../../features/auth/session/acting-session.ts';
+import { clearSession, setAccessToken } from '../../features/auth/session/session-store.ts';
 
 function stubMe(roles: string[], email = 'testing@example.com') {
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => new Response(JSON.stringify({ id: 'u-1', email, displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
   );
+}
+
+function actAsClient() {
+  saveAdminActingSession('fake-admin-token', 'admin@example.com', {
+    id: 'client-1',
+    name: 'Elena Vance',
+    email: 'testing@example.com',
+    roleBadge: 'Private Client',
+    category: 'CLIENT',
+  });
 }
 
 function renderShell(initialEntry = '/') {
@@ -44,6 +55,7 @@ describe('AppShell', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    clearSession();
   });
 
   it('renders client den with no admin overview or advisor links', async () => {
@@ -122,11 +134,38 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Models & Keys' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Tenants' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'API Keys' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Exit to Client App' })).toBeVisible();
+
+    // Without an acting session `/` bounces admins back, so the exit links stay hidden instead of dead.
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit Admin' })).toBeNull();
 
     // Client-only navigation items are not in the admin sidebar
     expect(screen.queryByRole('link', { name: 'Cash Flow' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
+  });
+
+  it('shows the admin exit links only while an acting session is active', async () => {
+    stubMe(['USER', 'ADMIN'], 'admin@example.com');
+    actAsClient();
+    renderShell('/admin');
+    expect(await screen.findByText('Admin body')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Exit to Client App' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Exit' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Exit Admin' })).toBeVisible();
+  });
+
+  it('shows the retry state instead of demo chrome when the lookup fails with a token', async () => {
+    setAccessToken('token');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 401, headers: { 'content-type': 'application/json' } })),
+    );
+    renderShell('/');
+    expect(await screen.findByText('Session lookup failed')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+    expect(screen.queryByText(/Elena/)).toBeNull();
   });
 
   it('keeps client den chrome on /settings/security for advisors and provides a separate Advisor Workstation link', async () => {
@@ -178,13 +217,7 @@ describe('AppShell', () => {
 
   it('displays acting mode banner when an admin is impersonating a demo persona', async () => {
     stubMe(['USER']);
-    saveAdminActingSession('fake-admin-token', 'admin@example.com', {
-      id: 'client-1',
-      name: 'Elena Vance',
-      email: 'testing@example.com',
-      roleBadge: 'Private Client',
-      category: 'CLIENT',
-    });
+    actAsClient();
 
     renderShell('/');
     expect(await screen.findByText('Client Den Body')).toBeVisible();

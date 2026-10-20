@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearSession, setAccessToken } from '../../features/auth/session/session-store.ts';
 import { setLocale } from '../../lib/locale-store.ts';
 import { DashboardPage } from './dashboard-page.tsx';
 
@@ -34,6 +35,7 @@ describe('DashboardPage', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    clearSession();
   });
 
   it('shows net worth, the runway gauge, and switches household mode', async () => {
@@ -110,5 +112,16 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Client Login')).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Dashboard' })).toBeNull();
     expect(screen.queryByText(/Elena/)).toBeNull();
+  });
+
+  it('shows the retry state instead of bouncing to login when the token exists', async () => {
+    vi.unstubAllGlobals();
+    setAccessToken('token');
+    stubMe(401);
+    renderDashboard();
+
+    expect(await screen.findByText('Session lookup failed')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Dashboard' })).toBeNull();
   });
 });

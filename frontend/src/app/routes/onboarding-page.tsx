@@ -1,9 +1,10 @@
 import { Navigate, useNavigate } from 'react-router';
-import { ADVISOR_ROLE } from '@wealth-advisor/rules';
+import { ADMIN_ROLE, ADVISOR_ROLE } from '@wealth-advisor/rules';
 import logoImg from '../../assets/logo.png';
 import logoDarkImg from '../../assets/logo-dark.png';
 import { LanguageSelect } from '../../components/ui/language-select.tsx';
 import { ThemeToggle } from '../../components/ui/theme-toggle.tsx';
+import { Spinner } from '../../components/ui/spinner.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { ProfilingQuestionnaire } from '../../features/profiling/components/profiling-questionnaire.tsx';
 import { useStrings } from '../../lib/dictionaries.ts';
@@ -12,9 +13,19 @@ import { useStrings } from '../../lib/dictionaries.ts';
 export function OnboardingPage() {
   const navigate = useNavigate();
   const strings = useStrings();
-  const { data: me } = useMe();
+  const me = useMe();
 
-  if (me?.roles.includes(ADVISOR_ROLE)) {
+  if (me.isPending) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center text-brand-600">
+        <Spinner label="Loading" />
+      </div>
+    );
+  }
+  if (me.data?.roles.includes(ADMIN_ROLE)) {
+    return <Navigate to="/admin" replace />;
+  }
+  if (me.data?.roles.includes(ADVISOR_ROLE)) {
     return <Navigate to="/advisor" replace />;
   }
 
@@ -52,7 +63,7 @@ export function OnboardingPage() {
 
         <div className="rounded-field border border-line bg-surface p-6 shadow-sm">
           <ProfilingQuestionnaire
-            email={me?.email}
+            email={me.data?.email}
             startFresh
             onComplete={() => navigate('/', { replace: true })}
           />

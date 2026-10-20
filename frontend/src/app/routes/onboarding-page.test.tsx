@@ -9,6 +9,13 @@ import { OnboardingPage } from './onboarding-page.tsx';
 
 let client: QueryClient;
 
+function stubMe(roles: string[] = ['USER'], email = 'fresh@example.com') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify({ id: 'u-1', email, displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
+  );
+}
+
 describe('OnboardingPage', () => {
   beforeEach(() => {
     client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -21,6 +28,7 @@ describe('OnboardingPage', () => {
   });
 
   it('renders onboarding header and step 1 of questionnaire', async () => {
+    stubMe();
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
@@ -29,7 +37,7 @@ describe('OnboardingPage', () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Welcome to Syntropy AI' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Welcome to Syntropy AI' })).toBeVisible();
     expect(screen.getByText('Question 1 of 7')).toBeVisible();
     expect(screen.getByText('How do you feel about investment risk?')).toBeVisible();
 
@@ -59,5 +67,37 @@ describe('OnboardingPage', () => {
     );
 
     expect(await screen.findByText('Advisor Workstation')).toBeVisible();
+  });
+
+  it('redirects ADMIN accounts directly to the admin console', async () => {
+    stubMe(['USER', 'ADMIN'], 'admin@example.com');
+    const router = createMemoryRouter(
+      [
+        { path: '/onboarding', element: <OnboardingPage /> },
+        { path: '/admin', element: <p>Admin Console</p> },
+      ],
+      { initialEntries: ['/onboarding'] },
+    );
+    render(
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Admin Console')).toBeVisible();
+  });
+
+  it('shows a spinner instead of the questionnaire while roles resolve', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <OnboardingPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
+    expect(screen.queryByText('Question 1 of 7')).toBeNull();
   });
 });

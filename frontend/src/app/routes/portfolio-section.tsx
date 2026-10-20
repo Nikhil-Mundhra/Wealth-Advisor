@@ -4,7 +4,7 @@ import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Button } from '../../components/ui/button.tsx';
-import { Spinner } from '../../components/ui/spinner.tsx';
+import { MeGate } from '../../features/auth/components/me-gate.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
@@ -23,29 +23,17 @@ export interface PortfolioSectionProps {
 }
 
 // Every target class renders for demo account; real accounts render user-configured assets from onboarding.
-export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
+function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
   const strings = useStrings();
-  const me = useMe();
+  const { data: me } = useMe();
   const activeClient = useActiveClient();
-  const profile = useProfile(me.data?.email);
-  const { data: apiPortfolio } = usePortfolio(isDemoEmail(me.data?.email) && activeClient.id === 'elena-vance');
+  const isDemo = isDemoEmail(me?.email);
+  const profile = useProfile(me?.email);
+  const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
   const [constructionModalOpen, setConstructionModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const { ref, visible } = useReveal<HTMLDivElement>();
-
-  // Gate on the session like AdvisoryPage: while roles resolve, show a spinner, never the demo fixture.
-  if (me.isPending) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center text-brand-600">
-        <Spinner label="Loading" />
-      </div>
-    );
-  }
-  if (me.isError || !me.data) {
-    return <Navigate to="/login" replace />;
-  }
-  const isDemo = isDemoEmail(me.data.email);
 
   // Non-demo users without completed profiling must onboard first
   if (!isDemo && !profile.isCompleted && showTitle) {
@@ -288,5 +276,14 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
         ownerDisplayName={activeClient.name}
       />
     </div>
+  );
+}
+
+// Identity gate: spinner while roles resolve, retry state on lookup failure, never the demo fixture.
+export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
+  return (
+    <MeGate>
+      <PortfolioView showTitle={showTitle} />
+    </MeGate>
   );
 }

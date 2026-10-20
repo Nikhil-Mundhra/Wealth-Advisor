@@ -5,7 +5,7 @@ import {
   listHoldingAmounts,
   type HouseholdMode,
 } from '@wealth-advisor/rules';
-import { Spinner } from '../../components/ui/spinner.tsx';
+import { MeGate } from '../../features/auth/components/me-gate.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
 import { AdvisoryThread } from './advisory-thread.tsx';
@@ -48,16 +48,9 @@ export function ClientAdvisoryView() {
 
 // /advisory serves the signed-in user's personal portfolio copilot; advisor roster copilot lives at /advisor/copilot.
 export function AdvisoryPage() {
-  const me = useMe();
-  if (me.isPending) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center text-brand-600">
-        <Spinner label="Loading" />
-      </div>
-    );
-  }
-  if (me.isError || !me.data) {
-    return <Navigate to="/login" replace />;
-  }
-  return <ClientAdvisoryView />;
+  return (
+    <MeGate>
+      <ClientAdvisoryView />
+    </MeGate>
+  );
 }

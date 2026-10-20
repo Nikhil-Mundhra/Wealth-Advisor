@@ -3,7 +3,7 @@ import { Navigate } from 'react-router';
 import { listHoldingAmounts } from '@wealth-advisor/rules';
 import { Card } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
-import { Spinner } from '../../components/ui/spinner.tsx';
+import { MeGate } from '../../features/auth/components/me-gate.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
@@ -214,18 +214,11 @@ function CashflowView() {
   );
 }
 
-// Gate on the session like AdvisoryPage: while roles resolve, show a spinner, never the demo fixture.
+// Identity gate: spinner while roles resolve, retry state on lookup failure, never the demo fixture.
 export function CashflowPage() {
-  const me = useMe();
-  if (me.isPending) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center text-brand-600">
-        <Spinner label="Loading" />
-      </div>
-    );
-  }
-  if (me.isError || !me.data) {
-    return <Navigate to="/login" replace />;
-  }
-  return <CashflowView />;
+  return (
+    <MeGate>
+      <CashflowView />
+    </MeGate>
+  );
 }
