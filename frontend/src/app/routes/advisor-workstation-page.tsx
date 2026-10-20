@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
 import {
   AlertTriangle,
   ArrowRight,
@@ -35,7 +34,6 @@ import { cn } from '../../lib/cn.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 
 export function AdvisorWorkstationPage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'active' | 'invites'>('overview');
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<AdvisorClientSummaryDto | null>(null);
@@ -318,6 +316,7 @@ export function AdvisorWorkstationPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* shortcut: single entry to the brief; the duplicate launch opened the same modal. */}
               <Button
                 type="button"
                 variant="outline"
@@ -326,14 +325,6 @@ export function AdvisorWorkstationPage() {
               >
                 <Sparkles aria-hidden className="mr-1.5 size-3.5 text-gold" />
                 30s Meeting Brief
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => navigate('/advisory')}
-                className="text-xs"
-              >
-                Launch Advisory Session
               </Button>
             </div>
           </div>
@@ -475,7 +466,7 @@ export function AdvisorWorkstationPage() {
         open={briefOpen}
         onClose={() => setBriefOpen(false)}
         client={briefClient ?? activeClient}
-        onNavigateToAdvisory={() => navigate('/advisory')}
+        onNavigateToAdvisory={() => setActiveTab('active')}
       />
       <InstrumentComparisonModal
         open={instrumentsOpen}

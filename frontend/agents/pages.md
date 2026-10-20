@@ -30,6 +30,8 @@ frontend/src/app/routes/advisor-login-page.tsx : institutional login terminal fo
 frontend/src/app/routes/advisor-workstation-page.tsx : wealth analyst workstation with client roster, AUM summaries, and invitation links
 frontend/src/app/routes/advisory-page.test.tsx : thread, step-up gate, and no-auth degradation
 frontend/src/app/routes/advisory-page.tsx : copilot thread, rebalance card, biometric step-up modal
+frontend/src/app/routes/advisory-route.test.tsx : role-aware /advisory routing: client view versus advisor redirect
+frontend/src/app/routes/advisory-thread.tsx : store-free copilot thread shared by the client advisory view
 frontend/src/app/routes/ai-settings-page.test.tsx : user API key input, model selection, toast notification, and persistence tests
 frontend/src/app/routes/ai-settings-page.tsx : user AI API key configuration and FinanceBench model rankings page
 frontend/src/app/routes/cashflow-page.test.tsx : accounts and remittance plan render
