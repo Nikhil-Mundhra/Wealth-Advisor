@@ -32,13 +32,21 @@ describe('ShareStrategyModal', () => {
         ),
       ),
     );
+    const writeText = vi.fn(async (_text: string) => {});
+    Object.defineProperty(window.navigator, 'clipboard', { value: { writeText }, configurable: true });
     renderModal();
 
     expect(screen.getByRole('checkbox', { name: /Mask absolute amounts/ })).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Create link' }));
 
     expect(await screen.findByDisplayValue('http://localhost:3000/share/dewa_sec_abc')).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(writeText).toHaveBeenCalledWith('http://localhost:3000/share/dewa_sec_abc');
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeVisible();
+
     vi.unstubAllGlobals();
+    delete (window.navigator as unknown as { clipboard?: unknown }).clipboard;
   });
 
   it('sends the unmasked choice when the toggle is cleared', async () => {

@@ -10,7 +10,7 @@ import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { DEMO_BASELINE, DEMO_HOLDINGS } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
-import { apiRequest } from '../../lib/api-client.ts';
+import { sharingApi } from '../../features/sharing/api/sharing-api.ts';
 
 export function SharedPlanPage() {
   const { token } = useParams();
@@ -24,8 +24,12 @@ export function SharedPlanPage() {
     if (!token) return;
     let active = true;
     setLoading(true);
+    // Drop the previous token's plan so /share/A never flashes (or sticks on failure) after moving to /share/B.
+    setSharedPlan(null);
+    setMasked(true);
     setLiveUnavailable(false);
-    apiRequest(`/sharing/${token}`, { response: SharedPlanResponse })
+    sharingApi
+      .get(token)
       .then((plan) => {
         if (active) setSharedPlan(plan);
       })
@@ -86,15 +90,18 @@ export function SharedPlanPage() {
 
       {liveUnavailable && !sharedPlan && (
         <p className="rounded-field border border-line bg-surface-subtle p-3 text-xs text-subtle">
-          Live plan unavailable. Showing the demo allocation baseline.
+          {strings['share.unavailable']}
         </p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <PageTitle>{strings['dashboard.allocation']}</PageTitle>
-        <Button variant="outline" aria-pressed={!masked} onClick={() => setMasked((was) => !was)}>
-          {masked ? strings['share.amounts'] : strings['share.masked']}
-        </Button>
+        {/* Live plans never render amounts, so the mask toggle would be dead: hide it. */}
+        {!liveHoldings && (
+          <Button variant="outline" aria-pressed={!masked} onClick={() => setMasked((was) => !was)}>
+            {masked ? strings['share.amounts'] : strings['share.masked']}
+          </Button>
+        )}
       </div>
 
       <Card aria-label={strings['dashboard.allocation']}>
@@ -155,28 +162,32 @@ export function SharedPlanPage() {
         </Card>
       )}
 
-      <Card aria-label="Stress simulation">
+      <Card aria-label={strings['share.stress.title']}>
         <div className="flex items-center gap-2 border-b border-line pb-3">
           <Shield className="size-4 text-brand-600" />
-          <h3 className="font-semibold text-sm text-ink">Stress Simulation (−5% EUR Shock)</h3>
+          <h3 className="font-semibold text-sm text-ink">{strings['share.stress.title']}</h3>
         </div>
         {sharedPlan?.planSnapshot?.stressTestScenario ? (
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 text-xs">
-            <div className="rounded-field border border-line bg-surface-subtle p-3">
-              <span className="font-semibold text-ink block mb-1">FX Shock</span>
-              <p className="text-muted">{sharedPlan.planSnapshot.stressTestScenario.fxShockPercent}% adverse move</p>
+          <>
+            <p className="mt-3 text-xs text-subtle">
+              {strings['share.stress.live'].replace(
+                '{pct}',
+                String(sharedPlan.planSnapshot.stressTestScenario.fxShockPercent),
+              )}
+            </p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 text-xs">
+              <div className="rounded-field border border-line bg-surface-subtle p-3">
+                <span className="font-semibold text-ink block mb-1">FX Shock</span>
+                <p className="text-muted">{sharedPlan.planSnapshot.stressTestScenario.fxShockPercent}% adverse move</p>
+              </div>
+              <div className="rounded-field border border-line bg-surface-subtle p-3">
+                <span className="font-semibold text-ink block mb-1">Estimated Drawdown</span>
+                <p className="text-muted">{sharedPlan.planSnapshot.stressTestScenario.estimatedDrawdownPercent}% portfolio value</p>
+              </div>
             </div>
-            <div className="rounded-field border border-line bg-surface-subtle p-3">
-              <span className="font-semibold text-ink block mb-1">Estimated Drawdown</span>
-              <p className="text-muted">{sharedPlan.planSnapshot.stressTestScenario.estimatedDrawdownPercent}% portfolio value</p>
-            </div>
-          </div>
+          </>
         ) : (
-          <p className="mt-3 text-xs leading-relaxed text-muted">
-            Deterministic illustration: a −5% EUR depreciation against CNY/SGD lifts monthly remittance costs by about
-            €145. Rebalancing 10% into EUR money-market preserves 6+ months of runway. Live engine scenarios appear
-            here once the plan snapshot carries one.
-          </p>
+          <p className="mt-3 text-xs leading-relaxed text-muted">{strings['share.stress.fallback']}</p>
         )}
       </Card>
 

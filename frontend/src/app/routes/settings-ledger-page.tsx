@@ -1,4 +1,5 @@
 import { Download, FileJson } from 'lucide-react';
+import type { ExecutedTradeDto } from '@wealth-advisor/contracts';
 import { Button } from '../../components/ui/button.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { downloadCsv, serializeLedgerToCsv, type LedgerRow } from '../../lib/csv-export.ts';
@@ -21,6 +22,9 @@ interface DisplayEntry {
   resultingHash: string | null;
   transactionHash: string | null;
   trades: string[];
+  // Raw API values for export fidelity; null for the demo baseline, which only has display strings.
+  rawTimestamp: string | null;
+  rawTrades: ExecutedTradeDto[] | null;
 }
 
 // Tamper-evident sandbox executions with audit digests, settings subnav and CSV/JSON export.
@@ -54,6 +58,8 @@ export function SettingsLedgerPage() {
       trades: (entry.executedTrades ?? []).map(
         (t) => `${t.action} ${t.assetSymbol} → ${(t.targetWeight * 100).toFixed(0)}% target`,
       ),
+      rawTimestamp: entry.timestamp,
+      rawTrades: entry.executedTrades,
     };
   });
 
@@ -69,6 +75,8 @@ export function SettingsLedgerPage() {
     resultingHash: null,
     transactionHash: null,
     trades: [],
+    rawTimestamp: null,
+    rawTrades: null,
   }));
 
   const isLive = liveEntries.length > 0;
@@ -78,7 +86,7 @@ export function SettingsLedgerPage() {
       timestamp: entry.at,
       action: entry.action,
       tier: entry.tier,
-      auditDigest: entry.digest,
+      auditDigest: entry.fullDigest ?? entry.digest,
       passkeyProofPresent: entry.passkeyVerified,
     }));
     const csv = serializeLedgerToCsv(rows, {
@@ -90,7 +98,7 @@ export function SettingsLedgerPage() {
 
   function handleExportJson() {
     const entries = displayEntries.map((entry) => ({
-      timestamp: entry.at,
+      timestamp: entry.rawTimestamp ?? entry.at,
       action: entry.action,
       tier: entry.tier,
       auditDigest: entry.fullDigest ?? entry.digest,
@@ -99,11 +107,15 @@ export function SettingsLedgerPage() {
       initialPortfolioStateHash: entry.initialHash,
       resultingPortfolioStateHash: entry.resultingHash,
       transactionHash: entry.transactionHash,
-      executedTrades: entry.trades,
+      executedTrades: entry.rawTrades ?? entry.trades,
     }));
     downloadJson(
       'tax-sandbox-ledger-2026-09.json',
-      serializeLedgerToJson(entries, { period: 'September 2026', baselineCurrency: 'EUR' }),
+      serializeLedgerToJson(entries, {
+        period: 'September 2026',
+        baselineCurrency: 'EUR',
+        source: isLive ? 'live-api' : 'demo-baseline',
+      }),
     );
   }
 
@@ -143,7 +155,7 @@ export function SettingsLedgerPage() {
             className="flex items-center gap-2"
           >
             <FileJson aria-hidden className="size-4" />
-            <span>Export JSON</span>
+            <span>{strings['settings.ledger.exportJson']}</span>
           </Button>
           <Button
             type="button"
@@ -182,7 +194,7 @@ export function SettingsLedgerPage() {
             <tbody>
               {displayEntries.map((entry) => (
                 <tr
-                  key={entry.digest}
+                  key={entry.fullDigest ?? entry.digest}
                   className="border-b border-line transition-colors last:border-0 motion-safe:hover:bg-surface-subtle"
                 >
                   <th scope="row" className="px-4 py-3 text-left font-normal">
