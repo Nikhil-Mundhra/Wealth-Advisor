@@ -106,4 +106,23 @@ describe('HomePage', () => {
     expect(screen.getByText(/Architecture Specs/i)).toBeVisible();
     expect(screen.getByRole('button', { name: /Advisor Lifecycle OS/i })).toBeVisible();
   });
+
+  it('navigates to MIT Sloan research gap when clicking "Read Research Gap" in hero', async () => {
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <HomePage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const readGapBtn = screen.getByRole('button', { name: /Read Research Gap/i });
+    expect(readGapBtn).toBeVisible();
+
+    await userEvent.click(readGapBtn);
+
+    // MIT Sloan subtab should now be selected and its content rendered
+    expect(screen.getByRole('tab', { name: /MIT Sloan Rigor Gap/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { name: /Why Raw LLMs Fail Financial Math/i })).toBeVisible();
+  });
 });

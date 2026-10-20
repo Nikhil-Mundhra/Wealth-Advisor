@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle2, ChevronRight, Cpu, Layers, Lock, ShieldCheck,
 import { Link } from 'react-router';
 
 interface HomepageHeroProps {
-  onScrollTo: (id: string) => void;
+  onScrollTo: (id: string, subtab?: string) => void;
 }
 
 export function HomepageHero({ onScrollTo }: HomepageHeroProps) {
@@ -50,7 +50,7 @@ export function HomepageHero({ onScrollTo }: HomepageHeroProps) {
 
             <button
               type="button"
-              onClick={() => onScrollTo('mit-sloan')}
+              onClick={() => onScrollTo('documentation', 'mit-sloan')}
               className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-subtle transition hover:text-ink cursor-pointer"
             >
               <span>Read Research Gap</span>
