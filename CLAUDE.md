@@ -39,6 +39,9 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 .github/dependabot.yml : weekly dependency update configuration for npm and github actions
 .github/workflows/ci.yml : on PRs and main, on a pinned ubuntu-24.04 runner: docs-lint, deps-lint, typecheck, tests, frontend build
 .nvmrc : Node major CI builds and local version managers use; change it and ci.yml `node-version` together
+docs/assets/logo-small.png : compressed README header logo (350px)
+docs/assets/ss0-small.jpg : compressed README landing hero (1200px)
+docs/assets/ss1-small.jpg : compressed README workflow photo (1200px)
 vercel.json : Vercel Services: frontend and backend service definitions, top-level rewrites, weekday market refresh cron
 ```
 
