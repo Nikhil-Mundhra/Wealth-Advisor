@@ -44,7 +44,8 @@ describe('WealthApi', () => {
   it('optimizes portfolio generating rebalance proposal', async () => {
     const { api } = setup();
     const proposal = await api.optimizePortfolio('default', 'default');
-    assert.equal(proposal.effectiveRiskScore, 4.0);
+    // Seeded Elena squeeze: base 7.0 at 3.2 months family runway recalibrates to 6.0.
+    assert.equal(proposal.effectiveRiskScore, 6.0);
     assert.ok(proposal.actions.length > 0);
     assert.ok(proposal.rationale.personalFinance.length > 0);
     assert.ok(proposal.rationale.crossBorder.length > 0);
