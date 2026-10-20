@@ -38,7 +38,7 @@ export function summarizeProposal(holdings: readonly { symbol: string; securityT
   return {
     stockPct,
     bondPct,
-    etfPct: Math.max(0, 100 - stockPct - bondPct), // derived so the three shares always sum to 100
+    etfPct: Math.min(100, Math.max(0, 100 - stockPct - bondPct)), // derived so the three shares always sum to 100
     topSymbol: top?.symbol ?? 'CSPX.LSE',
     topWeightPct: top ? Math.round(top.weight * 100) : 0,
   };
