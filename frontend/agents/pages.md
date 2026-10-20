@@ -17,7 +17,7 @@ frontend/public/logo.png : transparent brand logo asset for public web use
 frontend/public/og-image.jpg : Open Graph and Twitter social link preview image (1024x576)
 frontend/src/app/route-guards.test.tsx : admins pass, other roles redirect home
 frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status; AdminRoute checks the admin role
-frontend/src/app/router.tsx : route table: /home (public); /signup, /login (guest); / (root HomePage or Dashboard); /onboarding /portfolio /cashflow /advisory /evidence /settings/security /settings/ledger /settings/ai /admin* (protected); /share/:token (public)
+frontend/src/app/router.tsx : route table: /home (public); /signup, /login, /admin/login, /advisor/login (guest); / (root HomePage or Dashboard); /onboarding /portfolio /cashflow /advisory /evidence /settings/security /settings/ledger /settings/ai /admin* (protected); /share/:token (public)
 frontend/src/app/routes/admin-api-keys-page.tsx : API key issuance placeholder pending the tenant module
 frontend/src/app/routes/admin-credentials-page.tsx : demo persona accounts and credentials reference tab
 frontend/src/app/routes/admin-login-page.tsx : operator authentication portal for platform administrators
@@ -48,6 +48,7 @@ frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire
 frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
 frontend/src/app/routes/portfolio-page.tsx : deep-link route wrapper rendering shared PortfolioSection
 frontend/src/app/routes/portfolio-section.tsx : shared portfolio holdings table rendered on the dashboard and as a deep link
+frontend/src/app/routes/role-login-mismatch.test.tsx : role mismatch keeps a signed-in session and GuestRoute redirects role portals
 frontend/src/app/routes/root-route.tsx : dual-mode root route: HomePage for anonymous visitors, AppShell with DashboardPage for authenticated users
 frontend/src/app/routes/route-error-boundary.tsx : graceful error boundary with reload and navigation controls for uncaught route errors
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state

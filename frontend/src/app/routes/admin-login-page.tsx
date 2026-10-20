@@ -9,7 +9,7 @@ import { Input } from '../../components/ui/input.tsx';
 import { PasswordInput } from '../../components/ui/password-input.tsx';
 import { authApi } from '../../features/auth/api/auth-api.ts';
 import { useLogin } from '../../features/auth/api/use-login.ts';
-import { clearSession } from '../../features/auth/session/session-store.ts';
+import { clearSession, getAccessToken } from '../../features/auth/session/session-store.ts';
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
@@ -29,11 +29,14 @@ export function AdminLoginPage() {
     setLoading(true);
 
     try {
+      const hadSession = getAccessToken() !== null;
       await login.mutateAsync({ email, password, clientType: 'WEB', rememberMe: false });
       const me = await authApi.me();
       if (!me.roles.includes(ADMIN_ROLE)) {
-        await authApi.logout();
-        clearSession();
+        if (!hadSession) {
+          await authApi.logout();
+          clearSession();
+        }
         setError('Access denied: Account is not authorized as a platform operator.');
         setLoading(false);
         return;
