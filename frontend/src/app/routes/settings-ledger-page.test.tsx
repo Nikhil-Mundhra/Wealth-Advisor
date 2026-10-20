@@ -74,6 +74,65 @@ describe('SettingsLedgerPage', () => {
     downloadSpy.mockRestore();
   });
 
+  it('exports raw ISO timestamps, raw trades, and a live source marker from the API ledger', async () => {
+    setLocale('en');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            entries: [
+              {
+                id: 'le_1',
+                tenantId: 't1',
+                userId: 'u1',
+                orderType: 'PORTFOLIO_REBALANCE',
+                initialPortfolioStateHash: 'aaa',
+                executedTrades: [{ assetSymbol: 'VTI', action: 'BUY', amountBase: 1000, targetWeight: 0.4 }],
+                resultingPortfolioStateHash: 'bbb',
+                passkeyAssertionProof: {
+                  credentialId: 'c',
+                  clientDataJson: 'cd',
+                  authenticatorData: 'ad',
+                  signature: 'sig',
+                  verifiedAt: '2026-09-30T18:42:00.000Z',
+                },
+                auditDigest: 'fulldigest1234567890abcdef',
+                transactionHash: 'tx1',
+                status: 'COMMITTED',
+                timestamp: '2026-09-30T18:42:00.000Z',
+              },
+            ],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+    const downloadSpy = vi.spyOn(jsonExport, 'downloadJson').mockImplementation(() => {});
+
+    renderWithClient(
+      <MemoryRouter>
+        <SettingsLedgerPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(/Live API Logs/)).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Export JSON' }));
+
+    expect(downloadSpy).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(downloadSpy.mock.calls[0][1] as string);
+    expect(payload.source).toBe('live-api');
+    expect(payload.entries).toHaveLength(1);
+    expect(payload.entries[0].timestamp).toBe('2026-09-30T18:42:00.000Z');
+    expect(payload.entries[0].auditDigest).toBe('fulldigest1234567890abcdef');
+    expect(payload.entries[0].executedTrades).toEqual([
+      { assetSymbol: 'VTI', action: 'BUY', amountBase: 1000, targetWeight: 0.4 },
+    ]);
+
+    downloadSpy.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
   it('redirects /evidence to /settings/ledger', () => {
     setLocale('en');
     renderWithClient(

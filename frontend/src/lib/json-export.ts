@@ -3,6 +3,8 @@
 export interface LedgerJsonMeta {
   period: string;
   baselineCurrency: string;
+  // Provenance: live ledger API vs the demo baseline shown when it is unreachable.
+  source: 'live-api' | 'demo-baseline';
 }
 
 export function serializeLedgerToJson(entries: Record<string, unknown>[], meta: LedgerJsonMeta): string {
@@ -12,6 +14,7 @@ export function serializeLedgerToJson(entries: Record<string, unknown>[], meta: 
         report: 'Tax and Sandbox Execution Ledger',
         period: meta.period,
         baselineCurrency: meta.baselineCurrency,
+        source: meta.source,
         entries,
       },
       null,

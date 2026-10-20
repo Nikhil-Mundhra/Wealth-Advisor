@@ -3,6 +3,7 @@ import { Check, Copy, Link2 } from 'lucide-react';
 import { Alert } from '../../../components/ui/alert.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Dialog } from '../../../components/ui/dialog.tsx';
+import { useStrings } from '../../../lib/dictionaries.ts';
 import { ENGAGEMENT_EVENTS, track } from '../../../lib/engagement.ts';
 import { useCreateShareLink } from '../api/use-create-share-link.ts';
 
@@ -14,6 +15,7 @@ interface ShareStrategyModalProps {
 
 // Issues a read-only share URL; the viewer picks privacy masking before the link is created.
 export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStrategyModalProps) {
+  const strings = useStrings();
   const [privacyMasked, setPrivacyMasked] = useState(true);
   const [copied, setCopied] = useState(false);
   const createLink = useCreateShareLink();
@@ -42,9 +44,9 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStr
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} title="Share strategy">
+    <Dialog open={open} onClose={handleClose} title={strings['share.modal.title']}>
       <p className="mt-2 text-sm text-subtle">
-        A read-only link to this allocation proposal for {ownerDisplayName}. The link expires after 72 hours.
+        {strings['share.modal.body'].replace('{name}', ownerDisplayName)}
       </p>
 
       <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm">
@@ -55,21 +57,21 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStr
           className="mt-1 size-4 accent-brand-600"
         />
         <span>
-          <span className="font-medium text-ink">Mask absolute amounts</span>
-          <span className="block text-xs text-subtle">Viewers see target percentages, never account valuations.</span>
+          <span className="font-medium text-ink">{strings['share.modal.mask']}</span>
+          <span className="block text-xs text-subtle">{strings['share.modal.maskHint']}</span>
         </span>
       </label>
 
       {createLink.isError && (
         <div className="mt-3">
-          <Alert>Could not create the share link. Sign in and try again.</Alert>
+          <Alert>{strings['share.modal.error']}</Alert>
         </div>
       )}
 
       {url ? (
         <div className="mt-4 flex flex-col gap-2">
           <label htmlFor="share-strategy-url" className="text-xs font-medium text-subtle">
-            Expires {new Date(createLink.data!.expiresAt).toLocaleDateString()}
+            {strings['share.modal.expires'].replace('{date}', new Date(createLink.data!.expiresAt).toLocaleDateString())}
           </label>
           <div className="flex gap-2">
             <input
@@ -81,18 +83,18 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStr
             />
             <Button type="button" variant="outline" onClick={handleCopy} className="gap-1.5">
               {copied ? <Check aria-hidden className="size-4" /> : <Copy aria-hidden className="size-4" />}
-              <span>{copied ? 'Copied' : 'Copy'}</span>
+              <span>{copied ? strings['share.modal.copied'] : strings['share.modal.copy']}</span>
             </Button>
           </div>
         </div>
       ) : (
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {strings['share.modal.cancel']}
           </Button>
           <Button type="button" onClick={handleCreate} loading={createLink.isPending} className="gap-1.5">
             <Link2 aria-hidden className="size-4" />
-            <span>Create link</span>
+            <span>{strings['share.modal.create']}</span>
           </Button>
         </div>
       )}
