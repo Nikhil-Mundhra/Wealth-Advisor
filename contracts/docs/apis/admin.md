@@ -24,12 +24,16 @@ Every admin route requires a Bearer access token (`backend/docs/auth-token.md` `
 - nested route / query: `:id` the API key id; unknown or malformed → `AD_1002`; already revoked → `AD_1002` in the `mongo` store, 204 in the `memory` store
 
 ## GET /api/admin/models
-- responsibility: return the active LLM provider (default `mock`), every provider in `LLM_PROVIDERS`, and process uptime; `systemHealth.status` is always `ok` and `systemHealth.database` always `connected`
+- responsibility: return the active LLM provider (default `mock`), every provider in `LLM_PROVIDERS`, platform keys status (`gemini`, `openai`, `anthropic`, `openrouter`, `marketstack`), and process uptime; `systemHealth.status` is always `ok` and `systemHealth.database` always `connected`
 - contract: request none, response `AdminSettingsResponse` 200, errors `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer
 
 ## POST /api/admin/models
 - responsibility: set the platform-wide active LLM provider used by `POST /api/advisory/chat`
 - contract: request `UpdateAdminModelRequest`, response `AdminModelSettingDto` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `AD_1005`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## PATCH /api/admin/models/keys
+- responsibility: update or clear platform provider credentials (`geminiApiKey`, `openaiApiKey`, `anthropicApiKey`, `openrouterApiKey`, `marketstackAccessKey`); returns masked key status for each provider
+- contract: request `UpdatePlatformKeysRequest`, response `PlatformKeysStatusDto` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer
 
 ## GET /api/admin/users
 - responsibility: return list of registered user accounts, with optional filtering by query string, role, status, or tenant

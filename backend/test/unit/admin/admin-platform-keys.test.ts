@@ -25,6 +25,7 @@ describe('Admin Platform Managed Keys', () => {
     assert.ok(settings.platformKeys.gemini);
     assert.ok(settings.platformKeys.openai);
     assert.ok(settings.platformKeys.anthropic);
+    assert.ok(settings.platformKeys.openrouter);
     assert.ok(settings.platformKeys.marketstack);
 
     // Initial state: depending on process.env, source is 'env' or 'none'
@@ -38,6 +39,7 @@ describe('Admin Platform Managed Keys', () => {
     const updated = await api.updatePlatformKeys({
       geminiApiKey: 'AIzaSyTestGeminiKey123456789',
       openaiApiKey: 'sk-proj-test-openai-key-abc123xyz',
+      openrouterApiKey: 'sk-or-v1-test-openrouter-key-987654321',
     });
 
     assert.equal(updated.gemini.configured, true);
@@ -48,12 +50,19 @@ describe('Admin Platform Managed Keys', () => {
     assert.equal(updated.openai.source, 'db');
     assert.equal(updated.openai.maskedKey, 'sk-p...3xyz');
 
+    assert.equal(updated.openrouter.configured, true);
+    assert.equal(updated.openrouter.source, 'db');
+    assert.equal(updated.openrouter.maskedKey, 'sk-o...4321');
+
     // Effective key resolution
     const effectiveGemini = await api.getPlatformKey('gemini');
     assert.equal(effectiveGemini, 'AIzaSyTestGeminiKey123456789');
 
     const effectiveOpenAi = await api.getPlatformKey('openai');
     assert.equal(effectiveOpenAi, 'sk-proj-test-openai-key-abc123xyz');
+
+    const effectiveOpenRouter = await api.getPlatformKey('openrouter');
+    assert.equal(effectiveOpenRouter, 'sk-or-v1-test-openrouter-key-987654321');
 
     // Verify getSettings reflects updated DB keys
     const settings = await api.getSettings();

@@ -15,6 +15,7 @@ interface KeyConfigState {
   gemini: string;
   openai: string;
   anthropic: string;
+  openrouter: string;
   marketstack: string;
 }
 
@@ -25,6 +26,7 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
     gemini: '',
     openai: '',
     anthropic: '',
+    openrouter: '',
     marketstack: '',
   });
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'models'] });
       setEditingKey(null);
-      setDraftKeys({ gemini: '', openai: '', anthropic: '', marketstack: '' });
+      setDraftKeys({ gemini: '', openai: '', anthropic: '', openrouter: '', marketstack: '' });
       setFeedbackMessage('Platform keys updated successfully');
       setTimeout(() => setFeedbackMessage(null), 4000);
     },
@@ -63,6 +65,13 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
       envKeyName: 'ANTHROPIC_API_KEY',
     },
     {
+      id: 'openrouter',
+      label: 'OpenRouter (Universal)',
+      description: 'Unified gateway for benchmarked frontier & open-weight financial models (Nemotron, Claude, GPT-4o, Llama 3)',
+      status: platformKeys?.openrouter,
+      envKeyName: 'OPENROUTER_API_KEY',
+    },
+    {
       id: 'marketstack',
       label: 'Marketstack EOD',
       description: 'Metered global equities, sukuk, and ETF price data feed',
@@ -71,21 +80,23 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
     },
   ] as const;
 
-  const handleSaveKey = (id: 'gemini' | 'openai' | 'anthropic' | 'marketstack') => {
+  const handleSaveKey = (id: 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'marketstack') => {
     const value = draftKeys[id].trim();
     const payload: Record<string, string | null> = {};
     if (id === 'gemini') payload.geminiApiKey = value || null;
     if (id === 'openai') payload.openaiApiKey = value || null;
     if (id === 'anthropic') payload.anthropicApiKey = value || null;
+    if (id === 'openrouter') payload.openrouterApiKey = value || null;
     if (id === 'marketstack') payload.marketstackAccessKey = value || null;
     mutation.mutate(payload);
   };
 
-  const handleRevertToEnv = (id: 'gemini' | 'openai' | 'anthropic' | 'marketstack') => {
+  const handleRevertToEnv = (id: 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'marketstack') => {
     const payload: Record<string, string | null> = {};
     if (id === 'gemini') payload.geminiApiKey = null;
     if (id === 'openai') payload.openaiApiKey = null;
     if (id === 'anthropic') payload.anthropicApiKey = null;
+    if (id === 'openrouter') payload.openrouterApiKey = null;
     if (id === 'marketstack') payload.marketstackAccessKey = null;
     mutation.mutate(payload);
   };

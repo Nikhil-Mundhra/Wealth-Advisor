@@ -103,6 +103,7 @@ export class MongoAdminSettingsRepository implements AdminSettingsRepository {
       geminiApiKey: doc?.geminiApiKey ?? null,
       openaiApiKey: doc?.openaiApiKey ?? null,
       anthropicApiKey: doc?.anthropicApiKey ?? null,
+      openrouterApiKey: doc?.openrouterApiKey ?? null,
       marketstackAccessKey: doc?.marketstackAccessKey ?? null,
     };
   }
@@ -111,12 +112,14 @@ export class MongoAdminSettingsRepository implements AdminSettingsRepository {
     geminiApiKey?: string | null;
     openaiApiKey?: string | null;
     anthropicApiKey?: string | null;
+    openrouterApiKey?: string | null;
     marketstackAccessKey?: string | null;
   }): Promise<void> {
     const updateFields: Record<string, unknown> = { updatedAt: new Date() };
     if (keys.geminiApiKey !== undefined) updateFields.geminiApiKey = keys.geminiApiKey;
     if (keys.openaiApiKey !== undefined) updateFields.openaiApiKey = keys.openaiApiKey;
     if (keys.anthropicApiKey !== undefined) updateFields.anthropicApiKey = keys.anthropicApiKey;
+    if (keys.openrouterApiKey !== undefined) updateFields.openrouterApiKey = keys.openrouterApiKey;
     if (keys.marketstackAccessKey !== undefined) updateFields.marketstackAccessKey = keys.marketstackAccessKey;
 
     await (await this.col()).updateOne(

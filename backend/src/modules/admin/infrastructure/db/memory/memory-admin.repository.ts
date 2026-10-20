@@ -95,6 +95,7 @@ export class MemoryAdminSettingsRepository implements AdminSettingsRepository {
     geminiApiKey?: string | null;
     openaiApiKey?: string | null;
     anthropicApiKey?: string | null;
+    openrouterApiKey?: string | null;
     marketstackAccessKey?: string | null;
   } = {};
 
@@ -111,6 +112,7 @@ export class MemoryAdminSettingsRepository implements AdminSettingsRepository {
       geminiApiKey: this.platformKeys.geminiApiKey ?? null,
       openaiApiKey: this.platformKeys.openaiApiKey ?? null,
       anthropicApiKey: this.platformKeys.anthropicApiKey ?? null,
+      openrouterApiKey: this.platformKeys.openrouterApiKey ?? null,
       marketstackAccessKey: this.platformKeys.marketstackAccessKey ?? null,
     };
   }
@@ -119,11 +121,13 @@ export class MemoryAdminSettingsRepository implements AdminSettingsRepository {
     geminiApiKey?: string | null;
     openaiApiKey?: string | null;
     anthropicApiKey?: string | null;
+    openrouterApiKey?: string | null;
     marketstackAccessKey?: string | null;
   }): Promise<void> {
     if (keys.geminiApiKey !== undefined) this.platformKeys.geminiApiKey = keys.geminiApiKey;
     if (keys.openaiApiKey !== undefined) this.platformKeys.openaiApiKey = keys.openaiApiKey;
     if (keys.anthropicApiKey !== undefined) this.platformKeys.anthropicApiKey = keys.anthropicApiKey;
+    if (keys.openrouterApiKey !== undefined) this.platformKeys.openrouterApiKey = keys.openrouterApiKey;
     if (keys.marketstackAccessKey !== undefined) this.platformKeys.marketstackAccessKey = keys.marketstackAccessKey;
   }
 }

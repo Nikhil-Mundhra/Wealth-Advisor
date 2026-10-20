@@ -252,6 +252,7 @@ export interface LlmGatewayConfig {
   geminiApiKey?: ApiKeyResolver;
   openaiApiKey?: ApiKeyResolver;
   anthropicApiKey?: ApiKeyResolver;
+  openrouterApiKey?: ApiKeyResolver;
   http?: HttpClient;
 }
 

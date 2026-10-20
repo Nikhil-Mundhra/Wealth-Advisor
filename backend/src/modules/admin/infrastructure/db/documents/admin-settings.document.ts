@@ -10,6 +10,7 @@ export interface AdminSettingsDocument {
   geminiApiKey?: string | null;
   openaiApiKey?: string | null;
   anthropicApiKey?: string | null;
+  openrouterApiKey?: string | null;
   marketstackAccessKey?: string | null;
   updatedAt: Date;
 }

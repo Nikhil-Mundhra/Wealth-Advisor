@@ -22,6 +22,7 @@ export interface PlatformKeysRecord {
   geminiApiKey?: string | null;
   openaiApiKey?: string | null;
   anthropicApiKey?: string | null;
+  openrouterApiKey?: string | null;
   marketstackAccessKey?: string | null;
 }
 

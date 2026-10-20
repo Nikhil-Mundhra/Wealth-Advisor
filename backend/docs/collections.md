@@ -8,7 +8,7 @@
 | Collection | Owner | Holds | Non-obvious |
 |---|---|---|---|
 | `accounts` | finance | one cash balance per institution account and currency, per (`tenantId`, `userId`); `balance` in minor units | no unique index; (`tenantId`, `userId`, `currency`) is non-unique |
-| `admin_settings` | admin | platform settings; the `key: 'platform_settings'` document holds `activeLlmProvider` | unique (`key`); writes are `$set` upserts; a missing document reads as provider `mock` |
+| `admin_settings` | admin | platform settings; the `key: 'platform_settings'` document holds `activeLlmProvider` and platform keys (`geminiApiKey`, `openaiApiKey`, `anthropicApiKey`, `openrouterApiKey`, `marketstackAccessKey`) | unique (`key`); writes are `$set` upserts; a missing document reads as provider `mock` |
 | `api_keys` | admin | programmatic access keys per tenant: `keyPrefix`, SHA-256 `keyHash`, permissions, rate limit, monthly token quota | unique (`keyHash`); unique (`tenantId`, `keyPrefix`); revocation sets `status: 'REVOKED'`, the document stays |
 | `asset_products` | wealth | investable product catalogue: symbol, asset class, currency, risk rating, costs, returns | unique (`symbol`) |
 | `fx_rates` | market | one ECB reference rate per (`base`, `quote`, `date`), base EUR; append-only | unique (`base`, `quote`, `date`); appends are `$setOnInsert` upserts, so a fact is never overwritten; no weekend or TARGET-holiday dates |

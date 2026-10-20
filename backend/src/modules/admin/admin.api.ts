@@ -222,6 +222,7 @@ export function createAdminApi(deps: AdminApiDeps) {
           gemini: resolveKeyStatus(dbKeys.geminiApiKey, currentEnv.GEMINI_API_KEY),
           openai: resolveKeyStatus(dbKeys.openaiApiKey, currentEnv.OPENAI_API_KEY),
           anthropic: resolveKeyStatus(dbKeys.anthropicApiKey, currentEnv.ANTHROPIC_API_KEY),
+          openrouter: resolveKeyStatus(dbKeys.openrouterApiKey, currentEnv.OPENROUTER_API_KEY),
           marketstack: resolveKeyStatus(dbKeys.marketstackAccessKey, currentEnv.MARKETSTACK_ACCESS_KEY),
         },
         systemHealth: {
@@ -252,6 +253,9 @@ export function createAdminApi(deps: AdminApiDeps) {
       if (input.anthropicApiKey !== undefined) {
         keysToUpdate.anthropicApiKey = input.anthropicApiKey && input.anthropicApiKey.trim().length > 0 ? input.anthropicApiKey.trim() : null;
       }
+      if (input.openrouterApiKey !== undefined) {
+        keysToUpdate.openrouterApiKey = input.openrouterApiKey && input.openrouterApiKey.trim().length > 0 ? input.openrouterApiKey.trim() : null;
+      }
       if (input.marketstackAccessKey !== undefined) {
         keysToUpdate.marketstackAccessKey = input.marketstackAccessKey && input.marketstackAccessKey.trim().length > 0 ? input.marketstackAccessKey.trim() : null;
       }
@@ -262,11 +266,12 @@ export function createAdminApi(deps: AdminApiDeps) {
         gemini: resolveKeyStatus(updated.geminiApiKey, currentEnv.GEMINI_API_KEY),
         openai: resolveKeyStatus(updated.openaiApiKey, currentEnv.OPENAI_API_KEY),
         anthropic: resolveKeyStatus(updated.anthropicApiKey, currentEnv.ANTHROPIC_API_KEY),
+        openrouter: resolveKeyStatus(updated.openrouterApiKey, currentEnv.OPENROUTER_API_KEY),
         marketstack: resolveKeyStatus(updated.marketstackAccessKey, currentEnv.MARKETSTACK_ACCESS_KEY),
       };
     },
 
-    async getPlatformKey(name: 'gemini' | 'openai' | 'anthropic' | 'marketstack'): Promise<string | undefined> {
+    async getPlatformKey(name: 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'marketstack'): Promise<string | undefined> {
       const dbKeys = await settings.getPlatformKeys();
       const currentEnv = env();
       if (name === 'gemini') {
@@ -281,6 +286,10 @@ export function createAdminApi(deps: AdminApiDeps) {
         if (dbKeys.anthropicApiKey && dbKeys.anthropicApiKey.trim().length > 0) return dbKeys.anthropicApiKey.trim();
         return currentEnv.ANTHROPIC_API_KEY;
       }
+      if (name === 'openrouter') {
+        if (dbKeys.openrouterApiKey && dbKeys.openrouterApiKey.trim().length > 0) return dbKeys.openrouterApiKey.trim();
+        return currentEnv.OPENROUTER_API_KEY;
+      }
       if (name === 'marketstack') {
         if (dbKeys.marketstackAccessKey && dbKeys.marketstackAccessKey.trim().length > 0) return dbKeys.marketstackAccessKey.trim();
         return currentEnv.MARKETSTACK_ACCESS_KEY;
@@ -288,14 +297,15 @@ export function createAdminApi(deps: AdminApiDeps) {
       return undefined;
     },
 
-    async getPlatformKeys(): Promise<{ gemini?: string; openai?: string; anthropic?: string; marketstack?: string }> {
-      const [gemini, openai, anthropic, marketstack] = await Promise.all([
+    async getPlatformKeys(): Promise<{ gemini?: string; openai?: string; anthropic?: string; openrouter?: string; marketstack?: string }> {
+      const [gemini, openai, anthropic, openrouter, marketstack] = await Promise.all([
         this.getPlatformKey('gemini'),
         this.getPlatformKey('openai'),
         this.getPlatformKey('anthropic'),
+        this.getPlatformKey('openrouter'),
         this.getPlatformKey('marketstack'),
       ]);
-      return { gemini, openai, anthropic, marketstack };
+      return { gemini, openai, anthropic, openrouter, marketstack };
     },
 
     async findTenantById(id: string) {

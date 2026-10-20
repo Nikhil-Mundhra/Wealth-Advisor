@@ -15,7 +15,7 @@ export interface AdvisoryModuleDeps {
   finance: FinanceApi;
   wealth: WealthApi;
   getActiveProvider?: () => Promise<LlmProvider>;
-  getPlatformKeys?: () => Promise<{ gemini?: string; openai?: string; anthropic?: string }>;
+  getPlatformKeys?: () => Promise<{ gemini?: string; openai?: string; anthropic?: string; openrouter?: string }>;
   auth: MiddlewareHandler;
 }
 
@@ -34,6 +34,9 @@ export function createAdvisoryModule(
     anthropicApiKey: deps.getPlatformKeys
       ? async () => (await deps.getPlatformKeys?.())?.anthropic ?? currentEnv.ANTHROPIC_API_KEY
       : currentEnv.ANTHROPIC_API_KEY,
+    openrouterApiKey: deps.getPlatformKeys
+      ? async () => (await deps.getPlatformKeys?.())?.openrouter ?? currentEnv.OPENROUTER_API_KEY
+      : currentEnv.OPENROUTER_API_KEY,
     http: context.http,
   });
   const api = createAdvisoryApi({

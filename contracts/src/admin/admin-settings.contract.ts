@@ -23,6 +23,7 @@ export const PlatformKeysStatusDto = z.object({
   gemini: PlatformKeyStatusDto,
   openai: PlatformKeyStatusDto,
   anthropic: PlatformKeyStatusDto,
+  openrouter: PlatformKeyStatusDto,
   marketstack: PlatformKeyStatusDto,
 });
 export type PlatformKeysStatusDto = z.infer<typeof PlatformKeysStatusDto>;
@@ -31,6 +32,7 @@ export const UpdatePlatformKeysRequest = z.object({
   geminiApiKey: z.string().trim().nullable().optional(),
   openaiApiKey: z.string().trim().nullable().optional(),
   anthropicApiKey: z.string().trim().nullable().optional(),
+  openrouterApiKey: z.string().trim().nullable().optional(),
   marketstackAccessKey: z.string().trim().nullable().optional(),
 });
 export type UpdatePlatformKeysRequest = z.infer<typeof UpdatePlatformKeysRequest>;
