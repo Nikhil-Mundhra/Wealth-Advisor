@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { SECURITY_TYPES } from '@wealth-advisor/rules';
 
-export const CandidateSecurityTypeDto = z.enum(['STOCK', 'BOND', 'MUTUAL_FUND_ETF']);
+export const CandidateSecurityTypeDto = z.enum(SECURITY_TYPES);
 export type CandidateSecurityTypeDto = z.infer<typeof CandidateSecurityTypeDto>;
 
 export const RiskTierEnum = z.enum(['conservative', 'moderate', 'aggressive', 'very_aggressive']);

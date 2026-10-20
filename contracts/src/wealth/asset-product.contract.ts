@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import { ASSET_CLASSES, CURRENCIES } from '@wealth-advisor/rules';
+import { CandidateSecurityTypeDto } from './portfolio-construction.contract.ts';
 
 export const AssetProductDto = z.object({
   id: z.string(),
   symbol: z.string(),
   name: z.string(),
   assetClass: z.enum(ASSET_CLASSES),
+  securityType: CandidateSecurityTypeDto,
   denominationCurrency: z.enum(CURRENCIES),
   riskRating: z.number().int().min(1).max(10),
   expenseRatio: z.number(),

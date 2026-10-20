@@ -1,5 +1,5 @@
 import type { AdvisoryChatRequest, AdvisoryChatResponse } from '@wealth-advisor/contracts';
-import type { LlmProvider } from '@wealth-advisor/rules';
+import { mapScoreToRiskTier, type LlmProvider } from '@wealth-advisor/rules';
 import type { FinanceApi } from '../finance/public.ts';
 import type { WealthApi } from '../wealth/public.ts';
 import { LlmGateway } from './domain/llm-gateway.ts';
@@ -23,6 +23,12 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
       const cashflow = await finance.getCashflowSummary(tenantId, userId, householdMode);
       const portfolio = await wealth.getPortfolio(tenantId, userId);
 
+      // The model narrates engine output only: optimizer holdings at the portfolio risk tier
+      // travel with the prompt so the PROPOSAL card carries stocks, bonds and ETFs together.
+      const proposal = await wealth
+        .constructPortfolio(tenantId, userId, { riskTier: mapScoreToRiskTier(portfolio.effectiveRiskScore) })
+        .catch(() => null);
+
       const provider = getActiveProvider ? await getActiveProvider() : 'mock';
 
       return gateway.chat(provider, {
@@ -31,6 +37,7 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
         householdMode,
         cashflow,
         portfolio,
+        proposalHoldings: proposal?.holdings ?? [],
       });
     },
   };

@@ -6,7 +6,9 @@ export interface TrackedSymbol {
 }
 
 // US-listed ETFs, one or two per asset class, all priced in USD. Six symbols fit one Marketstack page per
-// ~160 trading days, so a one-year backfill costs two requests and a daily refresh one.
+// ~160 trading days, so a one-year backfill costs two requests and a daily refresh one. NSE/DFM single names and
+// bond/sukuk identifiers stay untracked: their Marketstack coverage is unverified, so the institutional catalog
+// prices them by reference (face value + evaluated yield) instead of the snapshot path.
 export const TRACKED_SYMBOLS: readonly TrackedSymbol[] = [
   { symbol: 'VT', assetClass: 'EQUITY_GLOBAL' },
   { symbol: 'VOO', assetClass: 'EQUITY_US' },

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { ProposalPayloadDto } from '@wealth-advisor/contracts';
 import { createAdvisoryApi } from '../../../src/modules/advisory/advisory.api.ts';
 import { LlmGateway } from '../../../src/modules/advisory/domain/llm-gateway.ts';
 import { createFinanceApi } from '../../../src/modules/finance/finance.api.ts';
@@ -156,6 +157,25 @@ describe('AdvisoryApi', () => {
     } finally {
       globalThis.fetch = realFetch;
     }
+  });
+
+  it('serves a multi-asset PROPOSAL card with stocks, bonds and ETFs', async () => {
+    const { api } = setup();
+    const res = await api.chat('default', 'default', {
+      message: 'How should my portfolio adapt?',
+      locale: 'en',
+      householdMode: 'FAMILY_HOUSEHOLD',
+    });
+
+    const proposal = res.actionCards.find((card) => card.cardType === 'PROPOSAL');
+    assert.ok(proposal, 'expected a PROPOSAL action card');
+    const payload = ProposalPayloadDto.parse(proposal.payload);
+    const types = new Set(payload.holdings.map((h) => h.securityType));
+    assert.ok(types.has('STOCK'), `expected a STOCK holding, got ${[...types]}`);
+    assert.ok(types.has('BOND'), `expected a BOND holding, got ${[...types]}`);
+    assert.ok(types.has('MUTUAL_FUND_ETF'), `expected a MUTUAL_FUND_ETF holding, got ${[...types]}`);
+    const totalWeight = payload.holdings.reduce((sum, h) => sum + h.weight, 0);
+    assert.ok(Math.abs(totalWeight - 1.0) < 0.001, `weights sum to ${totalWeight}`);
   });
 
   it('reports 0% equities for a portfolio holding no equities, avoiding falsy-zero default', async () => {

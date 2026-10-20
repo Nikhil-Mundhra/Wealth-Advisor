@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { LOCALES } from '@wealth-advisor/rules';
+import { ASSET_CLASSES, LOCALES } from '@wealth-advisor/rules';
+import { CandidateSecurityTypeDto } from '../wealth/portfolio-construction.contract.ts';
 import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const ActionCardDto = z.object({
@@ -7,6 +8,25 @@ export const ActionCardDto = z.object({
   payload: z.record(z.string(), z.any()),
 });
 export type ActionCardDto = z.infer<typeof ActionCardDto>;
+
+// Multi-asset proposal holdings served on the PROPOSAL card: one entry per holding with its
+// security type (STOCK | BOND | MUTUAL_FUND_ETF), asset class, and optimizer target weight.
+export const ProposalHoldingDto = z.object({
+  symbol: z.string(),
+  name: z.string(),
+  securityType: CandidateSecurityTypeDto,
+  assetClass: z.enum(ASSET_CLASSES),
+  weight: z.number(),
+});
+export type ProposalHoldingDto = z.infer<typeof ProposalHoldingDto>;
+
+export const ProposalPayloadDto = z.object({
+  holdings: z.array(ProposalHoldingDto),
+  currentWeights: z.record(z.string(), z.number()),
+  targetWeights: z.record(z.string(), z.number()),
+  valuationTotalBase: z.number().int(),
+});
+export type ProposalPayloadDto = z.infer<typeof ProposalPayloadDto>;
 
 export const AdvisoryChatRequest = z.object({
   message: z.string().min(1).max(2000),

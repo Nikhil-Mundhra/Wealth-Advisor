@@ -126,12 +126,14 @@ const hdfcFundEval = evaluateMutualFund({
   isShariaCompliant: false,
 });
 
-// Curated institutional candidate securities across jurisdictions (India, UAE, US, Global, Sovereign Debt, Sukuk, MMF)
+// Curated institutional candidate securities across jurisdictions (India, UAE, US, Global, Sovereign Debt, Sukuk, MMF).
+// shortcut: NSE/DFM single names and all bonds carry reference prices (face value + evaluated yield), exempt from the
+// Marketstack snapshot path; wire live EOD once provider docs confirm NSE/DFM/bond identifier coverage.
 export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
   {
     symbol: 'INFY.NSE',
     name: 'Infosys Ltd (NSE)',
-    assetClass: 'EQUITY_GLOBAL',
+    assetClass: 'EQUITY_INDIA',
     sector: 'Technology Services',
     securityType: 'STOCK',
     currentPrice: 1850,
@@ -148,7 +150,7 @@ export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
   {
     symbol: 'EMAAR.DFM',
     name: 'Emaar Properties PJSC (DFM)',
-    assetClass: 'EQUITY_GLOBAL',
+    assetClass: 'EQUITY_UAE',
     sector: 'Real Estate & Infrastructure',
     securityType: 'STOCK',
     currentPrice: 8.45,
@@ -201,7 +203,7 @@ export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
   {
     symbol: 'UAE_SOV_SUKUK_2029',
     name: 'UAE Federal Sovereign Sukuk 5.10% 2029',
-    assetClass: 'FIXED_INCOME_GOV',
+    assetClass: 'SUKUK_SOVEREIGN',
     sector: 'Sovereign Debt (Sukuk)',
     securityType: 'BOND',
     currentPrice: 1000,
@@ -219,7 +221,7 @@ export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
   {
     symbol: 'FAB_SUKUK_2030',
     name: 'First Abu Dhabi Bank Green Sukuk 5.45% 2030',
-    assetClass: 'FIXED_INCOME_GOV',
+    assetClass: 'SUKUK_CORP',
     sector: 'Corporate Sukuk / Green Debt',
     securityType: 'BOND',
     currentPrice: 995,

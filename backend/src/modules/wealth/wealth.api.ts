@@ -62,6 +62,7 @@ function toProductDto(doc: AssetProductDocument): AssetProductDto {
     symbol: doc.symbol,
     name: doc.name,
     assetClass: doc.assetClass,
+    securityType: doc.securityType,
     denominationCurrency: doc.denominationCurrency,
     riskRating: doc.riskRating,
     expenseRatio: doc.expenseRatio,
