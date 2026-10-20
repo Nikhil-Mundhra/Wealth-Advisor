@@ -23,6 +23,7 @@ import { hasAdvisorRole } from '@wealth-advisor/rules';
 import logoImg from '../../assets/logo.png';
 import logoDarkImg from '../../assets/logo-dark.png';
 import { ME_QUERY_KEY, useMe } from '../../features/auth/api/use-me.ts';
+import { MeErrorState } from '../../features/auth/components/me-gate.tsx';
 import {
   getAdminActingSession,
   returnToAdminSession,
@@ -129,7 +130,8 @@ function ActingBanner() {
 export function AppShell() {
   const strings = useStrings();
   const location = useLocation();
-  const { data: me, isPending } = useMe();
+  const meQuery = useMe();
+  const me = meQuery.data;
   const isAdvisorOrAdmin = Boolean(me && hasAdvisorRole(me.roles));
   const isAdminUser = Boolean(me?.roles.includes('ADMIN'));
 
@@ -139,13 +141,20 @@ export function AppShell() {
 
   const isAdminSection = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isAdvisorSection = location.pathname === '/advisor' || location.pathname.startsWith('/advisor/');
+  // Exit links only work while an acting session is active: without one, `/`
+  // bounces admins straight back, so the links stay hidden instead of dead.
+  const actingActive = getAdminActingSession() !== null;
 
-  if (isPending) {
+  if (meQuery.isPending) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-surface text-ink">
         <Spinner label="Loading" />
       </div>
     );
+  }
+
+  if (meQuery.isError || !me) {
+    return <MeErrorState />;
   }
 
   return (
@@ -193,10 +202,12 @@ export function AppShell() {
               </NavLink>
             ))}
             <div className="my-3 border-t border-line" />
-            <NavLink to="/" className={linkClass}>
-              <ArrowLeft aria-hidden className="size-5 text-subtle" />
-              <span>Exit to Client App</span>
-            </NavLink>
+            {actingActive && (
+              <NavLink to="/" className={linkClass}>
+                <ArrowLeft aria-hidden className="size-5 text-subtle" />
+                <span>Exit to Client App</span>
+              </NavLink>
+            )}
             <NavLink to="/advisor" className={linkClass}>
               <Briefcase aria-hidden className="size-5 text-gold" />
               <span>Advisor Workstation</span>
@@ -320,7 +331,7 @@ export function AppShell() {
             )}
             <LanguageSelect />
             <ThemeToggle />
-            {isAdminSection && (
+            {isAdminSection && actingActive && (
               <NavLink
                 to="/"
                 aria-label="Exit Admin"
@@ -344,7 +355,7 @@ export function AppShell() {
         aria-label={strings['header.nav.mobile']}
         className={cn(
           'fixed inset-x-0 bottom-0 z-10 grid border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden',
-          isAdminSection ? 'grid-cols-5' : 'grid-cols-3'
+          isAdminSection ? (actingActive ? 'grid-cols-5' : 'grid-cols-4') : 'grid-cols-3'
         )}
       >
         {isAdminSection ? (
@@ -365,10 +376,12 @@ export function AppShell() {
               <Cpu aria-hidden className="size-5" />
               <span>Models</span>
             </NavLink>
-            <NavLink to="/" className={tabClass}>
-              <ArrowLeft aria-hidden className="size-5" />
-              <span>Exit</span>
-            </NavLink>
+            {actingActive && (
+              <NavLink to="/" className={tabClass}>
+                <ArrowLeft aria-hidden className="size-5" />
+                <span>Exit</span>
+              </NavLink>
+            )}
           </>
         ) : isAdvisorSection ? (
           <>
