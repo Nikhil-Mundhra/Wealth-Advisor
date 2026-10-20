@@ -5,10 +5,15 @@ import type { AdvisorClient } from '../types.ts';
 
 interface ClientRosterProps {
   onOpenBriefForClient?: (client: AdvisorClient) => void;
-  onNavigateToAdvisory?: () => void;
+  onOpenClientPortfolio?: (client: AdvisorClient) => void;
+  onOpenClientCopilot?: (client: AdvisorClient) => void;
 }
 
-export function ClientRoster({ onOpenBriefForClient, onNavigateToAdvisory }: ClientRosterProps) {
+export function ClientRoster({
+  onOpenBriefForClient,
+  onOpenClientPortfolio,
+  onOpenClientCopilot,
+}: ClientRosterProps) {
   const activeClient = useActiveClient();
   const clients = useAdvisorClients();
 
@@ -18,7 +23,7 @@ export function ClientRoster({ onOpenBriefForClient, onNavigateToAdvisory }: Cli
         <div>
           <h2 className="text-base font-semibold tracking-tight text-ink">Advisor Client Roster</h2>
           <p className="text-xs text-muted">
-            Managing 4 active cross-border client accounts across Europe & Asia corridors.
+            Managing {clients.length} active cross-border client {clients.length === 1 ? 'account' : 'accounts'} across Europe & Asia corridors.
           </p>
         </div>
       </div>
@@ -100,31 +105,51 @@ export function ClientRoster({ onOpenBriefForClient, onNavigateToAdvisory }: Cli
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveClient(client.id);
+                      if (onOpenBriefForClient) {
+                        onOpenBriefForClient(client);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-600 cursor-pointer"
+                  >
+                    <Sparkles className="size-3.5" />
+                    <span>Brief</span>
+                  </button>
+
+                  {onOpenClientCopilot && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveClient(client.id);
+                        onOpenClientCopilot(client);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-subtle hover:text-ink cursor-pointer"
+                    >
+                      <MessagesSquare className="size-3.5" />
+                      <span>Copilot</span>
+                    </button>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   onClick={() => {
                     setActiveClient(client.id);
-                    if (onOpenBriefForClient) {
-                      onOpenBriefForClient(client);
-                    }
+                    onOpenClientPortfolio?.(client);
                   }}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-600 cursor-pointer"
-                >
-                  <Sparkles className="size-3.5" />
-                  <span>Brief</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveClient(client.id)}
-                  className={`rounded-field px-3 py-1 text-xs font-medium transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1 rounded-field px-3 py-1 text-xs font-medium transition cursor-pointer ${
                     isSelected
                       ? 'bg-brand-600 text-white dark:text-brand-950 font-semibold'
                       : 'border border-line bg-surface text-ink hover:bg-surface-subtle'
                   }`}
                 >
-                  {isSelected ? 'Active' : 'Select'}
+                  <span>Open Portfolio</span>
+                  <ArrowRight className="size-3" />
                 </button>
               </div>
             </div>

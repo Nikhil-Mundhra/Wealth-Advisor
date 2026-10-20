@@ -5,7 +5,7 @@ import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
-import { useProfile } from '../../features/profiling/profile-store.ts';
+import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
 import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
@@ -26,7 +26,7 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
   const strings = useStrings();
   const { data: me } = useMe();
   const activeClient = useActiveClient();
-  const isDemo = !me || me.email === 'testing@example.com';
+  const isDemo = isDemoEmail(me?.email);
   const profile = useProfile(me?.email);
   const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);

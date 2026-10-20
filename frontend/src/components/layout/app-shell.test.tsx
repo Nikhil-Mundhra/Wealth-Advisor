@@ -15,6 +15,7 @@ function renderShell(initialEntry = '/') {
         children: [
           { path: '/', element: <p>Client Den Body</p> },
           { path: '/advisor', element: <p>Advisor Body</p> },
+          { path: '/advisor/settings', element: <p>Advisor Settings Body</p> },
           { path: '/admin', element: <p>Admin body</p> },
           { path: '/settings/security', element: <p>Settings Body</p> },
         ],
@@ -73,13 +74,20 @@ describe('AppShell', () => {
     expect(screen.getByText('Advisor Body')).toBeVisible();
     expect(screen.getByText('Advisor Workstation')).toBeVisible();
 
-    // Advisor Overview tab
+    // Advisor workstation side tabs
     expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Client Portfolio' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'AI Advisory Copilot' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Instrument Matrix' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Onboarding & Invites' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Evidence & Audit' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Exit to Client App' })).toBeVisible();
 
-    // Settings is in advisor sidebar and labelled Settings
+    // Settings is in advisor sidebar and points to /advisor/settings
     const advisorNav = screen.getByRole('navigation', { name: 'Advisor workstation navigation' });
-    expect(within(advisorNav).getByRole('link', { name: 'Settings' })).toBeVisible();
+    const advisorSettingsLink = within(advisorNav).getByRole('link', { name: 'Settings' });
+    expect(advisorSettingsLink).toBeVisible();
+    expect(advisorSettingsLink).toHaveAttribute('href', '/advisor/settings');
     expect(within(advisorNav).queryByRole('link', { name: 'Security' })).toBeNull();
 
     // Settings must NOT be in the top navbar header
@@ -110,19 +118,32 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
   });
 
-  it('keeps advisor chrome on settings pages for advisors', async () => {
+  it('keeps client den chrome on /settings/security for advisors and provides a separate Advisor Workstation link', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ id: 'a-1', email: 'advisor.morgan@syntropy.ch', displayName: null, roles: ['USER', 'ADVISOR'], emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
+      vi.fn(async () => new Response(JSON.stringify({ id: 'a-1', email: 'advisor.morgan@syntropy.ch', displayName: 'Alex Morgan', roles: ['USER', 'ADVISOR'], emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
     );
     renderShell('/settings/security');
     expect(await screen.findByText('Settings Body')).toBeVisible();
 
-    // Advisor workstation nav once roles resolve, not client tabs
-    await waitFor(() => expect(screen.getByText('Advisor Workstation')).toBeVisible());
+    // Personal client tabs remain visible on /settings/security, plus a separate Advisor Workstation link and top-header button
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Advisor Workstation' })).toBeVisible());
+    expect(screen.getByRole('link', { name: 'Advisor Workstation' })).toHaveAttribute('href', '/advisor');
+    expect(screen.getByRole('link', { name: 'Enter Wealth Analyst Workstation' })).toHaveAttribute('href', '/advisor');
+    expect(screen.getAllByRole('link', { name: 'Dashboard' }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole('link', { name: 'Cash Flow' }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole('link', { name: 'Advisory' }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Personal Portfolio: Alex Morgan')).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Client Overview' })).toBeNull();
+  });
+
+  it('keeps advisor workstation chrome on /advisor/settings', async () => {
+    renderShell('/advisor/settings');
+    expect(await screen.findByText('Advisor Settings Body')).toBeVisible();
+    expect(screen.getByText('Advisor Workstation')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'AI Advisory Copilot' })).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Cash Flow' })).toBeNull();
   });
 
   it('displays acting mode banner when an admin is impersonating a demo persona', () => {

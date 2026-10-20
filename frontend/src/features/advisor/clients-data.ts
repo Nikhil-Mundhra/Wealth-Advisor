@@ -4,9 +4,10 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
   {
     id: 'elena-vance',
     name: 'Elena Vance',
-    email: 'elena.vance@example.com',
+    email: 'testing@example.com',
+    advisorEmail: 'advisor.morgan@syntropy.ch',
     avatarIndex: 1,
-    location: 'Berlin, Germany',
+    location: 'Zurich, Switzerland',
     householdMode: 'FAMILY_HOUSEHOLD',
     baseCurrency: 'EUR',
     netWorth: 95000,
@@ -74,11 +75,12 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     },
   },
   {
-    id: 'marcus-thorne',
-    name: 'Marcus Thorne',
-    email: 'm.thorne@vanguard-tech.co.uk',
+    id: 'marcus-vance',
+    name: 'Marcus Vance',
+    email: 'marcus.vance@example.com',
+    advisorEmail: 'advisor.morgan@syntropy.ch',
     avatarIndex: 2,
-    location: 'London, UK',
+    location: 'Zurich, Switzerland',
     householdMode: 'INDIVIDUAL',
     baseCurrency: 'GBP',
     netWorth: 320000,
@@ -142,11 +144,12 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     },
   },
   {
-    id: 'aisha-al-mansoor',
-    name: 'Aisha Al-Mansoor',
-    email: 'aisha.mansoor@al-mansoor.de',
+    id: 'meiling-chen',
+    name: 'Mei-Ling Chen',
+    email: 'meiling.chen@example.com',
+    advisorEmail: 'advisor.jenkins@syntropy.ch',
     avatarIndex: 3,
-    location: 'Frankfurt, Germany',
+    location: 'Singapore & Hong Kong',
     householdMode: 'FAMILY_HOUSEHOLD',
     baseCurrency: 'EUR',
     netWorth: 210000,
@@ -194,7 +197,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     preMeetingBrief: {
       headline: 'Child College Glidepath · Fixed Income Sleeve Underweight by -12%',
       summary:
-        'Aisha has a conservative 4.1 risk profile with a primary goal of preserving capital for her daughter’s university tuition in 4 years. Strong equity rally has pushed global equities to 42% against her 30% target, leaving fixed income underweight.',
+        'Mei-Ling has a conservative 4.1 risk profile with a primary goal of preserving capital for her daughter’s university tuition in 4 years. Strong equity rally has pushed global equities to 42% against her 30% target, leaving fixed income underweight.',
       runwayStatus: '7.8 months · Healthy (Well above the 6.0m family threshold)',
       driftAlert: 'Fixed Income is 33% vs 45% target (-12% drift breach). Equities are 42% vs 30% (+12% drift breach).',
       recommendedAgenda: [
@@ -209,11 +212,12 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     },
   },
   {
-    id: 'david-kim',
-    name: 'David Kim',
-    email: 'david.kim@kim-consulting.nl',
+    id: 'rahul-sharma',
+    name: 'Rahul Sharma',
+    email: 'rahul.sharma@example.com',
+    advisorEmail: null,
     avatarIndex: 4,
-    location: 'Amsterdam, Netherlands',
+    location: 'Dubai, UAE',
     householdMode: 'INDIVIDUAL',
     baseCurrency: 'EUR',
     netWorth: 140000,
@@ -261,7 +265,7 @@ export const SEEDED_CLIENTS: AdvisorClient[] = [
     preMeetingBrief: {
       headline: 'Severe Cash Drag (+14% Idle Cash) · Inactive Capital Yielding 0%',
       summary:
-        'David has accumulated substantial uninvested checking cash from recent consulting retainers. 34% of his total portfolio is sitting in zero-yield checking accounts, causing significant purchasing power loss against inflation.',
+        'Rahul has accumulated substantial uninvested checking cash from recent consulting retainers. 34% of his total portfolio is sitting in zero-yield checking accounts, causing significant purchasing power loss against inflation.',
       runwayStatus: '5.1 months · Warning (Adequate but cash drag penalty is acute)',
       driftAlert: 'Cash is 34% vs 20% target (+14% cash drag). Equities are 46% vs 60% (-14% underweight).',
       recommendedAgenda: [

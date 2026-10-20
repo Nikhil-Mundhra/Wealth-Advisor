@@ -6,11 +6,14 @@ import {
   Cpu,
   Key,
   KeyRound,
+  Layers,
   LayoutDashboard,
   MessagesSquare,
   ScrollText,
   Settings,
   Shield,
+  ShieldCheck,
+  UserCheck,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -25,6 +28,7 @@ import {
   returnToAdminSession,
   type ActingSessionInfo,
 } from '../../features/auth/session/acting-session.ts';
+import { setAdvisorScope } from '../../features/advisor/advisor-store.ts';
 import { ClientSelector } from '../../features/advisor/components/client-selector.tsx';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
@@ -41,6 +45,11 @@ const CLIENT_TABS = [
 // Advisor Workstation Navigation (Institutional oversight of client book)
 const ADVISOR_NAV_ITEMS = [
   { to: '/advisor', label: 'Client Overview', Icon: Users, end: true },
+  { to: '/advisor/client', label: 'Client Portfolio', Icon: Briefcase },
+  { to: '/advisor/copilot', label: 'AI Advisory Copilot', Icon: MessagesSquare },
+  { to: '/advisor/instruments', label: 'Instrument Matrix', Icon: Layers },
+  { to: '/advisor/invites', label: 'Onboarding & Invites', Icon: UserCheck },
+  { to: '/advisor/evidence', label: 'Evidence & Audit', Icon: ShieldCheck },
 ] as const;
 
 // System Admin Console Navigation (Supervisory operators)
@@ -119,17 +128,16 @@ function ActingBanner() {
 export function AppShell() {
   const strings = useStrings();
   const location = useLocation();
-  const { data: me, isPending: mePending } = useMe();
-  // Hide until roles resolve so advisors see no client-tab flash.
-  const showAdvisoryTab = !mePending && (!me || !hasAdvisorRole(me.roles));
-  const clientTabs = CLIENT_TABS.filter((tab) => tab.to !== '/advisory' || showAdvisoryTab);
+  const { data: me } = useMe();
+  const isAdvisorOrAdmin = Boolean(me && hasAdvisorRole(me.roles));
+  const isAdminUser = Boolean(me?.roles.includes('ADMIN'));
+
+  useEffect(() => {
+    setAdvisorScope(me?.email, isAdminUser);
+  }, [me?.email, isAdminUser]);
 
   const isAdminSection = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
-  const isAdvisorSection =
-    location.pathname === '/advisor' || location.pathname.startsWith('/advisor/') ||
-    // Advisors reach /settings/* from the workstation sidebar; keep the advisor chrome there.
-    // ADVISOR role only — admins keep the client chrome on settings as before.
-    (location.pathname.startsWith('/settings') && (me?.roles.includes('ADVISOR') ?? false));
+  const isAdvisorSection = location.pathname === '/advisor' || location.pathname.startsWith('/advisor/');
 
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">
@@ -195,7 +203,7 @@ export function AppShell() {
               </NavLink>
             ))}
             <div className="my-2 border-t border-line" />
-            <NavLink to="/settings/security" className={linkClass}>
+            <NavLink to="/advisor/settings" className={linkClass}>
               <Settings aria-hidden className="size-5" />
               {strings['header.settings']}
             </NavLink>
@@ -206,9 +214,9 @@ export function AppShell() {
             </NavLink>
           </nav>
         ) : (
-          /* 3. Client's Den Sidebar (Strictly personal portfolio, NO admin or advisor tabs) */
+          /* 3. Client's Den Sidebar (Personal portfolio, with explicit portal switch for advisors/admins) */
           <nav aria-label={strings['nav.main']} className="flex flex-col gap-1 px-3 mt-2">
-            {clientTabs.map(({ to, key, Icon, ...rest }) => (
+            {CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
               <NavLink key={to} to={to} {...rest} className={linkClass}>
                 <Icon aria-hidden className="size-5" />
                 {strings[key]}
@@ -223,7 +231,32 @@ export function AppShell() {
               <ScrollText aria-hidden className="size-5" />
               {strings['settings.ledger']}
             </NavLink>
+            {isAdvisorOrAdmin && (
+              <>
+                <div className="my-3 border-t border-line" />
+                <NavLink to="/advisor" className={linkClass}>
+                  <Briefcase aria-hidden className="size-5 text-gold" />
+                  <span>Advisor Workstation</span>
+                </NavLink>
+                {isAdminUser && (
+                  <NavLink to="/admin" className={linkClass}>
+                    <Shield aria-hidden className="size-5 text-gold" />
+                    <span>Admin Console</span>
+                  </NavLink>
+                )}
+              </>
+            )}
           </nav>
+        )}
+        {!isAdminSection && !isAdvisorSection && me && (
+          <div className="mt-auto border-t border-line px-4 py-3 text-xs">
+            <p className="font-medium text-ink truncate">
+              Personal Portfolio: {me.displayName || me.email}
+            </p>
+            {me.displayName && (
+              <p className="text-subtle truncate font-mono text-[11px]">{me.email}</p>
+            )}
+          </div>
         )}
       </aside>
 
@@ -271,6 +304,16 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!isAdminSection && !isAdvisorSection && isAdvisorOrAdmin && (
+              <NavLink
+                to="/advisor"
+                aria-label="Enter Wealth Analyst Workstation"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/15 px-3 py-1.5 text-xs font-semibold text-gold-dark hover:bg-gold/25 dark:text-gold-light transition-colors"
+              >
+                <Briefcase aria-hidden className="size-3.5 text-gold" />
+                <span>Wealth Analyst Workstation</span>
+              </NavLink>
+            )}
             <LanguageSelect />
             <ThemeToggle />
             {isAdminSection && (
@@ -297,7 +340,7 @@ export function AppShell() {
         aria-label={strings['header.nav.mobile']}
         className={cn(
           'fixed inset-x-0 bottom-0 z-10 grid border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden',
-          isAdminSection ? 'grid-cols-5' : isAdvisorSection ? 'grid-cols-3' : 'grid-cols-3'
+          isAdminSection ? 'grid-cols-5' : isAdvisorSection ? 'grid-cols-4' : 'grid-cols-3'
         )}
       >
         {isAdminSection ? (
@@ -329,7 +372,11 @@ export function AppShell() {
               <Users aria-hidden className="size-5" />
               <span>Clients</span>
             </NavLink>
-            <NavLink to="/settings/security" className={tabClass}>
+            <NavLink to="/advisor/copilot" className={tabClass}>
+              <MessagesSquare aria-hidden className="size-5" />
+              <span>Copilot</span>
+            </NavLink>
+            <NavLink to="/advisor/settings" className={tabClass}>
               <Settings aria-hidden className="size-5" />
               <span>{strings['header.settings']}</span>
             </NavLink>
@@ -339,7 +386,7 @@ export function AppShell() {
             </NavLink>
           </>
         ) : (
-          clientTabs.map(({ to, key, Icon, ...rest }) => (
+          CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
             <NavLink key={to} to={to} {...rest} className={tabClass}>
               <Icon aria-hidden className="size-5" />
               {strings[key]}

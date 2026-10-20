@@ -2,7 +2,6 @@ import { Navigate } from 'react-router';
 import {
   DEFAULT_FAMILY_BURN_ESTIMATE,
   DEFAULT_INDIVIDUAL_BURN_ESTIMATE,
-  hasAdvisorRole,
   listHoldingAmounts,
   type HouseholdMode,
 } from '@wealth-advisor/rules';
@@ -47,7 +46,7 @@ export function ClientAdvisoryView() {
   );
 }
 
-// /advisory is role-aware: advisors work from the workstation, clients see their own portfolio.
+// /advisory serves the signed-in user's personal portfolio copilot; advisor roster copilot lives at /advisor/copilot.
 export function AdvisoryPage() {
   const me = useMe();
   if (me.isPending) {
@@ -59,9 +58,6 @@ export function AdvisoryPage() {
   }
   if (me.isError || !me.data) {
     return <Navigate to="/login" replace />;
-  }
-  if (hasAdvisorRole(me.data.roles)) {
-    return <Navigate to="/advisor" replace />;
   }
   return <ClientAdvisoryView />;
 }
