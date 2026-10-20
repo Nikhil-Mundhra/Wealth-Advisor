@@ -343,9 +343,9 @@ sequenceDiagram
 
 #### 1.9 Deterministic Financial Engines (`backend/src/modules/`)
 - [x] **`BurnRateCalculator`:** Aggregates multi-currency transactions converted to baseline currency; adapts emergency reserve targets based on Individual vs. Family Household mode.
-- [ ] **`ExpatRiskProfiler`:** Recalibrates base risk score dynamically based on liquidity runway and foreign currency mismatch.
+- [x] **`ExpatRiskProfiler`:** Recalibrates base risk score dynamically based on liquidity runway and foreign currency mismatch (`recalibrateRiskScore` in `rules/src/profiling.rule.ts`, applied in `backend/src/modules/wealth/wealth.api.ts`).
 - [x] **`PortfolioOptimizer`:** Computes target asset allocation adapting to the effective risk score and ring-fencing scheduled Asian family remittances (`FAMILY_REMITTANCE`) and academic tuition deadlines (`TUITION_FEE`) as non-negotiable liquidity carve-outs into matching short-term cash/money-market buckets.
-- [ ] **Unit Tests:** 100% test coverage for calculations under Elena's family cashflow squeeze scenario and student tuition shock tests.
+- [x] **Unit Tests:** 100% test coverage for calculations under Elena's family cashflow squeeze scenario and student tuition shock tests (`backend/test/unit/wealth/risk-recalibration.test.ts`).
 
 ---
 
@@ -385,7 +385,7 @@ sequenceDiagram
   - Endpoints: `POST /api/sharing/create` (generates unguessable token with TTL and privacy masking), `GET /api/sharing/:token` (public read-only strategy presentation).
 
 #### 2.5 Multi-Provider LLM Gateway & Tool-Calling Agent (backend/src/modules/advisory)
-- [ ] Implement `LlmGateway` abstraction with concrete adapters:
+- [x] Implement `LlmGateway` abstraction with concrete adapters (`GeminiAdapter`, `ClaudeAdapter`, `OpenAiAdapter`, `MockLlmAdapter` in `backend/src/modules/advisory/domain/llm-gateway.ts`):
   - `GeminiAdapter` (`@google/genai` or direct REST API)
   - `ClaudeAdapter` (`@anthropic-ai/sdk` or REST)
   - `OpenAiAdapter` (`openai` or REST)

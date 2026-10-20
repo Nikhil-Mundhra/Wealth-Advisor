@@ -12,6 +12,8 @@ export type RebalanceActionDto = z.infer<typeof RebalanceActionDto>;
 export const OptimizePortfolioRequest = z.object({
   householdMode: HouseholdModeField.optional(),
   statedRiskScore: z.number().min(1).max(10).optional(),
+  runwayMonths: z.number().min(0).max(120).optional(),
+  fxMismatchPct: z.number().min(0).max(100).optional(),
 });
 export type OptimizePortfolioRequest = z.infer<typeof OptimizePortfolioRequest>;
 

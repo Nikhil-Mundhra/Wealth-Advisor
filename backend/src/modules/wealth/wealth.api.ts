@@ -10,6 +10,7 @@ import {
   deriveTimeHorizonYears,
   mapScoreToRiskTier,
   mapStressAnswerToRiskBand,
+  recalibrateRiskScore,
   WEALTH_ERROR_CODES,
   type OptimizationConstraints,
   type RiskTier,
@@ -145,10 +146,24 @@ export function createWealthApi(deps: WealthApiDeps) {
     async optimizePortfolio(
       tenantId: string,
       userId: string,
-      _input?: OptimizePortfolioRequest,
+      input?: OptimizePortfolioRequest,
     ): Promise<RebalanceProposalResponse> {
       const doc = await portfolios.findByUser(tenantId, userId);
       if (!doc) throw new DomainError(WEALTH_ERROR_CODES.portfolioNotFound, 'portfolio not found');
+
+      // Dynamic recalibration: live runway and FX pressure override the onboarding score.
+      // Unknown household mode defaults to family, the conservative bar that never overstates risk capacity.
+      const effectiveRiskScore = recalibrateRiskScore({
+        baseRiskScore: input?.statedRiskScore ?? doc.baseRiskScore,
+        runwayMonths: input?.runwayMonths ?? doc.burnRateRunwayMonths,
+        householdMode: input?.householdMode ?? 'FAMILY_HOUSEHOLD',
+        fxMismatchPct: input?.fxMismatchPct,
+      });
+      if (effectiveRiskScore !== doc.effectiveRiskScore) {
+        doc.effectiveRiskScore = effectiveRiskScore;
+        doc.updatedAt = clock.now();
+        await portfolios.save(doc);
+      }
 
       const currentWeights: Record<string, number> = {};
       const targetWeights: Record<string, number> = {};
@@ -168,7 +183,7 @@ export function createWealthApi(deps: WealthApiDeps) {
       );
 
       return {
-        effectiveRiskScore: doc.effectiveRiskScore,
+        effectiveRiskScore,
         currentWeights,
         targetWeights,
         driftPercentages,

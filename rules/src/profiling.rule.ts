@@ -5,6 +5,8 @@
 // - CFA Institute Standards of Practice Handbook (Wealth Planning): Ability vs willingness to bear risk.
 
 import { CURRENCIES, type Currency } from './currency.rule.ts';
+import { RUNWAY_CRITICAL_MONTHS, RUNWAY_HEALTHY_MONTHS } from './burn-rate.rule.ts';
+import { type HouseholdMode } from './household-mode.rule.ts';
 
 export const PROFILING_PSYCHOLOGY_OPTIONS = [
   'PROTECT_CAPITAL',
@@ -275,4 +277,27 @@ export function calculateBaseRiskScore(answers: ProfilingAnswersInput): number {
   // Clamp score strictly between 1.0 and 10.0 rounded to one decimal place.
   const clamped = Math.max(1.0, Math.min(10.0, score));
   return Math.round(clamped * 10) / 10;
+}
+
+// Dynamic recalibration input: live liquidity and currency pressure on top of the onboarding base score.
+export interface RiskRecalibrationInput {
+  baseRiskScore: number;
+  runwayMonths: number;
+  householdMode: HouseholdMode;
+  // Share (0-100) of monthly outflows exposed to foreign-currency corridors; above 30 triggers a hedge penalty.
+  fxMismatchPct?: number;
+}
+
+// Recalibrates the base score against live liquidity runway and FX mismatch. A thin runway forces
+// capital preservation regardless of stated willingness; the penalty is asymmetric (loss aversion).
+export function recalibrateRiskScore(input: RiskRecalibrationInput): number {
+  let score = input.baseRiskScore;
+  const healthyMonths = input.householdMode === 'FAMILY_HOUSEHOLD' ? RUNWAY_HEALTHY_MONTHS : RUNWAY_CRITICAL_MONTHS;
+  if (!Number.isFinite(input.runwayMonths) || input.runwayMonths < RUNWAY_CRITICAL_MONTHS) {
+    score -= 2.0;
+  } else if (input.runwayMonths < healthyMonths) {
+    score -= 1.0;
+  }
+  if ((input.fxMismatchPct ?? 0) > 30) score -= 1.0;
+  return Math.round(Math.max(1.0, Math.min(10.0, score)) * 10) / 10;
 }

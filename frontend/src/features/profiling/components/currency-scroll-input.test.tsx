@@ -43,7 +43,11 @@ describe('CurrencyScrollInput', () => {
   });
 
   it('scrolls slowly to add low denomination (5 AED) and fast to add high denomination (500 AED)', () => {
-    const onChange = vi.fn();
+    // Wheel tiers derive from event timing, so pin the clock: consecutive events 5ms apart.
+    let now = 1000;
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    try {
+      const onChange = vi.fn();
     const { rerender } = render(
       <CurrencyScrollInput
         id="test-aed"
@@ -58,7 +62,6 @@ describe('CurrencyScrollInput', () => {
     // Slow scroll up (low deltaY): steps by 5 AED (Tier 0)
     fireEvent.wheel(input, { deltaY: -5 });
     expect(onChange).toHaveBeenCalledWith(105);
-
     // Fast scroll up (large deltaY with rapid velocity): steps by 500 AED (Tier 4)
     onChange.mockClear();
     rerender(
@@ -70,8 +73,12 @@ describe('CurrencyScrollInput', () => {
       />,
     );
 
+    now += 5;
     fireEvent.wheel(input, { deltaY: -500 });
     expect(onChange).toHaveBeenCalledWith(600);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it('scales relatively for PPP in other currencies (USD: $1 to $100, INR: ₹100 to ₹10,000)', () => {

@@ -248,6 +248,50 @@ export class OpenAiLlmAdapter implements LlmAdapter {
   }
 }
 
+export class ClaudeLlmAdapter implements LlmAdapter {
+  private readonly apiKey: ApiKeyResolver | undefined;
+  private readonly fallback: LlmAdapter;
+  private readonly http: HttpClient;
+
+  constructor(apiKey?: ApiKeyResolver, fallback: LlmAdapter = new MockLlmAdapter(), http: HttpClient = createHttpClient()) {
+    this.apiKey = apiKey;
+    this.fallback = fallback;
+    this.http = http;
+  }
+
+  async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
+    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    if (!key) return this.fallback.chat(context);
+    try {
+      const base = await this.fallback.chat(context);
+      const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+      const data = (await this.http.postJson(
+        'https://api.anthropic.com/v1/messages',
+        {
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 1024,
+          temperature: 0.2,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: context.message }],
+        },
+        {
+          timeoutMs: ADVISORY_HTTP_TIMEOUT_MS,
+          headers: {
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+          },
+        },
+      )) as any;
+
+      const block = (data?.content ?? []).find((part: any) => part?.type === 'text');
+      if (!block?.text) return base;
+      return narrate(base, JSON.parse(block.text) as Record<string, unknown>, systemPrompt);
+    } catch {
+      return this.fallback.chat(context);
+    }
+  }
+}
+
 export interface LlmGatewayConfig {
   geminiApiKey?: ApiKeyResolver;
   openaiApiKey?: ApiKeyResolver;
@@ -262,13 +306,14 @@ export class LlmGateway {
   constructor(config?: LlmGatewayConfig | string) {
     const geminiKey = typeof config === 'string' ? config : config?.geminiApiKey;
     const openaiKey = typeof config === 'object' ? config.openaiApiKey : undefined;
+    const anthropicKey = typeof config === 'object' ? config.anthropicApiKey : undefined;
     const http = (typeof config === 'object' ? config.http : undefined) ?? createHttpClient();
 
     const mock = new MockLlmAdapter();
     this.adapters = {
       mock,
       gemini: new GeminiLlmAdapter(geminiKey, mock, http),
-      claude: mock, // Claude gracefully falls back to deterministic mock until SDK wiring
+      claude: new ClaudeLlmAdapter(anthropicKey, mock, http),
       openai: new OpenAiLlmAdapter(openaiKey, mock, http),
     };
   }
