@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppShell } from './app-shell.tsx';
@@ -16,6 +16,7 @@ function renderShell(initialEntry = '/') {
           { path: '/', element: <p>Client Den Body</p> },
           { path: '/advisor', element: <p>Advisor Body</p> },
           { path: '/admin', element: <p>Admin body</p> },
+          { path: '/settings/security', element: <p>Settings Body</p> },
         ],
       },
     ],
@@ -107,6 +108,21 @@ describe('AppShell', () => {
     // Client-only navigation items are not in the admin sidebar
     expect(screen.queryByRole('link', { name: 'Cash Flow' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
+  });
+
+  it('keeps advisor chrome on settings pages for advisors', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ id: 'a-1', email: 'advisor.morgan@syntropy.ch', displayName: null, roles: ['USER', 'ADVISOR'], emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
+    );
+    renderShell('/settings/security');
+    expect(await screen.findByText('Settings Body')).toBeVisible();
+
+    // Advisor workstation nav once roles resolve, not client tabs
+    await waitFor(() => expect(screen.getByText('Advisor Workstation')).toBeVisible());
+    expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Cash Flow' })).toBeNull();
   });
 
   it('displays acting mode banner when an admin is impersonating a demo persona', () => {
