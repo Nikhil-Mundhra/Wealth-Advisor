@@ -47,3 +47,28 @@ export const AdminSettingsResponse = z.object({
   }),
 });
 export type AdminSettingsResponse = z.infer<typeof AdminSettingsResponse>;
+
+export const CheckAiHealthRequest = z.object({
+  provider: z.enum(LLM_PROVIDERS).optional(),
+});
+export type CheckAiHealthRequest = z.infer<typeof CheckAiHealthRequest>;
+
+export const AiProviderHealthDto = z.object({
+  provider: z.enum(LLM_PROVIDERS),
+  healthy: z.boolean(),
+  status: z.enum(['HEALTHY', 'UNHEALTHY', 'NOT_CONFIGURED', 'TIMEOUT']),
+  latencyMs: z.number().nullable(),
+  source: z.enum(['db', 'env', 'none']),
+  maskedKey: z.string().nullable(),
+  message: z.string(),
+  error: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
+});
+export type AiProviderHealthDto = z.infer<typeof AiProviderHealthDto>;
+
+export const CheckAiHealthResponse = z.object({
+  activeProvider: z.enum(LLM_PROVIDERS),
+  checkedAt: z.string(),
+  providers: z.array(AiProviderHealthDto),
+});
+export type CheckAiHealthResponse = z.infer<typeof CheckAiHealthResponse>;

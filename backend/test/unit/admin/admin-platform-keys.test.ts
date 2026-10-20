@@ -89,4 +89,49 @@ describe('Admin Platform Managed Keys', () => {
     assert.notEqual(currentKey, 'marketstack-custom-db-key');
     assert.ok(cleared.marketstack.source === 'env' || cleared.marketstack.source === 'none');
   });
+
+  it('checks AI platform health for mock and unconfigured providers', async () => {
+    const { api } = setup();
+
+    const health = await api.checkAiHealth('mock');
+    assert.equal(health.providers.length, 1);
+    assert.equal(health.providers[0].provider, 'mock');
+    assert.equal(health.providers[0].healthy, true);
+    assert.equal(health.providers[0].status, 'HEALTHY');
+
+    // With no DB keys set, an unconfigured provider returns NOT_CONFIGURED (assuming no env keys)
+    const allHealth = await api.checkAiHealth();
+    assert.ok(allHealth.providers.length >= 5);
+    const mockCheck = allHealth.providers.find((p) => p.provider === 'mock');
+    assert.ok(mockCheck?.healthy);
+  });
+
+  it('checks AI health for openrouter with live or mock probe', async () => {
+    const { api } = setup();
+    await api.updatePlatformKeys({
+      openrouterApiKey: 'sk-or-v1-test-probe-key',
+    });
+
+    const realFetch = globalThis.fetch;
+    try {
+      // Mock successful OpenRouter key check
+      globalThis.fetch = async () =>
+        new Response(
+          JSON.stringify({
+            data: { label: 'Test Key', usage: 0.05, limit: 10 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+
+      const health = await api.checkAiHealth('openrouter');
+      assert.equal(health.providers.length, 1);
+      const or = health.providers[0];
+      assert.equal(or.provider, 'openrouter');
+      assert.equal(or.healthy, true);
+      assert.equal(or.status, 'HEALTHY');
+      assert.ok(or.message.includes('Key valid'));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
 });

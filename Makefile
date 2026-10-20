@@ -11,7 +11,7 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck audit
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
 
 
 help:  ## List targets
@@ -87,6 +87,9 @@ deps-lint:  ## Check cross-module imports against backend/docs/module-dependenci
 
 audit:  ## Check dependencies for high-severity vulnerabilities
 	npm audit --omit=dev --audit-level=high
+
+check-ai:  ## Check AI platform API health on deployed site or local (e.g. make check-ai ARGS="--provider openrouter")
+	@node scripts/check-ai-health.mjs $(ARGS)
 
 $(RUN_DIR):
 

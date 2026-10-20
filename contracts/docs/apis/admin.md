@@ -35,6 +35,14 @@ Every admin route requires a Bearer access token (`backend/docs/auth-token.md` `
 - responsibility: update or clear platform provider credentials (`geminiApiKey`, `openaiApiKey`, `anthropicApiKey`, `openrouterApiKey`, `marketstackAccessKey`); returns masked key status for each provider
 - contract: request `UpdatePlatformKeysRequest`, response `PlatformKeysStatusDto` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth Bearer
 
+## GET /api/admin/models/health
+- responsibility: probe and report the health, connectivity, and latency of configured AI providers (`openrouter`, `gemini`, `openai`, `claude`, `mock`), or a single specified provider
+- contract: query `CheckAiHealthRequest`, response `CheckAiHealthResponse` 200, errors `AU_1005`, `AU_1901`, `AD_1004`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
+## POST /api/admin/models/health
+- responsibility: probe and report the health, connectivity, and latency of configured AI providers (`openrouter`, `gemini`, `openai`, `claude`, `mock`), or a single specified provider
+- contract: request `CheckAiHealthRequest`, response `CheckAiHealthResponse` 200, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `AD_1004`, `CORE_DB_UNCONFIGURED`; auth Bearer
+
 ## GET /api/admin/users
 - responsibility: return list of registered user accounts, with optional filtering by query string, role, status, or tenant
 - contract: query `AdminUserQueryRequest`, response `AdminUserListResponse` 200, errors `AU_1005`, `AU_1901`, `AD_1004`, `CORE_DB_UNCONFIGURED`; auth Bearer

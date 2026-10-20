@@ -85,13 +85,12 @@ describe('ClaudeLlmAdapter', () => {
     assert.ok(!res.threePillarRationale.wealthStrategy.includes('99%'));
   });
 
-  it('falls back to the deterministic mock without a key', async () => {
+  it('fails loudly without an API key', async () => {
     const adapter = new ClaudeLlmAdapter(undefined, undefined, stubHttp({}));
-    const res = await adapter.chat(context);
-    assert.match(res.reply, /family household/);
+    await assert.rejects(() => adapter.chat(context), (err: any) => err.code === 'AV_1001');
   });
 
-  it('falls back to the deterministic mock when Claude fails', async () => {
+  it('fails loudly when Claude fails', async () => {
     const failing: HttpClient = {
       getJson: async () => ({}),
       postJson: async () => {
@@ -99,7 +98,6 @@ describe('ClaudeLlmAdapter', () => {
       },
     };
     const adapter = new ClaudeLlmAdapter('test-anthropic-key', undefined, failing);
-    const res = await adapter.chat(context);
-    assert.match(res.reply, /family household/);
+    await assert.rejects(() => adapter.chat(context), (err: any) => err.code === 'AV_1001');
   });
 });

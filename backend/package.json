@@ -6,7 +6,7 @@
     "dev": "node --env-file-if-exists=../.env --watch src/node-server.ts",
     "start": "NODE_ENV=production node --env-file-if-exists=../.env src/node-server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
+    "test": "node --test --test-concurrency=4 \"test/**/*.test.ts\"",
     "test:unit": "node --test \"test/unit/**/*.test.ts\"",
     "db:indexes": "node --env-file-if-exists=../.env src/scripts/ensure-indexes.ts",
     "keys:generate": "node src/scripts/generate-jwt-keypair.ts",

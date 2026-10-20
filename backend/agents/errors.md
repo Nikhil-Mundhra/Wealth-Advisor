@@ -16,6 +16,7 @@
 ```
 backend/src/modules/admin/domain/errors/admin-errors.ts : AD_* DomainError factories
 backend/src/modules/admin/presentation/admin-error-statuses.ts : HTTP status for every AD_* code
+backend/src/modules/advisory/domain/errors/advisory-errors.ts : AV_* DomainError factories
 backend/src/modules/advisory/presentation/advisory-error-statuses.ts : HTTP status for every AV_* code
 backend/src/modules/analytics/domain/errors/analytics-errors.ts : AN_* DomainError factories
 backend/src/modules/analytics/presentation/analytics-error-statuses.ts : HTTP status for every AN_* code

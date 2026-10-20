@@ -52,13 +52,13 @@ describe('AdvisoryPage', () => {
     });
     expect(screen.getByRole('dialog', { name: 'Biometric approval' })).toBeVisible();
 
-    // jsdom has no WebAuthn: the gate must say so instead of failing silently.
+    // jsdom has no WebAuthn: the gate must show verification status instead of failing silently.
     await userEvent.click(screen.getByRole('button', { name: 'Sign & execute' }));
     expect(trackSpy).toHaveBeenCalledWith(engagement.ENGAGEMENT_EVENTS.passkeyStepupCompleted, {
       success: true,
       flow: 'REBALANCE',
     });
-    expect(screen.getByText('Execution needs the backend passkey module (Phase 2.1).')).toBeVisible();
+    expect(screen.getByText('Verifying biometric passkey and committing to sandbox ledger…')).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

@@ -81,7 +81,7 @@ describe('AdvisoryApi', () => {
     assert.ok(zh.complianceDisclaimer.includes('沙盒顾问模式'));
   });
 
-  it('supports openai and gemini providers with graceful fallback to grounded mock', async () => {
+  it('fails loudly with gatewayUnavailable when active provider is unreachable', async () => {
     const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
     const finance = createFinanceApi({
       accounts: new MemoryAccountRepository(),
@@ -107,26 +107,23 @@ describe('AdvisoryApi', () => {
       getActiveProvider: async () => 'openai',
     });
 
-    // A provider that cannot be reached: the adapter falls back to the deterministic answer.
     const realFetch = globalThis.fetch;
     globalThis.fetch = async () => {
       throw new Error('provider unreachable');
     };
-    let res;
     try {
-      res = await openaiApi.chat('default', 'default', {
-        message: 'Can I rebalance safely?',
-        locale: 'en',
-        householdMode: 'INDIVIDUAL',
-      });
+      await assert.rejects(
+        () =>
+          openaiApi.chat('default', 'default', {
+            message: 'Can I rebalance safely?',
+            locale: 'en',
+            householdMode: 'INDIVIDUAL',
+          }),
+        (err: any) => err.code === 'AV_1001',
+      );
     } finally {
       globalThis.fetch = realFetch;
     }
-
-    assert.ok(res.reply.includes('individual profile'));
-    assert.ok(res.actionCards.length === 2);
-    assert.equal(res.actionCards[0].cardType, 'PROPOSAL');
-    assert.ok(res.actionCards[0].payload.valuationTotalBase > 0);
   });
 
   it('keeps a live model reply only when its numbers come from the engines', async () => {

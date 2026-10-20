@@ -8,6 +8,8 @@ import {
   AdminUserQueryRequest,
   ApiKeyCreatedResponse,
   ApiKeyListResponse,
+  CheckAiHealthRequest,
+  CheckAiHealthResponse,
   CreateAdminUserRequest,
   CreateApiKeyRequest,
   CreateTenantRequest,
@@ -77,6 +79,18 @@ export function adminRoutes(deps: AdminRoutesDeps): readonly RouteDefinition[] {
       .body(UpdatePlatformKeysRequest)
       .responds(PlatformKeysStatusDto)
       .handle(async ({ body }) => api.updatePlatformKeys(body)),
+
+    RouteBuilder.get('/models/health')
+      .use(...guard)
+      .query(CheckAiHealthRequest)
+      .responds(CheckAiHealthResponse)
+      .handle(async ({ query }) => api.checkAiHealth(query?.provider)),
+
+    RouteBuilder.post('/models/health')
+      .use(...guard)
+      .body(CheckAiHealthRequest)
+      .responds(CheckAiHealthResponse)
+      .handle(async ({ body }) => api.checkAiHealth(body?.provider)),
 
     RouteBuilder.get('/users')
       .use(...guard)

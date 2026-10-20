@@ -7,6 +7,7 @@ import type {
 } from '@wealth-advisor/contracts';
 import type { HouseholdMode, LlmProvider, Locale } from '@wealth-advisor/rules';
 import { type HttpClient, createHttpClient } from '#core/http-client/http-client.ts';
+import { AdvisoryErrors } from './errors/advisory-errors.ts';
 import { factNumbers, shieldText } from './calculation-shield.ts';
 
 export interface LlmContext {
@@ -159,6 +160,23 @@ export class MockLlmAdapter implements LlmAdapter {
   }
 }
 
+function parseJsonSafe(raw: string): Record<string, unknown> {
+  const clean = raw.trim();
+  try {
+    return JSON.parse(clean);
+  } catch {
+    const codeBlockMatch = clean.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch?.[1]) {
+      return JSON.parse(codeBlockMatch[1]);
+    }
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (jsonMatch?.[0]) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error('Unable to extract valid JSON from model response');
+  }
+}
+
 // The model replaces only the narrative fields, each only with text whose numbers the engines produced.
 function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, prompt: string): AdvisoryChatResponse {
   const pillars = base.threePillarRationale;
@@ -174,7 +192,7 @@ function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, pr
   };
 }
 
-const ADVISORY_HTTP_TIMEOUT_MS = 8000;
+const ADVISORY_HTTP_TIMEOUT_MS = 15000;
 
 export type ApiKeyResolver = string | (() => Promise<string | undefined> | string | undefined);
 
@@ -191,12 +209,11 @@ export class GeminiLlmAdapter implements LlmAdapter {
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
-    if (!key) return this.fallback.chat(context);
-    try {
-      const base = await this.fallback.chat(context);
-      const mix = summarizeProposal(context.proposalHoldings);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-      const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
+    if (!key) throw AdvisoryErrors.gatewayUnavailable('Gemini API key is not configured');
+    const base = await this.fallback.chat(context);
+    const mix = summarizeProposal(context.proposalHoldings);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+    const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
 Current Portfolio:
 - Valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}
 - Runway: ${context.cashflow.runwayMonths.toFixed(1)} months (${context.cashflow.runwayBand})
@@ -214,7 +231,9 @@ Respond ONLY in valid JSON with these keys:
 }
 Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
 
-      const data = (await this.http.postJson(
+    let data: any;
+    try {
+      data = (await this.http.postJson(
         url,
         {
           contents: [{ parts: [{ text: `${systemPrompt}\n\nUser Question: ${context.message}` }] }],
@@ -225,13 +244,21 @@ Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered b
         },
         { timeoutMs: ADVISORY_HTTP_TIMEOUT_MS },
       )) as any;
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `Gemini request failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) return base;
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) throw AdvisoryErrors.gatewayUnavailable('Gemini returned an empty completion');
 
+    try {
       return narrate(base, JSON.parse(rawText) as Record<string, unknown>, systemPrompt);
-    } catch {
-      return this.fallback.chat(context);
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `Gemini response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }
@@ -249,12 +276,14 @@ export class OpenAiLlmAdapter implements LlmAdapter {
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
-    if (!key) return this.fallback.chat(context);
+    if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenAI API key is not configured');
+    const base = await this.fallback.chat(context);
+    const mix = summarizeProposal(context.proposalHoldings);
+    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+
+    let data: any;
     try {
-      const base = await this.fallback.chat(context);
-      const mix = summarizeProposal(context.proposalHoldings);
-      const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
-      const data = (await this.http.postJson(
+      data = (await this.http.postJson(
         'https://api.openai.com/v1/chat/completions',
         {
           model: 'gpt-4o-mini',
@@ -275,12 +304,20 @@ export class OpenAiLlmAdapter implements LlmAdapter {
           },
         },
       )) as any;
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `OpenAI request failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) return base;
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw AdvisoryErrors.gatewayUnavailable('OpenAI returned an empty completion');
+    try {
       return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt);
-    } catch {
-      return this.fallback.chat(context);
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `OpenAI response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }
@@ -298,11 +335,13 @@ export class ClaudeLlmAdapter implements LlmAdapter {
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
-    if (!key) return this.fallback.chat(context);
+    if (!key) throw AdvisoryErrors.gatewayUnavailable('Anthropic API key is not configured');
+    const base = await this.fallback.chat(context);
+    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+
+    let data: any;
     try {
-      const base = await this.fallback.chat(context);
-      const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
-      const data = (await this.http.postJson(
+      data = (await this.http.postJson(
         'https://api.anthropic.com/v1/messages',
         {
           model: 'claude-3-5-sonnet-20241022',
@@ -319,12 +358,20 @@ export class ClaudeLlmAdapter implements LlmAdapter {
           },
         },
       )) as any;
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `Anthropic request failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
-      const block = (data?.content ?? []).find((part: any) => part?.type === 'text');
-      if (!block?.text) return base;
+    const block = (data?.content ?? []).find((part: any) => part?.type === 'text');
+    if (!block?.text) throw AdvisoryErrors.gatewayUnavailable('Anthropic returned an empty completion');
+    try {
       return narrate(base, JSON.parse(block.text) as Record<string, unknown>, systemPrompt);
-    } catch {
-      return this.fallback.chat(context);
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `Anthropic response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }
@@ -349,12 +396,14 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
-    if (!key) return this.fallback.chat(context);
+    if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenRouter API key is not configured');
+    const base = await this.fallback.chat(context);
+    const mix = summarizeProposal(context.proposalHoldings);
+    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+
+    let data: any;
     try {
-      const base = await this.fallback.chat(context);
-      const mix = summarizeProposal(context.proposalHoldings);
-      const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
-      const data = (await this.http.postJson(
+      data = (await this.http.postJson(
         'https://openrouter.ai/api/v1/chat/completions',
         {
           model: this.model,
@@ -365,7 +414,6 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
             },
             { role: 'user', content: context.message },
           ],
-          response_format: { type: 'json_object' },
           temperature: 0.2,
         },
         {
@@ -377,12 +425,20 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
           },
         },
       )) as any;
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `OpenRouter request failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) return base;
-      return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt);
-    } catch {
-      return this.fallback.chat(context);
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw AdvisoryErrors.gatewayUnavailable('OpenRouter returned an empty completion');
+    try {
+      return narrate(base, parseJsonSafe(content), systemPrompt);
+    } catch (err: unknown) {
+      throw AdvisoryErrors.gatewayUnavailable(
+        `OpenRouter response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }

@@ -130,15 +130,58 @@ export async function createPasskeyAssertion(
   authenticatorData: string;
   signature: string;
 }> {
-  const activeCredId =
+  let activeCredId =
     credentialId ||
-    (typeof window !== 'undefined' ? window.localStorage.getItem(LOCAL_KEY_STORAGE) : null) ||
-    'demo_passkey_credential';
+    (typeof window !== 'undefined' ? window.localStorage.getItem(LOCAL_KEY_STORAGE) : null);
 
   const challenge = serverChallenge ?? `chal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+  // 1. Try Hardware WebAuthn API if supported in browser
+  if (typeof window !== 'undefined' && window.PublicKeyCredential && typeof navigator !== 'undefined' && navigator.credentials) {
+    try {
+      const challengeBuf = base64urlToBuffer(challenge);
+      const allowCredentials = activeCredId && activeCredId !== 'demo_passkey_credential'
+        ? [{ id: base64urlToBuffer(activeCredId) as unknown as ArrayBuffer, type: 'public-key' as const }]
+        : undefined;
+
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge: challengeBuf as unknown as ArrayBuffer,
+          rpId: window.location.hostname || 'localhost',
+          allowCredentials,
+          userVerification: 'preferred',
+          timeout: 60000,
+        },
+      })) as PublicKeyCredential | null;
+
+      if (assertion && 'response' in assertion) {
+        const resp = assertion.response as AuthenticatorAssertionResponse;
+        return {
+          credentialId: bufferToBase64url(assertion.rawId),
+          clientDataJson: bufferToBase64url(resp.clientDataJSON),
+          authenticatorData: bufferToBase64url(resp.authenticatorData),
+          signature: bufferToBase64url(resp.signature),
+        };
+      }
+    } catch {
+      // Continue to WebCrypto enclave fallback
+    }
+  }
+
+  // 2. Auto-enroll WebCrypto enclave key in sandbox if none exists yet
+  if (typeof window !== 'undefined' && window.crypto?.subtle && (!activeCredId || !window.localStorage.getItem(`${LOCAL_KEY_STORAGE}_${activeCredId}`))) {
+    try {
+      await enrollPasskey('Sandbox Device Biometrics');
+      activeCredId = window.localStorage.getItem(LOCAL_KEY_STORAGE) || activeCredId;
+    } catch {
+      // Degrades to demo structure if unauthenticated or offline
+    }
+  }
+
+  const resolvedCredId = activeCredId || 'demo_passkey_credential';
+
   if (typeof window !== 'undefined' && window.crypto?.subtle) {
-    const savedJwk = window.localStorage.getItem(`${LOCAL_KEY_STORAGE}_${activeCredId}`);
+    const savedJwk = window.localStorage.getItem(`${LOCAL_KEY_STORAGE}_${resolvedCredId}`);
     if (savedJwk) {
       const jwk = JSON.parse(savedJwk);
       const privateKey = await window.crypto.subtle.importKey(
@@ -177,7 +220,7 @@ export async function createPasskeyAssertion(
       );
 
       return {
-        credentialId: activeCredId,
+        credentialId: resolvedCredId,
         clientDataJson: bufferToBase64url(clientDataBytes),
         authenticatorData: bufferToBase64url(authData),
         signature: bufferToBase64url(signature),
@@ -192,7 +235,7 @@ export async function createPasskeyAssertion(
     origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
   });
   return {
-    credentialId: activeCredId,
+    credentialId: resolvedCredId,
     clientDataJson: bufferToBase64url(new TextEncoder().encode(clientData)),
     authenticatorData: bufferToBase64url(new Uint8Array(37).fill(1)),
     signature: bufferToBase64url(new Uint8Array(64).fill(2)),

@@ -129,23 +129,22 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           notice: parseNoticeCard(res),
         },
       ]);
-    } catch {
-      // Deterministic calculation shield fallback grounded in the viewer's own context
-      const isFamily = context.householdMode === 'FAMILY_HOUSEHOLD';
-      const fallbackReply = `Fiduciary Assessment for ${context.displayName} (${context.location}): Operating with a ${isFamily ? 'family household' : 'individual'} profile, your liquid runway stands at ${context.runwayMonths} months (monthly burn: ${formatMoney(context.monthlyBurn, context.baseCurrency)}). Our deterministic calculation shield verifies this inquiry against your active remittance corridors (${context.corridors.join(', ')}). The proposal shifts surplus high-beta assets into stable EUR overnight cash (XEON) to guarantee remittance execution.`;
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+            ? String((err as any).message)
+            : 'Server error: unable to connect to advisory AI gateway';
 
       setMessages((all) => [
         ...all,
         {
           role: 'assistant',
           key: null,
-          text: fallbackReply,
-          threePillarRationale: {
-            personalFinance: `Liquid runway stands at ${context.runwayMonths} months against a ${isFamily ? '6.0' : '3.0'}-month minimum fiduciary floor.`,
-            crossBorder: `Corridors (${context.corridors.join(', ')}) insulated against currency shocks.`,
-            wealthStrategy: `Drift status: Corridor within ±5%. Target risk: ${context.riskLabel} (${context.riskBand}).`,
-          },
-          complianceDisclaimer: 'Syntropy AI runs deterministic simulations for education only and does not constitute formal investment solicitation.',
+          text: `AI Model Connection Failed: ${errorMsg}`,
+          notice:
+            'The advisory AI pipeline could not reach the configured model provider. Check AI health status in Admin Settings or verify provider credentials.',
         },
       ]);
     } finally {
@@ -238,6 +237,7 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
         });
         if (res?.ledgerEntry?.transactionHash) {
           setExecutionResult(`Committed on Ledger: ${res.ledgerEntry.transactionHash.slice(0, 18)}…`);
+          setPending(false);
         }
       } catch {
         // Degrades gracefully when passkey assertion verification or backend is in demo sandbox mode
@@ -251,6 +251,7 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
       isPasskeyGated: true,
     });
     setPending(false);
+    setExecutionResult(null);
     setStepUp(true);
   }
 
@@ -480,7 +481,7 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           </div>
         )}
         <div className="mt-4 flex gap-2">
-          <Button onClick={sign}>{strings['advisory.stepup.sign']}</Button>
+          <Button onClick={sign} disabled={pending}>{strings['advisory.stepup.sign']}</Button>
           <Button variant="outline" onClick={closeStepUp}>
             {strings['advisory.stepup.cancel']}
           </Button>

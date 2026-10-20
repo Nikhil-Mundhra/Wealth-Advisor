@@ -132,4 +132,33 @@ describe('admin user routes', () => {
     assert.equal(deleteRes.status, 400);
     assert.equal((await json(deleteRes)).code, 'AD_1008');
   });
+
+  it('probes AI platform health via GET and POST /api/admin/models/health', async () => {
+    const unauthRes = await app.app.request('/api/admin/models/health', {
+      headers: { authorization: `Bearer ${userToken}` },
+    });
+    assert.equal(unauthRes.status, 403);
+
+    const getRes = await app.app.request('/api/admin/models/health?provider=mock', {
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+    assert.equal(getRes.status, 200);
+    const getBody = await json(getRes);
+    assert.equal(getBody.providers.length, 1);
+    assert.equal(getBody.providers[0].provider, 'mock');
+    assert.equal(getBody.providers[0].healthy, true);
+
+    const postRes = await app.app.request('/api/admin/models/health', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ provider: 'mock' }),
+    });
+    assert.equal(postRes.status, 200);
+    const postBody = await json(postRes);
+    assert.equal(postBody.providers[0].provider, 'mock');
+    assert.equal(postBody.providers[0].healthy, true);
+  });
 });

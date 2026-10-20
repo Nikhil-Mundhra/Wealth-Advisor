@@ -7,9 +7,11 @@ import type {
   AdminUserDto,
   AdminUserListResponse,
   AdminUserQueryRequest,
+  AiProviderHealthDto,
   ApiKeyCreatedResponse,
   ApiKeyDto,
   ApiKeyListResponse,
+  CheckAiHealthResponse,
   CreateAdminUserRequest,
   CreateApiKeyRequest,
   CreateTenantRequest,
@@ -326,6 +328,259 @@ export function createAdminApi(deps: AdminApiDeps) {
 
     async getActiveProvider(): Promise<LlmProvider> {
       return settings.getActiveLlmProvider();
+    },
+
+    async checkAiHealth(targetProvider?: LlmProvider): Promise<CheckAiHealthResponse> {
+      const active = await settings.getActiveLlmProvider();
+      const providersToTest: readonly LlmProvider[] = targetProvider ? [targetProvider] : LLM_PROVIDERS;
+      const dbKeys = await settings.getPlatformKeys();
+      const currentEnv = env();
+
+      const results = await Promise.all(
+        providersToTest.map(async (provider): Promise<AiProviderHealthDto> => {
+          if (provider === 'mock') {
+            return {
+              provider: 'mock',
+              healthy: true,
+              status: 'HEALTHY',
+              latencyMs: 0,
+              source: 'none',
+              maskedKey: null,
+              message: 'Deterministic mock adapter active (offline)',
+              model: 'MockLlmAdapter',
+            };
+          }
+
+          let key: string | undefined;
+          let source: 'db' | 'env' | 'none' = 'none';
+
+          if (provider === 'gemini') {
+            if (dbKeys.geminiApiKey?.trim()) {
+              key = dbKeys.geminiApiKey.trim();
+              source = 'db';
+            } else if (currentEnv.GEMINI_API_KEY?.trim()) {
+              key = currentEnv.GEMINI_API_KEY.trim();
+              source = 'env';
+            }
+          } else if (provider === 'openai') {
+            if (dbKeys.openaiApiKey?.trim()) {
+              key = dbKeys.openaiApiKey.trim();
+              source = 'db';
+            } else if (currentEnv.OPENAI_API_KEY?.trim()) {
+              key = currentEnv.OPENAI_API_KEY.trim();
+              source = 'env';
+            }
+          } else if (provider === 'claude') {
+            if (dbKeys.anthropicApiKey?.trim()) {
+              key = dbKeys.anthropicApiKey.trim();
+              source = 'db';
+            } else if (currentEnv.ANTHROPIC_API_KEY?.trim()) {
+              key = currentEnv.ANTHROPIC_API_KEY.trim();
+              source = 'env';
+            }
+          } else if (provider === 'openrouter') {
+            if (dbKeys.openrouterApiKey?.trim()) {
+              key = dbKeys.openrouterApiKey.trim();
+              source = 'db';
+            } else if (currentEnv.OPENROUTER_API_KEY?.trim()) {
+              key = currentEnv.OPENROUTER_API_KEY.trim();
+              source = 'env';
+            }
+          }
+
+          const masked = maskKey(key);
+          if (!key) {
+            return {
+              provider,
+              healthy: false,
+              status: 'NOT_CONFIGURED',
+              latencyMs: null,
+              source: 'none',
+              maskedKey: null,
+              message: 'API key is not configured',
+              error: 'Missing API key',
+            };
+          }
+
+          const start = Date.now();
+          const timeoutMs = 8000;
+          try {
+            if (provider === 'openrouter') {
+              const res = await fetch('https://openrouter.ai/api/v1/auth/key', {
+                headers: {
+                  authorization: `Bearer ${key}`,
+                  'http-referer': 'https://syntropy.finance',
+                  'x-title': 'Syntropy Wealth Advisor',
+                },
+                signal: AbortSignal.timeout(timeoutMs),
+              });
+              const latencyMs = Date.now() - start;
+              if (res.ok) {
+                const data: any = await res.json().catch(() => ({}));
+                const label = data?.data?.label ?? 'OpenRouter Key';
+                const usage = data?.data?.usage !== undefined ? `$${Number(data.data.usage).toFixed(4)}` : 'N/A';
+                const limit =
+                  data?.data?.limit !== null && data?.data?.limit !== undefined
+                    ? `$${data.data.limit}`
+                    : 'unlimited';
+                return {
+                  provider,
+                  healthy: true,
+                  status: 'HEALTHY',
+                  latencyMs,
+                  source,
+                  maskedKey: masked,
+                  message: `Key valid (${label}, usage: ${usage}, limit: ${limit})`,
+                  model: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+                };
+              }
+              const errText = await res.text().catch(() => '');
+              return {
+                provider,
+                healthy: false,
+                status: 'UNHEALTHY',
+                latencyMs,
+                source,
+                maskedKey: masked,
+                message: `OpenRouter returned HTTP ${res.status}`,
+                error: errText.slice(0, 200) || `HTTP ${res.status}`,
+                model: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+              };
+            }
+
+            if (provider === 'gemini') {
+              const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`,
+                {
+                  signal: AbortSignal.timeout(timeoutMs),
+                },
+              );
+              const latencyMs = Date.now() - start;
+              if (res.ok) {
+                return {
+                  provider,
+                  healthy: true,
+                  status: 'HEALTHY',
+                  latencyMs,
+                  source,
+                  maskedKey: masked,
+                  message: 'Gemini API key verified successfully',
+                  model: 'gemini-2.5-flash',
+                };
+              }
+              const errText = await res.text().catch(() => '');
+              return {
+                provider,
+                healthy: false,
+                status: 'UNHEALTHY',
+                latencyMs,
+                source,
+                maskedKey: masked,
+                message: `Gemini returned HTTP ${res.status}`,
+                error: errText.slice(0, 200) || `HTTP ${res.status}`,
+                model: 'gemini-2.5-flash',
+              };
+            }
+
+            if (provider === 'openai') {
+              const res = await fetch('https://api.openai.com/v1/models', {
+                headers: { authorization: `Bearer ${key}` },
+                signal: AbortSignal.timeout(timeoutMs),
+              });
+              const latencyMs = Date.now() - start;
+              if (res.ok) {
+                return {
+                  provider,
+                  healthy: true,
+                  status: 'HEALTHY',
+                  latencyMs,
+                  source,
+                  maskedKey: masked,
+                  message: 'OpenAI API key verified successfully',
+                  model: 'gpt-4o-mini',
+                };
+              }
+              const errText = await res.text().catch(() => '');
+              return {
+                provider,
+                healthy: false,
+                status: 'UNHEALTHY',
+                latencyMs,
+                source,
+                maskedKey: masked,
+                message: `OpenAI returned HTTP ${res.status}`,
+                error: errText.slice(0, 200) || `HTTP ${res.status}`,
+                model: 'gpt-4o-mini',
+              };
+            }
+
+            if (provider === 'claude') {
+              const res = await fetch('https://api.anthropic.com/v1/models', {
+                headers: {
+                  'x-api-key': key,
+                  'anthropic-version': '2023-06-01',
+                },
+                signal: AbortSignal.timeout(timeoutMs),
+              });
+              const latencyMs = Date.now() - start;
+              if (res.ok) {
+                return {
+                  provider,
+                  healthy: true,
+                  status: 'HEALTHY',
+                  latencyMs,
+                  source,
+                  maskedKey: masked,
+                  message: 'Anthropic API key verified successfully',
+                  model: 'claude-3-5-sonnet-20241022',
+                };
+              }
+              const errText = await res.text().catch(() => '');
+              return {
+                provider,
+                healthy: false,
+                status: 'UNHEALTHY',
+                latencyMs,
+                source,
+                maskedKey: masked,
+                message: `Anthropic returned HTTP ${res.status}`,
+                error: errText.slice(0, 200) || `HTTP ${res.status}`,
+                model: 'claude-3-5-sonnet-20241022',
+              };
+            }
+
+            return {
+              provider,
+              healthy: false,
+              status: 'UNHEALTHY',
+              latencyMs: null,
+              source,
+              maskedKey: masked,
+              message: 'Unsupported provider',
+            };
+          } catch (err: unknown) {
+            const latencyMs = Date.now() - start;
+            const isTimeout =
+              err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
+            return {
+              provider,
+              healthy: false,
+              status: isTimeout ? 'TIMEOUT' : 'UNHEALTHY',
+              latencyMs,
+              source,
+              maskedKey: masked,
+              message: isTimeout ? 'Request timed out after 8s' : 'Connection failed',
+              error: err instanceof Error ? err.message : String(err),
+            };
+          }
+        }),
+      );
+
+      return {
+        activeProvider: active,
+        checkedAt: clock.now().toISOString(),
+        providers: results,
+      };
     },
 
     async listUsers(query?: AdminUserQueryRequest): Promise<AdminUserListResponse> {

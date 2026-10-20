@@ -13,7 +13,8 @@
     "build": "npm run build -w frontend",
     "start": "npm run start -w backend",
     "typecheck": "npm run typecheck --workspaces",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs",
+    "check-ai": "node scripts/check-ai-health.mjs"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"

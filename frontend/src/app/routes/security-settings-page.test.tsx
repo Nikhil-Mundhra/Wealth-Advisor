@@ -44,7 +44,7 @@ describe('SecuritySettingsPage', () => {
     for (const tier of ['TIER_0_READ', 'TIER_1_ADVISORY', 'TIER_2_SIMULATE', 'TIER_3_EXECUTE']) {
       expect(screen.getByText(tier)).toBeVisible();
     }
-    expect(screen.getByText('No passkeys yet — enrollment arrives with the backend passkey module.')).toBeVisible();
+    expect(screen.getByText('No passkeys registered yet. Enroll your device biometrics above for Tier 3 execution.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible();
     expect(screen.getByLabelText('Reporting currency')).toBeVisible();
   });

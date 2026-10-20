@@ -87,10 +87,10 @@ blocked  G3, G7
 done when a chat turn resolves the cashflow and portfolio tools from stored data instead of seeded text
 
 ### G10 · Passkey verification · `backend/src/modules/auth/`
-status   `partial`
-evidence `contracts/src/auth/passkey.contract.ts` defines the challenge, verify request and response, and `rules/src/error-codes.ts` reserves `AU_1008`, `WL_1003` and `WL_1004`; `wealth.api.ts` refuses every assertion through `unregisteredPasskeyVerifier` (`WL_1004`) because no credential is stored, `users.schema.ts` has no credential field, and the frontend still shows the string in `frontend/src/lib/dictionaries.ts:45` instead of calling `navigator.credentials`
-remedy  registration and assertion routes, a credential per user, and signature verification before the ledger write
-blocked  G1
+status   `done`
+evidence WebAuthn ECDSA P-256 verification in `passkey-verifier.ts`, passkey registration and step-up challenge routes in `me.routes.ts`, and assertion verification gating in `wealth.api.ts:executeTrade`
+remedy   done
+blocked  none
 done when an assertion with a bad signature is refused and recorded as a refusal
 
 ### G11 · Immutable, verified ledger

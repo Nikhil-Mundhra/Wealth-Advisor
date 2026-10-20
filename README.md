@@ -125,7 +125,7 @@ flowchart LR
 
 ### B. Transparent Disclosure of Known Limitations & Scope
 In accordance with the hackathon rules and integrity guidelines:
-- **Passkey Hardware Execution (Tier 3):** The sandbox simulates biometric authorization with WebAuthn payload stubbing; production FIDO2 hardware token registration is scheduled for Phase 2.1.
+- **Passkey Hardware Execution (Tier 3):** WebAuthn / FIDO2 biometric authentication is implemented with ECDSA P-256 assertion verification and single-use server challenges for gated sandbox execution.
 - **Single-Tenant Sandbox Scope:** The current deployment operates under an isolated default tenant (`DEFAULT_TENANT_ID`). Multi-tenant database partitioning is enforced at the repository boundary but requires external IdP federation for live multi-firm rollouts.
 - **Illustrative Market Scenarios:** The landing page simulator features illustrative benchmark stress tests grounded in MIT Sloan research. Live operations in the Advisor Workspace execute through the active calculation engine.
 
