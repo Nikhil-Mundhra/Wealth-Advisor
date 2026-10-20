@@ -7,4 +7,5 @@ backend/docs/events.md : event envelope, event catalogue (producer, consumers, v
 backend/docs/module-contract.md : module manifest fields and how modules are mounted
 backend/docs/module-dependencies.md : allowed imports between modules (edge list), acyclic graph
 backend/docs/planned-collections.md : planned, unbuilt changes to built collections
+backend/docs/request-flow.md : inbound request lifecycle, failure processing, cron refresh chain
 ```

@@ -10,6 +10,7 @@
 - module boundaries: allowed imports between modules → `backend/docs/module-dependencies.md`
 - events: envelope, catalogue, idempotency → `backend/docs/events.md`
 - component boundaries → `docs/architecture/c3-backend.md`
+- request lifecycle, failure processing, cron refresh chain → `backend/docs/request-flow.md`
 - backend facts: collections, schema, planned collections, auth tokens → `backend/docs/index.md`
 
 ## Axes
