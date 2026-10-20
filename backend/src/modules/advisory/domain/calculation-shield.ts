@@ -2,7 +2,7 @@
 // a fact (exactly, or rounded to the precision the candidate writes) is kept; any other candidate yields the fallback.
 // Numbers spelled out in words are not detected.
 
-const NUMBER = /(?:(?<=^|[\s([<€$£¥])[-−]\s*[$€£¥]?|[$€£¥]\s*[-−])?\d+(?:[.,]\d+)*/g;
+const NUMBER = /(?:(?<=^|[\s([<€$£¥])(?<!\d\s*[%€$£¥]?\s*)[-−]\s*[$€£¥]?|[$€£¥]\s*[-−])?\d+(?:[.,]\d+)*/g;
 
 interface Reading {
   readonly value: number;

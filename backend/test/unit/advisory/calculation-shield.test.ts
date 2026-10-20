@@ -56,4 +56,10 @@ describe('calculation shield', () => {
     const single = factNumbers('42');
     assert.deepEqual(single, [42]);
   });
+
+  it('treats hyphenated ranges as positive numbers rather than negative numbers', () => {
+    const rangeFacts = factNumbers('Equities target 30% to 40%. Monthly buffer €1680 to €1960.');
+    const rangeText = 'We recommend shifting 30 - 40% of holdings and keeping €1680 - €1960 liquid.';
+    assert.equal(shieldText(rangeText, FALLBACK, rangeFacts), rangeText);
+  });
 });

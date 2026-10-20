@@ -45,6 +45,55 @@ export function summarizeProposal(holdings: readonly { symbol: string; securityT
   };
 }
 
+export function buildAdvisoryFacts(context: LlmContext) {
+  const burn = Math.round(context.cashflow.netCashflowBase / 100);
+  const runway = context.cashflow.runwayMonths;
+  const portfolioVal = Math.round(context.portfolio.totalValuationBase / 100);
+  const mix = summarizeProposal(context.proposalHoldings);
+
+  const cuts = [10, 15, 20, 25, 30, 35, 40, 45, 50].map((pct) => {
+    const savings = Math.round(burn * (pct / 100));
+    const newBurn = Math.max(1, burn - savings);
+    const newRunway = Number((runway / (1 - pct / 100)).toFixed(1));
+    return { pct, savings, newBurn, newRunway };
+  });
+
+  const holdingWeights = context.proposalHoldings.map((h) => Number((h.weight * 100).toFixed(1)));
+
+  const benchmarksSummary = [
+    `Client Financial Position:`,
+    `- Liquid Runway: ${runway.toFixed(1)} months (${context.cashflow.runwayBand})`,
+    `- Net Monthly Burn / Outflow: €${burn}`,
+    `- Total Portfolio Valuation: €${portfolioVal}`,
+    `- Household Mode: ${context.householdMode}`,
+    `- Preferred Locale: ${context.locale}`,
+    `- Target Allocations (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%`,
+    `- Spending Reduction Benchmarks (Deterministic Engine Calculations):`,
+    ...cuts.map(
+      (c) =>
+        `  * ${c.pct}% cut: saves €${c.savings}/mo, reducing burn to €${c.newBurn}/mo, extending runway to ${c.newRunway} months`,
+    ),
+    `- Standard Buffer Targets: 3, 6, 9, 12, 18, 24 months`,
+    `- Review Timelines: 7, 14, 30, 60, 90 days`,
+    `- Action Steps: 1, 2, 3, 4, 5`,
+  ].join('\n');
+
+  const extraFactNumbers = [
+    runway,
+    burn,
+    portfolioVal,
+    mix.stockPct,
+    mix.bondPct,
+    mix.etfPct,
+    mix.topWeightPct,
+    1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 14, 15, 18, 20, 24, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100,
+    ...holdingWeights,
+    ...cuts.flatMap((c) => [c.pct, c.savings, c.newBurn, c.newRunway]),
+  ].filter((n) => typeof n === 'number' && !Number.isNaN(n) && n !== 0);
+
+  return { burn, runway, portfolioVal, mix, cuts, benchmarksSummary, extraFactNumbers };
+}
+
 export class MockLlmAdapter implements LlmAdapter {
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
     const { locale, householdMode, cashflow, portfolio, proposalHoldings } = context;
@@ -178,16 +227,35 @@ function parseJsonSafe(raw: string): Record<string, unknown> {
 }
 
 // The model replaces only the narrative fields, each only with text whose numbers the engines produced.
-function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, prompt: string): AdvisoryChatResponse {
+function narrate(
+  base: AdvisoryChatResponse,
+  parsed: Record<string, unknown>,
+  prompt: string,
+  extraFacts: readonly number[] = [],
+): AdvisoryChatResponse {
   const pillars = base.threePillarRationale;
-  const facts = factNumbers(prompt, base.reply, pillars.personalFinance, pillars.crossBorder, pillars.wealthStrategy);
+  const facts = [
+    ...factNumbers(prompt, base.reply, pillars.personalFinance, pillars.crossBorder, pillars.wealthStrategy),
+    ...extraFacts,
+  ];
+
+  const parsedPillars =
+    typeof parsed.threePillarRationale === 'object' && parsed.threePillarRationale !== null
+      ? (parsed.threePillarRationale as Record<string, unknown>)
+      : {};
+
+  const rawReply = parsed.reply ?? parsed.message ?? parsed.response;
+  const rawPf = parsed.personalFinance ?? parsedPillars.personalFinance;
+  const rawCb = parsed.crossBorder ?? parsedPillars.crossBorder;
+  const rawWs = parsed.wealthStrategy ?? parsedPillars.wealthStrategy;
+
   return {
     ...base,
-    reply: shieldText(parsed.reply, base.reply, facts),
+    reply: shieldText(rawReply, base.reply, facts),
     threePillarRationale: {
-      personalFinance: shieldText(parsed.personalFinance, pillars.personalFinance, facts),
-      crossBorder: shieldText(parsed.crossBorder, pillars.crossBorder, facts),
-      wealthStrategy: shieldText(parsed.wealthStrategy, pillars.wealthStrategy, facts),
+      personalFinance: shieldText(rawPf, pillars.personalFinance, facts),
+      crossBorder: shieldText(rawCb, pillars.crossBorder, facts),
+      wealthStrategy: shieldText(rawWs, pillars.wealthStrategy, facts),
     },
   };
 }
@@ -211,25 +279,23 @@ export class GeminiLlmAdapter implements LlmAdapter {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
     if (!key) throw AdvisoryErrors.gatewayUnavailable('Gemini API key is not configured');
     const base = await this.fallback.chat(context);
-    const mix = summarizeProposal(context.proposalHoldings);
+    const facts = buildAdvisoryFacts(context);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
     const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
-Current Portfolio:
-- Valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}
-- Runway: ${context.cashflow.runwayMonths.toFixed(1)} months (${context.cashflow.runwayBand})
-- Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}
-- Household Mode: ${context.householdMode}
-- Preferred Locale: ${context.locale}
-- Optimizer Targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%
+${facts.benchmarksSummary}
+
+Instructions:
+1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
+2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
 
 Respond ONLY in valid JSON with these keys:
 {
-  "reply": "Clear, professional advisory message addressing the user",
-  "personalFinance": "One sentence summary on runway, cashflow, and emergency buffer",
-  "crossBorder": "One sentence on currency corridors, remittance obligations, and FX risk",
-  "wealthStrategy": "One sentence on portfolio weights and asset reallocation"
-}
-Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
+  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
+  "crossBorder": "One sentence on currency corridors and remittance obligations",
+  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
+}`;
+    const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
     let data: any;
     try {
@@ -254,7 +320,7 @@ Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered b
     if (!rawText) throw AdvisoryErrors.gatewayUnavailable('Gemini returned an empty completion');
 
     try {
-      return narrate(base, JSON.parse(rawText) as Record<string, unknown>, systemPrompt);
+      return narrate(base, JSON.parse(rawText) as Record<string, unknown>, fullPrompt, facts.extraFactNumbers);
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `Gemini response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
@@ -278,8 +344,22 @@ export class OpenAiLlmAdapter implements LlmAdapter {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenAI API key is not configured');
     const base = await this.fallback.chat(context);
-    const mix = summarizeProposal(context.proposalHoldings);
-    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Optimizer targets (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+    const facts = buildAdvisoryFacts(context);
+    const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
+${facts.benchmarksSummary}
+
+Instructions:
+1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
+2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
+
+Respond ONLY in valid JSON with these keys:
+{
+  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
+  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
+  "crossBorder": "One sentence on currency corridors and remittance obligations",
+  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
+}`;
+    const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
     let data: any;
     try {
@@ -313,7 +393,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
     const content = data?.choices?.[0]?.message?.content;
     if (!content) throw AdvisoryErrors.gatewayUnavailable('OpenAI returned an empty completion');
     try {
-      return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt);
+      return narrate(base, JSON.parse(content) as Record<string, unknown>, fullPrompt, facts.extraFactNumbers);
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `OpenAI response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
@@ -398,19 +478,13 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
     const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenRouter API key is not configured');
     const base = await this.fallback.chat(context);
-    const mix = summarizeProposal(context.proposalHoldings);
+    const facts = buildAdvisoryFacts(context);
     const systemPrompt = `You are a cross-border private wealth and cashflow advisor for Syntropy AI.
-Client Financial Position:
-- Liquid Runway: ${context.cashflow.runwayMonths.toFixed(1)} months (${context.cashflow.runwayBand})
-- Net Monthly Burn / Outflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}
-- Total Portfolio Valuation: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}
-- Household Mode: ${context.householdMode}
-- Preferred Locale: ${context.locale}
-- Target Allocations (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%
+${facts.benchmarksSummary}
 
 Instructions:
 1. Directly answer the user's specific life event or question in "reply" with actionable, personalized fiduciary guidance.
-2. Fiduciary Calculation Shield: If citing any numbers, figures, or percentages, strictly use ONLY the verified engine figures provided above (Runway: ${context.cashflow.runwayMonths.toFixed(1)}, Monthly Burn: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}, Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}, Targets: ${mix.stockPct}%, ${mix.bondPct}%, ${mix.etfPct}%). Never invent new numbers, unverified percentages, or step numbers (such as 1., 2., 3.); explain spending cuts or rebalancing in descriptive prose.
+2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
 
 Respond ONLY in valid JSON with these keys:
 {
@@ -456,7 +530,7 @@ Respond ONLY in valid JSON with these keys:
 
         const content = data?.choices?.[0]?.message?.content;
         if (content) {
-          return narrate(base, parseJsonSafe(content), fullPrompt);
+          return narrate(base, parseJsonSafe(content), fullPrompt, facts.extraFactNumbers);
         }
       } catch (err) {
         lastError = err;
