@@ -25,6 +25,7 @@ const context: LlmContext = {
   householdMode: 'FAMILY_HOUSEHOLD',
   cashflow,
   portfolio,
+  proposalHoldings: [],
 };
 
 function stubHttp(response: unknown): HttpClient {
