@@ -16,9 +16,10 @@ import {
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { hasAdvisorRole } from '@wealth-advisor/rules';
 import logoImg from '../../assets/logo.png';
 import logoDarkImg from '../../assets/logo-dark.png';
-import { ME_QUERY_KEY } from '../../features/auth/api/use-me.ts';
+import { ME_QUERY_KEY, useMe } from '../../features/auth/api/use-me.ts';
 import {
   getAdminActingSession,
   returnToAdminSession,
@@ -118,6 +119,10 @@ function ActingBanner() {
 export function AppShell() {
   const strings = useStrings();
   const location = useLocation();
+  const { data: me } = useMe();
+  // Advisors reach the copilot from the workstation; the den Advisory tab would only bounce them back.
+  const showAdvisoryTab = !me || !hasAdvisorRole(me.roles);
+  const clientTabs = CLIENT_TABS.filter((tab) => tab.to !== '/advisory' || showAdvisoryTab);
 
   const isAdminSection = location.pathname.startsWith('/admin');
   const isAdvisorSection = location.pathname.startsWith('/advisor');
@@ -199,7 +204,7 @@ export function AppShell() {
         ) : (
           /* 3. Client's Den Sidebar (Strictly personal portfolio, NO admin or advisor tabs) */
           <nav aria-label={strings['nav.main']} className="flex flex-col gap-1 px-3 mt-2">
-            {CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
+            {clientTabs.map(({ to, key, Icon, ...rest }) => (
               <NavLink key={to} to={to} {...rest} className={linkClass}>
                 <Icon aria-hidden className="size-5" />
                 {strings[key]}
@@ -330,7 +335,7 @@ export function AppShell() {
             </NavLink>
           </>
         ) : (
-          CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
+          clientTabs.map(({ to, key, Icon, ...rest }) => (
             <NavLink key={to} to={to} {...rest} className={tabClass}>
               <Icon aria-hidden className="size-5" />
               {strings[key]}

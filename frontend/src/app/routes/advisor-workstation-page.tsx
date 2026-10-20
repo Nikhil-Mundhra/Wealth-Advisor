@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
 import {
   AlertTriangle,
   ArrowRight,
@@ -35,7 +34,6 @@ import { cn } from '../../lib/cn.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 
 export function AdvisorWorkstationPage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'active' | 'invites'>('overview');
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<AdvisorClientSummaryDto | null>(null);
@@ -330,7 +328,7 @@ export function AdvisorWorkstationPage() {
               <Button
                 type="button"
                 variant="primary"
-                onClick={() => navigate('/advisory')}
+                onClick={() => handleOpenBrief(activeClient)}
                 className="text-xs"
               >
                 Launch Advisory Session
@@ -475,7 +473,7 @@ export function AdvisorWorkstationPage() {
         open={briefOpen}
         onClose={() => setBriefOpen(false)}
         client={briefClient ?? activeClient}
-        onNavigateToAdvisory={() => navigate('/advisory')}
+        onNavigateToAdvisory={() => setActiveTab('active')}
       />
       <InstrumentComparisonModal
         open={instrumentsOpen}
