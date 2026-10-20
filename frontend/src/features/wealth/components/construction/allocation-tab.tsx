@@ -1,22 +1,25 @@
 import type { ConstructPortfolioResponse } from '@wealth-advisor/contracts';
 import { CheckCircle2 } from 'lucide-react';
 import { formatMoney } from '../../../../lib/format-money.ts';
+import { useStrings } from '../../../../lib/dictionaries.ts';
 
 export function AllocationTab({ result, defaultCurrency }: { result: ConstructPortfolioResponse; defaultCurrency: string }) {
+  const strings = useStrings();
+
   return (
     <div className="overflow-x-auto rounded-field border border-line bg-surface">
       <table className="w-full text-left text-xs">
         <thead className="border-b border-line bg-surface-subtle text-subtle">
           <tr>
-            <th scope="col" className="px-3 py-2.5 font-semibold">Security & Ticker</th>
-            <th scope="col" className="px-3 py-2.5 font-semibold">Asset Sleeve</th>
-            <th scope="col" className="px-3 py-2.5 text-right font-semibold">Target Weight</th>
-            <th scope="col" className="px-3 py-2.5 text-right font-semibold">Capital Allocation</th>
-            <th scope="col" className="px-3 py-2.5 text-right font-semibold">Exp. Return</th>
-            <th scope="col" className="px-3 py-2.5 text-right font-semibold">Volatility</th>
-            <th scope="col" className="px-3 py-2.5 text-center font-semibold">Scores (T / F / Q)</th>
-            <th scope="col" className="px-3 py-2.5 text-center font-semibold">Composite</th>
-            <th scope="col" className="px-3 py-2.5 text-center font-semibold">Sharia Status</th>
+            <th scope="col" className="px-3 py-2.5 font-semibold">{strings['portfolio.construction.allocation.securityTicker']}</th>
+            <th scope="col" className="px-3 py-2.5 font-semibold">{strings['portfolio.construction.allocation.assetSleeve']}</th>
+            <th scope="col" className="px-3 py-2.5 text-right font-semibold">{strings['portfolio.construction.allocation.targetWeight']}</th>
+            <th scope="col" className="px-3 py-2.5 text-right font-semibold">{strings['portfolio.construction.allocation.capitalAllocation']}</th>
+            <th scope="col" className="px-3 py-2.5 text-right font-semibold">{strings['portfolio.construction.allocation.expReturn']}</th>
+            <th scope="col" className="px-3 py-2.5 text-right font-semibold">{strings['portfolio.construction.allocation.volatility']}</th>
+            <th scope="col" className="px-3 py-2.5 text-center font-semibold">{strings['portfolio.construction.allocation.scores']}</th>
+            <th scope="col" className="px-3 py-2.5 text-center font-semibold">{strings['portfolio.construction.allocation.composite']}</th>
+            <th scope="col" className="px-3 py-2.5 text-center font-semibold">{strings['portfolio.construction.allocation.shariaStatus']}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -58,10 +61,10 @@ export function AllocationTab({ result, defaultCurrency }: { result: ConstructPo
                 {h.isShariaCompliant ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                     <CheckCircle2 className="size-3 text-emerald-600" />
-                    Sharia Certified
+                    {strings['portfolio.construction.allocation.shariaCertified']}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-muted">Conventional</span>
+                  <span className="text-[10px] text-muted">{strings['portfolio.construction.allocation.conventional']}</span>
                 )}
               </td>
             </tr>

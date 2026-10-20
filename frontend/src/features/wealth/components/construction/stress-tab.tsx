@@ -1,5 +1,6 @@
 import type { ConstructPortfolioResponse } from '@wealth-advisor/contracts';
 import { Sliders } from 'lucide-react';
+import { useStrings } from '../../../../lib/dictionaries.ts';
 
 function monteCarloPercentiles(result: ConstructPortfolioResponse) {
   const { percentiles } = result.monteCarlo;
@@ -21,6 +22,8 @@ export function StressTab({
   rateShiftBps: number;
   onRateShiftChange: (bps: number) => void;
 }) {
+  const strings = useStrings();
+
   // duration x yield shift, expressed as a percentage price move on the bond sleeve.
   const duration = result.durationWeightedExposure;
   const whatIfBondValueShiftPct = -(duration * (rateShiftBps / 10000)) * 100;
@@ -30,7 +33,7 @@ export function StressTab({
       {/* Macroeconomic Stress Tests */}
       <div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-subtle mb-2">
-          Macroeconomic Scenario Stress Tests
+          {strings['portfolio.construction.stress.scenarioTitle']}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {result.stressTestOutcomes.map((scenario) => (
@@ -61,8 +64,8 @@ export function StressTab({
               </div>
 
               <div className="mt-2 pt-2 border-t border-line/60 flex items-center justify-between text-[10px] text-muted">
-                <span>Est. Drawdown: {scenario.estimatedDrawdownPct}%</span>
-                <span>Constraint: {scenario.violatesConstraint ? 'Exceeded Limit' : 'Within Tolerance'}</span>
+                <span>{strings['portfolio.construction.stress.drawdown']} {scenario.estimatedDrawdownPct}%</span>
+                <span>{strings['portfolio.construction.stress.constraint']} {scenario.violatesConstraint ? strings['portfolio.construction.stress.exceeded'] : strings['portfolio.construction.stress.within']}</span>
               </div>
             </div>
           ))}
@@ -73,9 +76,9 @@ export function StressTab({
       <div className="rounded-field border border-line bg-surface p-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-subtle">
-            2,000-Path Monte Carlo Return Distribution (1-Year Horizon)
+            {strings['portfolio.construction.stress.monteCarloTitle']}
           </h3>
-          <span className="text-[11px] font-mono text-muted">Bootstrapped Variance</span>
+          <span className="text-[11px] font-mono text-muted">{strings['portfolio.construction.stress.bootstrappedVariance']}</span>
         </div>
         <div className="grid grid-cols-5 gap-2 text-center text-xs">
           {monteCarloPercentiles(result).map(({ label, value, tone }) => (
@@ -87,8 +90,8 @@ export function StressTab({
         </div>
 
         <div className="mt-3 flex items-center justify-between text-xs text-subtle pt-3 border-t border-line">
-          <span>95% Conditional Value at Risk (CVaR / Expected Shortfall): <strong className="text-danger font-mono">{result.monteCarlo.cvar95}%</strong></span>
-          <span>Max Simulated Drawdown: <strong className="text-danger font-mono">{result.monteCarlo.maxSimulatedDrawdown}%</strong></span>
+          <span>{strings['portfolio.construction.stress.cvar']} <strong className="text-danger font-mono">{result.monteCarlo.cvar95}%</strong></span>
+          <span>{strings['portfolio.construction.stress.maxDrawdown']} <strong className="text-danger font-mono">{result.monteCarlo.maxSimulatedDrawdown}%</strong></span>
         </div>
       </div>
 
@@ -96,16 +99,16 @@ export function StressTab({
       <div className="rounded-field border border-brand-500/20 bg-brand-500/5 p-4 flex flex-col gap-3">
         <div className="flex items-center gap-1.5 text-xs font-bold text-brand-800 dark:text-brand-300">
           <Sliders className="size-4" />
-          Interactive "What-If" Interest Rate Shift Simulator
+          {strings['portfolio.construction.stress.whatIfTitle']}
         </div>
         <p className="text-xs text-subtle">
-          Drag the policy rate slider to simulate immediate capital impact on the fixed income and sukuk sleeve based on {duration} years duration:
+          {strings['portfolio.construction.stress.whatIfBody'].replace('{duration}', duration.toFixed(1))}
         </p>
         <div className="flex items-center gap-4">
-          <span className="text-xs font-mono w-16 text-right">-200 bps</span>
+          <span className="text-xs font-mono w-16 text-right">{strings['portfolio.construction.stress.minus200']}</span>
           <input
             type="range"
-            aria-label="Policy rate shift in basis points"
+            aria-label={strings['portfolio.construction.stress.sliderAria']}
             min="-200"
             max="200"
             step="25"
@@ -113,12 +116,12 @@ export function StressTab({
             onChange={(e) => onRateShiftChange(Number(e.target.value))}
             className="flex-1 cursor-pointer accent-brand-600"
           />
-          <span className="text-xs font-mono w-16">+200 bps</span>
+          <span className="text-xs font-mono w-16">{strings['portfolio.construction.stress.plus200']}</span>
         </div>
         <div className="flex items-center justify-between text-xs pt-2 border-t border-brand-500/10">
-          <span>Applied Macro Shift: <strong className="font-mono text-ink">{rateShiftBps > 0 ? `+${rateShiftBps}` : rateShiftBps} bps</strong></span>
+          <span>{strings['portfolio.construction.stress.appliedShift']} <strong className="font-mono text-ink">{rateShiftBps > 0 ? `+${rateShiftBps}` : rateShiftBps} bps</strong></span>
           <span>
-            Simulated Bond Sleeve Price Shift:{' '}
+            {strings['portfolio.construction.stress.bondShift']}{' '}
             <strong className={`font-mono ${whatIfBondValueShiftPct >= 0 ? 'text-emerald-600' : 'text-danger'}`}>
               {whatIfBondValueShiftPct >= 0 ? `+${whatIfBondValueShiftPct.toFixed(2)}` : whatIfBondValueShiftPct.toFixed(2)}%
             </strong>

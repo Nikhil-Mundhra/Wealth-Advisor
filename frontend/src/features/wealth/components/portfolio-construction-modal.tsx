@@ -9,6 +9,7 @@ import { AllocationTab } from './construction/allocation-tab.tsx';
 import { ComplianceTab } from './construction/compliance-tab.tsx';
 import { RationaleTab } from './construction/rationale-tab.tsx';
 import { StressTab } from './construction/stress-tab.tsx';
+import { useStrings } from '../../../lib/dictionaries.ts';
 
 interface PortfolioConstructionModalProps {
   open: boolean;
@@ -19,14 +20,8 @@ interface PortfolioConstructionModalProps {
   initialTotalValue?: number;
 }
 
-const TABS = [
-  { id: 'allocation', label: 'Optimal Allocation' },
-  { id: 'rationale', label: 'Fiduciary Rationale (6 Pillars)' },
-  { id: 'stress', label: 'Stress Tests & What-If Calculator' },
-  { id: 'compliance', label: 'Regulatory Compliance Checklist' },
-] as const;
-
-type TabId = (typeof TABS)[number]['id'];
+const TAB_IDS = ['allocation', 'rationale', 'stress', 'compliance'] as const;
+type TabId = (typeof TAB_IDS)[number];
 
 const tabDomId = (id: TabId) => `pc-tab-${id}`;
 const panelDomId = (id: TabId) => `pc-panel-${id}`;
@@ -69,13 +64,13 @@ function MetricCard({ label, value, note, tone }: { label: string; value: string
   );
 }
 
-function summaryMetrics(result: ConstructPortfolioResponse) {
+function summaryMetrics(result: ConstructPortfolioResponse, strings: ReturnType<typeof useStrings>) {
   return [
-    { label: 'Expected Annual Return', value: `+${result.portfolioExpectedReturn}%`, note: 'Asset-weighted prior', tone: 'positive' },
-    { label: 'Portfolio Volatility', value: `${result.portfolioVolatility}%`, note: 'Cross-asset dampened', tone: 'neutral' },
-    { label: 'Sharpe Ratio', value: `${result.portfolioSharpeRatio}`, note: 'Excess return / risk', tone: 'brand' },
-    { label: 'Duration Exposure', value: `${result.durationWeightedExposure} yrs`, note: 'Modified duration', tone: 'neutral' },
-    { label: '1Y 95% Value at Risk', value: `-${result.monteCarlo.valueAtRisk95}%`, note: 'Monte Carlo 5th percentile', tone: 'risk' },
+    { label: strings['portfolio.construction.metric.expectedReturn'], value: `+${result.portfolioExpectedReturn}%`, note: strings['portfolio.construction.metric.note.expectedReturn'], tone: 'positive' },
+    { label: strings['portfolio.construction.metric.volatility'], value: `${result.portfolioVolatility}%`, note: strings['portfolio.construction.metric.note.volatility'], tone: 'neutral' },
+    { label: strings['portfolio.construction.metric.sharpe'], value: `${result.portfolioSharpeRatio}`, note: strings['portfolio.construction.metric.note.sharpe'], tone: 'brand' },
+    { label: strings['portfolio.construction.metric.duration'], value: `${result.durationWeightedExposure} yrs`, note: strings['portfolio.construction.metric.note.duration'], tone: 'neutral' },
+    { label: strings['portfolio.construction.metric.var95'], value: `-${result.monteCarlo.valueAtRisk95}%`, note: strings['portfolio.construction.metric.note.var95'], tone: 'risk' },
   ] as const;
 }
 
@@ -87,6 +82,15 @@ export function PortfolioConstructionModal({
   defaultRiskScore = 6.8,
   initialTotalValue = 95000,
 }: PortfolioConstructionModalProps) {
+  const strings = useStrings();
+
+  const TABS = [
+    { id: 'allocation', label: strings['portfolio.construction.tab.allocation'] },
+    { id: 'rationale', label: strings['portfolio.construction.tab.rationale'] },
+    { id: 'stress', label: strings['portfolio.construction.tab.stress'] },
+    { id: 'compliance', label: strings['portfolio.construction.tab.compliance'] },
+  ] as const;
+
   // Lazy: the first solve reads this state, so it must start from the client's own score.
   const [riskTier, setRiskTier] = useState<RiskTierEnum>(() => mapScoreToRiskTier(defaultRiskScore));
   const [jurisdiction, setJurisdiction] = useState<JurisdictionEnum>('GLOBAL');
@@ -159,18 +163,18 @@ export function PortfolioConstructionModal({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">
-                Quantitative Portfolio Construction Engine
+                {strings['portfolio.construction.engineTitle']}
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-700 dark:text-brand-300">
                 <Scale className="size-3" />
-                Multi-Asset Mean-Variance Solver
+                {strings['portfolio.construction.solverBadge']}
               </span>
             </div>
             <h2 id="portfolio-construction-title" className="font-display text-xl font-bold text-ink mt-1">
-              Fiduciary Portfolio Construction: {clientName}
+              {strings['portfolio.construction.title'].replace('{clientName}', clientName)}
             </h2>
             <p className="mt-1 text-xs text-subtle">
-              Integrates Technical Analysis, DCF Fundamental Valuation, Sukuk & Bond Duration/Convexity Models, and Mutual Fund Performance Screens.
+              {strings['portfolio.construction.subtitle']}
             </p>
           </div>
 
@@ -178,7 +182,7 @@ export function PortfolioConstructionModal({
             type="button"
             onClick={onClose}
             className="rounded-control p-1 text-subtle hover:text-ink hover:bg-surface-subtle transition cursor-pointer"
-            aria-label="Close modal"
+            aria-label={strings['portfolio.construction.closeAria']}
           >
             <X className="size-5" />
           </button>
@@ -188,7 +192,7 @@ export function PortfolioConstructionModal({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3.5 rounded-field border border-line bg-surface-subtle/70">
           <div>
             <label htmlFor="pc-construction-risk-tier" className="block text-[11px] font-semibold text-subtle uppercase mb-1">
-              Client Risk Tier
+              {strings['portfolio.construction.riskTierLabel']}
             </label>
             <select
               id="pc-construction-risk-tier"
@@ -196,16 +200,16 @@ export function PortfolioConstructionModal({
               onChange={(e) => setRiskTier(e.target.value as RiskTierEnum)}
               className="w-full text-xs rounded border border-line bg-surface px-2.5 py-1.5 font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              <option value="conservative">Conservative (λ = 8.0, Max Dur 3.5y)</option>
-              <option value="moderate">Moderate (λ = 4.5, Max Dur 5.5y)</option>
-              <option value="aggressive">Aggressive (λ = 2.5, Max Dur 7.5y)</option>
-              <option value="very_aggressive">Very Aggressive (λ = 1.2, Max Dur 10y)</option>
+              <option value="conservative">{strings['portfolio.construction.riskTier.conservative']}</option>
+              <option value="moderate">{strings['portfolio.construction.riskTier.moderate']}</option>
+              <option value="aggressive">{strings['portfolio.construction.riskTier.aggressive']}</option>
+              <option value="very_aggressive">{strings['portfolio.construction.riskTier.veryAggressive']}</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="pc-construction-jurisdiction" className="block text-[11px] font-semibold text-subtle uppercase mb-1">
-              Market Jurisdiction
+              {strings['portfolio.construction.jurisdictionLabel']}
             </label>
             <select
               id="pc-construction-jurisdiction"
@@ -213,16 +217,16 @@ export function PortfolioConstructionModal({
               onChange={(e) => setJurisdiction(e.target.value as JurisdictionEnum)}
               className="w-full text-xs rounded border border-line bg-surface px-2.5 py-1.5 font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              <option value="GLOBAL">Global & Cross-Border (US, EU, GCC, Asia)</option>
-              <option value="INDIA">India (NSE, G-Secs, SEBI Funds)</option>
-              <option value="UAE">UAE & GCC (DFM, Sovereign Sukuk, SCA)</option>
+              <option value="GLOBAL">{strings['portfolio.construction.jurisdiction.global']}</option>
+              <option value="INDIA">{strings['portfolio.construction.jurisdiction.india']}</option>
+              <option value="UAE">{strings['portfolio.construction.jurisdiction.uae']}</option>
             </select>
           </div>
 
           <div>
             {/* Caption, not a label: a <label for> here would replace the toggle's own state-bearing name. */}
             <span className="block text-[11px] font-semibold text-subtle uppercase mb-1">
-              Sharia Compliance Filter
+              {strings['portfolio.construction.shariaLabel']}
             </span>
             <button
               type="button"
@@ -234,7 +238,7 @@ export function PortfolioConstructionModal({
               }`}
             >
               <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              {shariaOnly ? 'SCA Sharia-Certified Only' : 'All Asset Types (Conventional & Sukuk)'}
+              {shariaOnly ? strings['portfolio.construction.sharia.on'] : strings['portfolio.construction.sharia.off']}
             </button>
           </div>
 
@@ -245,7 +249,7 @@ export function PortfolioConstructionModal({
               className="w-full py-1.5 text-xs font-semibold gap-1.5"
             >
               <RefreshCw className={`size-3.5 ${isPending ? 'animate-spin' : ''}`} />
-              {isPending ? 'Solving Optimization...' : 'Re-Solve Optimal Portfolio'}
+              {isPending ? strings['portfolio.construction.solving'] : strings['portfolio.construction.resolve']}
             </Button>
           </div>
         </div>
@@ -253,7 +257,7 @@ export function PortfolioConstructionModal({
         {/* Top Summary Metrics */}
         {result && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {summaryMetrics(result).map(({ label, value, note, tone }) => (
+            {summaryMetrics(result, strings).map(({ label, value, note, tone }) => (
               <MetricCard key={label} label={label} value={value} note={note} tone={tone} />
             ))}
           </div>
@@ -261,7 +265,7 @@ export function PortfolioConstructionModal({
 
         <div
           role="tablist"
-          aria-label="Portfolio construction sections"
+          aria-label={strings['portfolio.construction.tablistLabel']}
           className="flex border-b border-line text-xs font-medium gap-1"
           onKeyDown={handleTabKeyDown}
         >
@@ -303,17 +307,17 @@ export function PortfolioConstructionModal({
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-line pt-4">
           <span className="text-xs text-subtle">
-            Syntropy AI Wealth Platform · Expanded Portfolio Construction Engine
+            {strings['portfolio.construction.footer.tagline']}
           </span>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={onClose} className="text-xs">
-              Close
+              {strings['portfolio.construction.footer.close']}
             </Button>
             <a
               href="/advisory"
               className="rounded-field bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 dark:text-brand-950 flex items-center gap-1"
             >
-              Consult Copilot with Allocation
+              {strings['portfolio.construction.footer.consult']}
               <ChevronRight className="size-3.5" />
             </a>
           </div>

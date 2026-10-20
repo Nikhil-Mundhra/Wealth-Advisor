@@ -1,35 +1,36 @@
 import type { ConstructPortfolioResponse, RiskTierEnum } from '@wealth-advisor/contracts';
 import { CheckCircle2 } from 'lucide-react';
+import { useStrings } from '../../../../lib/dictionaries.ts';
 
-function complianceRows(result: ConstructPortfolioResponse, riskTier: RiskTierEnum, shariaOnly: boolean) {
+function complianceRows(result: ConstructPortfolioResponse, riskTier: RiskTierEnum, shariaOnly: boolean, strings: ReturnType<typeof useStrings>) {
   const checks = result.complianceChecks;
   return [
     {
-      title: 'SCA / AAOIFI Sharia Compliance',
+      title: strings['portfolio.construction.compliance.shariaTitle'],
       passed: checks.shariaPassed,
       body: shariaOnly
-        ? 'Strict filter verified: All portfolio holdings are certified Sharia-compliant sukuk or non-financial equities with compliant debt ratios.'
-        : 'Dual-jurisdiction portfolio contains compliant sovereign sukuk alongside conventional diversification assets.',
+        ? strings['portfolio.construction.compliance.sharia.strict']
+        : strings['portfolio.construction.compliance.sharia.dual'],
     },
     {
-      title: 'Fund House Concentration Cap (≤ 15%)',
+      title: strings['portfolio.construction.compliance.fundHouseTitle'],
       passed: checks.fundHouseCapPassed,
-      body: 'No single asset management company or sponsor exceeds the 15% maximum portfolio concentration limit.',
+      body: strings['portfolio.construction.compliance.fundHouseBody'],
     },
     {
-      title: 'Minimum Liquidity Factor (≥ 0.70)',
+      title: strings['portfolio.construction.compliance.liquidityTitle'],
       passed: checks.liquidityPassed,
-      body: 'All allocated instruments possess verified daily trading volume meeting institutional liquidity criteria.',
+      body: strings['portfolio.construction.compliance.liquidityBody'],
     },
     {
-      title: `Duration Risk Ceiling (${riskTier.toUpperCase()})`,
+      title: strings['portfolio.construction.compliance.durationTitle'].replace('{riskTier}', riskTier.toUpperCase()),
       passed: checks.durationCapPassed,
-      body: `Duration-weighted bond exposure (${result.durationWeightedExposure} yrs) sits within the risk tier fiduciary ceiling.`,
+      body: strings['portfolio.construction.compliance.durationBody'].replace('{duration}', result.durationWeightedExposure.toFixed(1)),
     },
     {
-      title: 'Single Sector Exposure Limit (≤ 30%)',
+      title: strings['portfolio.construction.compliance.sectorTitle'],
       passed: checks.sectorCapsPassed,
-      body: 'No single macroeconomic industry sector exceeds 30% of total equity and credit exposure.',
+      body: strings['portfolio.construction.compliance.sectorBody'],
     },
   ] as const;
 }
@@ -55,14 +56,16 @@ export function ComplianceTab({
   riskTier: RiskTierEnum;
   shariaOnly: boolean;
 }) {
+  const strings = useStrings();
+
   return (
     <div className="rounded-field border border-line bg-surface p-4 flex flex-col gap-3">
       <h3 className="text-xs font-bold uppercase tracking-wider text-subtle mb-1">
-        Fiduciary & Jurisdiction Rule Verification Matrix
+        {strings['portfolio.construction.compliance.matrixTitle']}
       </h3>
 
       <div className="space-y-2.5">
-        {complianceRows(result, riskTier, shariaOnly).map(({ title, body, passed }) => (
+        {complianceRows(result, riskTier, shariaOnly, strings).map(({ title, body, passed }) => (
           <ComplianceRow key={title} title={title} body={body} passed={passed} />
         ))}
       </div>
