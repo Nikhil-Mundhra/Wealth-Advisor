@@ -421,45 +421,51 @@ Respond ONLY in valid JSON with these keys:
 }`;
     const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
-    let data: any;
-    try {
-      data = (await this.http.postJson(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          model: this.model,
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            { role: 'user', content: context.message },
-          ],
-          temperature: 0.2,
-        },
-        {
-          timeoutMs: ADVISORY_HTTP_TIMEOUT_MS,
-          headers: {
-            authorization: `Bearer ${key}`,
-            'http-referer': 'https://syntropy.finance',
-            'x-title': 'Syntropy Wealth Advisor',
+    const candidateModels = [
+      this.model,
+      'minimax/minimax-m3.1-flash:free',
+      'google/gemma-4-26b-a4b-it:free',
+      'openrouter/free',
+    ].filter((m, i, arr) => arr.indexOf(m) === i);
+
+    let lastError: unknown = null;
+    for (const modelToTry of candidateModels) {
+      try {
+        const data = (await this.http.postJson(
+          'https://openrouter.ai/api/v1/chat/completions',
+          {
+            model: modelToTry,
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              { role: 'user', content: context.message },
+            ],
+            temperature: 0.2,
           },
-        },
-      )) as any;
-    } catch (err: unknown) {
-      throw AdvisoryErrors.gatewayUnavailable(
-        `OpenRouter request failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+          {
+            timeoutMs: 10000,
+            headers: {
+              authorization: `Bearer ${key}`,
+              'http-referer': 'https://syntropy.finance',
+              'x-title': 'Syntropy Wealth Advisor',
+            },
+          },
+        )) as any;
+
+        const content = data?.choices?.[0]?.message?.content;
+        if (content) {
+          return narrate(base, parseJsonSafe(content), fullPrompt);
+        }
+      } catch (err) {
+        lastError = err;
+      }
     }
 
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw AdvisoryErrors.gatewayUnavailable('OpenRouter returned an empty completion');
-    try {
-      return narrate(base, parseJsonSafe(content), fullPrompt);
-    } catch (err: unknown) {
-      throw AdvisoryErrors.gatewayUnavailable(
-        `OpenRouter response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+    throw AdvisoryErrors.gatewayUnavailable(
+      `OpenRouter request failed across candidate models: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+    );
   }
 }
 

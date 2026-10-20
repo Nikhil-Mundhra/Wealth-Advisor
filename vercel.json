@@ -9,7 +9,8 @@
     "backend": {
       "root": "backend/",
       "framework": "hono",
-      "entrypoint": "src/app.ts"
+      "entrypoint": "src/app.ts",
+      "maxDuration": 60
     }
   },
   "rewrites": [
