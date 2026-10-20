@@ -22,6 +22,7 @@ import { SettingsNav } from './settings-nav.tsx';
 export function SecuritySettingsPage() {
   const strings = useStrings();
   const me = useMe();
+  const isAdvisor = me.data?.roles.includes('ADVISOR') ?? false;
   const logout = useLogout();
   const profile = useProfile(me.data?.email);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -79,7 +80,7 @@ export function SecuritySettingsPage() {
         )}
       </Card>
 
-      <ConnectedAdvisorCard />
+      {!isAdvisor && <ConnectedAdvisorCard />}
 
       <Card aria-label={strings['security.tiers']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.tiers']}</h2>

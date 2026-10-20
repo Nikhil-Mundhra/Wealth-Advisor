@@ -11,7 +11,6 @@ import {
   ScrollText,
   Settings,
   Shield,
-  ShieldCheck,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -126,7 +125,11 @@ export function AppShell() {
   const clientTabs = CLIENT_TABS.filter((tab) => tab.to !== '/advisory' || showAdvisoryTab);
 
   const isAdminSection = location.pathname.startsWith('/admin');
-  const isAdvisorSection = location.pathname.startsWith('/advisor');
+  const isAdvisorSection =
+    location.pathname.startsWith('/advisor') ||
+    // Advisors reach /settings/* from the workstation sidebar; keep the advisor chrome there.
+    // ADVISOR role only — admins keep the client chrome on settings as before.
+    (location.pathname.startsWith('/settings') && (me?.roles.includes('ADVISOR') ?? false));
 
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">
@@ -211,10 +214,6 @@ export function AppShell() {
                 {strings[key]}
               </NavLink>
             ))}
-            <NavLink to="/evidence" className={linkClass}>
-              <ShieldCheck aria-hidden className="size-5 text-emerald-600 dark:text-emerald-400" />
-              <span>Evidence & Audit</span>
-            </NavLink>
             <div className="my-2 border-t border-line" />
             <NavLink to="/settings/security" className={linkClass}>
               <Settings aria-hidden className="size-5" />
