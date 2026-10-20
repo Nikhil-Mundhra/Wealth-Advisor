@@ -32,5 +32,8 @@ describe('wealth optimize routes', () => {
     });
     assert.equal(response.status, 200);
     assert.equal((await json(response)).effectiveRiskScore, 5.0);
+    // The bodyless call above persisted 6.0; this what-if must leave the stored score untouched.
+    const storedAfter = await app.app.request('/api/wealth/portfolio');
+    assert.equal(((await storedAfter.json()) as Record<string, unknown>).effectiveRiskScore, 6.0);
   });
 });
