@@ -7,6 +7,7 @@ import {
   deriveTimeHorizonYears,
   mapStressAnswerToRiskBand,
   rankRelevantCurrencies,
+  recalibrateRiskScore,
   type ProfilingAnswersInput,
 } from '@wealth-advisor/rules';
 
@@ -98,5 +99,12 @@ describe('profiling.rule', () => {
     };
     const highScore = calculateBaseRiskScore(aggressiveAnswers);
     assert.equal(highScore, 10.0);
+  });
+
+  it('scores exactly 6.0 months runway as recovered for a family household', () => {
+    assert.equal(
+      recalibrateRiskScore({ baseRiskScore: 7.0, runwayMonths: 6.0, householdMode: 'FAMILY_HOUSEHOLD' }),
+      7.0,
+    );
   });
 });

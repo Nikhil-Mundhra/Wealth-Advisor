@@ -5,6 +5,7 @@ import {
   ConstructPortfolioResponse,
   ExecuteTradeRequest,
   ExecuteTradeResponse,
+  OptimizePortfolioRequest,
   PortfolioResponse,
   RebalanceProposalResponse,
   RiskProfileResponse,
@@ -38,11 +39,12 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
 
     RouteBuilder.post('/optimize')
       .use(...guard)
+      .body(OptimizePortfolioRequest)
       .responds(RebalanceProposalResponse)
-      .handle(async ({ c }) => {
+      .handle(async ({ c, body }) => {
         const { tenantId, userId } = scope(c);
         const targetUserId = c.req.query('clientId') || userId;
-        return api.optimizePortfolio(tenantId, targetUserId);
+        return api.optimizePortfolio(tenantId, targetUserId, body);
       }),
 
     RouteBuilder.post('/construct')

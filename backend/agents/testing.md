@@ -30,6 +30,7 @@ backend/test/integration/market/market-routes.suite.ts : quotes, fx (query valid
 backend/test/integration/market/market-routes.test.ts : runs the market-routes suite on mongod
 backend/test/integration/scoped-routes/route-guards.memory.test.ts : ADMIN role on the admin console, householdMode query validation, a signed-in caller for every write, share only a held portfolio
 backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
+backend/test/integration/wealth/wealth-optimize-routes.memory.test.ts : optimize body reaches recalibration; FX mismatch penalty in the route response
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
 backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders, weekdays, generated Marketstack pages
@@ -76,6 +77,6 @@ backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public
 backend/test/unit/sharing/sharing-api.test.ts : share tokens and TTL, snapshot from the caller's rebalance proposal, no portfolio refused, seeded demo link
 backend/test/unit/sharing/sharing-routes.test.ts : share-link creation files under the principal the auth guard resolved
 backend/test/unit/wealth/asset-product-seeds.test.ts : catalog covers every optimizer symbol; re-seed repairs legacy rows without duplicates
-backend/test/unit/wealth/risk-recalibration.test.ts : runway and FX mismatch penalties, floor clamp, seeded Elena recalibration
+backend/test/unit/wealth/risk-recalibration.test.ts : runway and FX mismatch penalties, floor clamp, seeded Elena recalibration, what-if overrides never persisted
 backend/test/unit/wealth/wealth-api.test.ts : portfolio rebalancing, passkey presence and verifier refusal, ledger digests
 ```

@@ -292,7 +292,11 @@ export interface RiskRecalibrationInput {
 // capital preservation regardless of stated willingness; the penalty is asymmetric (loss aversion).
 export function recalibrateRiskScore(input: RiskRecalibrationInput): number {
   let score = input.baseRiskScore;
+  // Individuals need a smaller buffer, so their healthy bar equals the critical bar: the -1 warning branch below is
+  // intentionally unreachable for INDIVIDUAL, and only FAMILY_HOUSEHOLD pays the warning-band penalty.
   const healthyMonths = input.householdMode === 'FAMILY_HOUSEHOLD' ? RUNWAY_HEALTHY_MONTHS : RUNWAY_CRITICAL_MONTHS;
+  // Exactly 6.0 scores as recovered (strict <) while runwayBand still reports warning (<=): the score is lenient at
+  // the boundary but the UI keeps attention until the buffer is above 6 months.
   if (!Number.isFinite(input.runwayMonths) || input.runwayMonths < RUNWAY_CRITICAL_MONTHS) {
     score -= 2.0;
   } else if (input.runwayMonths < healthyMonths) {

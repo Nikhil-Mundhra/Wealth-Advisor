@@ -59,6 +59,32 @@ describe('ClaudeLlmAdapter', () => {
     assert.match(res.complianceDisclaimer, /sandbox/i);
   });
 
+  it('discards model-invented numbers and keeps the engine figures', async () => {
+    const adapter = new ClaudeLlmAdapter(
+      'test-anthropic-key',
+      undefined,
+      stubHttp({
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              reply: 'Runway stands at 9.9 months with a €1,000,000 bonus.',
+              personalFinance: 'Monthly net burn is €99999.',
+              crossBorder: 'Shields the EUR/CNY corridor with 0% risk.',
+              wealthStrategy: 'Shifts portfolio from 99% equities down.',
+            }),
+          },
+        ],
+      }),
+    );
+    const res = await adapter.chat(context);
+    assert.ok(!res.reply.includes('9.9'), `invented runway leaked: ${res.reply}`);
+    assert.match(res.reply, /3\.2/);
+    assert.ok(!res.threePillarRationale.personalFinance.includes('99999'));
+    assert.ok(!res.threePillarRationale.crossBorder.includes('0%'));
+    assert.ok(!res.threePillarRationale.wealthStrategy.includes('99%'));
+  });
+
   it('falls back to the deterministic mock without a key', async () => {
     const adapter = new ClaudeLlmAdapter(undefined, undefined, stubHttp({}));
     const res = await adapter.chat(context);

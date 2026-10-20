@@ -59,6 +59,20 @@ describe('recalibrateRiskScore', () => {
     );
   });
 
+  it('leaves an individual with a healthy runway untouched', () => {
+    assert.equal(
+      recalibrateRiskScore({ baseRiskScore: 4.0, runwayMonths: 4.0, householdMode: 'INDIVIDUAL' }),
+      4.0,
+    );
+  });
+
+  it('treats a non-finite runway as critical', () => {
+    assert.equal(
+      recalibrateRiskScore({ baseRiskScore: 7.0, runwayMonths: NaN, householdMode: 'INDIVIDUAL' }),
+      5.0,
+    );
+  });
+
   it('drops two points on a student tuition shock below critical runway', () => {
     assert.equal(
       recalibrateRiskScore({ baseRiskScore: 6.5, runwayMonths: 1.8, householdMode: 'INDIVIDUAL' }),
@@ -82,9 +96,7 @@ describe('recalibrateRiskScore', () => {
 describe('optimizePortfolio recalibration', () => {
   it('recalibrates the seeded Elena portfolio from 4.0 to 6.0', async () => {
     const wealth = setupWealth();
-    const proposal = await wealth.optimizePortfolio('default', 'default', {
-      householdMode: 'FAMILY_HOUSEHOLD',
-    });
+    const proposal = await wealth.optimizePortfolio('default', 'default');
     assert.equal(proposal.effectiveRiskScore, 6.0);
     const stored = await wealth.getPortfolio('default', 'default');
     assert.equal(stored.effectiveRiskScore, 6.0);
@@ -97,5 +109,16 @@ describe('optimizePortfolio recalibration', () => {
       fxMismatchPct: 40,
     });
     assert.equal(proposal.effectiveRiskScore, 5.0);
+  });
+
+  it('never persists caller what-if overrides into the stored score', async () => {
+    const wealth = setupWealth();
+    const proposal = await wealth.optimizePortfolio('default', 'default', {
+      householdMode: 'FAMILY_HOUSEHOLD',
+      fxMismatchPct: 40,
+    });
+    assert.equal(proposal.effectiveRiskScore, 5.0);
+    const stored = await wealth.getPortfolio('default', 'default');
+    assert.equal(stored.effectiveRiskScore, 4.0);
   });
 });
