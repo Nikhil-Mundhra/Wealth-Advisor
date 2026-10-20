@@ -519,7 +519,7 @@ Respond ONLY in valid JSON with these keys:
             temperature: 0.2,
           },
           {
-            timeoutMs: 10000,
+            timeoutMs: 6000,
             headers: {
               authorization: `Bearer ${key}`,
               'http-referer': 'https://syntropy.finance',
