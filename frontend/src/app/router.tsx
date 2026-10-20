@@ -28,14 +28,14 @@ import { AppShell } from '../components/layout/app-shell.tsx';
 
 export const router = createBrowserRouter([
   { path: '/home', element: <HomePage />, errorElement: <RouteErrorBoundary /> },
-  { path: '/admin/login', element: <AdminLoginPage />, errorElement: <RouteErrorBoundary /> },
-  { path: '/advisor/login', element: <AdvisorLoginPage />, errorElement: <RouteErrorBoundary /> },
   {
     element: <GuestRoute />,
     errorElement: <RouteErrorBoundary />,
     children: [
       { path: '/signup', element: <SignupPage /> },
       { path: '/login', element: <LoginPage /> },
+      { path: '/admin/login', element: <AdminLoginPage /> },
+      { path: '/advisor/login', element: <AdvisorLoginPage /> },
     ],
   },
   // Root path: Anonymous visitors get HomePage; Authenticated users get AppShell with DashboardPage
