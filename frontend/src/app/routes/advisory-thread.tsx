@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Share2, Shield, CheckCircle2, ArrowRight } from 'lucide-react';
-import { AdvisoryChatResponse, CreateShareLinkResponse } from '@wealth-advisor/contracts';
+import { AdvisoryChatResponse, CreateShareLinkResponse, ProposalPayloadDto } from '@wealth-advisor/contracts';
 import type { Currency, HouseholdMode } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
@@ -43,6 +43,8 @@ interface Message {
   text: string;
   threePillarRationale?: ThreePillars;
   complianceDisclaimer?: string;
+  proposal?: ProposalPayloadDto;
+  notice?: string;
 }
 
 const SEED: Message[] = [
@@ -59,6 +61,20 @@ const SEED: Message[] = [
     complianceDisclaimer: 'Syntropy AI runs deterministic simulations for education only and does not constitute formal investment solicitation.',
   },
 ];
+
+// The proposal card mirrors the latest PROPOSAL action card, never a hardcoded sleeve mix.
+function parseProposalCard(res: AdvisoryChatResponse): ProposalPayloadDto | undefined {
+  const proposalCard = res.actionCards.find((card) => card.cardType === 'PROPOSAL');
+  const parsed = proposalCard ? ProposalPayloadDto.safeParse(proposalCard.payload) : null;
+  return parsed?.success ? parsed.data : undefined;
+}
+
+// An optimizer failure arrives as a NOTICE card so the thread shows it instead of silent empty holdings.
+function parseNoticeCard(res: AdvisoryChatResponse): string | undefined {
+  const noticeCard = res.actionCards.find((card) => card.cardType === 'NOTICE');
+  const message = noticeCard?.payload?.message;
+  return typeof message === 'string' ? message : undefined;
+}
 
 // Store-free copilot thread; every client fact arrives via context so advisor and client views share it.
 export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
@@ -108,6 +124,8 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           text: res.reply,
           threePillarRationale: res.threePillarRationale,
           complianceDisclaimer: res.complianceDisclaimer,
+          proposal: parseProposalCard(res),
+          notice: parseNoticeCard(res),
         },
       ]);
     } catch {
@@ -238,6 +256,10 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     setPending(false);
     setStepUp(false);
   }
+
+  // The proposal card mirrors the latest PROPOSAL action card, never a hardcoded sleeve mix.
+  const latestProposal = [...messages].reverse().find((message) => message.proposal)?.proposal;
+  const latestNotice = [...messages].reverse().find((message) => message.notice)?.notice;
 
   return (
     <div className="flex flex-col gap-6">
@@ -378,35 +400,39 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
         </div>
 
         {/* Proposed Allocation Shifts */}
-        <div className="mt-3 grid gap-2 sm:grid-cols-3 text-xs">
-          <div className="rounded bg-surface-subtle p-2.5">
-            <p className="text-subtle">Equities (CSPX)</p>
-            <p className="mt-1 font-display text-sm font-semibold text-ink flex items-center gap-1.5">
-              <span>60%</span>
-              <ArrowRight aria-hidden className="size-3 text-subtle" />
-              <span className="text-brand-700 dark:text-brand-900">40%</span>
-              <span className="text-danger text-[11px]">(-20%)</span>
-            </p>
+        {latestNotice && (
+          <div className="mt-3">
+            <Alert tone="info">{latestNotice}</Alert>
           </div>
-          <div className="rounded bg-surface-subtle p-2.5">
-            <p className="text-subtle">EUR Overnight Cash (XEON)</p>
-            <p className="mt-1 font-display text-sm font-semibold text-ink flex items-center gap-1.5">
-              <span>15%</span>
-              <ArrowRight aria-hidden className="size-3 text-subtle" />
-              <span className="text-brand-700 dark:text-brand-900">25%</span>
-              <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">(+10%)</span>
-            </p>
+        )}
+        {latestProposal && latestProposal.holdings.length > 0 ? (
+          <div className="mt-3 grid gap-2 sm:grid-cols-3 text-xs">
+            {latestProposal.holdings.map((holding) => {
+              const hasCurrent = holding.symbol in latestProposal.currentWeights;
+              const current = latestProposal.currentWeights[holding.symbol] ?? 0;
+              const deltaPp = (holding.weight - current) * 100;
+              return (
+                <div key={holding.symbol} className="rounded bg-surface-subtle p-2.5">
+                  <p className="text-subtle">
+                    {holding.symbol} · {holding.securityType}
+                  </p>
+                  <p className="mt-1 font-display text-sm font-semibold text-ink flex items-center gap-1.5">
+                    {hasCurrent && <span>{(current * 100).toFixed(0)}%</span>}
+                    {hasCurrent && <ArrowRight aria-hidden className="size-3 text-subtle" />}
+                    <span className="text-brand-700 dark:text-brand-900">{(holding.weight * 100).toFixed(0)}%</span>
+                    {hasCurrent && (
+                      <span className={deltaPp >= 0 ? 'text-emerald-600 dark:text-emerald-400 text-[11px]' : 'text-danger text-[11px]'}>
+                        ({deltaPp >= 0 ? '+' : ''}{deltaPp.toFixed(0)}%)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-          <div className="rounded bg-surface-subtle p-2.5">
-            <p className="text-subtle">EUR Govt Bonds (IEAG)</p>
-            <p className="mt-1 font-display text-sm font-semibold text-ink flex items-center gap-1.5">
-              <span>25%</span>
-              <ArrowRight aria-hidden className="size-3 text-subtle" />
-              <span className="text-brand-700 dark:text-brand-900">35%</span>
-              <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">(+10%)</span>
-            </p>
-          </div>
-        </div>
+        ) : (
+          !latestNotice && <p className="mt-3 text-xs text-subtle">No proposal yet — ask the copilot for a rebalancing plan.</p>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={openStepUp}>

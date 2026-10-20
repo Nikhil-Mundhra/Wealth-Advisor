@@ -4,6 +4,10 @@ import type { AssetProductDocument } from '../documents/asset-product.document.t
 // Canonical catalog: every symbol the optimizer can propose exists here, so the
 // PROPOSAL card never references an unknown product. Shared by the Mongo seed
 // script and the in-memory repository to keep both catalogs identical.
+// listedVsReference: VWCE.DE, IEGA.AS, VWRL.AS, CSPX.LSE, XEON.XETRA, INFY.NSE and
+// EMAAR.DFM are real exchange listings; HDFC_TOP100, UAE_SOV_SUKUK_2029, FAB_SUKUK_2030
+// and IN_GSEC_718_2033 are synthetic reference-priced IDs (fund NAV / face-plus-yield),
+// never sent down a live market-data path.
 export const ASSET_PRODUCT_SEEDS: Array<Omit<AssetProductDocument, '_id' | 'updatedAt'>> = [
   {
     symbol: 'CSPX.LSE',
@@ -81,7 +85,7 @@ export const ASSET_PRODUCT_SEEDS: Array<Omit<AssetProductDocument, '_id' | 'upda
     isActive: true,
   },
   {
-    symbol: 'IEAG.AMS',
+    symbol: 'IEGA.AS',
     name: 'iShares Core EUR Govt Bond UCITS ETF',
     assetClass: 'FIXED_INCOME_GOV',
     securityType: 'MUTUAL_FUND_ETF',
@@ -187,8 +191,9 @@ export const ASSET_PRODUCT_SEEDS: Array<Omit<AssetProductDocument, '_id' | 'upda
   },
 ];
 
-// Insert-when-missing per symbol: existing databases keep their rows (no duplicates
-// on re-runs) while upgrades gain the instruments added after their first seed.
+// Insert-when-missing per symbol, then repair legacy rows in place: databases
+// seeded before the securityType column (or an assetClass rename) gain the current
+// catalog values on re-runs, while _id identity is preserved via $setOnInsert.
 export async function upsertAssetProducts(
   col: Pick<Collection<AssetProductDocument>, 'updateOne'>,
   now: Date,
@@ -198,7 +203,7 @@ export async function upsertAssetProducts(
   for (const product of ASSET_PRODUCT_SEEDS) {
     const result = await col.updateOne(
       { symbol: product.symbol },
-      { $setOnInsert: { ...product, _id: new ObjectId(), updatedAt: now } },
+      { $set: { ...product, updatedAt: now }, $setOnInsert: { _id: new ObjectId() } },
       { upsert: true },
     );
     if (result.upsertedCount > 0) inserted += 1;

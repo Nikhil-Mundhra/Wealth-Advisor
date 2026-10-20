@@ -25,16 +25,17 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
 
       // The model narrates engine output only: optimizer holdings at the portfolio risk tier
       // travel with the prompt so the PROPOSAL card carries stocks, bonds and ETFs together.
+      // An optimizer failure is surfaced as a NOTICE card, never silent empty holdings.
       const proposal = await wealth
         .constructPortfolio(tenantId, userId, { riskTier: mapScoreToRiskTier(portfolio.effectiveRiskScore) })
         .catch((err) => {
-          console.warn('[advisory] constructPortfolio failed, continuing without proposal holdings', err);
+          console.warn('[advisory] constructPortfolio failed, continuing with a NOTICE card', err);
           return null;
         });
 
       const provider = getActiveProvider ? await getActiveProvider() : 'mock';
 
-      return gateway.chat(provider, {
+      const res = await gateway.chat(provider, {
         message: input.message,
         locale,
         householdMode,
@@ -42,6 +43,20 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
         portfolio,
         proposalHoldings: proposal?.holdings ?? [],
       });
+      if (proposal !== null) return res;
+      return {
+        ...res,
+        actionCards: [
+          ...res.actionCards,
+          {
+            cardType: 'NOTICE' as const,
+            payload: {
+              code: 'PROPOSAL_UNAVAILABLE',
+              message: 'The optimizer could not build a proposal for this portfolio; allocations below are unavailable.',
+            },
+          },
+        ],
+      };
     },
   };
 }

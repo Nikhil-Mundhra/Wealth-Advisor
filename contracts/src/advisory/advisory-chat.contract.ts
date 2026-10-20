@@ -4,7 +4,7 @@ import { CandidateSecurityTypeDto } from '../wealth/portfolio-construction.contr
 import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const ActionCardDto = z.object({
-  cardType: z.enum(['PROPOSAL', 'STRESS_TEST', 'RUNWAY_ALERT', 'PRODUCT_COMPARISON']),
+  cardType: z.enum(['PROPOSAL', 'STRESS_TEST', 'RUNWAY_ALERT', 'PRODUCT_COMPARISON', 'NOTICE']),
   payload: z.record(z.string(), z.any()),
 });
 export type ActionCardDto = z.infer<typeof ActionCardDto>;

@@ -30,7 +30,7 @@ The platform implements the core neuro-symbolic division of labor codified by mo
 │         @wealth-advisor/rules: ±5% Drift Corridors, Runway Bands, FX Shock  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Tier 4: Standardized MCP Tool Bus & Institutional Product Catalog           │
-│         UCITS ETFs (VWCE, CSPX, IEAG), Overnight Cash (XEON), Currency Hedges│
+│         UCITS ETFs (VWCE, CSPX, IEGA), Overnight Cash (XEON), Currency Hedges│
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Tier 5: Verification, Permission Tiers & SHA-256 Tamper-Evident Ledger      │
 │         Tier 1 (AI Suggests) → Tier 2 (Advisor Signs) → Tier 3 (Client Sees)│
@@ -59,7 +59,7 @@ One-click pre-meeting briefing modal distilling the client record into:
 A dedicated comparison tool covering real UCITS instruments and money market vehicles:
 - **VWCE.DE** (Vanguard FTSE All-World UCITS ETF) — 0.22% TER, Physical Accumulating
 - **CSPX.LSE** (iShares Core S&P 500 UCITS ETF) — 0.07% TER, Physical Accumulating, 15% US withholding tax efficiency
-- **IEAG.AMS** (iShares Core EUR Govt Bond UCITS ETF) — 0.09% TER, AAA/AA Sovereign Fixed Income
+- **IEGA.AS** (iShares Core EUR Govt Bond UCITS ETF) — 0.09% TER, AAA/AA Sovereign Fixed Income
 - **AGGH.LSE** (iShares Core Global Aggregate Bond EUR Hedged) — 0.10% TER, Systematic FX Hedged
 - **XEON.XET** (Xtrackers II EUR Overnight Rate Swap UCITS ETF) — 0.10% TER, €STR Capital Preservation Buffer
 

@@ -224,5 +224,27 @@ describe('AdvisoryApi', () => {
     });
     assert.ok(res.threePillarRationale.wealthStrategy.includes('from 0% equities'));
   });
+
+  it('surfaces an optimizer failure as a NOTICE card instead of silent empty holdings', async () => {
+    const { finance, wealth } = setupApis();
+    const api = createAdvisoryApi({
+      finance,
+      wealth: {
+        ...wealth,
+        constructPortfolio: async () => {
+          throw new Error('optimizer down');
+        },
+      },
+      gateway: new LlmGateway(),
+    });
+    const res = await api.chat('default', 'default', {
+      message: 'How should my portfolio adapt?',
+      locale: 'en',
+      householdMode: 'FAMILY_HOUSEHOLD',
+    });
+    const notice = res.actionCards.find((card) => card.cardType === 'NOTICE');
+    assert.ok(notice, 'expected a NOTICE action card on optimizer failure');
+    assert.equal(notice.payload.code, 'PROPOSAL_UNAVAILABLE');
+  });
 });
 

@@ -255,7 +255,7 @@ export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
     maxWeightCap: 0.35,
   },
   {
-    symbol: 'IEAG.AMS',
+    symbol: 'IEGA.AS',
     name: 'iShares Core EUR Govt Bond UCITS ETF',
     assetClass: 'FIXED_INCOME_GOV',
     sector: 'Eurozone Sovereign Debt',

@@ -23,7 +23,7 @@ const RESPONSE: ConstructPortfolioResponse = {
     {
       symbol: 'VTI',
       name: 'Vanguard Total Stock Market',
-      assetClass: 'Equity',
+      assetClass: 'EQUITY_US',
       sector: 'Broad Market',
       securityType: 'STOCK',
       weight: 0.6,
@@ -39,7 +39,7 @@ const RESPONSE: ConstructPortfolioResponse = {
     {
       symbol: 'SUKUK',
       name: 'Sovereign Sukuk 2031',
-      assetClass: 'Fixed Income',
+      assetClass: 'SUKUK_SOVEREIGN',
       sector: 'Sovereign',
       securityType: 'BOND',
       weight: 0.4,
