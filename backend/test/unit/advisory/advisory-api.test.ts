@@ -288,7 +288,7 @@ describe('AdvisoryApi', () => {
       });
 
       assert.equal(requestedUrl, 'https://openrouter.ai/api/v1/chat/completions');
-      assert.equal(requestedBody?.model, 'nvidia/nemotron-3-ultra-550b-a55b:free');
+      assert.equal(requestedBody?.model, 'openrouter/free');
       assert.equal(authHeader, 'Bearer sk-or-v1-test-nemotron-key');
       assert.ok(res.reply.includes('Nemotron reasoning'));
     } finally {

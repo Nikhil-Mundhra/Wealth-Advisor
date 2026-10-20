@@ -192,7 +192,7 @@ function narrate(base: AdvisoryChatResponse, parsed: Record<string, unknown>, pr
   };
 }
 
-const ADVISORY_HTTP_TIMEOUT_MS = 15000;
+const ADVISORY_HTTP_TIMEOUT_MS = 25000;
 
 export type ApiKeyResolver = string | (() => Promise<string | undefined> | string | undefined);
 
@@ -386,7 +386,7 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
     apiKey?: ApiKeyResolver,
     fallback: LlmAdapter = new MockLlmAdapter(),
     http: HttpClient = createHttpClient(),
-    model: string = 'nvidia/nemotron-3-ultra-550b-a55b:free',
+    model: string = 'openrouter/free',
   ) {
     this.apiKey = apiKey;
     this.fallback = fallback;
