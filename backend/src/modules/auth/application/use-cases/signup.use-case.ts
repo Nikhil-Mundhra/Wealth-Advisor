@@ -48,7 +48,8 @@ export class SignupUseCase implements UseCase<SignupCommand, SignupResult> {
       }
     }
 
-    const roles = command.clientRole === 'ADVISOR' ? (['USER', 'ADVISOR'] as const) : (['USER'] as const);
+    // Public signup always issues the base role; elevated roles are granted through the admin console only.
+    const roles = ['USER'] as const;
     const now = clock.now();
 
     const user = User.registerWithEmail({

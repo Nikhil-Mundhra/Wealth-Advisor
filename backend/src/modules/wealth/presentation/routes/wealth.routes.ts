@@ -1,4 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
+import { WEALTH_ERROR_CODES, hasAdvisorRole } from '@wealth-advisor/rules';
+import { DomainError } from '#core/domain/domain-error.ts';
 import {
   AssetProductListResponse,
   ConstructPortfolioRequest,
@@ -18,8 +20,20 @@ import type { WealthApi } from '../../wealth.api.ts';
 export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth: MiddlewareHandler): readonly RouteDefinition[] {
   const guard = [auth];
   const scope = (c: Context) => {
-    const { tenantId, userId } = c.get('principal');
-    return { tenantId, userId };
+    const principal = c.get('principal') as { tenantId: string; userId: string; roles: readonly string[] };
+    const { tenantId, userId } = principal;
+    const roles = principal.roles ?? [];
+    return { tenantId, userId, roles };
+  };
+
+  // A caller reads another user's portfolio only with an advisor or admin role; everyone else
+  // gets 404, so user IDs are not enumerable through this query param.
+  const targetOrOwn = (userId: string, roles: readonly string[], clientId: string | undefined): string => {
+    const targetUserId = clientId || userId;
+    if (targetUserId !== userId && !hasAdvisorRole(roles)) {
+      throw new DomainError(WEALTH_ERROR_CODES.portfolioNotFound, 'portfolio not found');
+    }
+    return targetUserId;
   };
 
   return [
@@ -32,8 +46,8 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
       .use(...guard)
       .responds(PortfolioResponse)
       .handle(async ({ c }) => {
-        const { tenantId, userId } = scope(c);
-        const targetUserId = c.req.query('clientId') || userId;
+        const { tenantId, userId, roles } = scope(c);
+        const targetUserId = targetOrOwn(userId, roles, c.req.query('clientId'));
         return api.getPortfolio(tenantId, targetUserId);
       }),
 
@@ -42,8 +56,8 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
       .body(OptimizePortfolioRequest)
       .responds(RebalanceProposalResponse)
       .handle(async ({ c, body }) => {
-        const { tenantId, userId } = scope(c);
-        const targetUserId = c.req.query('clientId') || userId;
+        const { tenantId, userId, roles } = scope(c);
+        const targetUserId = targetOrOwn(userId, roles, c.req.query('clientId'));
         return api.optimizePortfolio(tenantId, targetUserId, body);
       }),
 
