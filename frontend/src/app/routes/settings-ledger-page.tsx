@@ -1,20 +1,35 @@
-import { Download, ShieldCheck } from 'lucide-react';
+import { Download, FileJson } from 'lucide-react';
 import { Button } from '../../components/ui/button.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { downloadCsv, serializeLedgerToCsv, type LedgerRow } from '../../lib/csv-export.ts';
 import { DEMO_LEDGER } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
+import { downloadJson, serializeLedgerToJson } from '../../lib/json-export.ts';
 import { useReveal } from '../../lib/use-reveal.ts';
 import { useSandboxLedger } from '../../features/wealth/api/use-sandbox-ledger.ts';
 import { SettingsNav } from './settings-nav.tsx';
 
-// Tamper-evident sandbox executions with audit digests, settings subnav and CSV export.
+interface DisplayEntry {
+  action: string;
+  at: string;
+  tier: string;
+  digest: string;
+  passkeyVerified: boolean;
+  status: string;
+  fullDigest: string | null;
+  initialHash: string | null;
+  resultingHash: string | null;
+  transactionHash: string | null;
+  trades: string[];
+}
+
+// Tamper-evident sandbox executions with audit digests, settings subnav and CSV/JSON export.
 export function SettingsLedgerPage() {
   const strings = useStrings();
   const { ref, visible } = useReveal<HTMLDivElement>();
   const { data: ledgerData, isLoading } = useSandboxLedger();
 
-  const liveEntries = (ledgerData?.entries ?? []).map((entry) => {
+  const liveEntries: DisplayEntry[] = (ledgerData?.entries ?? []).map((entry) => {
     const tradeSummary = entry.executedTrades && entry.executedTrades.length > 0
       ? entry.executedTrades.map((t) => `${t.action} ${t.assetSymbol} (${(t.targetWeight * 100).toFixed(0)}%)`).join(', ')
       : entry.orderType.replace(/_/g, ' ');
@@ -32,13 +47,28 @@ export function SettingsLedgerPage() {
       digest: entry.auditDigest.slice(0, 16) + '…',
       passkeyVerified: Boolean(entry.passkeyAssertionProof?.signature),
       status: entry.status,
+      fullDigest: entry.auditDigest,
+      initialHash: entry.initialPortfolioStateHash,
+      resultingHash: entry.resultingPortfolioStateHash,
+      transactionHash: entry.transactionHash,
+      trades: (entry.executedTrades ?? []).map(
+        (t) => `${t.action} ${t.assetSymbol} → ${(t.targetWeight * 100).toFixed(0)}% target`,
+      ),
     };
   });
 
-  const displayEntries = liveEntries.length > 0 ? liveEntries : DEMO_LEDGER.map((e) => ({
-    ...e,
+  const displayEntries: DisplayEntry[] = liveEntries.length > 0 ? liveEntries : DEMO_LEDGER.map((e) => ({
+    action: e.action,
+    at: e.at,
+    tier: e.tier,
+    digest: e.digest,
     passkeyVerified: e.tier === 'TIER_3_EXECUTE',
     status: 'COMMITTED',
+    fullDigest: null,
+    initialHash: null,
+    resultingHash: null,
+    transactionHash: null,
+    trades: [],
   }));
 
   const isLive = liveEntries.length > 0;
@@ -56,6 +86,25 @@ export function SettingsLedgerPage() {
       baselineCurrency: 'EUR',
     });
     downloadCsv('tax-sandbox-ledger-2026-09.csv', csv);
+  }
+
+  function handleExportJson() {
+    const entries = displayEntries.map((entry) => ({
+      timestamp: entry.at,
+      action: entry.action,
+      tier: entry.tier,
+      auditDigest: entry.fullDigest ?? entry.digest,
+      passkeyProofPresent: entry.passkeyVerified,
+      status: entry.status,
+      initialPortfolioStateHash: entry.initialHash,
+      resultingPortfolioStateHash: entry.resultingHash,
+      transactionHash: entry.transactionHash,
+      executedTrades: entry.trades,
+    }));
+    downloadJson(
+      'tax-sandbox-ledger-2026-09.json',
+      serializeLedgerToJson(entries, { period: 'September 2026', baselineCurrency: 'EUR' }),
+    );
   }
 
   return (
@@ -86,15 +135,26 @@ export function SettingsLedgerPage() {
             </span>
           )}
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleExportCsv}
-          className="flex items-center gap-2"
-        >
-          <Download aria-hidden className="size-4" />
-          <span>{strings['settings.ledger.export']}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportJson}
+            className="flex items-center gap-2"
+          >
+            <FileJson aria-hidden className="size-4" />
+            <span>Export JSON</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportCsv}
+            className="flex items-center gap-2"
+          >
+            <Download aria-hidden className="size-4" />
+            <span>{strings['settings.ledger.export']}</span>
+          </Button>
+        </div>
       </div>
 
       <section
@@ -128,6 +188,29 @@ export function SettingsLedgerPage() {
                   <th scope="row" className="px-4 py-3 text-left font-normal">
                     {entry.action}
                     <span className="block text-xs text-subtle">{entry.at}</span>
+                    {entry.initialHash && entry.resultingHash ? (
+                      <details className="mt-1 text-xs">
+                        <summary className="cursor-pointer text-brand-700 dark:text-brand-900">
+                          Before → after state diff
+                        </summary>
+                        <dl className="mt-1.5 flex flex-col gap-1 font-mono text-[11px] text-subtle">
+                          <div className="flex gap-1.5">
+                            <dt>Before:</dt>
+                            <dd className="break-all">{entry.initialHash}</dd>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <dt>After:</dt>
+                            <dd className="break-all">{entry.resultingHash}</dd>
+                          </div>
+                          {entry.trades.map((trade) => (
+                            <div key={trade} className="flex gap-1.5">
+                              <dt>Trade:</dt>
+                              <dd className="break-all">{trade}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </details>
+                    ) : null}
                   </th>
                   <td className="px-4 py-3">
                     <span

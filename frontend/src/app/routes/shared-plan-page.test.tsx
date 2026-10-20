@@ -21,4 +21,13 @@ describe('SharedPlanPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Show amounts' }));
     expect(screen.getByText('€57,000')).toBeVisible();
   });
+
+  it('shows the stress simulation when the live plan is unavailable', async () => {
+    setLocale('en');
+    renderShare();
+
+    expect(await screen.findByText('Live plan unavailable. Showing the demo allocation baseline.')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Stress Simulation (−5% EUR Shock)' })).toBeVisible();
+    expect(screen.getByText(/Deterministic illustration/)).toBeVisible();
+  });
 });

@@ -110,6 +110,8 @@ frontend/src/features/marketing/components/particles-background.tsx : theme-awar
 frontend/src/features/marketing/components/positioning-matrix-section.tsx : strategic positioning comparison matrix for B2B2C vs B2C
 frontend/src/features/marketing/components/triad-overview-section.tsx : overview of the triad architecture (Workflow OS, Semantic Graph, MIT Sloan)
 frontend/src/features/marketing/data/highlights.ts : highlight copy
+frontend/src/features/sharing/components/share-strategy-modal.test.tsx : masked share URL issuance and privacy toggle
+frontend/src/features/sharing/components/share-strategy-modal.tsx : read-only strategy URL modal with privacy masking toggle
 frontend/src/features/wealth/components/construction/allocation-tab.tsx : optimal multi-asset allocation table with weights, unit conversions, scores, and sharia status
 frontend/src/features/wealth/components/construction/compliance-tab.tsx : fiduciary and jurisdiction rule verification checklist driven by compliance flags
 frontend/src/features/wealth/components/construction/rationale-tab.tsx : six-pillar fiduciary rationale narrative with source model attribution

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Navigate, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import * as csvExport from '../../lib/csv-export.ts';
+import * as jsonExport from '../../lib/json-export.ts';
 import { setLocale } from '../../lib/locale-store.ts';
 import { SettingsLedgerPage } from './settings-ledger-page.tsx';
 
@@ -47,6 +48,27 @@ describe('SettingsLedgerPage', () => {
     expect(downloadSpy).toHaveBeenCalledTimes(1);
     expect(downloadSpy).toHaveBeenCalledWith(
       'tax-sandbox-ledger-2026-09.csv',
+      expect.stringContaining('Tax and Sandbox Execution Ledger'),
+    );
+    downloadSpy.mockRestore();
+  });
+
+  it('triggers JSON download on button click', async () => {
+    setLocale('en');
+    const downloadSpy = vi.spyOn(jsonExport, 'downloadJson').mockImplementation(() => {});
+
+    renderWithClient(
+      <MemoryRouter>
+        <SettingsLedgerPage />
+      </MemoryRouter>,
+    );
+
+    const exportBtn = screen.getByRole('button', { name: 'Export JSON' });
+    await userEvent.click(exportBtn);
+
+    expect(downloadSpy).toHaveBeenCalledTimes(1);
+    expect(downloadSpy).toHaveBeenCalledWith(
+      'tax-sandbox-ledger-2026-09.json',
       expect.stringContaining('Tax and Sandbox Execution Ledger'),
     );
     downloadSpy.mockRestore();
