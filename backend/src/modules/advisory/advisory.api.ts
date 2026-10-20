@@ -27,7 +27,10 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
       // travel with the prompt so the PROPOSAL card carries stocks, bonds and ETFs together.
       const proposal = await wealth
         .constructPortfolio(tenantId, userId, { riskTier: mapScoreToRiskTier(portfolio.effectiveRiskScore) })
-        .catch(() => null);
+        .catch((err) => {
+          console.warn('[advisory] constructPortfolio failed, continuing without proposal holdings', err);
+          return null;
+        });
 
       const provider = getActiveProvider ? await getActiveProvider() : 'mock';
 

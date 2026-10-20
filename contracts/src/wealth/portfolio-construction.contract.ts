@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SECURITY_TYPES } from '@wealth-advisor/rules';
+import { ASSET_CLASSES, SECURITY_TYPES } from '@wealth-advisor/rules';
 
 export const CandidateSecurityTypeDto = z.enum(SECURITY_TYPES);
 export type CandidateSecurityTypeDto = z.infer<typeof CandidateSecurityTypeDto>;
@@ -13,9 +13,9 @@ export type JurisdictionEnum = z.infer<typeof JurisdictionEnum>;
 export const AllocatedHoldingDto = z.object({
   symbol: z.string(),
   name: z.string(),
-  assetClass: z.string(),
+  assetClass: z.enum(ASSET_CLASSES),
   sector: z.string(),
-  securityType: z.string(),
+  securityType: CandidateSecurityTypeDto,
   weight: z.number(), // 0 to 1
   targetAmountBase: z.number().int(), // minor units / cents
   expectedReturn: z.number(),

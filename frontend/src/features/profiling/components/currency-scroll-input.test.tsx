@@ -6,6 +6,20 @@ import { CurrencyScrollInput } from './currency-scroll-input.tsx';
 import { getDenominationTiers } from '../lib/currency-denominations.ts';
 
 describe('CurrencyScrollInput', () => {
+  // Stub the clock: the momentum path depends on the gap between wheel events, not wall time.
+  function stubClock() {
+    let now = 1000;
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    return {
+      advance(ms: number): void {
+        now += ms;
+      },
+      restore(): void {
+        nowSpy.mockRestore();
+      },
+    };
+  }
+
   it('calibrates denomination tiers based on purchasing power and nominal scale', () => {
     expect(getDenominationTiers('AED')).toEqual([5, 10, 50, 100, 500]);
     expect(getDenominationTiers('USD')).toEqual([1, 5, 10, 25, 100]);
@@ -43,88 +57,93 @@ describe('CurrencyScrollInput', () => {
   });
 
   it('scrolls slowly to add low denomination (5 AED) and fast to add high denomination (500 AED)', () => {
-    // Wheel tiers derive from event timing, so pin the clock: consecutive events 5ms apart.
-    let now = 1000;
-    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const clock = stubClock();
     try {
       const onChange = vi.fn();
-    const { rerender } = render(
-      <CurrencyScrollInput
-        id="test-aed"
-        currency="AED"
-        value={100}
-        onChange={onChange}
-      />,
-    );
+      const { rerender } = render(
+        <CurrencyScrollInput
+          id="test-aed"
+          currency="AED"
+          value={100}
+          onChange={onChange}
+        />,
+      );
 
-    const input = screen.getByRole('spinbutton');
+      const input = screen.getByRole('spinbutton');
 
-    // Slow scroll up (low deltaY): steps by 5 AED (Tier 0)
-    fireEvent.wheel(input, { deltaY: -5 });
-    expect(onChange).toHaveBeenCalledWith(105);
-    // Fast scroll up (large deltaY with rapid velocity): steps by 500 AED (Tier 4)
-    onChange.mockClear();
-    rerender(
-      <CurrencyScrollInput
-        id="test-aed"
-        currency="AED"
-        value={100}
-        onChange={onChange}
-      />,
-    );
+      // Slow scroll up (low deltaY): steps by 5 AED (Tier 0)
+      fireEvent.wheel(input, { deltaY: -5 });
+      expect(onChange).toHaveBeenCalledWith(105);
 
-    now += 5;
-    fireEvent.wheel(input, { deltaY: -500 });
-    expect(onChange).toHaveBeenCalledWith(600);
+      // Fast scroll up (large deltaY with rapid velocity): steps by 500 AED (Tier 4)
+      clock.advance(16);
+      onChange.mockClear();
+      rerender(
+        <CurrencyScrollInput
+          id="test-aed"
+          currency="AED"
+          value={100}
+          onChange={onChange}
+        />,
+      );
+
+      fireEvent.wheel(input, { deltaY: -500 });
+      expect(onChange).toHaveBeenCalledWith(600);
     } finally {
-      nowSpy.mockRestore();
+      clock.restore();
     }
   });
 
   it('scales relatively for PPP in other currencies (USD: $1 to $100, INR: ₹100 to ₹10,000)', () => {
-    const onChangeUsd = vi.fn();
-    const { rerender } = render(
-      <CurrencyScrollInput
-        id="test-usd"
-        currency="USD"
-        value={50}
-        onChange={onChangeUsd}
-      />,
-    );
+    const clock = stubClock();
+    try {
+      const onChangeUsd = vi.fn();
+      const { rerender } = render(
+        <CurrencyScrollInput
+          id="test-usd"
+          currency="USD"
+          value={50}
+          onChange={onChangeUsd}
+        />,
+      );
 
-    const inputUsd = screen.getByRole('spinbutton');
+      const inputUsd = screen.getByRole('spinbutton');
 
-    // Slow scroll up in USD: steps by $1
-    fireEvent.wheel(inputUsd, { deltaY: -5 });
-    expect(onChangeUsd).toHaveBeenCalledWith(51);
+      // Slow scroll up in USD: steps by $1
+      fireEvent.wheel(inputUsd, { deltaY: -5 });
+      expect(onChangeUsd).toHaveBeenCalledWith(51);
 
-    // Fast scroll up in USD: steps by $100
-    onChangeUsd.mockClear();
-    rerender(
-      <CurrencyScrollInput
-        id="test-usd"
-        currency="USD"
-        value={50}
-        onChange={onChangeUsd}
-      />,
-    );
-    fireEvent.wheel(inputUsd, { deltaY: -500 });
-    expect(onChangeUsd).toHaveBeenCalledWith(150);
+      // Fast scroll up in USD: steps by $100
+      clock.advance(16);
+      onChangeUsd.mockClear();
+      rerender(
+        <CurrencyScrollInput
+          id="test-usd"
+          currency="USD"
+          value={50}
+          onChange={onChangeUsd}
+        />,
+      );
+      fireEvent.wheel(inputUsd, { deltaY: -500 });
+      expect(onChangeUsd).toHaveBeenCalledWith(150);
 
-    // INR Test
-    const onChangeInr = vi.fn();
-    render(
-      <CurrencyScrollInput
-        id="test-inr"
-        currency="INR"
-        value={1000}
-        onChange={onChangeInr}
-      />,
-    );
+      // INR Test
+      const onChangeInr = vi.fn();
+      render(
+        <CurrencyScrollInput
+          id="test-inr"
+          currency="INR"
+          value={1000}
+          onChange={onChangeInr}
+        />,
+      );
 
-    const inputInr = screen.getAllByRole('spinbutton')[1];
-    fireEvent.wheel(inputInr, { deltaY: -5 });
-    expect(onChangeInr).toHaveBeenCalledWith(1100); // 1000 + 100 INR
+      const inputInr = screen.getAllByRole('spinbutton')[1];
+      fireEvent.wheel(inputInr, { deltaY: -5 });
+      expect(onChangeInr).toHaveBeenCalledWith(1100); // 1000 + 100 INR
+    } finally {
+      clock.restore();
+    }
   });
 
   it('handles keyboard arrow navigation and clamps at 0', () => {

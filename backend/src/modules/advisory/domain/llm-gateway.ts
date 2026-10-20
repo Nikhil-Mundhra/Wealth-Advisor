@@ -32,11 +32,13 @@ export function summarizeProposal(holdings: readonly { symbol: string; securityT
 } {
   const weightOf = (securityType: string) =>
     holdings.filter((h) => h.securityType === securityType).reduce((sum, h) => sum + h.weight, 0);
+  const stockPct = Math.round(weightOf('STOCK') * 100);
+  const bondPct = Math.round(weightOf('BOND') * 100);
   const top = [...holdings].sort((a, b) => b.weight - a.weight)[0];
   return {
-    stockPct: Math.round(weightOf('STOCK') * 100),
-    bondPct: Math.round(weightOf('BOND') * 100),
-    etfPct: Math.round(weightOf('MUTUAL_FUND_ETF') * 100),
+    stockPct,
+    bondPct,
+    etfPct: 100 - stockPct - bondPct, // derived so the three shares always sum to 100
     topSymbol: top?.symbol ?? 'CSPX.LSE',
     topWeightPct: top ? Math.round(top.weight * 100) : 0,
   };
@@ -51,27 +53,20 @@ export class MockLlmAdapter implements LlmAdapter {
 
     // Find key asset allocations dynamically
     const currentWeights: Record<string, number> = {};
-    const targetWeights: Record<string, number> = {};
     let equityWeight = 0;
     let targetEquityWeight = 0;
-    let topHoldingSymbol = proposalHoldings[0]?.symbol ?? 'CSPX.LSE';
-    let maxWeight = 0;
+    // The proposal top holding is the single source: the optimizer mix, not the legacy sleeves.
+    const { stockPct, bondPct, etfPct, topSymbol: topHoldingSymbol } = summarizeProposal(proposalHoldings);
 
     for (const h of portfolio.holdings) {
       currentWeights[h.assetSymbol] = h.currentWeight;
-      targetWeights[h.assetSymbol] = h.targetWeight;
       if (h.assetClass.startsWith('EQUITY')) {
         equityWeight += h.currentWeight;
         targetEquityWeight += h.targetWeight;
       }
-      if (h.currentWeight > maxWeight) {
-        maxWeight = h.currentWeight;
-        topHoldingSymbol = h.assetSymbol;
-      }
     }
 
     // Optimizer targets by security type; the proposal card carries the full per-holding mix.
-    const { stockPct, bondPct, etfPct } = summarizeProposal(proposalHoldings);
     const proposalTargets: Record<string, number> = {};
     for (const h of proposalHoldings) proposalTargets[h.symbol] = h.weight;
 
@@ -91,9 +86,9 @@ export class MockLlmAdapter implements LlmAdapter {
 
     const replies: Record<Locale, string> = {
       en: `Based on your ${isFamily ? 'family household' : 'individual'} profile, your current liquid runway stands at ${burnMonths.toFixed(1)} months. Because you maintain cross-border remittance commitments to East Asia, our deterministic optimizer recommends rebalancing ${equityPct > targetEquityPct ? `${equityPct - targetEquityPct}% of your equities (principally ${topHoldingSymbol})` : 'your portfolio allocations'} into high-yield sovereign bonds and short-term EUR liquidity buffers to absorb FX currency fluctuations.${mixLine.en}`,
-      'zh-CN': `根据您的${isFamily ? '家庭' : '个人'}财务规划，当前流动资金储备周期为 ${burnMonths.toFixed(1)} 个月。鉴于您需要定期向东亚进行跨境汇款，我们的确定性计算引擎建议将股票资产（尤其是 ${topHoldingSymbol}）再平衡至短期欧元流动性与高收益主权债券，以抵御汇率波动风险。`,
-      'zh-HK': `根據您的${isFamily ? '家庭' : '個人'}財務規劃，當前流動資金儲備週期為 ${burnMonths.toFixed(1)} 個月。鑑於您需要定期向東亞進行跨境匯款，我們的確定性計算引擎建議將股票資產（尤其是 ${topHoldingSymbol}）再平衡至短期歐元流動性與高收益主權債券，以抵禦匯率波動風險。`,
-      de: `Basierend auf Ihrem ${isFamily ? 'Familienhaushalt' : 'Einzelhaushalt'} beträgt Ihre liquide Notfallreserve ${burnMonths.toFixed(1)} Monate. Angesichts Ihrer regelmäßigen Auslandsüberweisungen nach Ostasien empfiehlt unser finanzmathematischer Optimierer, Teile Ihrer Aktien (${topHoldingSymbol}) in kurzfristige EUR-Liquidität und Staatsanleihen umzuschichten.`,
+      'zh-CN': `根据您的${isFamily ? '家庭' : '个人'}财务规划，当前流动资金储备周期为 ${burnMonths.toFixed(1)} 个月。鉴于您需要定期向东亚进行跨境汇款，我们的确定性计算引擎建议将股票资产（尤其是 ${topHoldingSymbol}）再平衡至短期欧元流动性与高收益主权债券，以抵御汇率波动风险。${mixLine['zh-CN']}`,
+      'zh-HK': `根據您的${isFamily ? '家庭' : '個人'}財務規劃，當前流動資金儲備週期為 ${burnMonths.toFixed(1)} 個月。鑑於您需要定期向東亞進行跨境匯款，我們的確定性計算引擎建議將股票資產（尤其是 ${topHoldingSymbol}）再平衡至短期歐元流動性與高收益主權債券，以抵禦匯率波動風險。${mixLine['zh-HK']}`,
+      de: `Basierend auf Ihrem ${isFamily ? 'Familienhaushalt' : 'Einzelhaushalt'} beträgt Ihre liquide Notfallreserve ${burnMonths.toFixed(1)} Monate. Angesichts Ihrer regelmäßigen Auslandsüberweisungen nach Ostasien empfiehlt unser finanzmathematischer Optimierer, Teile Ihrer Aktien (${topHoldingSymbol}) in kurzfristige EUR-Liquidität und Staatsanleihen umzuschichten.${mixLine.de}`,
     };
 
     const disclaimers: Record<Locale, string> = {
@@ -141,7 +136,7 @@ export class MockLlmAdapter implements LlmAdapter {
             weight: h.weight,
           })),
           currentWeights: hasHoldings ? currentWeights : {},
-          targetWeights: hasHoldings ? targetWeights : proposalTargets,
+          targetWeights: proposalTargets, // holdings ARE the proposal; never the legacy sleeves
           valuationTotalBase: portfolio.totalValuationBase,
         },
       },

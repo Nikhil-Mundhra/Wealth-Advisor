@@ -176,6 +176,20 @@ describe('AdvisoryApi', () => {
     assert.ok(types.has('MUTUAL_FUND_ETF'), `expected a MUTUAL_FUND_ETF holding, got ${[...types]}`);
     const totalWeight = payload.holdings.reduce((sum, h) => sum + h.weight, 0);
     assert.ok(Math.abs(totalWeight - 1.0) < 0.001, `weights sum to ${totalWeight}`);
+    // The proposal holdings ARE the proposal: targetWeights must mirror them exactly.
+    assert.deepEqual(Object.keys(payload.targetWeights).sort(), payload.holdings.map((h) => h.symbol).sort());
+  });
+
+  it('appends the optimizer mix line to non-English replies', async () => {
+    const { api } = setup();
+    for (const locale of ['zh-CN', 'zh-HK', 'de'] as const) {
+      const res = await api.chat('default', 'default', {
+        message: '汇率波动怎么办？',
+        locale,
+        householdMode: 'FAMILY_HOUSEHOLD',
+      });
+      assert.ok(res.reply.includes('ETF'), `expected optimizer mix in ${locale} reply`);
+    }
   });
 
   it('reports 0% equities for a portfolio holding no equities, avoiding falsy-zero default', async () => {

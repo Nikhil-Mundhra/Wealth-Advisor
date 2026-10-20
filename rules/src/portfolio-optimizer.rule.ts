@@ -49,9 +49,9 @@ export interface OptimizationConstraints {
 export interface AllocatedHoldingResult {
   symbol: string;
   name: string;
-  assetClass: string;
+  assetClass: AssetClass;
   sector: string;
-  securityType: string;
+  securityType: SecurityType;
   weight: number; // 0 to 1
   targetAmountBase: number;
   expectedReturn: number;

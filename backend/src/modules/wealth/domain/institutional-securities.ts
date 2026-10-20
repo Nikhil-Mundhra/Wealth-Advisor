@@ -295,7 +295,7 @@ export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
   {
     symbol: 'HDFC_TOP100',
     name: 'HDFC Top 100 Equity Mutual Fund',
-    assetClass: 'EQUITY_GLOBAL',
+    assetClass: 'EQUITY_INDIA',
     sector: 'Indian Large Cap Equity',
     securityType: 'MUTUAL_FUND_ETF',
     currentPrice: 980,

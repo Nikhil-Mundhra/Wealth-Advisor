@@ -62,7 +62,8 @@ function toProductDto(doc: AssetProductDocument): AssetProductDto {
     symbol: doc.symbol,
     name: doc.name,
     assetClass: doc.assetClass,
-    securityType: doc.securityType,
+    // Older databases predate the securityType column; default so reads never emit undefined.
+    securityType: doc.securityType ?? 'MUTUAL_FUND_ETF',
     denominationCurrency: doc.denominationCurrency,
     riskRating: doc.riskRating,
     expenseRatio: doc.expenseRatio,
