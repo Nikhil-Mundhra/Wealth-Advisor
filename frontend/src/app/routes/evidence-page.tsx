@@ -22,6 +22,7 @@ import {
 import { Button } from '../../components/ui/button.tsx';
 import { Card, cardClassName } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
+import { SettingsNav } from './settings-nav.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { useSandboxLedger } from '../../features/wealth/api/use-sandbox-ledger.ts';
 import { downloadCsv, serializeLedgerToCsv, type LedgerRow } from '../../lib/csv-export.ts';
@@ -169,6 +170,7 @@ export function EvidencePage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full">
+      <SettingsNav />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div>
