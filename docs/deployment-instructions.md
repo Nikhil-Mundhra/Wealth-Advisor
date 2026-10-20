@@ -8,15 +8,15 @@ Facts for shipping the app. Environment values live in `infra/docs/env.md`. Rout
 |---|---|---|
 | Vercel production | push to `main` | Vercel builds both services from `vercel.json` and serves traffic |
 | Local production bundle | `make prod` | builds the frontend, serves SPA plus API from one Node process |
-| Local nginx front | `make proxy` | builds the SPA, serves it through nginx in front of the backend |
-| Local Vercel routing check | `make vercel-dev` | runs the `vercel.json` rewrites locally in the foreground |
+| Local nginx front | `make proxy` | builds the SPA, serves it through nginx in front of the backend (needs Docker; start the API separately with `make backend`) |
+| Local Vercel routing check | `make vercel-dev` | runs the `vercel.json` rewrites locally in the foreground (needs the Vercel CLI and a linked project) |
 
 ## Secrets
 
 | Secret | Location | Scope |
 |---|---|---|
 | `MONGODB_URI` (production) | Vercel project settings | Production only |
-| `AUTH_JWT_PRIVATE_KEY`, `AUTH_JWT_PUBLIC_KEY` (`make jwt-keys`) | Vercel project settings | Production only, never Preview |
+| `AUTH_JWT_PRIVATE_KEY`, `AUTH_JWT_PUBLIC_KEY` (`make jwt-keys`) | Vercel project settings | Production only, never Preview (Preview auth fails closed without keys; give Preview its own throwaway pair if login must work there) |
 | `MARKETSTACK_ACCESS_KEY`, `CRON_SECRET` | Vercel project settings | Production (market refresh) |
 | Local development values | repo-root `.env` | local runs only, and nothing reads `.env.local` |
 
@@ -26,13 +26,13 @@ Vercel reads no env file. Local runs read only the repo-root `.env`. Nothing rea
 
 | Event | Action |
 |---|---|
-| First production deploy | run `make db-indexes` against the production `MONGODB_URI` |
+| First production deploy | run `MONGODB_URI=<production-uri> make db-indexes` (shell env overrides the local `.env`) |
 | A deploy adds or changes collections or indexes | run `make db-indexes` again |
 | Local demo data | run `make seed-demo` (refuses `NODE_ENV=production`) |
 
 ## Cron
 
-Vercel Cron calls `GET /api/market/refresh` weekdays at 23:00 UTC (`vercel.json`). It needs `MARKETSTACK_ACCESS_KEY` and `CRON_SECRET`. Without the key the endpoint answers `MK_1903`. With a wrong secret it answers `MK_1001`.
+Vercel Cron calls `GET /api/market/refresh` weekdays at 23:00 UTC (`vercel.json`). Auth runs first: a missing or wrong `CRON_SECRET` (or missing `Authorization` header) answers `MK_1001`. With a valid secret but no `MARKETSTACK_ACCESS_KEY` it answers `MK_1903`. The env var must be named `CRON_SECRET`. Vercel injects it as the bearer header automatically.
 
 ## Check after deploy
 
