@@ -8,7 +8,7 @@ Facts for shipping the app. Environment values live in `infra/docs/env.md`. Rout
 |---|---|---|
 | Vercel production | push to `main` | Vercel builds both services from `vercel.json` and serves traffic |
 | Local production bundle | `make prod` | builds the frontend, serves SPA plus API from one Node process |
-| Local nginx front | `make proxy` | builds the SPA, serves it through nginx in front of the backend (needs Docker; start the API separately with `make backend`) |
+| Local nginx front | `make proxy` | builds the SPA, serves it through nginx in front of the backend (needs Docker, plus `make backend` for the API) |
 | Local Vercel routing check | `make vercel-dev` | runs the `vercel.json` rewrites locally in the foreground (needs the Vercel CLI and a linked project) |
 
 ## Secrets
@@ -16,7 +16,7 @@ Facts for shipping the app. Environment values live in `infra/docs/env.md`. Rout
 | Secret | Location | Scope |
 |---|---|---|
 | `MONGODB_URI` (production) | Vercel project settings | Production only |
-| `AUTH_JWT_PRIVATE_KEY`, `AUTH_JWT_PUBLIC_KEY` (`make jwt-keys`) | Vercel project settings | Production only, never Preview (Preview auth fails closed without keys; give Preview its own throwaway pair if login must work there) |
+| `AUTH_JWT_PRIVATE_KEY`, `AUTH_JWT_PUBLIC_KEY` (`make jwt-keys`) | Vercel project settings | Production only, never Preview (Preview auth fails closed without keys, so give Preview its own throwaway pair if login must work there) |
 | `MARKETSTACK_ACCESS_KEY`, `CRON_SECRET` | Vercel project settings | Production (market refresh) |
 | Local development values | repo-root `.env` | local runs only, and nothing reads `.env.local` |
 
