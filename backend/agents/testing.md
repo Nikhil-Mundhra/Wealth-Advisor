@@ -76,7 +76,6 @@ backend/test/unit/rules/technical-analysis.rule.test.ts : RSI normalization, MA 
 backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public/off-graph imports on a fixture tree, core importing a module, cycle detection
 backend/test/unit/sharing/sharing-api.test.ts : share tokens and TTL, snapshot from the caller's rebalance proposal, no portfolio refused, seeded demo link
 backend/test/unit/sharing/sharing-routes.test.ts : share-link creation files under the principal the auth guard resolved
-<<<<<<< HEAD
 backend/test/unit/wealth/asset-product-seeds.test.ts : catalog covers every optimizer symbol; re-seed repairs legacy rows without duplicates
 backend/test/unit/wealth/risk-recalibration.test.ts : runway and FX mismatch penalties, floor clamp, seeded Elena recalibration, what-if overrides never persisted
 backend/test/unit/wealth/wealth-api.test.ts : portfolio rebalancing, passkey presence and verifier refusal, ledger digests
