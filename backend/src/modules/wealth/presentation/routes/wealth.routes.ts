@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { ADVISOR_ROLE, ADMIN_ROLE, WEALTH_ERROR_CODES } from '@wealth-advisor/rules';
+import { WEALTH_ERROR_CODES, hasAdvisorRole } from '@wealth-advisor/rules';
 import { DomainError } from '#core/domain/domain-error.ts';
 import {
   AssetProductListResponse,
@@ -21,7 +21,8 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
   const guard = [auth];
   const scope = (c: Context) => {
     const principal = c.get('principal') as { tenantId: string; userId: string; roles: readonly string[] };
-    const { tenantId, userId, roles } = principal;
+    const { tenantId, userId } = principal;
+    const roles = principal.roles ?? [];
     return { tenantId, userId, roles };
   };
 
@@ -29,7 +30,7 @@ export function wealthRoutes(api: WealthApi, auth: MiddlewareHandler, writeAuth:
   // gets 404, so user IDs are not enumerable through this query param.
   const targetOrOwn = (userId: string, roles: readonly string[], clientId: string | undefined): string => {
     const targetUserId = clientId || userId;
-    if (targetUserId !== userId && !roles.includes(ADVISOR_ROLE) && !roles.includes(ADMIN_ROLE)) {
+    if (targetUserId !== userId && !hasAdvisorRole(roles)) {
       throw new DomainError(WEALTH_ERROR_CODES.portfolioNotFound, 'portfolio not found');
     }
     return targetUserId;
