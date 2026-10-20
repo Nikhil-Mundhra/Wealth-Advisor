@@ -175,6 +175,39 @@ describe('PortfolioConstructionModal', () => {
     );
   });
 
+  it('seeds the tier and the first solve from defaultRiskScore', async () => {
+    render(<PortfolioConstructionModal open onClose={vi.fn()} defaultRiskScore={3.2} />, { wrapper });
+
+    // mapScoreToRiskTier maps 3.2 to conservative, and the first solve runs from that state.
+    const [riskSelect] = await screen.findAllByRole('combobox');
+    expect(riskSelect).toHaveValue('conservative');
+
+    await vi.waitFor(() =>
+      expect(wealthApi.constructPortfolio).toHaveBeenCalledWith({
+        riskTier: 'conservative',
+        jurisdiction: 'GLOBAL',
+        shariaOnly: false,
+        targetTotalValueBase: 9_500_000,
+      }),
+    );
+  });
+
+  it('re-seeds the tier when the selected client changes while the modal stays mounted', async () => {
+    const view = render(<PortfolioConstructionModal open onClose={vi.fn()} defaultRiskScore={5.5} />, { wrapper });
+    const [riskSelect] = await screen.findAllByRole('combobox');
+    expect(riskSelect).toHaveValue('moderate');
+
+    // The parent mounts this modal once, so a client switch arrives as a prop change.
+    view.rerender(<PortfolioConstructionModal open onClose={vi.fn()} defaultRiskScore={9} />);
+
+    expect(screen.getAllByRole('combobox')[0]).toHaveValue('very_aggressive');
+    await vi.waitFor(() =>
+      expect(wealthApi.constructPortfolio).toHaveBeenLastCalledWith(
+        expect.objectContaining({ riskTier: 'very_aggressive' }),
+      ),
+    );
+  });
+
   it('sends the same payload from the Re-Solve button as from the open effect', async () => {
     renderModal();
     await vi.waitFor(() => expect(wealthApi.constructPortfolio).toHaveBeenCalledTimes(1));

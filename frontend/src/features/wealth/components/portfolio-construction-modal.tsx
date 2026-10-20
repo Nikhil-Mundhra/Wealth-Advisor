@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronRight, RefreshCw, Scale, ShieldCheck, X } from 'lucide-react';
 import type { ConstructPortfolioResponse, JurisdictionEnum, RiskTierEnum } from '@wealth-advisor/contracts';
+import { mapScoreToRiskTier } from '@wealth-advisor/rules';
 import { Button } from '../../../components/ui/button.tsx';
 import { useConstructPortfolio } from '../api/use-construct-portfolio.ts';
 import { AllocationTab } from './construction/allocation-tab.tsx';
@@ -77,11 +78,17 @@ export function PortfolioConstructionModal({
   defaultRiskScore = 6.8,
   initialTotalValue = 95000,
 }: PortfolioConstructionModalProps) {
-  const [riskTier, setRiskTier] = useState<RiskTierEnum>('moderate');
+  // Lazy: the first solve reads this state, so it must start from the client's own score.
+  const [riskTier, setRiskTier] = useState<RiskTierEnum>(() => mapScoreToRiskTier(defaultRiskScore));
   const [jurisdiction, setJurisdiction] = useState<JurisdictionEnum>('GLOBAL');
   const [shariaOnly, setShariaOnly] = useState(false);
   const [whatIfRateShiftBps, setWhatIfRateShiftBps] = useState(0); // -200 to +200 bps
   const [activeTab, setActiveTab] = useState<TabId>('allocation');
+
+  // The parent mounts this modal once, so a client switch arrives only as a changed score prop.
+  useEffect(() => {
+    setRiskTier(mapScoreToRiskTier(defaultRiskScore));
+  }, [defaultRiskScore]);
 
   const { mutate: construct, data: result, isPending } = useConstructPortfolio();
 
