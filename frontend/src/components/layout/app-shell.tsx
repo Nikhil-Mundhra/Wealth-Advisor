@@ -188,7 +188,7 @@ export function AppShell() {
             <div className="my-2 border-t border-line" />
             <NavLink to="/settings/security" className={linkClass}>
               <Settings aria-hidden className="size-5" />
-              {strings['settings.security']}
+              {strings['header.settings']}
             </NavLink>
             <div className="my-3 border-t border-line" />
             <NavLink to="/" className={linkClass}>
@@ -208,7 +208,7 @@ export function AppShell() {
             <div className="my-2 border-t border-line" />
             <NavLink to="/settings/security" className={linkClass}>
               <Settings aria-hidden className="size-5" />
-              {strings['settings.security']}
+              {strings['header.settings']}
             </NavLink>
             <NavLink to="/settings/ledger" className={linkClass}>
               <ScrollText aria-hidden className="size-5" />
@@ -264,7 +264,7 @@ export function AppShell() {
           <div className="flex items-center gap-2">
             <LanguageSelect />
             <ThemeToggle />
-            {isAdminSection ? (
+            {isAdminSection && (
               <NavLink
                 to="/"
                 aria-label="Exit Admin"
@@ -272,22 +272,6 @@ export function AppShell() {
               >
                 <ArrowLeft aria-hidden className="size-3.5 text-subtle" />
                 <span>Exit Admin</span>
-              </NavLink>
-            ) : isAdvisorSection ? (
-              <NavLink
-                to="/settings/security"
-                aria-label={strings['header.settings']}
-                className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-              >
-                <Settings aria-hidden className="size-5" />
-              </NavLink>
-            ) : (
-              <NavLink
-                to="/settings/security"
-                aria-label={strings['header.settings']}
-                className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-              >
-                <Settings aria-hidden className="size-5" />
               </NavLink>
             )}
           </div>
@@ -338,7 +322,7 @@ export function AppShell() {
             </NavLink>
             <NavLink to="/settings/security" className={tabClass}>
               <Settings aria-hidden className="size-5" />
-              <span>Security</span>
+              <span>{strings['header.settings']}</span>
             </NavLink>
             <NavLink to="/" className={tabClass}>
               <ArrowLeft aria-hidden className="size-5" />

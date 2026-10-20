@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { AppShell } from './app-shell.tsx';
@@ -42,8 +42,16 @@ describe('AppShell', () => {
       expect(screen.getAllByRole('link', { name }).length).toBeGreaterThanOrEqual(2);
     }
 
-    // Security & settings are present
-    expect(screen.getByRole('link', { name: 'Settings' })).toBeVisible();
+    // Settings is present in sidebar and labelled Settings (not Security)
+    const settingsLink = screen.getByRole('link', { name: 'Settings' });
+    expect(settingsLink).toBeVisible();
+    expect(settingsLink).toHaveAttribute('href', '/settings/security');
+    expect(screen.queryByRole('link', { name: 'Security' })).toBeNull();
+
+    // Settings must NOT be in the top navbar header
+    const header = screen.getByRole('banner');
+    expect(within(header).queryByRole('link', { name: 'Settings' })).toBeNull();
+    expect(within(header).queryByRole('link', { name: 'Security' })).toBeNull();
 
     // Admin overview and Advisor workstation MUST NOT be present in Client Den
     expect(screen.queryByRole('link', { name: 'Admin Overview' })).toBeNull();
@@ -59,6 +67,16 @@ describe('AppShell', () => {
     // Advisor Overview tab
     expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Exit to Client App' })).toBeVisible();
+
+    // Settings is in advisor sidebar and labelled Settings
+    const advisorNav = screen.getByRole('navigation', { name: 'Advisor workstation navigation' });
+    expect(within(advisorNav).getByRole('link', { name: 'Settings' })).toBeVisible();
+    expect(within(advisorNav).queryByRole('link', { name: 'Security' })).toBeNull();
+
+    // Settings must NOT be in the top navbar header
+    const header = screen.getByRole('banner');
+    expect(within(header).queryByRole('link', { name: 'Settings' })).toBeNull();
+    expect(within(header).queryByRole('link', { name: 'Security' })).toBeNull();
 
     // Admin console items are NOT in advisor sidebar
     expect(screen.queryByRole('link', { name: 'User Accounts' })).toBeNull();
