@@ -13,8 +13,22 @@ export const PasskeyRegisterVerifyRequest = z.object({
   clientDataJson: z.string(),
   attestationObject: z.string(),
   deviceName: z.string().optional(),
+  publicKeySpki: z.string().optional(),
 });
 export type PasskeyRegisterVerifyRequest = z.infer<typeof PasskeyRegisterVerifyRequest>;
+
+export const PasskeyCredentialDto = z.object({
+  id: z.string(),
+  credentialId: z.string(),
+  deviceName: z.string(),
+  createdAt: z.string(),
+});
+export type PasskeyCredentialDto = z.infer<typeof PasskeyCredentialDto>;
+
+export const ListPasskeysResponse = z.object({
+  passkeys: z.array(PasskeyCredentialDto),
+});
+export type ListPasskeysResponse = z.infer<typeof ListPasskeysResponse>;
 
 export const PasskeyLoginOptionsResponse = z.object({
   challenge: z.string(),

@@ -5,8 +5,12 @@ import {
   ClientAdvisorProfileResponse,
   type ConnectAdvisorRequest,
   type CreateAdvisorInviteRequest,
+  ListPasskeysResponse,
   type LoginRequest,
   MeResponse,
+  PasskeyRegisterVerifyRequest,
+  PasskeyRegistrationOptionsResponse,
+  PasskeyStepUpVerifyResponse,
   type SignupRequest,
   SignupResponse,
   TokenPairResponse,
@@ -32,4 +36,12 @@ export const authApi = {
     apiRequest('/auth/advisor/invites', { response: AdvisorInviteListResponse, authenticated: true }),
   createAdvisorInvite: (body: CreateAdvisorInviteRequest) =>
     apiRequest('/auth/advisor/invites', { method: 'POST', body, response: AdvisorInviteDto, authenticated: true }),
+  getPasskeyRegistrationOptions: () =>
+    apiRequest('/auth/passkeys/register/options', { response: PasskeyRegistrationOptionsResponse, authenticated: true }),
+  verifyPasskeyRegistration: (body: PasskeyRegisterVerifyRequest) =>
+    apiRequest('/auth/passkeys/register/verify', { method: 'POST', body, response: PasskeyStepUpVerifyResponse, authenticated: true }),
+  listPasskeys: () =>
+    apiRequest('/auth/passkeys', { response: ListPasskeysResponse, authenticated: true }),
+  deletePasskey: (credentialId: string) =>
+    apiRequest(`/auth/passkeys/${encodeURIComponent(credentialId)}`, { method: 'DELETE', authenticated: true }),
 };

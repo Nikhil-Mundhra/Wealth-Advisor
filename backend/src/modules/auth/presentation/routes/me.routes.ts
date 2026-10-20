@@ -5,7 +5,11 @@ import {
   ClientAdvisorProfileResponse,
   ConnectAdvisorRequest,
   CreateAdvisorInviteRequest,
+  ListPasskeysResponse,
   MeResponse,
+  PasskeyRegisterVerifyRequest,
+  PasskeyRegistrationOptionsResponse,
+  PasskeyStepUpVerifyResponse,
 } from '@wealth-advisor/contracts';
 import { RouteBuilder, type RouteDefinition } from '#core/http/route-builder.ts';
 import type { AccessTokenSignerPort } from '../../application/ports/access-token-signer.port.ts';
@@ -15,6 +19,7 @@ import type { DeleteAccountUseCase } from '../../application/use-cases/delete-ac
 import type { GetConnectedAdvisorUseCase } from '../../application/use-cases/get-connected-advisor.use-case.ts';
 import type { GetMeUseCase } from '../../application/use-cases/get-me.use-case.ts';
 import type { ListAdvisorClientsUseCase } from '../../application/use-cases/list-advisor-clients.use-case.ts';
+import type { PasskeyUseCase } from '../../application/use-cases/passkey.use-case.ts';
 import { clearRefreshCookie } from '../cookies/refresh-cookie.ts';
 import { toMeResponse } from '../mappers/result-to-contract.mapper.ts';
 import { getPrincipal, requireAuth } from '../middleware/require-auth.ts';
@@ -27,6 +32,7 @@ export interface MeRouteDeps {
   readonly getConnectedAdvisor?: GetConnectedAdvisorUseCase;
   readonly listClients?: ListAdvisorClientsUseCase;
   readonly advisorInvites?: AdvisorInvitesUseCase;
+  readonly passkeys?: PasskeyUseCase;
 }
 
 export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
@@ -86,6 +92,41 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
         if (!deps.advisorInvites) throw new Error('advisorInvites use case not configured');
         const origin = new URL(c.req.url).origin;
         return deps.advisorInvites.createInvite(getPrincipal(c).userId, body, origin);
+      }),
+
+    RouteBuilder.get('/passkeys/register/options')
+      .use(authenticated)
+      .responds(PasskeyRegistrationOptionsResponse)
+      .handle(async ({ c }) => {
+        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        return deps.passkeys.getRegistrationOptions(getPrincipal(c).userId);
+      }),
+
+    RouteBuilder.post('/passkeys/register/verify')
+      .use(authenticated)
+      .body(PasskeyRegisterVerifyRequest)
+      .responds(PasskeyStepUpVerifyResponse)
+      .handle(async ({ c, body }) => {
+        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        const { userId, tenantId } = getPrincipal(c);
+        const res = await deps.passkeys.verifyRegistration(userId, tenantId ?? 'default', body);
+        return { verified: res.verified, assertionProof: body.credentialId };
+      }),
+
+    RouteBuilder.get('/passkeys')
+      .use(authenticated)
+      .responds(ListPasskeysResponse)
+      .handle(async ({ c }) => {
+        if (!deps.passkeys) return { passkeys: [] };
+        return deps.passkeys.list(getPrincipal(c).userId);
+      }),
+
+    RouteBuilder.delete('/passkeys/:credentialId')
+      .use(authenticated)
+      .handle(async ({ c }) => {
+        if (!deps.passkeys) return;
+        const credentialId = c.req.param('credentialId') ?? '';
+        await deps.passkeys.remove(getPrincipal(c).userId, credentialId);
       }),
   ];
 }

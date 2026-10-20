@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ShieldCheck } from 'lucide-react';
 import { COUNTRY_CURRENCY_MAP, CURRENCIES, PERMISSION_TIERS, type Currency } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
@@ -6,6 +8,8 @@ import { Card } from '../../components/ui/card.tsx';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
+import { authApi } from '../../features/auth/api/auth-api.ts';
+import { enrollPasskey } from '../../features/auth/api/passkey-client.ts';
 import { useDeleteAccount } from '../../features/auth/api/use-delete-account.ts';
 import { useLogout } from '../../features/auth/api/use-logout.ts';
 import { useMe } from '../../features/auth/api/use-me.ts';
@@ -21,6 +25,36 @@ export function SecuritySettingsPage() {
   const logout = useLogout();
   const profile = useProfile(me.data?.email);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollMsg, setEnrollMsg] = useState<string | null>(null);
+
+  const { data: passkeysData, refetch: refetchPasskeys } = useQuery({
+    queryKey: ['auth', 'passkeys'],
+    queryFn: () => authApi.listPasskeys().catch(() => ({ passkeys: [] })),
+    enabled: Boolean(me.data),
+    retry: false,
+  });
+
+  const passkeys = passkeysData?.passkeys ?? [];
+
+  async function handleEnroll() {
+    setEnrolling(true);
+    setEnrollMsg(null);
+    try {
+      const ok = await enrollPasskey();
+      if (ok) {
+        await refetchPasskeys();
+        setEnrollMsg('Passkey enrolled successfully for Tier 3 execution.');
+      } else {
+        setEnrollMsg('Passkey enrollment was cancelled.');
+      }
+    } catch {
+      setEnrollMsg('Passkey enrollment failed.');
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
   const deleteAccount = useDeleteAccount(() => {
     wipeUserDataFromBrowser(me.data?.email);
   });
@@ -60,8 +94,41 @@ export function SecuritySettingsPage() {
       </Card>
 
       <Card aria-label={strings['security.passkeys']}>
-        <h2 className="text-sm font-medium text-subtle">{strings['security.passkeys']}</h2>
-        <p className="mt-3 text-sm text-subtle">{strings['security.nopasskeys']}</p>
+        <div className="flex items-center justify-between border-b border-line pb-2.5">
+          <h2 className="text-sm font-medium text-subtle">{strings['security.passkeys']}</h2>
+          <Button
+            type="button"
+            variant="outline"
+            className="text-xs h-7 px-2.5"
+            loading={enrolling}
+            onClick={handleEnroll}
+          >
+            <ShieldCheck className="size-3 mr-1 text-brand-600" />
+            Enroll Passkey
+          </Button>
+        </div>
+        {enrollMsg && (
+          <div className="mt-2.5">
+            <Alert tone="info">{enrollMsg}</Alert>
+          </div>
+        )}
+        {passkeys.length === 0 ? (
+          <p className="mt-3 text-sm text-subtle">{strings['security.nopasskeys']}</p>
+        ) : (
+          <ul className="mt-3 flex flex-col divide-y divide-line">
+            {passkeys.map((pk) => (
+              <li key={pk.id} className="flex items-center justify-between py-2 text-xs">
+                <div>
+                  <p className="font-semibold text-ink">{pk.deviceName}</p>
+                  <p className="font-mono text-[10px] text-subtle">ID: {pk.credentialId.slice(0, 16)}…</p>
+                </div>
+                <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                  Tier 3 Active
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card aria-label="Reporting currency section">

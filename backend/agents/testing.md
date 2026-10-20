@@ -44,6 +44,7 @@ backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns,
 backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
 backend/test/unit/analytics/snapshot-inputs.test.ts : one price basis per symbol: adjusted only when every close has one
 backend/test/unit/auth/advisor-client-flow.test.ts : B2B2C advisor invite generation, delegation connection, and client listing
+backend/test/unit/auth/passkey-ceremony.test.ts : WebAuthn passkey registration, key extraction, signature verification, and rebalance execution gating
 backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts

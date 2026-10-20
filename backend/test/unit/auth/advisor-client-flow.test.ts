@@ -124,4 +124,51 @@ describe('B2B2C Advisor & Client Workflow', () => {
     assert.equal(roster.clients.length, 1);
     assert.equal(roster.clients[0].email, 'direct.client@example.com');
   });
+
+  it('populates live valuation, currency, runway, and risk band when metrics resolver is provided', async () => {
+    const { users, signup, clock } = setup();
+
+    const advisorId = new ObjectId().toHexString();
+    const tenantId = new ObjectId().toHexString();
+    const advisorUser = User.registerWithEmail({
+      id: advisorId,
+      tenantId,
+      email: Email.of('advisor.live@syntropy.ch'),
+      passwordHash: 'hashed_pw',
+      displayName: 'Live Advisor',
+      roles: ['USER', 'ADVISOR'],
+      now: clock.now(),
+    });
+    await users.insert(advisorUser);
+
+    const clientSignup = await signup.execute({
+      email: 'client.live@syntropy.ch',
+      password: 'SecurePassword123!',
+      displayName: 'Live Client',
+      advisorCode: `ADV-${advisorId}`,
+    });
+
+    const getClientMetrics = async (tId: string, clientUserIds: string[]) => {
+      assert.equal(tId, tenantId);
+      assert.deepEqual(clientUserIds, [clientSignup.userId]);
+      const map = new Map();
+      map.set(clientSignup.userId, {
+        totalValuationBase: 125000000,
+        currency: 'CHF',
+        runwayMonths: 24.5,
+        riskBand: 'AGGRESSIVE',
+      });
+      return map;
+    };
+
+    const listWithMetrics = new ListAdvisorClientsUseCase({ users, getClientMetrics });
+    const roster = await listWithMetrics.execute({ advisorId });
+
+    assert.equal(roster.clients.length, 1);
+    const client = roster.clients[0];
+    assert.equal(client.totalValuationBase, 125000000);
+    assert.equal(client.currency, 'CHF');
+    assert.equal(client.runwayMonths, 24.5);
+    assert.equal(client.riskBand, 'AGGRESSIVE');
+  });
 });

@@ -13,6 +13,7 @@
 ```
 frontend/src/features/admin/api/admin-api.ts : admin endpoint calls for tenants, api keys, and model settings
 frontend/src/features/auth/api/auth-api.ts : auth endpoint calls typed by contracts
+frontend/src/features/auth/api/passkey-client.ts : WebAuthn and WebCrypto passkey enrollment and assertion signature generation
 frontend/src/features/auth/api/use-delete-account.ts : delete-account mutation; ends local session and clears query cache
 frontend/src/features/auth/api/use-login.ts : login mutation
 frontend/src/features/auth/api/use-logout.ts : logout mutation; always ends the local session

@@ -44,6 +44,7 @@ backend/src/app.ts : createApp(): registers modules, health, error handler; defa
 backend/src/core/application/use-case.ts : UseCase<Command, Result> interface
 backend/src/core/config/env.ts : validates environment variables once (zod)
 backend/src/core/crypto/constant-time-equal.ts : string equality in constant time (SHA-256 digests, timingSafeEqual)
+backend/src/core/crypto/passkey-verifier.ts : WebAuthn ECDSA P-256 signature verification and passkey store
 backend/src/core/crypto/random-token.ts : opaque random token of a given byte length → base64url
 backend/src/core/crypto/sha256.ts : SHA-256 → hex
 backend/src/core/domain/base-entity.ts : entity base: id + timestamps, finalize() → postInit()

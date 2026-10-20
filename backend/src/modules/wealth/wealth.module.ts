@@ -41,6 +41,7 @@ export interface WealthModuleDeps {
   auth: MiddlewareHandler;
   // Writes need a signed-in caller: an anonymous request never writes into the demo account.
   writeAuth: MiddlewareHandler;
+  passkeys?: import('./application/ports.ts').PasskeyVerifier;
 }
 
 export function createWealthModule(
@@ -75,7 +76,7 @@ export function createWealthModule(
     portfolios,
     profiles,
     ledger,
-    passkeys: unregisteredPasskeyVerifier,
+    passkeys: deps?.passkeys ?? unregisteredPasskeyVerifier,
     clock,
     analytics: deps?.analytics,
   });

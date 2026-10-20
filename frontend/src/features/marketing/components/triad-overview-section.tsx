@@ -51,7 +51,7 @@ export function TriadOverviewSection({
               <p className="mt-3 text-sm leading-relaxed text-muted">
                 Advisors reject standalone chatbots that require duplicate data entry. Institutional wealth management
                 demands automating the entire advisory lifecycle: pre-meeting briefs, real-time transcription,
-                multimodal document intake (1040s, statements), and automated two-way CRM syncs (Wealthbox, Redtail, eMoney).
+                multimodal document intake (1040s, statements), and automated two-way CRM syncs (Wealthbox, Redtail, eMoney — Roadmap).
               </p>
 
               <div className="mt-6 space-y-2 border-t border-line pt-4 text-xs text-subtle">

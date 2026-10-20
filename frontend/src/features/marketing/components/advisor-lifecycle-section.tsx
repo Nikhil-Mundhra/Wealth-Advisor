@@ -163,11 +163,16 @@ export function AdvisorLifecycleSection() {
 
           {/* Right: Supported Integrations Card */}
           <div className="lg:col-span-4 rounded-card border border-line bg-surface-subtle p-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink">
-              Two-Way Ecosystem Integrations
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink">
+                Two-Way Ecosystem Integrations
+              </p>
+              <span className="rounded bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-gold dark:text-gold-light border border-gold/30">
+                Roadmap
+              </span>
+            </div>
             <p className="mt-2 text-xs leading-relaxed text-muted">
-              Direct API connectors with bi-directional sync to keep client records unified.
+              Direct API connectors with bi-directional sync to keep client records unified across platforms (Phase 2 roadmap).
             </p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-ink">
               <span className="rounded-control border border-line bg-surface px-2.5 py-1">Wealthbox</span>

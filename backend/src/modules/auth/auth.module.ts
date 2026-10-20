@@ -28,11 +28,16 @@ import { seedDemoUser } from './infrastructure/db/seed/demo-user.seed.ts';
 import { AUTH_ERROR_STATUSES } from './presentation/auth-error-statuses.ts';
 import { authRoutes } from './presentation/routes/auth.routes.ts';
 import { meRoutes } from './presentation/routes/me.routes.ts';
+import { PasskeyUseCase } from './application/use-cases/passkey.use-case.ts';
+import type { PasskeyService } from '#core/crypto/passkey-verifier.ts';
+import type { ClientMetricsResolver } from './application/use-cases/list-advisor-clients.use-case.ts';
 
 import { optionalAuth, requireAuth } from './presentation/middleware/require-auth.ts';
 
 export interface AuthModuleOptions {
   sharedUserDocs?: Map<string, any>;
+  passkeys?: PasskeyService;
+  getClientMetrics?: ClientMetricsResolver;
 }
 
 // Composition root: the only file that knows which concrete class implements each port.
@@ -96,8 +101,9 @@ export function createAuthModule(
         deleteAccount: new DeleteAccountUseCase({ users, sessions }),
         connectAdvisor: new ConnectAdvisorUseCase({ users, clock }),
         getConnectedAdvisor: new GetConnectedAdvisorUseCase({ users }),
-        listClients: new ListAdvisorClientsUseCase({ users }),
+        listClients: new ListAdvisorClientsUseCase({ users, getClientMetrics: options?.getClientMetrics }),
         advisorInvites: new AdvisorInvitesUseCase({ users, clock }),
+        passkeys: options?.passkeys ? new PasskeyUseCase({ users, passkeys: options.passkeys, clock }) : undefined,
         signer,
       }),
     ],

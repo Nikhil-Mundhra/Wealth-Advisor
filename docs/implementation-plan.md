@@ -419,8 +419,8 @@ sequenceDiagram
 - [x] **i18n:** Lightweight translation dictionary provider supporting `en`, `zh-CN`, `zh-HK`, `de`. Implement `LanguageSelect` dropdown in navbar.
 
 #### 3.2 Passkey Integration & Security Settings (`/settings/security`)
-- [ ] 1-Click Passkey login and enrollment flows using `@simplewebauthn/browser` (supports FaceID on iOS Safari and TouchID on Android Chrome).
-- [ ] `SecuritySettingsPage` (`/settings/security`): Manage enrolled Passkeys, device names, active sessions, and permission tiers.
+- [x] 1-Click Passkey enrollment flows using WebAuthn credential management with software ECDSA P-256 fallback.
+- [x] `SecuritySettingsPage` (`/settings/security`): Manage enrolled Passkeys, device names, active sessions, and permission tiers.
 
 #### 3.3 Expat Wealth Dashboard & Cashflow Views (`/`, `/portfolio`, `/cashflow`)
 - [x] **Dashboard (`/`):** Multi-currency net worth cards, Individual vs. Family Household toggle, burn-rate health gauge, target vs current allocation. Responsive single-column mobile layout.
@@ -430,10 +430,10 @@ sequenceDiagram
 #### 3.4 AI Advisory Copilot & Biometric Execution Modal (`/advisory`)
 - [x] **Conversational Interface:** Full-height streaming dialogue panel with touch-optimized mobile chat drawer and multilingual responses.
 - [x] **Generative UI Action Cards:** Product Comparison, Dynamic Risk Recalibration, and Rebalance Proposal cards.
-- [ ] **Tier 3 Biometric Step-Up Modal:** Triggers browser Passkey prompt (TouchID/FaceID) to sign transaction before submission.
+- [x] **Tier 3 Biometric Step-Up Modal:** Triggers browser Passkey prompt (TouchID/FaceID) to sign transaction before submission.
 
 #### 3.5 Public Shared Plan View (`/share/:token`)
-- [ ] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile.
+- [x] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile.
 - [x] Privacy toggle: view as exact amounts or relative percentages.
 
 #### 3.6 Evidence Explorer & Admin Console (`/evidence`, `/admin/*`)
