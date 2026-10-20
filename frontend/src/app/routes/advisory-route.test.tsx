@@ -26,6 +26,7 @@ function renderAdvisoryRoute(roles: string[], email: string) {
             element: <AppShell />,
             children: [
               { path: '/advisory', element: <AdvisoryPage /> },
+              { path: '/onboarding', element: <p>Onboarding</p> },
               {
                 element: <AdvisorRoute />,
                 children: [{ path: '/advisor', element: <p>Workstation</p> }],
@@ -64,6 +65,12 @@ describe('Advisory route', () => {
 
   it('redirects ADVISOR roles to the workstation', async () => {
     renderAdvisoryRoute(['USER', 'ADVISOR'], 'advisor@example.com');
+    expect(await screen.findByText('Workstation')).toBeVisible();
+    expect(screen.queryByRole('textbox', { name: 'Ask about your portfolio…' })).toBeNull();
+  });
+
+  it('redirects ADMIN roles to the workstation', async () => {
+    renderAdvisoryRoute(['ADMIN'], 'admin@example.com');
     expect(await screen.findByText('Workstation')).toBeVisible();
     expect(screen.queryByRole('textbox', { name: 'Ask about your portfolio…' })).toBeNull();
   });

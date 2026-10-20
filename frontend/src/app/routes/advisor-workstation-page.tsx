@@ -316,6 +316,7 @@ export function AdvisorWorkstationPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* shortcut: single entry to the brief; the duplicate launch opened the same modal. */}
               <Button
                 type="button"
                 variant="outline"
@@ -324,14 +325,6 @@ export function AdvisorWorkstationPage() {
               >
                 <Sparkles aria-hidden className="mr-1.5 size-3.5 text-gold" />
                 30s Meeting Brief
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => handleOpenBrief(activeClient)}
-                className="text-xs"
-              >
-                Launch Advisory Session
               </Button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppShell } from './app-shell.tsx';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -33,13 +33,21 @@ describe('AppShell', () => {
     sessionStorage.clear();
   });
 
-  it('renders client den with no admin overview or advisor links', () => {
-    renderShell('/');
-    expect(screen.getByText('Client Den Body')).toBeVisible();
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
-    // Client tabs are present
+  it('renders client den with no admin overview or advisor links', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ id: 'u-1', email: 'testing@example.com', displayName: null, roles: ['USER'], emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
+    );
+    renderShell('/');
+    expect(await screen.findByText('Client Den Body')).toBeVisible();
+
+    // Client tabs appear once roles resolve
     for (const name of ['Dashboard', 'Cash Flow', 'Advisory']) {
-      expect(screen.getAllByRole('link', { name }).length).toBeGreaterThanOrEqual(2);
+      expect((await screen.findAllByRole('link', { name })).length).toBeGreaterThanOrEqual(2);
     }
 
     // Settings is present in sidebar and labelled Settings (not Security)

@@ -119,9 +119,9 @@ function ActingBanner() {
 export function AppShell() {
   const strings = useStrings();
   const location = useLocation();
-  const { data: me } = useMe();
-  // Advisors reach the copilot from the workstation; the den Advisory tab would only bounce them back.
-  const showAdvisoryTab = !me || !hasAdvisorRole(me.roles);
+  const { data: me, isPending: mePending } = useMe();
+  // Hide until roles resolve so advisors see no client-tab flash.
+  const showAdvisoryTab = !mePending && (!me || !hasAdvisorRole(me.roles));
   const clientTabs = CLIENT_TABS.filter((tab) => tab.to !== '/advisory' || showAdvisoryTab);
 
   const isAdminSection = location.pathname.startsWith('/admin');

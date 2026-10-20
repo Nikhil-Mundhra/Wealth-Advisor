@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Share2, Shield, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Share2, Shield, CheckCircle2, ArrowRight } from 'lucide-react';
 import { AdvisoryChatResponse, CreateShareLinkResponse } from '@wealth-advisor/contracts';
 import type { Currency, HouseholdMode } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
@@ -24,7 +24,6 @@ export interface AdvisoryContext {
   riskLabel: string;
   riskBand: string;
   baseCurrency: Currency;
-  driftAlert: string | null;
   householdMode: HouseholdMode;
   runwayMonths: number;
   monthlyBurn: number;
@@ -57,7 +56,7 @@ const SEED: Message[] = [
       crossBorder: 'Shields EUR/CNY and GBP/SGD family remittance obligations against currency volatility.',
       wealthStrategy: 'Shifts portfolio from 60% equities down to 40% target weight to match recalibrated risk tolerance.',
     },
-    complianceDisclaimer: 'Syntropy AI operates under advisor sandbox mode. Recommendations are deterministic simulations and do not constitute formal investment solicitation.',
+    complianceDisclaimer: 'Syntropy AI runs deterministic simulations for education only and does not constitute formal investment solicitation.',
   },
 ];
 
@@ -125,9 +124,9 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           threePillarRationale: {
             personalFinance: `Liquid runway stands at ${context.runwayMonths} months against a ${isFamily ? '6.0' : '3.0'}-month minimum fiduciary floor.`,
             crossBorder: `Corridors (${context.corridors.join(', ')}) insulated against currency shocks.`,
-            wealthStrategy: `Drift status: ${context.driftAlert || 'Corridor within ±5%'}. Target risk: ${context.riskLabel} (${context.riskBand}).`,
+            wealthStrategy: `Drift status: Corridor within ±5%. Target risk: ${context.riskLabel} (${context.riskBand}).`,
           },
-          complianceDisclaimer: 'Syntropy AI operates under advisor sandbox mode. Recommendations are deterministic simulations and do not constitute formal investment solicitation.',
+          complianceDisclaimer: 'Syntropy AI runs deterministic simulations for education only and does not constitute formal investment solicitation.',
         },
       ]);
     } finally {
@@ -266,12 +265,6 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
               </span>
             )}
           </a>
-          {context.driftAlert && (
-            <div className="flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-medium text-danger">
-              <AlertTriangle aria-hidden className="size-3.5" />
-              <span>{context.driftAlert}</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -291,8 +284,8 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
             T2
           </span>
           <div>
-            <p className="font-semibold text-ink">Tier 2: Advisor Approves</p>
-            <p className="text-[11px] text-subtle">Advisor signs off proposal and generates client strategy link.</p>
+            <p className="font-semibold text-ink">Tier 2: You Approve</p>
+            <p className="text-[11px] text-subtle">You review the proposal before anything is shared or executed.</p>
           </div>
         </div>
         <div className="flex items-start gap-2">
@@ -375,11 +368,11 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           {advisorApproved ? (
             <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 aria-hidden className="size-3.5" />
-              <span>Approved by Advisor (Tier 2 Verified)</span>
+              <span>Approved (Tier 2 Verified)</span>
             </span>
           ) : (
             <span className="rounded-full bg-gold-subtle px-2.5 py-0.5 text-xs font-medium text-gold">
-              Awaiting Advisor Sign-off (Tier 2)
+              Awaiting Your Approval (Tier 2)
             </span>
           )}
         </div>
