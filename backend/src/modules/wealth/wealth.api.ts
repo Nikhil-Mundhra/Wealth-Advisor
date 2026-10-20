@@ -161,7 +161,8 @@ export function createWealthApi(deps: WealthApiDeps) {
         householdMode: input?.householdMode ?? 'FAMILY_HOUSEHOLD',
         fxMismatchPct: input?.fxMismatchPct,
       });
-      if (effectiveRiskScore !== doc.effectiveRiskScore) {
+      // What-if overrides shape the response only; only a live call with no input persists the recalibration.
+      if (input === undefined && effectiveRiskScore !== doc.effectiveRiskScore) {
         doc.effectiveRiskScore = effectiveRiskScore;
         doc.updatedAt = clock.now();
         await portfolios.save(doc);
