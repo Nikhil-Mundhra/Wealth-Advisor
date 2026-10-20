@@ -498,8 +498,6 @@ Respond ONLY in valid JSON with these keys:
     const candidateModels = [
       this.model,
       'minimax/minimax-m3.1-flash:free',
-      'google/gemma-4-26b-a4b-it:free',
-      'openrouter/free',
     ].filter((m, i, arr) => arr.indexOf(m) === i);
 
     let lastError: unknown = null;
@@ -519,7 +517,7 @@ Respond ONLY in valid JSON with these keys:
             temperature: 0.2,
           },
           {
-            timeoutMs: 6000,
+            timeoutMs: 14000,
             headers: {
               authorization: `Bearer ${key}`,
               'http-referer': 'https://syntropy.finance',
