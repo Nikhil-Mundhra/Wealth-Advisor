@@ -34,7 +34,7 @@ async function submitClientForm(onSuccess: () => void) {
   render(<LoginForm onSuccess={onSuccess} />, { wrapper });
   await userEvent.type(screen.getByLabelText('Email address'), 'advisor.morgan@syntropy.ch');
   await userEvent.type(screen.getByLabelText('Password'), 'correct-horse-1');
-  await userEvent.click(screen.getByRole('button', { name: 'Sign in', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 }
 
 async function submitAdvisorForm() {
