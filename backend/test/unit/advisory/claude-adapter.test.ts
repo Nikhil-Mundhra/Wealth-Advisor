@@ -81,6 +81,7 @@ describe('ClaudeLlmAdapter', () => {
     assert.ok(!res.reply.includes('9.9'), `invented runway leaked: ${res.reply}`);
     assert.match(res.reply, /3\.2/);
     assert.ok(!res.threePillarRationale.personalFinance.includes('99999'));
+    assert.ok(!res.threePillarRationale.crossBorder.includes('0%'));
     assert.ok(!res.threePillarRationale.wealthStrategy.includes('99%'));
   });
 

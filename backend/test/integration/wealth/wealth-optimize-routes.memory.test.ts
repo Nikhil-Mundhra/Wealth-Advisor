@@ -20,6 +20,9 @@ describe('wealth optimize routes', () => {
     const response = await postJson(app.app, '/api/wealth/optimize', {});
     assert.equal(response.status, 200);
     assert.equal((await json(response)).effectiveRiskScore, 6.0);
+    const stored = await app.app.request('/api/wealth/portfolio');
+    assert.equal(stored.status, 200);
+    assert.equal(((await stored.json()) as Record<string, unknown>).effectiveRiskScore, 6.0);
   });
 
   it('applies the FX penalty from the request body', async () => {

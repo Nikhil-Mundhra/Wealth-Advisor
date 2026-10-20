@@ -162,7 +162,10 @@ export function createWealthApi(deps: WealthApiDeps) {
         fxMismatchPct: input?.fxMismatchPct,
       });
       // What-if overrides shape the response only; only a live call with no input persists the recalibration.
-      if (input === undefined && effectiveRiskScore !== doc.effectiveRiskScore) {
+      // An empty object over HTTP counts as live, not what-if: readJsonBody normalizes empty bodies to {}
+      // and RouteBuilder always forwards the parsed body, so input === undefined is never true over HTTP.
+      const isLiveCall = input === undefined || Object.keys(input).length === 0;
+      if (isLiveCall && effectiveRiskScore !== doc.effectiveRiskScore) {
         doc.effectiveRiskScore = effectiveRiskScore;
         doc.updatedAt = clock.now();
         await portfolios.save(doc);
