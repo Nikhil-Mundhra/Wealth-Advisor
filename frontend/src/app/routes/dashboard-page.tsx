@@ -16,6 +16,7 @@ import { AreaChart } from '../../components/ui/area-chart.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
+import { Spinner } from '../../components/ui/spinner.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { ProfilingModal } from '../../features/profiling/components/profiling-modal.tsx';
 import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
@@ -45,7 +46,7 @@ const BAND_TONE: Record<RunwayBand, string> = {
   healthy: 'text-ink',
 };
 
-export function DashboardPage() {
+function DashboardView() {
   const strings = useStrings();
   const { data: me } = useMe();
   const activeClient = useActiveClient();
@@ -356,4 +357,20 @@ export function DashboardPage() {
       />
     </div>
   );
+}
+
+// Gate on the session like AdvisoryPage: while roles resolve, show a spinner, never the demo fixture.
+export function DashboardPage() {
+  const me = useMe();
+  if (me.isPending) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center text-brand-600">
+        <Spinner label="Loading" />
+      </div>
+    );
+  }
+  if (me.isError || !me.data) {
+    return <Navigate to="/login" replace />;
+  }
+  return <DashboardView />;
 }

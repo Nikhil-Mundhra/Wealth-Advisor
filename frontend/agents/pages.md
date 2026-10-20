@@ -49,8 +49,9 @@ frontend/src/app/routes/onboarding-page.tsx : dedicated onboarding questionnaire
 frontend/src/app/routes/portfolio-page.test.tsx : holdings with current, target, and drift weights
 frontend/src/app/routes/portfolio-page.tsx : deep-link route wrapper rendering shared PortfolioSection
 frontend/src/app/routes/portfolio-section.tsx : shared portfolio holdings table rendered on the dashboard and as a deep link
-frontend/src/app/routes/role-login-mismatch.test.tsx : role mismatch keeps a signed-in session and GuestRoute redirects role portals
-frontend/src/app/routes/root-route.tsx : dual-mode root route: HomePage for anonymous visitors, AppShell with DashboardPage for authenticated users
+frontend/src/app/routes/role-login-mismatch.test.tsx : role mismatch keeps a signed-in session, client login rejects staff creds, GuestRoute redirects role portals
+frontend/src/app/routes/root-route.test.tsx : staff redirect to their portal, acting session stays on the client dashboard, GuestRoute bounce never lands analysts on it
+frontend/src/app/routes/root-route.tsx : dual-mode root route: HomePage for anonymous visitors, staff redirect to their portal, AppShell for clients
 frontend/src/app/routes/route-error-boundary.tsx : graceful error boundary with reload and navigation controls for uncaught route errors
 frontend/src/app/routes/security-settings-page.test.tsx : session, tier ladder, passkey empty state
 frontend/src/app/routes/security-settings-page.tsx : session facts, tier ladder, passkeys, sign out
