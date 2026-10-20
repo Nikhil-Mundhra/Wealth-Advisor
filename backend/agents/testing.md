@@ -39,6 +39,7 @@ backend/test/unit/admin/admin-platform-keys.test.ts : platform keys management a
 backend/test/unit/admin/admin-users-api.test.ts : admin user management API, roles, statuses, and pagination
 backend/test/unit/advisory/advisory-api.test.ts : multilingual copilot responses, unreachable-provider fallback, live model replies held to engine numbers, action cards
 backend/test/unit/advisory/calculation-shield.test.ts : grounded, rounded, decimal-comma and invented numbers; missing candidates
+backend/test/unit/advisory/claude-adapter.test.ts : Claude replies held to engine numbers, missing key and provider failure fall back to mock
 backend/test/unit/analytics/market-snapshot.test.ts : MarketSnapshot invariants; measureSnapshot threshold and window
 backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns, annualization and covariance against a hand-computed series
 backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
@@ -74,5 +75,6 @@ backend/test/unit/rules/technical-analysis.rule.test.ts : RSI normalization, MA 
 backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public/off-graph imports on a fixture tree, core importing a module, cycle detection
 backend/test/unit/sharing/sharing-api.test.ts : share tokens and TTL, snapshot from the caller's rebalance proposal, no portfolio refused, seeded demo link
 backend/test/unit/sharing/sharing-routes.test.ts : share-link creation files under the principal the auth guard resolved
+backend/test/unit/wealth/risk-recalibration.test.ts : runway and FX mismatch penalties, floor clamp, seeded Elena recalibration
 backend/test/unit/wealth/wealth-api.test.ts : portfolio rebalancing, passkey presence and verifier refusal, ledger digests
 ```
