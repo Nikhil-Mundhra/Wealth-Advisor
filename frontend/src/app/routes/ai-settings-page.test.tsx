@@ -26,13 +26,16 @@ describe('AiSettingsPage', () => {
 
     expect(screen.getByRole('heading', { name: 'AI & Model Configuration' })).toBeVisible();
     expect(screen.getByText('Platform Default Gateway Active')).toBeVisible();
-    expect(screen.getAllByText('Google Gemini 2.5 Flash').length).toBeGreaterThan(0);
 
-    // Verify NVIDIA Nemotron #1 Free spotlight
-    expect(screen.getAllByText('nvidia/nemotron-3-ultra-550b-a55b:free').length).toBeGreaterThan(0);
-    expect(screen.getByText(/is the #1 Free Model/i)).toBeVisible();
+    // Verify Active Reasoning Model defaults to Nemotron
+    expect(screen.getByText('Active Reasoning Model')).toBeVisible();
     expect(screen.getAllByText('NVIDIA Nemotron 3 Ultra 550B').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('nvidia/nemotron-3-ultra-550b-a55b:free').length).toBeGreaterThan(0);
+
+    // Verify NVIDIA Nemotron #1 Free spotlight and models grid
+    expect(screen.getByText(/is the #1 Free Model/i)).toBeVisible();
     expect(screen.getAllByText('88.5%').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Google Gemini 2.5 Flash').length).toBeGreaterThan(0);
   });
 
   it('submits a custom OpenRouter key, displays toast overlay, and persists in the UI permanently', async () => {

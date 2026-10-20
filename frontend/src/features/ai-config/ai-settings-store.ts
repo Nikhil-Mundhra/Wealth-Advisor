@@ -43,7 +43,7 @@ function getDefaultModelForProvider(provider: AiProvider): string {
     case 'openai':
       return 'openai/gpt-4o';
     case 'gemini':
-      return SYSTEM_DEFAULT_MODEL_ID;
+      return 'google/gemini-2.5-flash';
     default:
       return SYSTEM_DEFAULT_MODEL_ID;
   }

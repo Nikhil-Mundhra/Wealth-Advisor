@@ -77,4 +77,16 @@ describe('ai-settings-store', () => {
     const fallback = getActiveModelSpec('non-existent-model');
     expect(fallback.id).toBe(SYSTEM_DEFAULT_MODEL_ID);
   });
+
+  it('defaults to NVIDIA Nemotron as the initial system reasoning model when unconfigured', () => {
+    const config = getAiConfig();
+    expect(config.isCustom).toBe(false);
+    expect(config.selectedModelId).toBe(TOP_FREE_MODEL_ID);
+
+    const activeSpec = getActiveModelSpec(config.selectedModelId);
+    expect(activeSpec.id).toBe('nvidia/nemotron-3-ultra-550b-a55b:free');
+    expect(activeSpec.name).toBe('NVIDIA Nemotron 3 Ultra 550B');
+    expect(activeSpec.isDefault).toBe(true);
+    expect(activeSpec.provider).toBe('openrouter');
+  });
 });
