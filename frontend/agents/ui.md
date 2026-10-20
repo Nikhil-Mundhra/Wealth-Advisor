@@ -52,6 +52,8 @@ frontend/src/lib/engagement.test.ts : unit tests for typed event payloads and Ve
 frontend/src/lib/engagement.ts : typed engagement tracking wrapper over Vercel Web Analytics
 frontend/src/lib/format-money.test.ts : locale currency rendering
 frontend/src/lib/format-money.ts : locale-aware money rendering
+frontend/src/lib/json-export.test.ts : ledger JSON envelope shape
+frontend/src/lib/json-export.ts : ledger JSON serializer and browser download trigger
 frontend/src/lib/locale-store.ts : active locale, localStorage, <html lang> applier
 frontend/src/lib/locales/de.ts : German UI copy, typed against StringKey
 frontend/src/lib/locales/en.ts : English UI copy and the StringKey every other locale must match

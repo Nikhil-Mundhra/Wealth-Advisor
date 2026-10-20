@@ -22,6 +22,8 @@ frontend/src/features/auth/api/use-signup.ts : signup mutation, then login with 
 frontend/src/features/finance/api/finance-api.ts : finance endpoint calls for multi-currency accounts and cashflow
 frontend/src/features/finance/api/use-accounts.ts : multi-currency bank accounts query hook
 frontend/src/features/finance/api/use-cashflow.ts : cashflow and runway summary query hook
+frontend/src/features/sharing/api/sharing-api.ts : shareable plan link endpoint calls typed by contracts
+frontend/src/features/sharing/api/use-create-share-link.ts : share URL creation mutation hook
 frontend/src/features/wealth/api/use-construct-portfolio.ts : portfolio construction and multi-asset optimization mutation hook
 frontend/src/features/wealth/api/use-portfolio.ts : holdings, valuation, and allocation query hook
 frontend/src/features/wealth/api/use-sandbox-ledger.ts : tamper-evident sandbox execution audit query hook

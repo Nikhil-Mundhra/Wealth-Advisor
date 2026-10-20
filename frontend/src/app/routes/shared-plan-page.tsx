@@ -18,17 +18,20 @@ export function SharedPlanPage() {
   const [masked, setMasked] = useState(true);
   const [sharedPlan, setSharedPlan] = useState<SharedPlanResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [liveUnavailable, setLiveUnavailable] = useState(false);
 
   useEffect(() => {
     if (!token) return;
     let active = true;
     setLoading(true);
+    setLiveUnavailable(false);
     apiRequest(`/sharing/${token}`, { response: SharedPlanResponse })
       .then((plan) => {
         if (active) setSharedPlan(plan);
       })
       .catch(() => {
         // Fallback to demo holding baseline when unauthenticated or offline
+        if (active) setLiveUnavailable(true);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -79,6 +82,12 @@ export function SharedPlanPage() {
               : 'Full allocation and portfolio weights unlocked for authorized co-planner review.'}
           </p>
         </div>
+      )}
+
+      {liveUnavailable && !sharedPlan && (
+        <p className="rounded-field border border-line bg-surface-subtle p-3 text-xs text-subtle">
+          Live plan unavailable. Showing the demo allocation baseline.
+        </p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -145,6 +154,31 @@ export function SharedPlanPage() {
           </div>
         </Card>
       )}
+
+      <Card aria-label="Stress simulation">
+        <div className="flex items-center gap-2 border-b border-line pb-3">
+          <Shield className="size-4 text-brand-600" />
+          <h3 className="font-semibold text-sm text-ink">Stress Simulation (−5% EUR Shock)</h3>
+        </div>
+        {sharedPlan?.planSnapshot?.stressTestScenario ? (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 text-xs">
+            <div className="rounded-field border border-line bg-surface-subtle p-3">
+              <span className="font-semibold text-ink block mb-1">FX Shock</span>
+              <p className="text-muted">{sharedPlan.planSnapshot.stressTestScenario.fxShockPercent}% adverse move</p>
+            </div>
+            <div className="rounded-field border border-line bg-surface-subtle p-3">
+              <span className="font-semibold text-ink block mb-1">Estimated Drawdown</span>
+              <p className="text-muted">{sharedPlan.planSnapshot.stressTestScenario.estimatedDrawdownPercent}% portfolio value</p>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            Deterministic illustration: a −5% EUR depreciation against CNY/SGD lifts monthly remittance costs by about
+            €145. Rebalancing 10% into EUR money-market preserves 6+ months of runway. Live engine scenarios appear
+            here once the plan snapshot carries one.
+          </p>
+        )}
+      </Card>
 
       <footer className="text-center text-[11px] text-subtle">
         Syntropy AI Fiduciary Gateway · Shareable plan snapshots are cryptographically tokenized and read-only.

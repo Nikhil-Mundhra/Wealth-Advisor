@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setLocale } from '../../lib/locale-store.ts';
 import { PortfolioPage } from './portfolio-page.tsx';
@@ -25,5 +26,17 @@ describe('PortfolioPage', () => {
     expect(screen.getByRole('row', { name: /US Tech Equities/ })).toHaveTextContent('-20%');
     // Unheld target classes still render so the book sums.
     expect(screen.getByRole('row', { name: /FX_HEDGE/ })).toHaveTextContent('+10%');
+  });
+
+  it('opens the share strategy modal from the portfolio page', async () => {
+    render(
+      <QueryClientProvider client={client}>
+        <PortfolioPage />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Share strategy' }));
+    expect(screen.getByRole('dialog', { name: 'Share strategy' })).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: /Mask absolute amounts/ })).toBeChecked();
   });
 });

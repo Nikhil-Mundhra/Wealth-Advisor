@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, Scale } from 'lucide-react';
+import { AlertTriangle, Scale, Share2 } from 'lucide-react';
 import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
@@ -9,6 +9,7 @@ import { useProfile } from '../../features/profiling/profile-store.ts';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
 import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
+import { ShareStrategyModal } from '../../features/sharing/components/share-strategy-modal.tsx';
 import { PortfolioConstructionModal } from '../../features/wealth/components/portfolio-construction-modal.tsx';
 import { usePortfolio } from '../../features/wealth/api/use-portfolio.ts';
 import { DEMO_BASELINE } from '../../lib/demo-data.ts';
@@ -30,6 +31,7 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
   const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
   const [constructionModalOpen, setConstructionModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const { ref, visible } = useReveal<HTMLDivElement>();
 
   // Non-demo users without completed profiling must onboard first
@@ -109,6 +111,14 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
               onClick={() => setInstrumentModalOpen(true)}
             >
               Compare UCITS Products
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShareModalOpen(true)}
+              className="gap-1.5"
+            >
+              <Share2 className="size-3.5" />
+              Share strategy
             </Button>
             <a
               href="/advisory"
@@ -257,6 +267,12 @@ export function PortfolioSection({ showTitle = true }: PortfolioSectionProps) {
         defaultCurrency={activeClient.baseCurrency}
         defaultRiskScore={activeClient.riskScore}
         initialTotalValue={activeClient.netWorth}
+      />
+
+      <ShareStrategyModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        ownerDisplayName={activeClient.name}
       />
     </div>
   );

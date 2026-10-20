@@ -424,7 +424,7 @@ sequenceDiagram
 
 #### 3.3 Expat Wealth Dashboard & Cashflow Views (`/`, `/portfolio`, `/cashflow`)
 - [x] **Dashboard (`/`):** Multi-currency net worth cards, Individual vs. Family Household toggle, burn-rate health gauge, target vs current allocation. Responsive single-column mobile layout.
-- [ ] **Portfolio Page (`/portfolio`):** Asset holdings, rebalancing drift visualizer, and "Share Strategy URL" modal with privacy balance masking toggle.
+- [x] **Portfolio Page (`/portfolio`):** Asset holdings, rebalancing drift visualizer, and "Share Strategy URL" modal with privacy balance masking toggle.
 - [x] **Cashflow Page (`/cashflow`):** Multi-currency accounts, recurring bills, Asian remittance corridor planner.
 
 #### 3.4 AI Advisory Copilot & Biometric Execution Modal (`/advisory`)
@@ -437,7 +437,7 @@ sequenceDiagram
 - [x] Privacy toggle: view as exact amounts or relative percentages.
 
 #### 3.6 Evidence Explorer & Admin Console (`/evidence`, `/admin/*`)
-- [ ] **Evidence Page (`/evidence`):** Sandbox audit table, before/after diffs, Passkey signature proofs, SHA-256 hashes, JSON download.
+- [x] **Evidence Page (`/evidence`):** Sandbox audit table, before/after diffs, Passkey signature proofs, SHA-256 hashes, JSON download.
 - [x] **Admin Console (`/admin`, `/admin/tenants`, `/admin/api-keys`, `/admin/models`):**
   - Organization and tenant management table.
   - API key issuance with permission tier checkboxes.
