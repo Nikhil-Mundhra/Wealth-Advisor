@@ -108,6 +108,10 @@ frontend/src/features/marketing/components/particles-background.tsx : theme-awar
 frontend/src/features/marketing/components/positioning-matrix-section.tsx : strategic positioning comparison matrix for B2B2C vs B2C
 frontend/src/features/marketing/components/triad-overview-section.tsx : overview of the triad architecture (Workflow OS, Semantic Graph, MIT Sloan)
 frontend/src/features/marketing/data/highlights.ts : highlight copy
+frontend/src/features/wealth/components/construction/allocation-tab.tsx : optimal multi-asset allocation table with weights, unit conversions, scores, and sharia status
+frontend/src/features/wealth/components/construction/compliance-tab.tsx : fiduciary and jurisdiction rule verification checklist driven by compliance flags
+frontend/src/features/wealth/components/construction/rationale-tab.tsx : six-pillar fiduciary rationale narrative with source model attribution
+frontend/src/features/wealth/components/construction/stress-tab.tsx : macro scenario cards, monte carlo percentiles, and the what-if rate shift simulator
 frontend/src/features/wealth/components/portfolio-construction-modal.test.tsx : characterization coverage for solve payloads, derived what-if math, tab panels, and compliance flags
 frontend/src/features/wealth/components/portfolio-construction-modal.tsx : quantitative portfolio construction and mean-variance optimization modal
 ```
