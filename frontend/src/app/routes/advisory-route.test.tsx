@@ -105,8 +105,9 @@ describe('Advisory route', () => {
       </QueryClientProvider>,
     );
 
-    // Sidebar must not flash advisor chrome while roles are unresolved.
-    expect(await screen.findAllByRole('link', { name: 'Advisory' })).not.toHaveLength(0);
+    // While roles resolve, a neutral loading frame replaces all chrome: no client tabs, no advisor links, no demo data.
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Client Overview' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Advisor Workstation' })).toBeNull();
     expect(screen.queryByText('Advisor Workstation')).toBeNull();

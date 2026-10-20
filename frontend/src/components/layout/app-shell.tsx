@@ -33,6 +33,7 @@ import { ClientSelector } from '../../features/advisor/components/client-selecto
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { LanguageSelect } from '../ui/language-select.tsx';
+import { Spinner } from '../ui/spinner.tsx';
 import { ThemeToggle } from '../ui/theme-toggle.tsx';
 
 // Client Den Navigation (Strictly private personal wealth management)
@@ -128,7 +129,7 @@ function ActingBanner() {
 export function AppShell() {
   const strings = useStrings();
   const location = useLocation();
-  const { data: me } = useMe();
+  const { data: me, isPending } = useMe();
   const isAdvisorOrAdmin = Boolean(me && hasAdvisorRole(me.roles));
   const isAdminUser = Boolean(me?.roles.includes('ADMIN'));
 
@@ -138,6 +139,14 @@ export function AppShell() {
 
   const isAdminSection = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isAdvisorSection = location.pathname === '/advisor' || location.pathname.startsWith('/advisor/');
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-surface text-ink">
+        <Spinner label="Loading" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-surface text-ink md:pl-60">
@@ -206,11 +215,6 @@ export function AppShell() {
             <NavLink to="/advisor/settings" className={linkClass}>
               <Settings aria-hidden className="size-5" />
               {strings['header.settings']}
-            </NavLink>
-            <div className="my-3 border-t border-line" />
-            <NavLink to="/" className={linkClass}>
-              <ArrowLeft aria-hidden className="size-5 text-subtle" />
-              <span>Exit to Client App</span>
             </NavLink>
           </nav>
         ) : (
@@ -340,7 +344,7 @@ export function AppShell() {
         aria-label={strings['header.nav.mobile']}
         className={cn(
           'fixed inset-x-0 bottom-0 z-10 grid border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden',
-          isAdminSection ? 'grid-cols-5' : isAdvisorSection ? 'grid-cols-4' : 'grid-cols-3'
+          isAdminSection ? 'grid-cols-5' : 'grid-cols-3'
         )}
       >
         {isAdminSection ? (
@@ -379,10 +383,6 @@ export function AppShell() {
             <NavLink to="/advisor/settings" className={tabClass}>
               <Settings aria-hidden className="size-5" />
               <span>{strings['header.settings']}</span>
-            </NavLink>
-            <NavLink to="/" className={tabClass}>
-              <ArrowLeft aria-hidden className="size-5" />
-              <span>Exit</span>
             </NavLink>
           </>
         ) : (

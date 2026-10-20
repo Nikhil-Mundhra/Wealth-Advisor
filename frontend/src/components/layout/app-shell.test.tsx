@@ -6,6 +6,13 @@ import { AppShell } from './app-shell.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { saveAdminActingSession } from '../../features/auth/session/acting-session.ts';
 
+function stubMe(roles: string[], email = 'testing@example.com') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify({ id: 'u-1', email, displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
+  );
+}
+
 function renderShell(initialEntry = '/') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
@@ -69,9 +76,10 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: 'Advisor Workstation' })).toBeNull();
   });
 
-  it('renders advisor workstation navigation in sidebar when at /advisor', () => {
+  it('renders advisor workstation navigation in sidebar when at /advisor', async () => {
+    stubMe(['USER', 'ADVISOR'], 'advisor.morgan@syntropy.ch');
     renderShell('/advisor');
-    expect(screen.getByText('Advisor Body')).toBeVisible();
+    expect(await screen.findByText('Advisor Body')).toBeVisible();
     expect(screen.getByText('Advisor Workstation')).toBeVisible();
 
     // Advisor workstation side tabs
@@ -81,7 +89,9 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Instrument Matrix' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Onboarding & Invites' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Evidence & Audit' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Exit to Client App' })).toBeVisible();
+    // Analysts must not see an exit back to the client app
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit' })).toBeNull();
 
     // Settings is in advisor sidebar and points to /advisor/settings
     const advisorNav = screen.getByRole('navigation', { name: 'Advisor workstation navigation' });
@@ -100,9 +110,10 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: 'Demo Credentials' })).toBeNull();
   });
 
-  it('renders admin console navigation in sidebar when at /admin', () => {
+  it('renders admin console navigation in sidebar when at /admin', async () => {
+    stubMe(['USER', 'ADMIN'], 'admin@example.com');
     renderShell('/admin');
-    expect(screen.getByText('Admin body')).toBeVisible();
+    expect(await screen.findByText('Admin body')).toBeVisible();
     expect(screen.getByText('Admin Console')).toBeVisible();
 
     // Admin console items are rendered
@@ -138,15 +149,35 @@ describe('AppShell', () => {
   });
 
   it('keeps advisor workstation chrome on /advisor/settings', async () => {
+    stubMe(['USER', 'ADVISOR'], 'advisor.morgan@syntropy.ch');
     renderShell('/advisor/settings');
     expect(await screen.findByText('Advisor Settings Body')).toBeVisible();
     expect(screen.getByText('Advisor Workstation')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'AI Advisory Copilot' })).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit to Client App' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Exit' })).toBeNull();
   });
 
-  it('displays acting mode banner when an admin is impersonating a demo persona', () => {
+  it('renders a neutral loading frame while roles resolve, with no client tabs or demo data', async () => {
+    let resolveMe!: (value: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>((resolve) => { resolveMe = resolve; })),
+    );
+    renderShell('/advisor');
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Cash Flow' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Advisory' })).toBeNull();
+    expect(screen.queryByText(/Elena/)).toBeNull();
+    resolveMe(new Response(JSON.stringify({ id: 'a-1', email: 'advisor.morgan@syntropy.ch', displayName: null, roles: ['USER', 'ADVISOR'], emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } }));
+    expect(await screen.findByText('Advisor Body')).toBeVisible();
+  });
+
+  it('displays acting mode banner when an admin is impersonating a demo persona', async () => {
+    stubMe(['USER']);
     saveAdminActingSession('fake-admin-token', 'admin@example.com', {
       id: 'client-1',
       name: 'Elena Vance',
@@ -156,6 +187,7 @@ describe('AppShell', () => {
     });
 
     renderShell('/');
+    expect(await screen.findByText('Client Den Body')).toBeVisible();
     expect(screen.getByRole('complementary', { name: 'Admin demo session active' })).toBeVisible();
     expect(screen.getByText(/Admin Acting Mode:/)).toBeVisible();
     expect(screen.getByText('Elena Vance')).toBeVisible();

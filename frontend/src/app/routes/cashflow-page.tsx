@@ -3,6 +3,7 @@ import { Navigate } from 'react-router';
 import { listHoldingAmounts } from '@wealth-advisor/rules';
 import { Card } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
+import { Spinner } from '../../components/ui/spinner.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
@@ -13,7 +14,7 @@ import { formatMoney } from '../../lib/format-money.ts';
 import { useReveal } from '../../lib/use-reveal.ts';
 
 // Multi-currency balances and remittance corridor plan.
-export function CashflowPage() {
+function CashflowView() {
   const strings = useStrings();
   const { data: me } = useMe();
   const activeClient = useActiveClient();
@@ -211,4 +212,20 @@ export function CashflowPage() {
       </Card>
     </div>
   );
+}
+
+// Gate on the session like AdvisoryPage: while roles resolve, show a spinner, never the demo fixture.
+export function CashflowPage() {
+  const me = useMe();
+  if (me.isPending) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center text-brand-600">
+        <Spinner label="Loading" />
+      </div>
+    );
+  }
+  if (me.isError || !me.data) {
+    return <Navigate to="/login" replace />;
+  }
+  return <CashflowView />;
 }
