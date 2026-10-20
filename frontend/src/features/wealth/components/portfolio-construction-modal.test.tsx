@@ -154,6 +154,46 @@ describe('PortfolioConstructionModal', () => {
     expect(screen.getByRole('button', { name: 'All Asset Types (Conventional & Sukuk)' })).toBeInTheDocument();
   });
 
+  it('gives the tab strip tablist semantics and a single tab stop', async () => {
+    renderModal();
+    const tablist = await screen.findByRole('tablist', { name: 'Portfolio construction sections' });
+    const tabs = within(tablist).getAllByRole('tab');
+    expect(tabs).toHaveLength(4);
+
+    // Roving tabindex: the active tab is the strip's only entry point.
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[0]).toHaveAttribute('tabindex', '0');
+    for (const tab of tabs.slice(1)) {
+      expect(tab).toHaveAttribute('aria-selected', 'false');
+      expect(tab).toHaveAttribute('tabindex', '-1');
+    }
+
+    const panel = await screen.findByRole('tabpanel');
+    expect(panel).toHaveAttribute('aria-labelledby', tabs[0].id);
+    expect(tabs[0]).toHaveAttribute('aria-controls', panel.id);
+  });
+
+  it('moves selection and focus with the arrow keys', async () => {
+    renderModal();
+    const tablist = await screen.findByRole('tablist');
+
+    within(tablist).getAllByRole('tab')[0].focus();
+    await userEvent.keyboard('{ArrowRight}');
+
+    const rationaleTab = within(tablist).getAllByRole('tab')[1];
+    expect(rationaleTab).toHaveAttribute('aria-selected', 'true');
+    expect(rationaleTab).toHaveFocus();
+    expect(await screen.findByText('personal-finance-copy')).toBeInTheDocument();
+
+    await userEvent.keyboard('{End}');
+    expect(within(tablist).getAllByRole('tab')[3]).toHaveFocus();
+    expect(await screen.findByText('Fiduciary & Jurisdiction Rule Verification Matrix')).toBeInTheDocument();
+
+    await userEvent.keyboard('{Home}');
+    expect(within(tablist).getAllByRole('tab')[0]).toHaveFocus();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+  });
+
   it('solves once on open with minor-unit value and the default controls', async () => {
     renderModal();
     await vi.waitFor(() =>
@@ -258,15 +298,15 @@ describe('PortfolioConstructionModal', () => {
     expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(screen.queryByText('personal-finance-copy')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Fiduciary Rationale (6 Pillars)' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Fiduciary Rationale (6 Pillars)' }));
     expect(await screen.findByText('personal-finance-copy')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Stress Tests & What-If Calculator' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Stress Tests & What-If Calculator' }));
     expect(await screen.findByText('Macroeconomic Scenario Stress Tests')).toBeInTheDocument();
     expect(screen.queryByText('personal-finance-copy')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Regulatory Compliance Checklist' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Regulatory Compliance Checklist' }));
     expect(await screen.findByText('Fiduciary & Jurisdiction Rule Verification Matrix')).toBeInTheDocument();
   });
 
@@ -307,7 +347,7 @@ describe('PortfolioConstructionModal', () => {
   it('renders all six rationale pillars and the source attributions', async () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Fiduciary Rationale (6 Pillars)' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Fiduciary Rationale (6 Pillars)' }));
 
     for (const copy of [
       'personal-finance-copy',
@@ -326,7 +366,7 @@ describe('PortfolioConstructionModal', () => {
   it('derives the bond sleeve shift from duration and the rate slider', async () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Stress Tests & What-If Calculator' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Stress Tests & What-If Calculator' }));
     // The flanking "-200 bps" / "+200 bps" text is not a label, so the slider names itself.
     const slider = await screen.findByRole('slider', { name: 'Policy rate shift in basis points' });
 
@@ -345,7 +385,7 @@ describe('PortfolioConstructionModal', () => {
   it('signs positive stress moves and colours the -10% danger threshold', async () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Stress Tests & What-If Calculator' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Stress Tests & What-If Calculator' }));
     expect(await screen.findByText('Macroeconomic Scenario Stress Tests')).toBeInTheDocument();
 
     const severe = scenarioCard('Rate Shock +200bps');
@@ -366,7 +406,7 @@ describe('PortfolioConstructionModal', () => {
   it('renders every Monte Carlo percentile and the tail risk figures', async () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Stress Tests & What-If Calculator' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Stress Tests & What-If Calculator' }));
 
     for (const value of ['-14.2%', '-3.1%', '+6.8%', '+15.4%', '+24.9%', '21.7%', '27.3%']) {
       expect(await screen.findByText(value)).toBeInTheDocument();
@@ -376,7 +416,7 @@ describe('PortfolioConstructionModal', () => {
   it('marks each compliance check from its own flag', async () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Regulatory Compliance Checklist' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Regulatory Compliance Checklist' }));
     expect(await screen.findByText('SCA / AAOIFI Sharia Compliance')).toBeInTheDocument();
 
     expect(complianceIcon('SCA / AAOIFI Sharia Compliance')).toHaveClass('text-emerald-600');
@@ -388,7 +428,7 @@ describe('PortfolioConstructionModal', () => {
   it('flips the Sharia filter, its compliance copy, and the next solve payload', async () => {
     renderModal();
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Regulatory Compliance Checklist' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Regulatory Compliance Checklist' }));
     expect(
       await screen.findByText('Dual-jurisdiction portfolio contains compliant sovereign sukuk alongside conventional diversification assets.'),
     ).toBeInTheDocument();

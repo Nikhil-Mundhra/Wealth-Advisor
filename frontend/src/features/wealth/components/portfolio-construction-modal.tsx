@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { ChevronRight, RefreshCw, Scale, ShieldCheck, X } from 'lucide-react';
 import type { ConstructPortfolioResponse, JurisdictionEnum, RiskTierEnum } from '@wealth-advisor/contracts';
 import { mapScoreToRiskTier } from '@wealth-advisor/rules';
@@ -27,10 +28,18 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-function TabButton({ label, active, onSelect }: { label: string; active: boolean; onSelect: () => void }) {
+const tabDomId = (id: TabId) => `pc-tab-${id}`;
+const panelDomId = (id: TabId) => `pc-panel-${id}`;
+
+function TabButton({ id, label, active, onSelect }: { id: TabId; label: string; active: boolean; onSelect: () => void }) {
   return (
     <button
+      id={tabDomId(id)}
       type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls={panelDomId(id)}
+      tabIndex={active ? 0 : -1}
       onClick={onSelect}
       className={`px-3 py-2 border-b-2 transition cursor-pointer ${
         active ? 'border-brand-600 text-brand-700 dark:text-brand-300 font-semibold' : 'border-transparent text-subtle hover:text-ink'
@@ -110,6 +119,32 @@ export function PortfolioConstructionModal({
   if (!open) return null;
 
   const handleSolve = () => construct(buildRequest());
+
+  // The strip stays one tab stop; arrows move selection and focus together (automatic activation).
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const index = TABS.findIndex((tab) => tab.id === activeTab);
+    let nextIndex: number;
+    switch (event.key) {
+      case 'ArrowRight':
+        nextIndex = (index + 1) % TABS.length;
+        break;
+      case 'ArrowLeft':
+        nextIndex = (index - 1 + TABS.length) % TABS.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = TABS.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    const next = TABS[nextIndex];
+    setActiveTab(next.id);
+    document.getElementById(tabDomId(next.id))?.focus();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
@@ -224,11 +259,16 @@ export function PortfolioConstructionModal({
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-line text-xs font-medium gap-1">
+        <div
+          role="tablist"
+          aria-label="Portfolio construction sections"
+          className="flex border-b border-line text-xs font-medium gap-1"
+          onKeyDown={handleTabKeyDown}
+        >
           {TABS.map(({ id, label }) => (
             <TabButton
               key={id}
+              id={id}
               label={id === 'allocation' ? `${label} (${result?.holdings.length ?? 0} Holdings)` : label}
               active={activeTab === id}
               onSelect={() => setActiveTab(id)}
@@ -237,17 +277,27 @@ export function PortfolioConstructionModal({
         </div>
 
         {activeTab === 'allocation' && result && (
-          <AllocationTab result={result} defaultCurrency={defaultCurrency} />
+          <div role="tabpanel" id={panelDomId('allocation')} aria-labelledby={tabDomId('allocation')} tabIndex={0}>
+            <AllocationTab result={result} defaultCurrency={defaultCurrency} />
+          </div>
         )}
 
-        {activeTab === 'rationale' && result && <RationaleTab result={result} />}
+        {activeTab === 'rationale' && result && (
+          <div role="tabpanel" id={panelDomId('rationale')} aria-labelledby={tabDomId('rationale')} tabIndex={0}>
+            <RationaleTab result={result} />
+          </div>
+        )}
 
         {activeTab === 'stress' && result && (
-          <StressTab result={result} rateShiftBps={whatIfRateShiftBps} onRateShiftChange={setWhatIfRateShiftBps} />
+          <div role="tabpanel" id={panelDomId('stress')} aria-labelledby={tabDomId('stress')} tabIndex={0}>
+            <StressTab result={result} rateShiftBps={whatIfRateShiftBps} onRateShiftChange={setWhatIfRateShiftBps} />
+          </div>
         )}
 
         {activeTab === 'compliance' && result && (
-          <ComplianceTab result={result} riskTier={riskTier} shariaOnly={shariaOnly} />
+          <div role="tabpanel" id={panelDomId('compliance')} aria-labelledby={tabDomId('compliance')} tabIndex={0}>
+            <ComplianceTab result={result} riskTier={riskTier} shariaOnly={shariaOnly} />
+          </div>
         )}
 
         {/* Footer */}
