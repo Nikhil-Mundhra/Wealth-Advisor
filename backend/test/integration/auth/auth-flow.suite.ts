@@ -48,6 +48,15 @@ export function runAuthFlowSuite(start: () => Promise<TestApp>): void {
         { path: ['password'], code: 'password.too_short' },
       ]);
     });
+
+    it('ignores a smuggled clientRole and always issues the base role', async () => {
+      const created = await postJson(t.app, '/api/auth/signup', { email: 'ambitious@example.com', password: PASSWORD, clientRole: 'ADVISOR' });
+      assert.equal(created.status, 201);
+      const login = await json(await postJson(t.app, '/api/auth/login', { email: 'ambitious@example.com', password: PASSWORD, clientType: 'IOS' }));
+      const me = await t.app.request('/api/auth/me', { headers: bearer(String(login.accessToken)) });
+      assert.equal(me.status, 200);
+      assert.deepEqual((await json(me)).roles, ['USER']);
+    });
   });
 
   describe('login', () => {

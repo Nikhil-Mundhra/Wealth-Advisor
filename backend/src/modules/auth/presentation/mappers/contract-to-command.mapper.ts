@@ -8,7 +8,6 @@ export function toSignupCommand(request: SignupRequest): SignupCommand {
     password: request.password,
     displayName: request.displayName ?? null,
     advisorCode: request.advisorCode ?? null,
-    clientRole: request.clientRole,
   };
 }
 

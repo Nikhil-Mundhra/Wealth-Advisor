@@ -31,6 +31,7 @@ backend/test/integration/market/market-routes.test.ts : runs the market-routes s
 backend/test/integration/scoped-routes/route-guards.memory.test.ts : ADMIN role on the admin console, householdMode query validation, a signed-in caller for every write, share only a held portfolio
 backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
 backend/test/integration/wealth/wealth-optimize-routes.memory.test.ts : optimize body reaches recalibration; FX mismatch penalty in the route response
+backend/test/integration/wealth/wealth-portfolio-access.memory.test.ts : cross-user portfolio and optimize reads refuse with 404 for clients and anonymous callers
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
 backend/test/support/fake-clock.ts : clock moved by hand
 backend/test/support/market-fixtures.ts : fixture loader, fixture-backed http client, rate and price builders, weekdays, generated Marketstack pages
