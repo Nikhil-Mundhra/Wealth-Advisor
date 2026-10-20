@@ -53,6 +53,10 @@ frontend/src/lib/engagement.ts : typed engagement tracking wrapper over Vercel W
 frontend/src/lib/format-money.test.ts : locale currency rendering
 frontend/src/lib/format-money.ts : locale-aware money rendering
 frontend/src/lib/locale-store.ts : active locale, localStorage, <html lang> applier
+frontend/src/lib/locales/de.ts : German UI copy, typed against StringKey
+frontend/src/lib/locales/en.ts : English UI copy and the StringKey every other locale must match
+frontend/src/lib/locales/zh-cn.ts : simplified Chinese UI copy, typed against StringKey
+frontend/src/lib/locales/zh-hk.ts : traditional Chinese UI copy, typed against StringKey
 frontend/src/lib/theme-store.ts : light/dark choice (OS default), localStorage, .dark applier with circular wipe
 frontend/src/lib/use-count-up.test.ts : lands on target, jumps with reduced motion
 frontend/src/lib/use-count-up.ts : eased hero-number count-up
