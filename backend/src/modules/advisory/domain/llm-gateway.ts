@@ -51,32 +51,45 @@ export function buildAdvisoryFacts(context: LlmContext) {
   const portfolioVal = Math.round(context.portfolio.totalValuationBase / 100);
   const mix = summarizeProposal(context.proposalHoldings);
 
-  const cuts = [10, 15, 20, 25, 30, 35, 40, 45, 50].map((pct) => {
-    const savings = Math.round(burn * (pct / 100));
-    const newBurn = Math.max(1, burn - savings);
-    const newRunway = Number((runway / (1 - pct / 100)).toFixed(1));
-    return { pct, savings, newBurn, newRunway };
-  });
+  // Reduction benchmarks only make sense while the household actually burns reserves; a net inflow
+  // would turn them into negative savings and a clamped zero-burn row the model could quote.
+  const cuts =
+    burn > 0
+      ? [10, 15, 20, 25, 30, 35, 40, 45, 50].map((pct) => {
+          const savings = Math.round(burn * (pct / 100));
+          const newBurn = Math.max(1, burn - savings);
+          const newRunway = Number((runway / (1 - pct / 100)).toFixed(1));
+          return { pct, savings, newBurn, newRunway };
+        })
+      : [];
 
   const holdingWeights = context.proposalHoldings.map((h) => Number((h.weight * 100).toFixed(1)));
 
   const benchmarksSummary = [
     `Client Financial Position:`,
     `- Liquid Runway: ${runway.toFixed(1)} months (${context.cashflow.runwayBand})`,
-    `- Net Monthly Burn / Outflow: €${burn}`,
+    burn > 0
+      ? `- Net Monthly Burn / Outflow: €${burn}`
+      : `- Net Monthly Cashflow: €${burn} (monthly net inflow; reserves are not being spent)`,
     `- Total Portfolio Valuation: €${portfolioVal}`,
     `- Household Mode: ${context.householdMode}`,
     `- Preferred Locale: ${context.locale}`,
     `- Target Allocations (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%`,
-    `- Spending Reduction Benchmarks (Deterministic Engine Calculations):`,
-    ...cuts.map(
-      (c) =>
-        `  * ${c.pct}% cut: saves €${c.savings}/mo, reducing burn to €${c.newBurn}/mo, extending runway to ${c.newRunway} months`,
-    ),
+    burn > 0
+      ? `- Spending Reduction Benchmarks (Deterministic Engine Calculations):`
+      : `- Spending Reduction Benchmarks: not applicable while the household runs a monthly net inflow`,
+    burn > 0
+      ? cuts.map(
+          (c) =>
+            `  * ${c.pct}% cut: saves €${c.savings}/mo, reducing burn to €${c.newBurn}/mo, extending runway to ${c.newRunway} months`,
+        )
+      : [],
     `- Standard Buffer Targets: 3, 6, 9, 12, 18, 24 months`,
     `- Review Timelines: 7, 14, 30, 60, 90 days`,
     `- Action Steps: 1, 2, 3, 4, 5`,
-  ].join('\n');
+  ]
+    .flat()
+    .join('\n');
 
   const extraFactNumbers = [
     runway,
@@ -92,6 +105,19 @@ export function buildAdvisoryFacts(context: LlmContext) {
   ].filter((n) => typeof n === 'number' && !Number.isNaN(n) && n !== 0);
 
   return { burn, runway, portfolioVal, mix, cuts, benchmarksSummary, extraFactNumbers };
+}
+
+// Every live adapter must produce its whole reply in the user's locale; the mock is locale-aware,
+// and the shield fallback texts are localized, so an English-only live model would mix languages.
+const LOCALE_LANGUAGE: Record<Locale, string> = {
+  en: 'English',
+  'zh-CN': 'Simplified Chinese',
+  'zh-HK': 'Traditional Chinese (Hong Kong)',
+  de: 'German',
+};
+
+export function localeDirective(locale: Locale): string {
+  return `Reply in ${LOCALE_LANGUAGE[locale]} (${locale}) throughout: every JSON value is written in that language only.`;
 }
 
 export class MockLlmAdapter implements LlmAdapter {
@@ -264,7 +290,24 @@ function narrate(
 
 const ADVISORY_HTTP_TIMEOUT_MS = 25000;
 
+// The OpenRouter adapter may try more than one candidate model; the chain keeps a shared wall-time
+// budget (the deployment does not expose per-function maxDuration) so two slow candidates cannot
+// exceed the single-request ceiling of the other adapters.
+const OPENROUTER_CANDIDATE_TIMEOUT_MS = 14000;
+const OPENROUTER_TOTAL_TIMEOUT_MS = 25000;
+
 export type ApiKeyResolver = string | (() => Promise<string | undefined> | string | undefined);
+
+// A failing settings read behind a key resolver (admin database unavailable) must surface as a
+// typed gateway error, not as an unclassified transport failure.
+async function resolveApiKey(resolver: ApiKeyResolver | undefined, provider: string): Promise<string | undefined> {
+  if (!resolver) return undefined;
+  try {
+    return typeof resolver === 'function' ? await resolver() : resolver;
+  } catch {
+    throw AdvisoryErrors.gatewayUnavailable(`${provider} API key could not be resolved`);
+  }
+}
 
 export class GeminiLlmAdapter implements LlmAdapter {
   private readonly apiKey: ApiKeyResolver | undefined;
@@ -278,7 +321,7 @@ export class GeminiLlmAdapter implements LlmAdapter {
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
-    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    const key = await resolveApiKey(this.apiKey, 'Gemini');
     if (!key) throw AdvisoryErrors.gatewayUnavailable('Gemini API key is not configured');
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
@@ -289,6 +332,7 @@ ${facts.benchmarksSummary}
 Instructions:
 1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
 2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
+3. ${localeDirective(context.locale)}
 
 Respond ONLY in valid JSON with these keys:
 {
@@ -343,7 +387,7 @@ export class OpenAiLlmAdapter implements LlmAdapter {
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
-    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    const key = await resolveApiKey(this.apiKey, 'OpenAI');
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenAI API key is not configured');
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
@@ -353,6 +397,7 @@ ${facts.benchmarksSummary}
 Instructions:
 1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
 2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
+3. ${localeDirective(context.locale)}
 
 Respond ONLY in valid JSON with these keys:
 {
@@ -415,10 +460,11 @@ export class ClaudeLlmAdapter implements LlmAdapter {
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
-    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    const key = await resolveApiKey(this.apiKey, 'Anthropic');
     if (!key) throw AdvisoryErrors.gatewayUnavailable('Anthropic API key is not configured');
     const base = await this.fallback.chat(context);
-    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+    const facts = buildAdvisoryFacts(context);
+    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. ${localeDirective(context.locale)} Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
 
     let data: any;
     try {
@@ -448,7 +494,9 @@ export class ClaudeLlmAdapter implements LlmAdapter {
     const block = (data?.content ?? []).find((part: any) => part?.type === 'text');
     if (!block?.text) throw AdvisoryErrors.gatewayUnavailable('Anthropic returned an empty completion');
     try {
-      return narrate(base, JSON.parse(block.text) as Record<string, unknown>, systemPrompt);
+      // Claude has no enforced JSON response format and routinely wraps the object in a markdown
+      // fence; parseJsonSafe keeps the fenced form from failing the whole exchange.
+      return narrate(base, parseJsonSafe(block.text), systemPrompt, facts.extraFactNumbers);
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `Anthropic response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
@@ -476,7 +524,7 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
   }
 
   async chat(context: LlmContext): Promise<AdvisoryChatResponse> {
-    const key = typeof this.apiKey === 'function' ? await this.apiKey() : this.apiKey;
+    const key = await resolveApiKey(this.apiKey, 'OpenRouter');
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenRouter API key is not configured');
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
@@ -486,6 +534,7 @@ ${facts.benchmarksSummary}
 Instructions:
 1. Directly answer the user's specific life event or question in "reply" with actionable, personalized fiduciary guidance.
 2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
+3. ${localeDirective(context.locale)}
 
 Respond ONLY in valid JSON with these keys:
 {
@@ -494,15 +543,18 @@ Respond ONLY in valid JSON with these keys:
   "crossBorder": "One sentence on currency corridors and remittance obligations",
   "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
 }`;
-    const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
     const candidateModels = [
       this.model,
       'minimax/minimax-m3.1-flash:free',
     ].filter((m, i, arr) => arr.indexOf(m) === i);
 
-    let lastError: unknown = null;
+    const attemptErrors: string[] = [];
+    const chainStartedAt = Date.now();
     for (const modelToTry of candidateModels) {
+      const remaining = OPENROUTER_TOTAL_TIMEOUT_MS - (Date.now() - chainStartedAt);
+      // The next candidate gets what is left of the shared budget, floored at a usable minimum.
+      const candidateTimeoutMs = Math.min(OPENROUTER_CANDIDATE_TIMEOUT_MS, Math.max(2000, remaining));
       try {
         const data = (await this.http.postJson(
           'https://openrouter.ai/api/v1/chat/completions',
@@ -518,7 +570,7 @@ Respond ONLY in valid JSON with these keys:
             temperature: 0.2,
           },
           {
-            timeoutMs: 14000,
+            timeoutMs: candidateTimeoutMs,
             headers: {
               authorization: `Bearer ${key}`,
               'http-referer': 'https://syntropy.finance',
@@ -528,16 +580,24 @@ Respond ONLY in valid JSON with these keys:
         )) as any;
 
         const content = data?.choices?.[0]?.message?.content;
-        if (content) {
-          return narrate(base, parseJsonSafe(content), systemPrompt, facts.extraFactNumbers);
+        if (!content) {
+          attemptErrors.push(`${modelToTry}: returned an empty completion`);
+          continue;
         }
-      } catch (err) {
-        lastError = err;
+        try {
+          return narrate(base, parseJsonSafe(content), systemPrompt, facts.extraFactNumbers);
+        } catch (err: unknown) {
+          attemptErrors.push(
+            `${modelToTry}: response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      } catch (err: unknown) {
+        attemptErrors.push(`${modelToTry}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
     throw AdvisoryErrors.gatewayUnavailable(
-      `OpenRouter request failed across candidate models: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+      `OpenRouter provided no usable completion across candidate models (${attemptErrors.join('; ')})`,
     );
   }
 }

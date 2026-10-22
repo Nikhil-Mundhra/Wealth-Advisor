@@ -126,6 +126,29 @@ describe('AdvisoryApi', () => {
     }
   });
 
+  it('fails with gatewayUnavailable when getActiveProvider rejects', async () => {
+    const { finance, wealth } = setupApis();
+    const gateway = new LlmGateway();
+    const failingApi = createAdvisoryApi({
+      finance,
+      wealth,
+      gateway,
+      getActiveProvider: async () => {
+        throw new Error('database connection failed');
+      },
+    });
+
+    await assert.rejects(
+      () =>
+        failingApi.chat('default', 'default', {
+          message: 'Can I rebalance safely?',
+          locale: 'en',
+          householdMode: 'INDIVIDUAL',
+        }),
+      (err: any) => err.code === 'AV_1001' && err.message.includes('active provider could not be determined'),
+    );
+  });
+
   it('keeps a live model reply only when its numbers come from the engines', async () => {
     const { finance, wealth } = setupApis();
     const gateway = new LlmGateway({ geminiApiKey: 'test-key' });

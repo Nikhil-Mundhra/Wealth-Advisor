@@ -2,6 +2,7 @@ import type { AdvisoryChatRequest, AdvisoryChatResponse } from '@wealth-advisor/
 import { mapScoreToRiskTier, type LlmProvider } from '@wealth-advisor/rules';
 import type { FinanceApi } from '../finance/public.ts';
 import type { WealthApi } from '../wealth/public.ts';
+import { AdvisoryErrors } from './domain/errors/advisory-errors.ts';
 import { LlmGateway } from './domain/llm-gateway.ts';
 
 export interface AdvisoryApiDeps {
@@ -33,7 +34,15 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
           return null;
         });
 
-      const provider = getActiveProvider ? await getActiveProvider() : 'mock';
+      // A failing settings read (admin database unavailable) is a gateway failure, not a crash.
+      let provider: LlmProvider = 'mock';
+      if (getActiveProvider) {
+        try {
+          provider = await getActiveProvider();
+        } catch {
+          throw AdvisoryErrors.gatewayUnavailable('active provider could not be determined');
+        }
+      }
 
       const res = await gateway.chat(provider, {
         message: input.message,

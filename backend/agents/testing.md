@@ -42,6 +42,7 @@ backend/test/unit/admin/admin-users-api.test.ts : admin user management API, rol
 backend/test/unit/advisory/advisory-api.test.ts : multilingual copilot responses, unreachable-provider fallback, live model replies held to engine numbers, action cards
 backend/test/unit/advisory/calculation-shield.test.ts : grounded, rounded, decimal-comma and invented numbers; missing candidates
 backend/test/unit/advisory/claude-adapter.test.ts : Claude replies held to engine numbers, missing key and provider failure fall back to mock
+backend/test/unit/advisory/llm-gateway.test.ts : live adapter shield facts exclude the user inquiry, locale directive on every live prompt, fenced and benchmark-numbered narration, OpenRouter per-candidate failure report, net-inflow benchmarks omitted
 backend/test/unit/analytics/market-snapshot.test.ts : MarketSnapshot invariants; measureSnapshot threshold and window
 backend/test/unit/analytics/returns-covariance.test.ts : alignment, log returns, annualization and covariance against a hand-computed series
 backend/test/unit/analytics/snapshot-handler.test.ts : event handler: window, idempotent redelivery, too few observations, alignment gaps, adjusted close, other versions
