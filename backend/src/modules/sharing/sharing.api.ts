@@ -41,7 +41,8 @@ export function createSharingApi(deps: SharingApiDeps) {
       const now = clock.now();
       const ttlHours = input.ttlHours ?? 72;
       const expiresAt = new Date(now.getTime() + ttlHours * 3600000);
-      const token = `dewa_sec_${generateOpaqueToken(6)}`;
+      // 16 random bytes (128 bits): a share token is a bearer capability until it expires.
+      const token = `dewa_sec_${generateOpaqueToken(16)}`;
       // The snapshot is the caller's own rebalance proposal at the moment of sharing.
       const proposal = await wealth.optimizePortfolio(tenantId, userId);
 
@@ -90,24 +91,44 @@ export function createSharingApi(deps: SharingApiDeps) {
 }
 
 function maskPlanSnapshot(snapshot: PlanSnapshotDto): PlanSnapshotDto {
+  // One label per symbol across both weight maps, so a holding keeps the same anonymous name everywhere.
+  const labels = new Map<string, string>();
+  const labelFor = (symbol: string): string => {
+    const existing = labels.get(symbol);
+    if (existing) return existing;
+    const label = `Holding ${labels.size + 1}`;
+    labels.set(symbol, label);
+    return label;
+  };
+  for (const symbol of [...Object.keys(snapshot.recommendedWeights), ...Object.keys(snapshot.currentWeights)]) {
+    labelFor(symbol);
+  }
+
   const maskWeights = (weights: Record<string, number>) => {
     const masked: Record<string, number> = {};
-    let index = 1;
-    for (const weight of Object.values(weights)) {
-      masked[`Holding ${index++}`] = weight;
+    for (const [symbol, weight] of Object.entries(weights)) {
+      masked[labelFor(symbol)] = weight;
     }
     return masked;
   };
   const maskAmounts = (text: string) => text.replace(/[$€£¥]\s*\d+(?:[.,]\d+)*/g, '€***');
+  // The rationale names tickers even when the weight map is anonymized; the mask has to cover both.
+  const maskText = (text: string) => {
+    let masked = maskAmounts(text);
+    for (const [symbol, label] of [...labels.entries()].sort(([a], [b]) => b.length - a.length)) {
+      masked = masked.split(symbol).join(label);
+    }
+    return masked;
+  };
 
   return {
     ...snapshot,
     currentWeights: maskWeights(snapshot.currentWeights),
     recommendedWeights: maskWeights(snapshot.recommendedWeights),
     threePillarRationale: {
-      personalFinance: maskAmounts(snapshot.threePillarRationale.personalFinance),
-      crossBorder: maskAmounts(snapshot.threePillarRationale.crossBorder),
-      wealthStrategy: maskAmounts(snapshot.threePillarRationale.wealthStrategy),
+      personalFinance: maskText(snapshot.threePillarRationale.personalFinance),
+      crossBorder: maskText(snapshot.threePillarRationale.crossBorder),
+      wealthStrategy: maskText(snapshot.threePillarRationale.wealthStrategy),
     },
   };
 }

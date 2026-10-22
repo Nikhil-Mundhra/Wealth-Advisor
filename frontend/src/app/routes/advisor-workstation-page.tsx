@@ -106,6 +106,8 @@ export function AdvisorWorkstationPage() {
 
   const dbClients = clientsData?.clients ?? [];
   const invites = invitesData?.invites ?? [];
+  // The roster is local seed data; only a connected account has a backend user id to snapshot a plan for.
+  const shareClientId = dbClients.find((client) => client.email.toLowerCase() === activeClient.email.toLowerCase())?.id ?? null;
 
   // Aggregated valuation across seeded + database clients
   const totalAum = allClients.reduce((sum, c) => sum + c.netWorth, 0);
@@ -493,7 +495,7 @@ export function AdvisorWorkstationPage() {
             runwayMonths: activeClient.runwayMonths,
             monthlyBurn: activeClient.monthlyBurn,
             corridors: activeClient.remittances.map((r) => r.corridor),
-            shareId: `${activeClient.id}_plan_2026`,
+            shareClientId,
           }}
         />
       )}

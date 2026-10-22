@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { after, before, describe, it } from 'node:test';
 import { exportPKCS8, exportSPKI, generateKeyPair, SignJWT } from 'jose';
+import { DEFAULT_USER_ID } from '#core/db/document-id.ts';
 import { type TestApp, postJson, putJson, startTestApp } from '../../support/test-app.ts';
 
 const json = async (response: Response) => (await response.json()) as Record<string, unknown>;
@@ -89,5 +90,24 @@ describe('route guards', () => {
     const response = await postJson(app.app, '/api/sharing/create', {}, { authorization: `Bearer ${await tokenWith(['USER'])}` });
     assert.equal(response.status, 404);
     assert.equal((await json(response)).code, 'WL_1001');
+  });
+
+  it('refuses a user sharing a client plan, and lets an advisor share it', async () => {
+    const denied = await postJson(
+      app.app,
+      '/api/sharing/create',
+      { clientId: DEFAULT_USER_ID },
+      { authorization: `Bearer ${await tokenWith(['USER'])}` },
+    );
+    assert.equal(denied.status, 403);
+    assert.equal((await json(denied)).code, 'SH_1003');
+
+    const allowed = await postJson(
+      app.app,
+      '/api/sharing/create',
+      { clientId: DEFAULT_USER_ID, ownerDisplayName: 'Elena Vance' },
+      { authorization: `Bearer ${await tokenWith(['USER', 'ADVISOR'])}` },
+    );
+    assert.equal(allowed.status, 201);
   });
 });

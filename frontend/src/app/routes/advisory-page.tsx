@@ -40,7 +40,6 @@ export function ClientAdvisoryView() {
         runwayMonths: Math.round((liquidCash / monthlyBurn) * 10) / 10,
         monthlyBurn,
         corridors: profile.corridorCurrencies,
-        shareId: `${me?.id ?? 'client'}_plan_2026`,
       }}
     />
   );

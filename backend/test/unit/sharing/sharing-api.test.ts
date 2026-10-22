@@ -33,6 +33,8 @@ describe('SharingApi', () => {
     });
 
     assert.ok(res.shareToken.startsWith('dewa_sec_'));
+    // 16 random bytes base64url-encode to 22 characters; 6 bytes gave only 48 bits.
+    assert.ok(res.shareToken.length >= 'dewa_sec_'.length + 22);
     assert.equal(res.url, `/share/${res.shareToken}`);
 
     const retrieved = await api.getSharedPlan(res.shareToken);
@@ -79,6 +81,12 @@ describe('SharingApi', () => {
     assert.ok(keys.every((k) => k.startsWith('Holding ')));
     assert.ok(!keys.some((k) => Object.keys(proposal.currentWeights).includes(k)));
     assert.ok(!plan.planSnapshot.threePillarRationale.personalFinance.match(/€\d+/));
+    // The rationale names the rebalanced ticker, so masking the weight map alone would leak it.
+    const rationale = plan.planSnapshot.threePillarRationale.wealthStrategy;
+    for (const symbol of Object.keys(proposal.currentWeights)) {
+      assert.ok(!rationale.includes(symbol), `${symbol} leaked through the rationale`);
+    }
+    assert.match(rationale, /Holding \d+/);
   });
 
   it('refuses to share for a caller with no portfolio', async () => {

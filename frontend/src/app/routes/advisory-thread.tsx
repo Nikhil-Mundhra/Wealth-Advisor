@@ -29,7 +29,9 @@ export interface AdvisoryContext {
   runwayMonths: number;
   monthlyBurn: number;
   corridors: string[];
-  shareId: string;
+  // undefined shares the caller's own plan; null means this view has no shareable plan (for example, a roster client
+  // with no connected account); a string is that client's user id.
+  shareClientId?: string | null;
 }
 
 interface ThreePillars {
@@ -87,6 +89,9 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
   const [stepUp, setStepUp] = useState(false);
   const [pending, setPending] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareError, setShareError] = useState(false);
+  const [sharePending, setSharePending] = useState(false);
   const [advisorApproved, setAdvisorApproved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
@@ -173,34 +178,35 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     ]);
   }
 
-  function createShareLink(): void {
-    track(ENGAGEMENT_EVENTS.shareLinkCreated, {
-      isMasked: true,
-      hasExpiry: true,
-    });
-    void (async () => {
-      try {
-        const res = await apiRequest('/sharing/create', {
-          method: 'POST',
-          body: {
-            privacyMasked: true,
-            ownerDisplayName: context.displayName,
-            ttlHours: 72,
-          },
-          response: CreateShareLinkResponse,
-          authenticated: true,
-        });
-        if (typeof navigator !== 'undefined' && navigator.clipboard) {
-          await navigator.clipboard.writeText(`${window.location.origin}${res.url}`).catch(() => {});
-        }
-      } catch {
-        if (typeof navigator !== 'undefined' && navigator.clipboard) {
-          navigator.clipboard.writeText(`${window.location.origin}/share/${context.shareId}`).catch(() => {});
-        }
+  async function createShareLink(): Promise<void> {
+    setShareError(false);
+    setCopiedShare(false);
+    setSharePending(true);
+    try {
+      const res = await apiRequest('/sharing/create', {
+        method: 'POST',
+        body: {
+          privacyMasked: true,
+          ownerDisplayName: context.displayName,
+          ttlHours: 72,
+          ...(context.shareClientId ? { clientId: context.shareClientId } : {}),
+        },
+        response: CreateShareLinkResponse,
+        authenticated: true,
+      });
+      const url = `${window.location.origin}${res.url}`;
+      setShareUrl(url);
+      track(ENGAGEMENT_EVENTS.shareLinkCreated, { isMasked: true, hasExpiry: true });
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url).catch(() => {});
+        setCopiedShare(true);
+        setTimeout(() => setCopiedShare(false), 3000);
       }
-    })();
-    setCopiedShare(true);
-    setTimeout(() => setCopiedShare(false), 3000);
+    } catch {
+      setShareError(true);
+    } finally {
+      setSharePending(false);
+    }
   }
 
   function trackSpotlight(event: React.MouseEvent<HTMLElement>): void {
@@ -447,11 +453,35 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           <Button variant="outline" onClick={runStressSimulation}>
             Simulate −5% EUR shock
           </Button>
-          <Button variant="outline" onClick={createShareLink} className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            onClick={createShareLink}
+            disabled={sharePending || context.shareClientId === null}
+            title={context.shareClientId === null ? strings['advisory.shareUnavailable'] : undefined}
+            className="flex items-center gap-1.5"
+          >
             <Share2 aria-hidden className="size-4" />
             <span>{copiedShare ? 'Link copied' : 'Share strategy'}</span>
           </Button>
         </div>
+
+        {shareError && (
+          <div className="mt-3">
+            <Alert>{strings['share.modal.error']}</Alert>
+          </div>
+        )}
+
+        {shareUrl && (
+          <div className="mt-3">
+            <Input
+              readOnly
+              value={shareUrl}
+              aria-label={strings['share.linkLabel']}
+              onFocus={(event) => event.target.select()}
+              className="font-mono text-xs"
+            />
+          </div>
+        )}
       </Card>
 
       <form onSubmit={send} className="flex gap-2">

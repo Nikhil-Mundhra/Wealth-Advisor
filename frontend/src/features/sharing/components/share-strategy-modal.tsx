@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Check, Copy, Link2 } from 'lucide-react';
+import { SHARING_ERROR_CODES, WEALTH_ERROR_CODES } from '@wealth-advisor/rules';
 import { Alert } from '../../../components/ui/alert.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Dialog } from '../../../components/ui/dialog.tsx';
+import { ApiError } from '../../../lib/api-error.ts';
 import { useStrings } from '../../../lib/dictionaries.ts';
 import { ENGAGEMENT_EVENTS, track } from '../../../lib/engagement.ts';
 import { useCreateShareLink } from '../api/use-create-share-link.ts';
@@ -11,10 +13,11 @@ interface ShareStrategyModalProps {
   open: boolean;
   onClose: () => void;
   ownerDisplayName: string;
+  clientId?: string;
 }
 
 // Issues a read-only share URL; the viewer picks privacy masking before the link is created.
-export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStrategyModalProps) {
+export function ShareStrategyModal({ open, onClose, ownerDisplayName, clientId }: ShareStrategyModalProps) {
   const strings = useStrings();
   const [privacyMasked, setPrivacyMasked] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -29,9 +32,21 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStr
 
   function handleCreate() {
     setCopied(false);
-    track(ENGAGEMENT_EVENTS.shareLinkCreated, { isMasked: privacyMasked, hasExpiry: true });
-    createLink.mutate({ privacyMasked, ttlHours: 72, ownerDisplayName });
+    createLink.mutate(
+      { privacyMasked, ttlHours: 72, ownerDisplayName, ...(clientId ? { clientId } : {}) },
+      {
+        onSuccess: () => track(ENGAGEMENT_EVENTS.shareLinkCreated, { isMasked: privacyMasked, hasExpiry: true }),
+      },
+    );
   }
+
+  const errorMessage = (() => {
+    if (!createLink.isError) return null;
+    const code = createLink.error instanceof ApiError ? createLink.error.code : null;
+    if (code === WEALTH_ERROR_CODES.portfolioNotFound) return strings['share.modal.errorNoPortfolio'];
+    if (code === SHARING_ERROR_CODES.scopeForbidden) return strings['share.modal.errorForbidden'];
+    return strings['share.modal.error'];
+  })();
 
   async function handleCopy() {
     if (!url || typeof navigator === 'undefined' || !navigator.clipboard) return;
@@ -62,9 +77,9 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName }: ShareStr
         </span>
       </label>
 
-      {createLink.isError && (
+      {errorMessage && (
         <div className="mt-3">
-          <Alert>{strings['share.modal.error']}</Alert>
+          <Alert>{errorMessage}</Alert>
         </div>
       )}
 

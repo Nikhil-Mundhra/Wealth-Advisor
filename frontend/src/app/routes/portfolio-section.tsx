@@ -28,6 +28,7 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
   const { data: me } = useMe();
   const activeClient = useActiveClient();
   const isDemo = isDemoEmail(me?.email);
+  const ownerDisplayName = me?.displayName || 'Private Client';
   const profile = useProfile(me?.email);
   const { data: apiPortfolio } = usePortfolio(isDemo && activeClient.id === 'elena-vance');
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
@@ -59,6 +60,9 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
     : [];
 
   const isElena = isDemo && activeClient.id === 'elena-vance';
+  // The API snapshots the signed-in caller's portfolio, so the demo roster's other clients cannot be shared: their
+  // seeded holdings have no backend plan behind them.
+  const canShare = !isDemo || isElena;
   const hasLiveApiData = Boolean(isElena && apiPortfolio && apiPortfolio.holdings.length > 0);
 
   const displayDemoHoldings = hasLiveApiData && apiPortfolio
@@ -113,14 +117,16 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
             >
               Compare UCITS Products
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShareModalOpen(true)}
-              className="gap-1.5"
-            >
-              <Share2 className="size-3.5" />
-              Share strategy
-            </Button>
+            {canShare && (
+              <Button
+                variant="outline"
+                onClick={() => setShareModalOpen(true)}
+                className="gap-1.5"
+              >
+                <Share2 className="size-3.5" />
+                Share strategy
+              </Button>
+            )}
             <a
               href="/advisory"
               className="rounded-field bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 dark:text-brand-950"
@@ -273,7 +279,7 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
       <ShareStrategyModal
         open={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
-        ownerDisplayName={activeClient.name}
+        ownerDisplayName={ownerDisplayName}
       />
     </div>
   );

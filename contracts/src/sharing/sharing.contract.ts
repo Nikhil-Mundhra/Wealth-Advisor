@@ -23,6 +23,8 @@ export const CreateShareLinkRequest = z.object({
   privacyMasked: z.boolean().default(true),
   ttlHours: z.number().int().positive().max(720).default(72),
   ownerDisplayName: DisplayNameField.optional(),
+  // Another user's plan, accepted only from an advisor or admin caller.
+  clientId: z.string().optional(),
 });
 export type CreateShareLinkRequest = z.infer<typeof CreateShareLinkRequest>;
 

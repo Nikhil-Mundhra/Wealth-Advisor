@@ -54,7 +54,7 @@ describe('PortfolioPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Share strategy' }));
     expect(screen.getByRole('dialog', { name: 'Share strategy' })).toBeVisible();
-    expect(screen.getByRole('checkbox', { name: /Mask absolute amounts/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Hide holding names and amounts/ })).toBeChecked();
   });
 
   it('shows a loading frame without demo fixtures while roles resolve', async () => {

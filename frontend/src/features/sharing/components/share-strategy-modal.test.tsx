@@ -36,7 +36,7 @@ describe('ShareStrategyModal', () => {
     Object.defineProperty(window.navigator, 'clipboard', { value: { writeText }, configurable: true });
     renderModal();
 
-    expect(screen.getByRole('checkbox', { name: /Mask absolute amounts/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Hide holding names and amounts/ })).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Create link' }));
 
     expect(await screen.findByDisplayValue('http://localhost:3000/share/dewa_sec_abc')).toBeVisible();
@@ -59,7 +59,7 @@ describe('ShareStrategyModal', () => {
     vi.stubGlobal('fetch', fetchSpy);
     renderModal();
 
-    await userEvent.click(screen.getByRole('checkbox', { name: /Mask absolute amounts/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /Hide holding names and amounts/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Create link' }));
     await screen.findByDisplayValue('http://localhost:3000/share/dewa_sec_xyz');
 
@@ -67,6 +67,40 @@ describe('ShareStrategyModal', () => {
     const calls = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
     const body = JSON.parse(calls[1].body as string);
     expect(body.privacyMasked).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it('explains that a portfolio is required before sharing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(JSON.stringify({ code: 'WL_1001', message: 'portfolio not found' }), {
+          status: 404,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+    renderModal();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create link' }));
+    expect(await screen.findByText('Create a portfolio before sharing your strategy.')).toBeVisible();
+    vi.unstubAllGlobals();
+  });
+
+  it('explains that only an owned or assigned plan can be shared', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(JSON.stringify({ code: 'SH_1003', message: 'forbidden' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+    renderModal();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create link' }));
+    expect(await screen.findByText('You can only share your own plan or a client assigned to you.')).toBeVisible();
     vi.unstubAllGlobals();
   });
 });

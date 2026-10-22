@@ -10,7 +10,18 @@ import { AdvisoryPage } from './advisory-page.tsx';
 function stubMe(roles: string[] = ['USER'], email = 'testing@example.com') {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify({ id: 'u-1', email, displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
+    vi.fn(async (input: unknown) => {
+      if (String(input).endsWith('/api/sharing/create')) {
+        return new Response(
+          JSON.stringify({ shareToken: 'dewa_sec_test', url: '/share/dewa_sec_test', expiresAt: '2026-10-27T00:00:00.000Z' }),
+          { status: 201, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      return new Response(
+        JSON.stringify({ id: 'u-1', email, displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }),
   );
 }
 
@@ -87,6 +98,8 @@ describe('AdvisoryPage', () => {
     const shareBtn = await screen.findByRole('button', { name: /Share strategy/ });
     await userEvent.click(shareBtn);
 
+    expect(await screen.findByDisplayValue('http://localhost:3000/share/dewa_sec_test')).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(trackSpy).toHaveBeenCalledWith(engagement.ENGAGEMENT_EVENTS.shareLinkCreated, {
       isMasked: true,
       hasExpiry: true,
