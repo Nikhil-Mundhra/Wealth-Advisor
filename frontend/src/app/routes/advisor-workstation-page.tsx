@@ -15,7 +15,6 @@ import {
   Shield,
   Sparkles,
   TrendingUp,
-  User,
   UserCheck,
   Users,
 } from 'lucide-react';
@@ -128,12 +127,7 @@ export function AdvisorWorkstationPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold dark:text-gold-light border border-gold/30">
-              Institutional Terminal
-            </span>
-            <span className="text-xs text-subtle font-mono">Global Nomads Wealth Partners</span>
-          </div>
+          <p className="text-xs text-subtle font-mono">Global Nomads Wealth Partners</p>
           <PageTitle className="mt-1">Wealth Analyst Workstation</PageTitle>
           <p className="mt-1 text-xs text-subtle">
             Fiduciary client roster surveillance, cross-border allocation monitoring, and delegated client onboarding.
@@ -161,89 +155,6 @@ export function AdvisorWorkstationPage() {
             Invite Client
           </Button>
         </div>
-      </div>
-
-      {/* Advisor View Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-2" role="tablist" aria-label="Advisor Workstation Tabs">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'overview'}
-          onClick={() => selectTab('overview')}
-          className={cn(
-            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
-            activeTab === 'overview'
-              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
-              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
-          )}
-        >
-          <Users aria-hidden className="size-3.5" />
-          <span>All Clients Overview ({allClients.length})</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'active'}
-          onClick={() => selectTab('active')}
-          className={cn(
-            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
-            activeTab === 'active'
-              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
-              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
-          )}
-        >
-          <User aria-hidden className="size-3.5" />
-          <span>Active Client: {activeClient.name}</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'copilot'}
-          onClick={() => selectTab('copilot')}
-          className={cn(
-            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
-            activeTab === 'copilot'
-              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
-              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
-          )}
-        >
-          <MessagesSquare aria-hidden className="size-3.5" />
-          <span>AI Advisory Copilot ({activeClient.name})</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'instruments'}
-          onClick={() => selectTab('instruments')}
-          className={cn(
-            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
-            activeTab === 'instruments'
-              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
-              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
-          )}
-        >
-          <Layers aria-hidden className="size-3.5" />
-          <span>Instrument Matrix</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'invites'}
-          onClick={() => selectTab('invites')}
-          className={cn(
-            'flex items-center gap-2 rounded-field px-4 py-2 text-xs font-semibold transition-colors cursor-pointer',
-            activeTab === 'invites'
-              ? 'bg-gold/20 text-gold-dark dark:text-gold-light border border-gold/40'
-              : 'text-subtle hover:text-ink hover:bg-surface-subtle'
-          )}
-        >
-          <UserCheck aria-hidden className="size-3.5" />
-          <span>Onboarding & Invites ({invites.length})</span>
-        </button>
       </div>
 
       {/* TAB 1: ALL CLIENTS OVERVIEW */}

@@ -92,7 +92,6 @@ describe('AppShell', () => {
     stubMe(['USER', 'ADVISOR'], 'advisor.morgan@syntropy.ch');
     renderShell('/advisor');
     expect(await screen.findByText('Advisor Body')).toBeVisible();
-    expect(screen.getByText('Advisor Workstation')).toBeVisible();
 
     // Advisor workstation side tabs
     expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
@@ -191,7 +190,6 @@ describe('AppShell', () => {
     stubMe(['USER', 'ADVISOR'], 'advisor.morgan@syntropy.ch');
     renderShell('/advisor/settings');
     expect(await screen.findByText('Advisor Settings Body')).toBeVisible();
-    expect(screen.getByText('Advisor Workstation')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Client Overview' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'AI Advisory Copilot' })).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();

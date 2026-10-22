@@ -184,12 +184,6 @@ export function AppShell() {
             </div>
             <p className="text-lg font-semibold tracking-tight">{strings['app.name']}</p>
           </Link>
-          {isAdvisorSection && (
-            <div className="mt-1 flex items-center gap-1.5 pl-10.5">
-              <Briefcase aria-hidden className="size-3 text-gold" />
-              <span className="font-semibold text-[11px] uppercase tracking-wider text-gold">Advisor Workstation</span>
-            </div>
-          )}
         </div>
 
         {/* 1. Admin Console Sidebar */}
@@ -308,11 +302,7 @@ export function AppShell() {
             )}
             {isAdvisorSection && (
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-gold/10 px-2.5 py-1 text-xs font-semibold text-gold border border-gold/20">
-                  <Briefcase aria-hidden className="size-3.5" />
-                  <span>Institutional</span>
-                </div>
-                {/* Advisor can switch between clients in the workstation */}
+                {/* Advisor can switch between clients */}
                 <ClientSelector />
               </div>
             )}

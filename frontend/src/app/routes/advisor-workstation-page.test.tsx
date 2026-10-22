@@ -63,10 +63,7 @@ describe('AdvisorWorkstationPage', () => {
   it('scopes the client roster to Alex Morgan (2 assigned clients) instead of all 4', async () => {
     renderWorkstation('/advisor', 'advisor.morgan@syntropy.ch', ['USER', 'ADVISOR']);
 
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /All Clients Overview \(2\)/ })).toBeVisible();
-    });
-    expect(screen.getByText('Managing 2 active cross-border client accounts across Europe & Asia corridors.')).toBeVisible();
+    expect(await screen.findByText('Managing 2 active cross-border client accounts across Europe & Asia corridors.')).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Elena Vance' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Marcus Vance' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Mei-Ling Chen' })).toBeNull();
@@ -84,7 +81,7 @@ describe('AdvisorWorkstationPage', () => {
     await userEvent.click(openButtons[1]!);
 
     expect(await screen.findByText('Portfolio Holdings Allocation')).toBeVisible();
-    expect(screen.getByRole('tab', { name: /Active Client: Marcus Vance/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 2, name: 'Marcus Vance' })).toBeVisible();
   });
 
   it('renders the inline Institutional Instrument Matrix at /advisor/instruments', async () => {
