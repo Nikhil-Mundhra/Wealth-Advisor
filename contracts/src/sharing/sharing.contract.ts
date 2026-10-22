@@ -44,3 +44,29 @@ export const SharedPlanResponse = z.object({
   createdAt: z.string(),
 });
 export type SharedPlanResponse = z.infer<typeof SharedPlanResponse>;
+
+export const ListSharedPlansQuery = z.object({
+  clientId: z.string().optional(),
+});
+export type ListSharedPlansQuery = z.infer<typeof ListSharedPlansQuery>;
+
+export const SharedPlanSummaryItem = z.object({
+  shareToken: z.string(),
+  ownerDisplayName: z.string(),
+  privacyMasked: z.boolean(),
+  expiresAt: z.string(),
+  createdAt: z.string(),
+  revokedAt: z.string().nullable(),
+});
+export type SharedPlanSummaryItem = z.infer<typeof SharedPlanSummaryItem>;
+
+export const ListSharedPlansResponse = z.object({
+  plans: z.array(SharedPlanSummaryItem),
+});
+export type ListSharedPlansResponse = z.infer<typeof ListSharedPlansResponse>;
+
+export const RevokeShareLinkResponse = z.object({
+  revoked: z.boolean(),
+  shareToken: z.string(),
+});
+export type RevokeShareLinkResponse = z.infer<typeof RevokeShareLinkResponse>;

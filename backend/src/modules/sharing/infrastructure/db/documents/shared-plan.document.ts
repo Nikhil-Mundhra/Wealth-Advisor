@@ -14,4 +14,5 @@ export interface SharedPlanDocument {
   passphraseHash: string | null;
   expiresAt: Date;
   createdAt: Date;
+  revokedAt?: Date | null;
 }

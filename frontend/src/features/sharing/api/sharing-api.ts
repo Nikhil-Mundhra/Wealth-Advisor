@@ -1,4 +1,10 @@
-import { CreateShareLinkRequest, CreateShareLinkResponse, SharedPlanResponse } from '@wealth-advisor/contracts';
+import {
+  CreateShareLinkRequest,
+  CreateShareLinkResponse,
+  ListSharedPlansResponse,
+  RevokeShareLinkResponse,
+  SharedPlanResponse,
+} from '@wealth-advisor/contracts';
 import type { z } from 'zod';
 import { apiRequest } from '../../../lib/api-client.ts';
 
@@ -9,6 +15,20 @@ export const sharingApi = {
       method: 'POST',
       body,
       response: CreateShareLinkResponse,
+      authenticated: true,
+    }),
+
+  list: (clientId?: string) =>
+    apiRequest(clientId ? `/sharing/links?clientId=${encodeURIComponent(clientId)}` : '/sharing/links', {
+      method: 'GET',
+      response: ListSharedPlansResponse,
+      authenticated: true,
+    }),
+
+  revoke: (token: string) =>
+    apiRequest(`/sharing/${encodeURIComponent(token)}`, {
+      method: 'DELETE',
+      response: RevokeShareLinkResponse,
       authenticated: true,
     }),
 

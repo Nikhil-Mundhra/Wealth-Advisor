@@ -77,6 +77,7 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `SH_1001` | 404 | no shared plan for the token |
 | `SH_1002` | 410 | shared plan expired |
 | `SH_1003` | 403 | a caller without the advisor role tried to share another user's plan |
+| `SH_1004` | 429 | rate limit exceeded on public shared plan lookup |
 | `SH_1900` | 500 | sharing invariant violated (a write's tenant or user scope id is unusable) |
 
 - Defined with a status but thrown by no code path: `AU_1008`, `AD_1900`, `FN_1001`, `FN_1002`, `WL_1002`, `AV_1001`, `AV_1002`, `AV_1900`.

@@ -13,21 +13,23 @@ import { sharingApi } from '../../features/sharing/api/sharing-api.ts';
 type LoadState =
   | { status: 'loading' }
   | { status: 'ready'; plan: SharedPlanResponse }
-  | { status: 'error'; kind: 'expired' | 'notFound' | 'unavailable' };
+  | { status: 'error'; kind: 'expired' | 'notFound' | 'rateLimited' | 'unavailable' };
 
 // A missing token, a deleted plan and an expired one are different answers; collapsing them into demo data hides a
 // dead link behind holdings the owner never shared.
-function errorKind(error: unknown): 'expired' | 'notFound' | 'unavailable' {
+function errorKind(error: unknown): 'expired' | 'notFound' | 'rateLimited' | 'unavailable' {
   if (error instanceof ApiError) {
     if (error.code === SHARING_ERROR_CODES.planExpired) return 'expired';
     if (error.code === SHARING_ERROR_CODES.planNotFound) return 'notFound';
+    if (error.code === SHARING_ERROR_CODES.rateLimited || error.status === 429) return 'rateLimited';
   }
   return 'unavailable';
 }
 
-function errorKey(kind: 'expired' | 'notFound' | 'unavailable'): StringKey {
+function errorKey(kind: 'expired' | 'notFound' | 'rateLimited' | 'unavailable'): StringKey {
   if (kind === 'expired') return 'share.error.expired';
   if (kind === 'notFound') return 'share.error.notFound';
+  if (kind === 'rateLimited') return 'share.error.rateLimited';
   return 'share.error.unavailable';
 }
 

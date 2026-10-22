@@ -19,4 +19,20 @@ export class MongoSharedPlanRepository implements SharedPlanRepository {
     await (await this.col()).insertOne(doc as any);
     return doc;
   }
+
+  async listByTarget(tenantId: ObjectId, userId: ObjectId): Promise<SharedPlanDocument[]> {
+    return (await this.col())
+      .find({ tenantId, userId })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
+  }
+
+  async revoke(tenantId: ObjectId, shareToken: string, revokedAt: Date): Promise<SharedPlanDocument | null> {
+    return (await this.col()).findOneAndUpdate(
+      { tenantId, shareToken },
+      { $set: { revokedAt } },
+      { returnDocument: 'after' },
+    );
+  }
 }

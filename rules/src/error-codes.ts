@@ -86,6 +86,7 @@ export const SHARING_ERROR_CODES = {
   planNotFound: 'SH_1001',
   planExpired: 'SH_1002',
   scopeForbidden: 'SH_1003',
+  rateLimited: 'SH_1004',
   invariantViolated: 'SH_1900',
 } as const;
 

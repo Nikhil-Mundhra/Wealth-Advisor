@@ -55,4 +55,18 @@ export class MemorySharedPlanRepository implements SharedPlanRepository {
     this.plans.set(doc.shareToken, doc);
     return doc;
   }
+
+  async listByTarget(tenantId: ObjectId, userId: ObjectId): Promise<SharedPlanDocument[]> {
+    return [...this.plans.values()]
+      .filter((p) => p.tenantId.equals(tenantId) && p.userId.equals(userId))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async revoke(tenantId: ObjectId, shareToken: string, revokedAt: Date): Promise<SharedPlanDocument | null> {
+    const plan = this.plans.get(shareToken);
+    if (!plan || !plan.tenantId.equals(tenantId)) return null;
+    const updated: SharedPlanDocument = { ...plan, revokedAt };
+    this.plans.set(shareToken, updated);
+    return updated;
+  }
 }

@@ -81,6 +81,15 @@ describe('SharedPlanPage', () => {
     expect(await screen.findByText('This share link is invalid or has been removed.')).toBeVisible();
   });
 
+  it('shows a rate-limited message when 429 SH_1004 is received', async () => {
+    setLocale('en');
+    stubSharingFetch(() => jsonResponse({ code: 'SH_1004', message: 'too many requests' }, 429));
+    renderShare();
+
+    expect(await screen.findByText('Too many requests. Please wait a minute and try again.')).toBeVisible();
+    expect(screen.queryByText(/Strategy shared by/)).not.toBeInTheDocument();
+  });
+
   it('shows a load failure without inventing a plan', async () => {
     setLocale('en');
     stubSharingFetch(() => jsonResponse({ code: 'CORE_INTERNAL', message: 'boom' }, 500));

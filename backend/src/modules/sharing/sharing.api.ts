@@ -7,7 +7,9 @@ import { SHARING_ERROR_CODES } from '@wealth-advisor/rules';
 import type {
   CreateShareLinkRequest,
   CreateShareLinkResponse,
+  ListSharedPlansResponse,
   PlanSnapshotDto,
+  RevokeShareLinkResponse,
   SharedPlanResponse,
 } from '@wealth-advisor/contracts';
 import type { WealthApi } from '../wealth/public.ts';
@@ -72,7 +74,9 @@ export function createSharingApi(deps: SharingApiDeps) {
 
     async getSharedPlan(token: string): Promise<SharedPlanResponse> {
       const plan = await plans.findByToken(token);
-      if (!plan) throw new DomainError(SHARING_ERROR_CODES.planNotFound, `shared plan ${token} not found`);
+      if (!plan || plan.revokedAt) {
+        throw new DomainError(SHARING_ERROR_CODES.planNotFound, `shared plan ${token} not found`);
+      }
 
       if (plan.expiresAt < clock.now()) {
         throw new DomainError(SHARING_ERROR_CODES.planExpired, `shared plan ${token} has expired`);
@@ -85,6 +89,62 @@ export function createSharingApi(deps: SharingApiDeps) {
         planSnapshot: plan.privacyMasked ? maskPlanSnapshot(plan.planSnapshot) : plan.planSnapshot,
         expiresAt: plan.expiresAt.toISOString(),
         createdAt: plan.createdAt.toISOString(),
+      };
+    },
+
+    async listSharedPlans(
+      tenantId: string,
+      userId: string,
+      options?: { clientId?: string; isAdvisorOrAdmin?: boolean },
+    ): Promise<ListSharedPlansResponse> {
+      const targetUserId = options?.clientId ?? userId;
+      if (targetUserId !== userId && !options?.isAdvisorOrAdmin) {
+        throw new DomainError(SHARING_ERROR_CODES.scopeForbidden, 'only an advisor may view a client shared plans');
+      }
+      const tenantObjectId = requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant');
+      const userObjectId = requireScopeId(targetUserId, DEFAULT_USER_ID, 'user');
+      const docs = await plans.listByTarget(tenantObjectId, userObjectId);
+
+      return {
+        plans: docs.map((doc) => ({
+          shareToken: doc.shareToken,
+          ownerDisplayName: doc.ownerDisplayName,
+          privacyMasked: doc.privacyMasked,
+          expiresAt: doc.expiresAt.toISOString(),
+          createdAt: doc.createdAt.toISOString(),
+          revokedAt: doc.revokedAt ? doc.revokedAt.toISOString() : null,
+        })),
+      };
+    },
+
+    async revokeShareLink(
+      tenantId: string,
+      userId: string,
+      shareToken: string,
+      options?: { isAdvisorOrAdmin?: boolean },
+    ): Promise<RevokeShareLinkResponse> {
+      const plan = await plans.findByToken(shareToken);
+      if (!plan) throw new DomainError(SHARING_ERROR_CODES.planNotFound, `shared plan ${shareToken} not found`);
+
+      const tenantObjectId = requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant');
+      if (!plan.tenantId.equals(tenantObjectId)) {
+        throw new DomainError(SHARING_ERROR_CODES.scopeForbidden, 'cannot revoke share link across tenants');
+      }
+
+      const callerUserObjectId = requireScopeId(userId, DEFAULT_USER_ID, 'user');
+      const isOwner = plan.userId.equals(callerUserObjectId);
+      if (!isOwner && !options?.isAdvisorOrAdmin) {
+        throw new DomainError(
+          SHARING_ERROR_CODES.scopeForbidden,
+          'only the plan owner or an advisor may revoke this share link',
+        );
+      }
+
+      const now = clock.now();
+      await plans.revoke(tenantObjectId, shareToken, now);
+      return {
+        revoked: true,
+        shareToken,
       };
     },
   };

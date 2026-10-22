@@ -96,4 +96,45 @@ describe('SharingApi', () => {
       (error: { code?: string }) => error.code === 'WL_1001',
     );
   });
+
+  it('lists created shared plans for user and allows revoking', async () => {
+    const { api } = setup();
+    const link = await api.createShareLink('default', 'default', { privacyMasked: true, ttlHours: 24, ownerDisplayName: 'Elena' });
+
+    const listBefore = await api.listSharedPlans('default', 'default');
+    assert.ok(listBefore.plans.some((p) => p.shareToken === link.shareToken && p.revokedAt === null));
+
+    // Revoke the link
+    const revoked = await api.revokeShareLink('default', 'default', link.shareToken);
+    assert.equal(revoked.revoked, true);
+    assert.equal(revoked.shareToken, link.shareToken);
+
+    // List reflects revoked status
+    const listAfter = await api.listSharedPlans('default', 'default');
+    const item = listAfter.plans.find((p) => p.shareToken === link.shareToken);
+    assert.ok(item?.revokedAt !== null);
+
+    // Public lookup now treats revoked token as not found
+    await assert.rejects(
+      () => api.getSharedPlan(link.shareToken),
+      (err: { code?: string }) => err.code === 'SH_1001',
+    );
+  });
+
+  it('prevents non-advisor from viewing or revoking another client share plans', async () => {
+    const { api } = setup();
+    const link = await api.createShareLink('default', 'default', { privacyMasked: true, ttlHours: 24 });
+
+    // Non-advisor listing another user's plans
+    await assert.rejects(
+      () => api.listSharedPlans('default', '6000000000000000000000aa', { clientId: 'default', isAdvisorOrAdmin: false }),
+      (err: { code?: string }) => err.code === 'SH_1003',
+    );
+
+    // Non-advisor revoking another user's share link
+    await assert.rejects(
+      () => api.revokeShareLink('default', '6000000000000000000000aa', link.shareToken, { isAdvisorOrAdmin: false }),
+      (err: { code?: string }) => err.code === 'SH_1003',
+    );
+  });
 });

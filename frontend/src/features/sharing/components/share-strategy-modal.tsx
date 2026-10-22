@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Check, Copy, Link2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Copy, Link2, Trash2 } from 'lucide-react';
+import type { SharedPlanSummaryItem } from '@wealth-advisor/contracts';
 import { SHARING_ERROR_CODES, WEALTH_ERROR_CODES } from '@wealth-advisor/rules';
 import { Alert } from '../../../components/ui/alert.tsx';
 import { Button } from '../../../components/ui/button.tsx';
@@ -7,6 +8,7 @@ import { Dialog } from '../../../components/ui/dialog.tsx';
 import { ApiError } from '../../../lib/api-error.ts';
 import { useStrings } from '../../../lib/dictionaries.ts';
 import { ENGAGEMENT_EVENTS, track } from '../../../lib/engagement.ts';
+import { sharingApi } from '../api/sharing-api.ts';
 import { useCreateShareLink } from '../api/use-create-share-link.ts';
 
 interface ShareStrategyModalProps {
@@ -21,12 +23,34 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName, clientId }
   const strings = useStrings();
   const [privacyMasked, setPrivacyMasked] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [links, setLinks] = useState<SharedPlanSummaryItem[]>([]);
+  const [isLoadingLinks, setIsLoadingLinks] = useState(false);
+  const [revokingToken, setRevokingToken] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
   const createLink = useCreateShareLink();
   const url = createLink.data ? `${window.location.origin}${createLink.data.url}` : null;
+
+  useEffect(() => {
+    if (!open) return;
+    loadLinks();
+  }, [open, clientId]);
+
+  async function loadLinks() {
+    setIsLoadingLinks(true);
+    try {
+      const res = await sharingApi.list(clientId);
+      setLinks(res.plans);
+    } catch {
+      // Non-blocking; creating links still works even if list fails
+    } finally {
+      setIsLoadingLinks(false);
+    }
+  }
 
   function handleClose() {
     createLink.reset();
     setCopied(false);
+    setRevokeError(null);
     onClose();
   }
 
@@ -35,9 +59,27 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName, clientId }
     createLink.mutate(
       { privacyMasked, ttlHours: 72, ownerDisplayName, ...(clientId ? { clientId } : {}) },
       {
-        onSuccess: () => track(ENGAGEMENT_EVENTS.shareLinkCreated, { isMasked: privacyMasked, hasExpiry: true }),
+        onSuccess: () => {
+          track(ENGAGEMENT_EVENTS.shareLinkCreated, { isMasked: privacyMasked, hasExpiry: true });
+          loadLinks();
+        },
       },
     );
+  }
+
+  async function handleRevoke(token: string) {
+    setRevokingToken(token);
+    setRevokeError(null);
+    try {
+      await sharingApi.revoke(token);
+      setLinks((prev) =>
+        prev.map((item) => (item.shareToken === token ? { ...item, revokedAt: new Date().toISOString() } : item)),
+      );
+    } catch {
+      setRevokeError(strings['share.modal.revokeError']);
+    } finally {
+      setRevokingToken(null);
+    }
   }
 
   const errorMessage = (() => {
@@ -113,6 +155,72 @@ export function ShareStrategyModal({ open, onClose, ownerDisplayName, clientId }
           </Button>
         </div>
       )}
+
+      <div className="mt-6 border-t border-line pt-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-subtle">
+          {strings['share.modal.activeLinks']}
+        </h4>
+        {revokeError && (
+          <div className="mt-2">
+            <Alert>{revokeError}</Alert>
+          </div>
+        )}
+        {links.length === 0 ? (
+          <p className="mt-2 text-xs text-subtle">
+            {isLoadingLinks ? '…' : strings['share.modal.noActiveLinks']}
+          </p>
+        ) : (
+          <ul className="mt-2 flex max-h-48 flex-col gap-2 overflow-y-auto">
+            {links.map((link) => {
+              const isRevoked = Boolean(link.revokedAt);
+              const isExpired = !isRevoked && new Date(link.expiresAt).getTime() < Date.now();
+              const isLive = !isRevoked && !isExpired;
+
+              return (
+                <li
+                  key={link.shareToken}
+                  className="flex items-center justify-between gap-2 rounded-field border border-line bg-surface-subtle p-2 text-xs"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="max-w-[140px] truncate font-mono text-ink">
+                        /share/{link.shareToken}
+                      </span>
+                      {link.privacyMasked && (
+                        <span className="rounded bg-brand-500/10 px-1 py-0.5 text-[10px] text-brand-700 dark:text-brand-300">
+                          Masked
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-subtle">
+                      {isRevoked
+                        ? strings['share.modal.revoked']
+                        : isExpired
+                          ? strings['share.modal.expired']
+                          : strings['share.modal.expires'].replace(
+                              '{date}',
+                              new Date(link.expiresAt).toLocaleDateString(),
+                            )}
+                    </span>
+                  </div>
+                  {isLive && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => handleRevoke(link.shareToken)}
+                      loading={revokingToken === link.shareToken}
+                      className="h-7 px-2.5 text-[11px] text-critical"
+                    >
+                      <Trash2 aria-hidden className="size-3" />
+                      <span>{strings['share.modal.revoke']}</span>
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </Dialog>
   );
 }
