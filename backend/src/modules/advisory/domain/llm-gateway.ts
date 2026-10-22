@@ -227,6 +227,8 @@ function parseJsonSafe(raw: string): Record<string, unknown> {
 }
 
 // The model replaces only the narrative fields, each only with text whose numbers the engines produced.
+// The shield facts are sourced from the system prompt (engine benchmarks), never from the user inquiry:
+// a number the user types in their message must not whitelist itself in the model's narrative.
 function narrate(
   base: AdvisoryChatResponse,
   parsed: Record<string, unknown>,
@@ -295,14 +297,14 @@ Respond ONLY in valid JSON with these keys:
   "crossBorder": "One sentence on currency corridors and remittance obligations",
   "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
 }`;
-    const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
     let data: any;
     try {
       data = (await this.http.postJson(
         url,
         {
-          contents: [{ parts: [{ text: `${systemPrompt}\n\nUser Question: ${context.message}` }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text: context.message }] }],
           generationConfig: {
             temperature: 0.2,
             responseMimeType: 'application/json',
@@ -320,7 +322,7 @@ Respond ONLY in valid JSON with these keys:
     if (!rawText) throw AdvisoryErrors.gatewayUnavailable('Gemini returned an empty completion');
 
     try {
-      return narrate(base, JSON.parse(rawText) as Record<string, unknown>, fullPrompt, facts.extraFactNumbers);
+      return narrate(base, JSON.parse(rawText) as Record<string, unknown>, systemPrompt, facts.extraFactNumbers);
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `Gemini response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
@@ -359,7 +361,6 @@ Respond ONLY in valid JSON with these keys:
   "crossBorder": "One sentence on currency corridors and remittance obligations",
   "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
 }`;
-    const fullPrompt = `${systemPrompt}\nUser Inquiry: ${context.message}`;
 
     let data: any;
     try {
@@ -393,7 +394,7 @@ Respond ONLY in valid JSON with these keys:
     const content = data?.choices?.[0]?.message?.content;
     if (!content) throw AdvisoryErrors.gatewayUnavailable('OpenAI returned an empty completion');
     try {
-      return narrate(base, JSON.parse(content) as Record<string, unknown>, fullPrompt, facts.extraFactNumbers);
+      return narrate(base, JSON.parse(content) as Record<string, unknown>, systemPrompt, facts.extraFactNumbers);
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `OpenAI response could not be parsed: ${err instanceof Error ? err.message : String(err)}`,
@@ -528,7 +529,7 @@ Respond ONLY in valid JSON with these keys:
 
         const content = data?.choices?.[0]?.message?.content;
         if (content) {
-          return narrate(base, parseJsonSafe(content), fullPrompt, facts.extraFactNumbers);
+          return narrate(base, parseJsonSafe(content), systemPrompt, facts.extraFactNumbers);
         }
       } catch (err) {
         lastError = err;
