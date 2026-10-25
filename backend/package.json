@@ -17,7 +17,7 @@
     "@wealth-advisor/contracts": "*",
     "@wealth-advisor/rules": "*",
     "hono": "^4.13.13",
-    "jose": "^6.2.12",
+    "jose": "^6.2.13",
     "mongodb": "^7.7.0",
     "zod": "^4.6.5"
   },
