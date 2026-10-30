@@ -140,7 +140,7 @@ describe('ShareStrategyModal', () => {
                 shareToken: 'dewa_sec_live1',
                 ownerDisplayName: 'Elena Vance',
                 privacyMasked: true,
-                expiresAt: '2026-10-30T00:00:00.000Z',
+                expiresAt: '2027-10-30T00:00:00.000Z',
                 createdAt: '2026-10-22T00:00:00.000Z',
                 revokedAt: null,
               },
