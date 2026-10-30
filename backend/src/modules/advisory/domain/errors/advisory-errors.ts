@@ -9,6 +9,10 @@ export const AdvisoryErrors = {
     ),
   unsupportedModel: (model: string) =>
     new DomainError(ADVISORY_ERROR_CODES.unsupportedModel, `unsupported model: ${model}`),
+  unknownTool: (tool: string) =>
+    new DomainError(ADVISORY_ERROR_CODES.unsupportedModel, `unsupported advisory tool: ${tool}`),
+  tierForbidden: (tool: string, tier: string) =>
+    new DomainError(ADVISORY_ERROR_CODES.tierForbidden, `advisory tool ${tool} requires ${tier}`),
   invariantViolated: (detail: string) =>
     new DomainError(ADVISORY_ERROR_CODES.invariantViolated, `advisory invariant violated: ${detail}`),
 };

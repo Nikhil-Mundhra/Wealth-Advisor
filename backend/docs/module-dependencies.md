@@ -7,6 +7,8 @@ Allowed imports between backend modules. `make deps-lint` (`backend/scripts/modu
 flowchart LR
   advisory --> wealth
   advisory --> finance
+  advisory --> market
+  advisory --> analytics
   sharing --> wealth
   wealth --> analytics
   wealth --> finance
@@ -20,6 +22,8 @@ flowchart LR
 |---|---|
 | `advisory` | `wealth` |
 | `advisory` | `finance` |
+| `advisory` | `market` |
+| `advisory` | `analytics` |
 | `sharing` | `wealth` |
 | `wealth` | `analytics` |
 | `wealth` | `finance` |

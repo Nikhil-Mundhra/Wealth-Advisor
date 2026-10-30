@@ -79,6 +79,7 @@ export const WEALTH_ERROR_CODES = {
 export const ADVISORY_ERROR_CODES = {
   gatewayUnavailable: 'AV_1001',
   unsupportedModel: 'AV_1002',
+  tierForbidden: 'AV_1003',
   invariantViolated: 'AV_1900',
 } as const;
 

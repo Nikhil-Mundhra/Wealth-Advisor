@@ -88,6 +88,8 @@ export function buildModules(context: ModuleContext): ModuleManifest[] {
   const advisory = createAdvisoryModule(context, {
     finance: finance.api,
     wealth: wealth.api,
+    market: market.api,
+    analytics: analytics.api,
     getActiveProvider: () => admin.api.getActiveProvider(),
     getPlatformKeys: () => admin.api.getPlatformKeys(),
     auth: auth.optionalAuthGuard,

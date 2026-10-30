@@ -1,13 +1,20 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ProposalPayloadDto } from '@wealth-advisor/contracts';
+import { InProcessEventBus } from '../../../src/core/events/event-bus.ts';
+import { MemoryProcessedEvents } from '../../../src/core/events/memory-processed-events.ts';
 import { createAdvisoryApi } from '../../../src/modules/advisory/advisory.api.ts';
 import { LlmGateway } from '../../../src/modules/advisory/domain/llm-gateway.ts';
+import { createAnalyticsApi } from '../../../src/modules/analytics/analytics.api.ts';
+import { MemoryMarketSnapshotRepository } from '../../../src/modules/analytics/infrastructure/db/memory/memory-market-snapshot.repository.ts';
 import { createFinanceApi } from '../../../src/modules/finance/finance.api.ts';
 import {
   MemoryAccountRepository,
   MemoryTransactionRepository,
 } from '../../../src/modules/finance/infrastructure/db/memory/memory-finance.repository.ts';
+import { MemoryFxRateRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts';
+import { MemoryPriceRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-price.repository.ts';
+import { createMarketApi } from '../../../src/modules/market/market.api.ts';
 import { createWealthApi } from '../../../src/modules/wealth/wealth.api.ts';
 import {
   MemoryAssetProductRepository,
@@ -15,6 +22,24 @@ import {
   MemorySandboxLedgerRepository,
 } from '../../../src/modules/wealth/infrastructure/db/memory/memory-wealth.repository.ts';
 import { unregisteredPasskeyVerifier } from '../../../src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts';
+
+function setupInfra(clock: { now: () => Date }) {
+  const market = createMarketApi({
+    prices: new MemoryPriceRepository(),
+    fxRates: new MemoryFxRateRepository(),
+    priceSource: { fetchEndOfDay: async () => [] },
+    fxSource: { fetchRange: async () => [] },
+    events: new InProcessEventBus(),
+    clock,
+  });
+  const analytics = createAnalyticsApi({
+    market: { history: async () => [] },
+    snapshots: new MemoryMarketSnapshotRepository(),
+    processed: new MemoryProcessedEvents(),
+    clock,
+  });
+  return { market, analytics };
+}
 
 function setupApis() {
   const clock = { now: () => new Date('2026-10-06T12:00:00Z') };
@@ -30,7 +55,7 @@ function setupApis() {
     passkeys: unregisteredPasskeyVerifier,
     clock,
   });
-  return { finance, wealth };
+  return { finance, wealth, ...setupInfra(clock) };
 }
 
 function setup() {
@@ -47,8 +72,9 @@ function setup() {
     passkeys: unregisteredPasskeyVerifier,
     clock,
   });
+  const { market, analytics } = setupInfra(clock);
   const gateway = new LlmGateway();
-  const api = createAdvisoryApi({ finance, wealth, gateway });
+  const api = createAdvisoryApi({ finance, wealth, market, analytics, gateway });
   return { api };
 }
 
@@ -95,6 +121,7 @@ describe('AdvisoryApi', () => {
       passkeys: unregisteredPasskeyVerifier,
       clock,
     });
+    const { market, analytics } = setupInfra(clock);
     const gateway = new LlmGateway({
       geminiApiKey: 'test-dummy-gemini-key',
       openaiApiKey: 'test-dummy-openai-key',
@@ -103,6 +130,8 @@ describe('AdvisoryApi', () => {
     const openaiApi = createAdvisoryApi({
       finance,
       wealth,
+      market,
+      analytics,
       gateway,
       getActiveProvider: async () => 'openai',
     });
@@ -127,11 +156,13 @@ describe('AdvisoryApi', () => {
   });
 
   it('fails with gatewayUnavailable when getActiveProvider rejects', async () => {
-    const { finance, wealth } = setupApis();
+    const { finance, wealth, market, analytics } = setupApis();
     const gateway = new LlmGateway();
     const failingApi = createAdvisoryApi({
       finance,
       wealth,
+      market,
+      analytics,
       gateway,
       getActiveProvider: async () => {
         throw new Error('database connection failed');
@@ -150,10 +181,10 @@ describe('AdvisoryApi', () => {
   });
 
   it('keeps a live model reply only when its numbers come from the engines', async () => {
-    const { finance, wealth } = setupApis();
+    const { finance, wealth, market, analytics } = setupApis();
     const gateway = new LlmGateway({ geminiApiKey: 'test-key' });
-    const api = createAdvisoryApi({ finance, wealth, gateway, getActiveProvider: async () => 'gemini' });
-    const deterministic = await createAdvisoryApi({ finance, wealth, gateway: new LlmGateway() }).chat('default', 'default', {
+    const api = createAdvisoryApi({ finance, wealth, market, analytics, gateway, getActiveProvider: async () => 'gemini' });
+    const deterministic = await createAdvisoryApi({ finance, wealth, market, analytics, gateway: new LlmGateway() }).chat('default', 'default', {
       message: 'Can I rebalance safely?',
       locale: 'en',
       householdMode: 'INDIVIDUAL',
@@ -213,9 +244,11 @@ describe('AdvisoryApi', () => {
   });
 
   it('reports 0% equities for a portfolio holding no equities, avoiding falsy-zero default', async () => {
-    const { finance, wealth } = setupApis();
+    const { finance, wealth, market, analytics } = setupApis();
     const api = createAdvisoryApi({
       finance,
+      market,
+      analytics,
       wealth: {
         ...wealth,
         getPortfolio: async () => ({
@@ -246,9 +279,11 @@ describe('AdvisoryApi', () => {
   });
 
   it('surfaces an optimizer failure as a NOTICE card instead of silent empty holdings', async () => {
-    const { finance, wealth } = setupApis();
+    const { finance, wealth, market, analytics } = setupApis();
     const api = createAdvisoryApi({
       finance,
+      market,
+      analytics,
       wealth: {
         ...wealth,
         constructPortfolio: async () => {
@@ -268,7 +303,7 @@ describe('AdvisoryApi', () => {
   });
 
   it('routes to OpenRouter with Nemotron model when openrouter is the active provider', async () => {
-    const { finance, wealth } = setupApis();
+    const { finance, wealth, market, analytics } = setupApis();
     let requestedUrl = '';
     let requestedBody: any = null;
     let authHeader = '';
@@ -279,6 +314,8 @@ describe('AdvisoryApi', () => {
     const api = createAdvisoryApi({
       finance,
       wealth,
+      market,
+      analytics,
       gateway,
       getActiveProvider: async () => 'openrouter',
     });
