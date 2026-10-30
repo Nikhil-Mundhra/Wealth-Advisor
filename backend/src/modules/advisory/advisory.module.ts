@@ -3,6 +3,8 @@ import { defineModule, type ModuleManifest } from '#core/module/define-module.ts
 import type { ModuleContext } from '#core/module/module-context.ts';
 import type { FinanceApi } from '../finance/public.ts';
 import type { WealthApi } from '../wealth/public.ts';
+import type { MarketApi } from '../market/public.ts';
+import type { AnalyticsApi } from '../analytics/public.ts';
 import { createAdvisoryApi, type AdvisoryApi } from './advisory.api.ts';
 import { LlmGateway } from './domain/llm-gateway.ts';
 import { ADVISORY_ERROR_STATUSES } from './presentation/advisory-error-statuses.ts';
@@ -14,6 +16,8 @@ import type { MiddlewareHandler } from 'hono';
 export interface AdvisoryModuleDeps {
   finance: FinanceApi;
   wealth: WealthApi;
+  market: MarketApi;
+  analytics: AnalyticsApi;
   getActiveProvider?: () => Promise<LlmProvider>;
   getPlatformKeys?: () => Promise<{ gemini?: string; openai?: string; anthropic?: string; openrouter?: string }>;
   auth: MiddlewareHandler;
@@ -42,6 +46,8 @@ export function createAdvisoryModule(
   const api = createAdvisoryApi({
     finance: deps.finance,
     wealth: deps.wealth,
+    market: deps.market,
+    analytics: deps.analytics,
     gateway,
     getActiveProvider: deps.getActiveProvider,
   });

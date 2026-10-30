@@ -72,7 +72,8 @@ Every non-2xx API body is `ErrorResponse` (`contracts/src/common/error.contract.
 | `WL_1006` | 404 | no risk profile for the caller's scope |
 | `WL_1900` | 500 | wealth invariant violated (a ledger write's tenant or user scope id is unusable) |
 | `AV_1001` | 503 | LLM gateway unavailable |
-| `AV_1002` | 400 | unsupported model |
+| `AV_1002` | 400 | unsupported model or advisory tool |
+| `AV_1003` | 403 | advisory tool invoked without its permission tier |
 | `AV_1900` | 500 | advisory invariant violated |
 | `SH_1001` | 404 | no shared plan for the token |
 | `SH_1002` | 410 | shared plan expired |
