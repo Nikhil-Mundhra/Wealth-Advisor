@@ -393,7 +393,7 @@ sequenceDiagram
   - `ClaudeAdapter` (`@anthropic-ai/sdk` or REST)
   - `OpenAiAdapter` (`openai` or REST)
   - `MockLlmAdapter` (deterministic offline engine with canned tool calling & explainability)
-- [x] Registered Agent Tools:
+- [ ] Registered Agent Tools — see `docs/domain/advisory-gaps.md` G9:
   1. `get_cashflow_and_runway` (with Individual vs. Family mode)
   2. `get_currency_exposure`
   3. `calculate_adaptive_portfolio`
@@ -437,7 +437,7 @@ sequenceDiagram
 - [x] **Tier 3 Biometric Step-Up Modal:** Triggers browser Passkey prompt (TouchID/FaceID) to sign transaction before submission.
 
 #### 3.5 Public Shared Plan View (`/share/:token`)
-- [x] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile.
+- [ ] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile. See `docs/domain/advisory-gaps.md` G13.
 - [x] Privacy toggle: view as exact amounts or relative percentages.
 
 #### 3.6 Evidence Explorer & Admin Console (`/evidence`, `/admin/*`)
