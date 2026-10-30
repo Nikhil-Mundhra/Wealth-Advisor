@@ -15,9 +15,44 @@ function renderWithClient(ui: React.ReactElement) {
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
 
+function ledgerPayload() {
+  return {
+    entries: [
+      {
+        id: 'le_1',
+        tenantId: 't1',
+        userId: 'u1',
+        orderType: 'PORTFOLIO_REBALANCE',
+        initialPortfolioStateHash: 'aaa',
+        executedTrades: [{ assetSymbol: 'VTI', action: 'BUY', amountBase: 1000, targetWeight: 0.4 }],
+        resultingPortfolioStateHash: 'bbb',
+        passkeyAssertionProof: {
+          credentialId: 'c',
+          clientDataJson: 'cd',
+          authenticatorData: 'ad',
+          signature: 'sig',
+          verifiedAt: '2026-09-30T18:42:00.000Z',
+        },
+        auditDigest: 'fulldigest1234567890abcdef',
+        transactionHash: 'tx1',
+        status: 'COMMITTED',
+        timestamp: '2026-09-30T18:42:00.000Z',
+      },
+    ],
+  };
+}
+
+function stubLedger(payload: unknown = ledgerPayload()) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } })),
+  );
+}
+
 describe('SettingsLedgerPage', () => {
-  it('lists sandbox executions with their tiers, passkey proof, and digests', () => {
+  it('lists live sandbox executions with their tiers, passkey proof, and digests', async () => {
     setLocale('en');
+    stubLedger();
     renderWithClient(
       <MemoryRouter>
         <SettingsLedgerPage />
@@ -25,15 +60,31 @@ describe('SettingsLedgerPage', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Sandbox ledger' })).toBeVisible();
-    expect(screen.getByRole('row', { name: /Rebalance 20%/ })).toHaveTextContent('TIER_3_EXECUTE');
-    expect(screen.getByRole('row', { name: /Rebalance 20%/ })).toHaveTextContent('Verified');
-    expect(screen.getByRole('row', { name: /Simulate −5%/ })).toHaveTextContent('None');
-    expect(screen.getByText('9f2c41ab…e7')).toBeVisible();
+    expect(await screen.findByText(/Live API Logs \(1 Sandbox Record\)/)).toBeVisible();
+    expect(screen.getByRole('row', { name: /BUY VTI/ })).toHaveTextContent('TIER_3_EXECUTE');
+    expect(screen.getByRole('row', { name: /BUY VTI/ })).toHaveTextContent('Verified');
+    expect(screen.getByText('fulldigest123456…')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Export CSV' })).toBeVisible();
+    vi.unstubAllGlobals();
+  });
+
+  it('renders the empty state instead of seeded entries when the API ledger is empty', async () => {
+    setLocale('en');
+    stubLedger({ entries: [] });
+    renderWithClient(
+      <MemoryRouter>
+        <SettingsLedgerPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('No sandbox execution entries recorded.')).toBeVisible();
+    expect(screen.queryByText(/Rebalance 20%/)).toBeNull();
+    vi.unstubAllGlobals();
   });
 
   it('triggers CSV download on button click', async () => {
     setLocale('en');
+    stubLedger();
     const downloadSpy = vi.spyOn(csvExport, 'downloadCsv').mockImplementation(() => {});
 
     renderWithClient(
@@ -42,6 +93,7 @@ describe('SettingsLedgerPage', () => {
       </MemoryRouter>,
     );
 
+    expect(await screen.findByText(/Live API Logs/)).toBeVisible();
     const exportBtn = screen.getByRole('button', { name: 'Export CSV' });
     await userEvent.click(exportBtn);
 
@@ -51,10 +103,12 @@ describe('SettingsLedgerPage', () => {
       expect.stringContaining('Tax and Sandbox Execution Ledger'),
     );
     downloadSpy.mockRestore();
+    vi.unstubAllGlobals();
   });
 
   it('triggers JSON download on button click', async () => {
     setLocale('en');
+    stubLedger();
     const downloadSpy = vi.spyOn(jsonExport, 'downloadJson').mockImplementation(() => {});
 
     renderWithClient(
@@ -63,6 +117,7 @@ describe('SettingsLedgerPage', () => {
       </MemoryRouter>,
     );
 
+    expect(await screen.findByText(/Live API Logs/)).toBeVisible();
     const exportBtn = screen.getByRole('button', { name: 'Export JSON' });
     await userEvent.click(exportBtn);
 
@@ -72,42 +127,12 @@ describe('SettingsLedgerPage', () => {
       expect.stringContaining('Tax and Sandbox Execution Ledger'),
     );
     downloadSpy.mockRestore();
+    vi.unstubAllGlobals();
   });
 
   it('exports raw ISO timestamps, raw trades, and a live source marker from the API ledger', async () => {
     setLocale('en');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            entries: [
-              {
-                id: 'le_1',
-                tenantId: 't1',
-                userId: 'u1',
-                orderType: 'PORTFOLIO_REBALANCE',
-                initialPortfolioStateHash: 'aaa',
-                executedTrades: [{ assetSymbol: 'VTI', action: 'BUY', amountBase: 1000, targetWeight: 0.4 }],
-                resultingPortfolioStateHash: 'bbb',
-                passkeyAssertionProof: {
-                  credentialId: 'c',
-                  clientDataJson: 'cd',
-                  authenticatorData: 'ad',
-                  signature: 'sig',
-                  verifiedAt: '2026-09-30T18:42:00.000Z',
-                },
-                auditDigest: 'fulldigest1234567890abcdef',
-                transactionHash: 'tx1',
-                status: 'COMMITTED',
-                timestamp: '2026-09-30T18:42:00.000Z',
-              },
-            ],
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        ),
-      ),
-    );
+    stubLedger();
     const downloadSpy = vi.spyOn(jsonExport, 'downloadJson').mockImplementation(() => {});
 
     renderWithClient(
@@ -135,6 +160,7 @@ describe('SettingsLedgerPage', () => {
 
   it('redirects /evidence to /settings/ledger', () => {
     setLocale('en');
+    stubLedger({ entries: [] });
     renderWithClient(
       <MemoryRouter initialEntries={['/evidence']}>
         <Routes>

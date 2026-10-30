@@ -3,7 +3,6 @@ import type { ExecutedTradeDto } from '@wealth-advisor/contracts';
 import { Button } from '../../components/ui/button.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { downloadCsv, serializeLedgerToCsv, type LedgerRow } from '../../lib/csv-export.ts';
-import { DEMO_LEDGER } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { downloadJson, serializeLedgerToJson } from '../../lib/json-export.ts';
 import { useReveal } from '../../lib/use-reveal.ts';
@@ -63,24 +62,11 @@ export function SettingsLedgerPage() {
     };
   });
 
-  const displayEntries: DisplayEntry[] = liveEntries.length > 0 ? liveEntries : DEMO_LEDGER.map((e) => ({
-    action: e.action,
-    at: e.at,
-    tier: e.tier,
-    digest: e.digest,
-    passkeyVerified: e.tier === 'TIER_3_EXECUTE',
-    status: 'COMMITTED',
-    fullDigest: null,
-    initialHash: null,
-    resultingHash: null,
-    transactionHash: null,
-    trades: [],
-    rawTimestamp: null,
-    rawTrades: null,
-  }));
+  // The ledger reads only the API: with no entries the table renders its empty
+  // state, never a seeded baseline.
+  const displayEntries: DisplayEntry[] = liveEntries;
 
   const isLive = liveEntries.length > 0;
-
   function handleExportCsv() {
     const rows: LedgerRow[] = displayEntries.map((entry) => ({
       timestamp: entry.at,
@@ -114,7 +100,7 @@ export function SettingsLedgerPage() {
       serializeLedgerToJson(entries, {
         period: 'September 2026',
         baselineCurrency: 'EUR',
-        source: isLive ? 'live-api' : 'demo-baseline',
+        source: 'live-api',
       }),
     );
   }

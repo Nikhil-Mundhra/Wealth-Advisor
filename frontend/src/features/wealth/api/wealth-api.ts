@@ -6,6 +6,7 @@ import {
   CreateShareLinkResponse,
   ExecuteTradeRequest,
   ExecuteTradeResponse,
+  OptimizePortfolioRequest,
   PortfolioResponse,
   RebalanceProposalResponse,
   SandboxLedgerResponse,
@@ -33,9 +34,10 @@ export const wealthApi = {
       authenticated: true,
     }),
 
-  optimize: () =>
+  optimize: (body?: OptimizePortfolioRequest) =>
     apiRequest('/wealth/optimize', {
       method: 'POST',
+      body,
       response: RebalanceProposalResponse,
       authenticated: true,
     }),

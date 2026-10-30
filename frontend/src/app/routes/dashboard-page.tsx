@@ -23,12 +23,7 @@ import { isDemoEmail, useProfile } from '../../features/profiling/profile-store.
 import { PortfolioSection } from './portfolio-section.tsx';
 import { CLASS_CHART } from '../../lib/chart-colors.ts';
 import { useActiveClient } from '../../features/advisor/advisor-store.ts';
-import {
-  DEMO_BASELINE,
-  DEMO_NET_WORTH_SERIES,
-  DEMO_RUNWAY_MONTHS,
-  DEMO_TARGET_WEIGHTS,
-} from '../../lib/demo-data.ts';
+import { useCashflow } from '../../features/finance/api/use-cashflow.ts';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 import { useCountUp } from '../../lib/use-count-up.ts';
@@ -58,10 +53,13 @@ function DashboardView() {
     .reduce((total, holding) => total + holding.amount, 0);
   const [household, setHousehold] = useState<HouseholdMode>(activeClient.householdMode);
   const [profilingOpen, setProfilingOpen] = useState(false);
+  // Live runway and reserves read from GET /finance/cashflow; the profile math
+  // below stays as the offline fallback until the API answers.
+  const { data: cashflowData } = useCashflow(isDemo ? activeClient.householdMode : household);
 
   const primaryCurrency = isDemo
     ? activeClient.baseCurrency
-    : (profile.preferredCurrency || (profile.answers.countries.residence && COUNTRY_CURRENCY_MAP[profile.answers.countries.residence.toUpperCase()]) || DEMO_BASELINE);
+    : (profile.preferredCurrency || (profile.answers.countries.residence && COUNTRY_CURRENCY_MAP[profile.answers.countries.residence.toUpperCase()]) || 'EUR');
 
   const netWorthBasis = isDemo ? activeClient.netWorth : (profile.totalHoldings || activeClient.netWorth);
   const netWorth = useCountUp(netWorthBasis);
@@ -145,15 +143,16 @@ function DashboardView() {
     };
   }, [timeframe, isDemo, netWorthBasis, activeClient]);
 
-  // Runway calculation: demo fixture vs real user's liquid cash buffer
-  let displayRunwayMonths = isDemo ? activeClient.runwayMonths : DEMO_RUNWAY_MONTHS;
-  if (!isDemo) {
+  // Runway: the API value wins when the backend answers; otherwise the roster
+  // fixture (demo) or the local profile buffer math (signed-in user).
+  let displayRunwayMonths = cashflowData?.runwayMonths ?? activeClient.runwayMonths;
+  if (!isDemo && !cashflowData) {
     const liquidCash = bucketTotal('cashSavings');
     const estimatedMonthlyBurn =
       household === 'INDIVIDUAL' ? DEFAULT_INDIVIDUAL_BURN_ESTIMATE : DEFAULT_FAMILY_BURN_ESTIMATE;
     displayRunwayMonths = Math.round((liquidCash / estimatedMonthlyBurn) * 10) / 10;
   }
-  const band = isDemo ? activeClient.runwayBand : runwayBand(displayRunwayMonths);
+  const band = cashflowData?.runwayBand ?? (isDemo ? activeClient.runwayBand : runwayBand(displayRunwayMonths));
 
   // User asset allocation weights
   const realAllocations: { assetClass: AssetClass; label: string; weight: number }[] =
@@ -181,8 +180,6 @@ function DashboardView() {
           },
         ]
       : [];
-
-  const trailPoints = isDemo ? DEMO_NET_WORTH_SERIES : [netWorthBasis, netWorthBasis];
 
   const { ref, visible } = useReveal<HTMLDivElement>();
 
