@@ -96,10 +96,8 @@ There is no tool registry, function-calling schema or tool dispatch in the codeb
 ## Data flow today
 ```mermaid
 flowchart TB
-  fixtures["frontend/src/lib/demo-data.ts · holdings, runway, ledger"]
-  fixtures --> pages["/ , /portfolio, /cashflow, /evidence, /share/:token"]
-  canned["/advisory · seeded replies, no backend read"]
-  admin["frontend/src/features/admin/api/admin-api.ts"]
+  hooks["frontend/src/features/*/api · finance, wealth, advisory, sharing hooks"]
+  hooks --> pages["/ , /portfolio, /cashflow, /evidence, /share/:token, /advisory"]
   cron[["Vercel Cron · weekday 23:00 UTC"]] --> refresh["GET /api/market/refresh"]
   refresh --> frankfurter[Frankfurter · ECB fx_rates]
   refresh --> marketstack[Marketstack · eod prices]
@@ -108,10 +106,10 @@ flowchart TB
   stores --> snapshot[analytics · market_snapshots]
   routes["/api/finance/* · /api/wealth/* · /api/advisory/chat · /api/sharing/* · /api/admin/*"]
   snapshot -. no frontend caller .-> routes
-  routes -. only /api/admin has one .-> pages
-  admin --> routes
+  routes --> pages
+  hooks --> routes
 ```
 
-`frontend/src/features/` has hooks for auth and admin only; there is no finance, wealth, advisory or sharing feature directory, so every advisory number a user sees still comes from `frontend/src/lib/demo-data.ts` or from the seeded replies in `frontend/src/app/routes/advisory-page.tsx`.
+`frontend/src/features/` has a hook per module (finance, wealth, advisory, sharing); every advisory page reads its backend route, with an empty state when the API has no rows.
 
 Route surface: `contracts/docs/apis/market.md`, `contracts/docs/apis/analytics.md`, `contracts/docs/apis/core.md`. Module and event contracts: `backend/docs/module-dependencies.md`, `backend/docs/events.md`.

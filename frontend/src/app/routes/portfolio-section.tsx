@@ -13,7 +13,6 @@ import { InstrumentComparisonModal } from '../../features/advisor/components/ins
 import { ShareStrategyModal } from '../../features/sharing/components/share-strategy-modal.tsx';
 import { PortfolioConstructionModal } from '../../features/wealth/components/portfolio-construction-modal.tsx';
 import { usePortfolio } from '../../features/wealth/api/use-portfolio.ts';
-import { DEMO_BASELINE } from '../../lib/demo-data.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 import { useReveal } from '../../lib/use-reveal.ts';

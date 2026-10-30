@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { Clock, Shield, Sparkles } from 'lucide-react';
 import { SHARING_ERROR_CODES } from '@wealth-advisor/rules';
@@ -8,7 +7,7 @@ import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { ApiError } from '../../lib/api-error.ts';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
-import { sharingApi } from '../../features/sharing/api/sharing-api.ts';
+import { useSharedPlan } from '../../features/sharing/api/use-shared-plan.ts';
 
 type LoadState =
   | { status: 'loading' }
@@ -36,36 +35,21 @@ function errorKey(kind: 'expired' | 'notFound' | 'rateLimited' | 'unavailable'):
 export function SharedPlanPage() {
   const { token } = useParams();
   const strings = useStrings();
-  const [state, setState] = useState<LoadState>({ status: 'loading' });
+  // The plan reads only the backend: masking and expiry are applied server-side.
+  const { data: plan, isLoading, error } = useSharedPlan(token);
 
-  useEffect(() => {
-    if (!token) {
-      setState({ status: 'error', kind: 'notFound' });
-      return;
-    }
+  const state: LoadState = !token
+    ? { status: 'error', kind: 'notFound' }
+    : isLoading
+      ? { status: 'loading' }
+      : plan
+        ? { status: 'ready', plan }
+        : { status: 'error', kind: errorKind(error) };
 
-    let active = true;
-    setState({ status: 'loading' });
-    sharingApi
-      .get(token)
-      .then((plan) => {
-        if (active) setState({ status: 'ready', plan });
-      })
-      .catch((error: unknown) => {
-        if (active) setState({ status: 'error', kind: errorKind(error) });
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [token]);
-
-  const plan = state.status === 'ready' ? state.plan : null;
-  const holdings = plan
-    ? Object.entries(plan.planSnapshot.recommendedWeights).map(([label, weight]) => ({
+  const holdings = state.status === 'ready' ? Object.entries(state.plan.planSnapshot.recommendedWeights).map(([label, weight]) => ({
         label,
         weight: Math.round(weight * 100),
-        currentWeight: Math.round((plan.planSnapshot.currentWeights[label] ?? weight) * 100),
+        currentWeight: Math.round((state.plan.planSnapshot.currentWeights[label] ?? weight) * 100),
       }))
     : [];
 

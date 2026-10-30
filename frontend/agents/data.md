@@ -12,6 +12,9 @@
 
 ```
 frontend/src/features/admin/api/admin-api.ts : admin endpoint calls for tenants, api keys, and model settings
+frontend/src/features/advisory/api/advisory-api.ts : advisory copilot chat endpoint call typed by contracts
+frontend/src/features/advisory/api/use-advisory-chat.test.tsx : copilot turn posts to /advisory/chat and returns the gateway reply
+frontend/src/features/advisory/api/use-advisory-chat.ts : copilot turn mutation hook
 frontend/src/features/auth/api/auth-api.ts : auth endpoint calls typed by contracts
 frontend/src/features/auth/api/passkey-client.ts : WebAuthn and WebCrypto passkey enrollment and assertion signature generation
 frontend/src/features/auth/api/use-delete-account.ts : delete-account mutation; ends local session and clears query cache
@@ -24,8 +27,13 @@ frontend/src/features/finance/api/use-accounts.ts : multi-currency bank accounts
 frontend/src/features/finance/api/use-cashflow.ts : cashflow and runway summary query hook
 frontend/src/features/sharing/api/sharing-api.ts : shareable plan link endpoint calls typed by contracts
 frontend/src/features/sharing/api/use-create-share-link.ts : share URL creation mutation hook
+frontend/src/features/sharing/api/use-shared-plan.test.tsx : shared plan reads /sharing/:token without inventing holdings
+frontend/src/features/sharing/api/use-shared-plan.ts : shared plan query hook
 frontend/src/features/wealth/api/use-construct-portfolio.ts : portfolio construction and multi-asset optimization mutation hook
+frontend/src/features/wealth/api/use-execute-trade.ts : passkey-gated sandbox execution mutation hook
+frontend/src/features/wealth/api/use-optimize.ts : backend optimizer rebalance proposal mutation hook
 frontend/src/features/wealth/api/use-portfolio.ts : holdings, valuation, and allocation query hook
+frontend/src/features/wealth/api/use-proposal.test.tsx : optimizer proposal and execution hooks round-trip backend actions
 frontend/src/features/wealth/api/use-sandbox-ledger.ts : tamper-evident sandbox execution audit query hook
 frontend/src/features/wealth/api/wealth-api.ts : wealth endpoint calls for portfolio, products, optimizer, and execution ledger
 frontend/src/lib/api-client.ts : fetch wrapper: /api base, contract-validated responses, bearer token, one retry after refresh

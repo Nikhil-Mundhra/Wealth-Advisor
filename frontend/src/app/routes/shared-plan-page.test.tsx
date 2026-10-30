@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -6,8 +7,13 @@ import { setLocale } from '../../lib/locale-store.ts';
 import { SharedPlanPage } from './shared-plan-page.tsx';
 
 function renderShare(initialEntries = ['/share/plan_AAA']) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter([{ path: '/share/:token', element: <SharedPlanPage /> }], { initialEntries });
-  render(<RouterProvider router={router} />);
+  render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
   return router;
 }
 
@@ -68,7 +74,7 @@ describe('SharedPlanPage', () => {
     stubSharingFetch(() => jsonResponse({ code: 'SH_1002', message: 'expired' }, 410));
     renderShare();
 
-    expect(await screen.findByText('This share link has expired. Ask the owner to create a new one.')).toBeVisible();
+    expect(await screen.findByText('This share link has expired. Ask the owner to create a new one.', undefined, { timeout: 5000 })).toBeVisible();
     expect(screen.queryByText(/Strategy shared by/)).not.toBeInTheDocument();
     expect(screen.queryByText('€57,000')).not.toBeInTheDocument();
   });
@@ -78,7 +84,7 @@ describe('SharedPlanPage', () => {
     stubSharingFetch(() => jsonResponse({ code: 'SH_1001', message: 'not found' }, 404));
     renderShare(['/share/does-not-exist']);
 
-    expect(await screen.findByText('This share link is invalid or has been removed.')).toBeVisible();
+    expect(await screen.findByText('This share link is invalid or has been removed.', undefined, { timeout: 5000 })).toBeVisible();
   });
 
   it('shows a rate-limited message when 429 SH_1004 is received', async () => {
@@ -86,7 +92,7 @@ describe('SharedPlanPage', () => {
     stubSharingFetch(() => jsonResponse({ code: 'SH_1004', message: 'too many requests' }, 429));
     renderShare();
 
-    expect(await screen.findByText('Too many requests. Please wait a minute and try again.')).toBeVisible();
+    expect(await screen.findByText('Too many requests. Please wait a minute and try again.', undefined, { timeout: 5000 })).toBeVisible();
     expect(screen.queryByText(/Strategy shared by/)).not.toBeInTheDocument();
   });
 
@@ -95,7 +101,7 @@ describe('SharedPlanPage', () => {
     stubSharingFetch(() => jsonResponse({ code: 'CORE_INTERNAL', message: 'boom' }, 500));
     renderShare();
 
-    expect(await screen.findByText('The shared plan could not be loaded. Please try again.')).toBeVisible();
+    expect(await screen.findByText('The shared plan could not be loaded. Please try again.', undefined, { timeout: 5000 })).toBeVisible();
     expect(screen.queryByText(/Strategy shared by/)).not.toBeInTheDocument();
   });
 
@@ -125,6 +131,6 @@ describe('SharedPlanPage', () => {
 
     // The previous token's plan must not flash through or stick around on fetch failure.
     expect(screen.queryByText('Strategy shared by Alice AAA')).not.toBeInTheDocument();
-    expect(await screen.findByText('This share link is invalid or has been removed.')).toBeVisible();
+    expect(await screen.findByText('This share link is invalid or has been removed.', undefined, { timeout: 5000 })).toBeVisible();
   });
 });

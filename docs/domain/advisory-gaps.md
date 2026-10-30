@@ -110,8 +110,8 @@ done when a rationale sentence changes when its underlying engine output changes
 ## Surfaces
 
 ### G13 · Frontend reads the API · `frontend/src/`
-status   `fixture`
-evidence `frontend/src/features/` has `admin` and `auth` only; `/portfolio`, `/cashflow`, `/evidence` and `/share/:token` import `frontend/src/lib/demo-data.ts`, and `/advisory` replies from seeded local state (`frontend/src/app/routes/advisory-page.tsx:17`)
+status   closed
+evidence `frontend/src/features/` has a hook per module (`finance`, `wealth`, `advisory`, `sharing`); `/portfolio`, `/cashflow`, `/evidence` and `/share/:token` read their backend routes with an empty-state fallback, and `/advisory` turns arrive from `POST /advisory/chat` with no seeded replies; `demo-data.ts` is deleted
 remedy  one hook per module, then delete the fixture constants and the seeded replies
 blocked  G8, G9, G11
 done when no advisory page imports `demo-data.ts`

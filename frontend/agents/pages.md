@@ -5,7 +5,7 @@
 
 ## Rules
 - Signed-out pages sit under `GuestRoute`, signed-in pages under `ProtectedRoute`, admin pages under `AdminRoute` inside it; `/share/:token` stays outside every guard.
-- Pages read `frontend/src/lib/demo-data.ts` until the backend endpoint for that data exists, then switch to a feature hook.
+- Pages read backend data through the hooks in `features/<name>/api`, never from local fixtures.
 
 ## File structure
 

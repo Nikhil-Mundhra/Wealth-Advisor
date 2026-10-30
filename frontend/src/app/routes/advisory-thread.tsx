@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Share2, Shield, CheckCircle2, ArrowRight } from 'lucide-react';
-import { AdvisoryChatResponse, CreateShareLinkResponse, ProposalPayloadDto } from '@wealth-advisor/contracts';
+import { ProposalPayloadDto, type AdvisoryChatResponse } from '@wealth-advisor/contracts';
 import type { Currency, HouseholdMode } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
@@ -8,13 +8,16 @@ import { Card } from '../../components/ui/card.tsx';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
+import { useAdvisoryChat } from '../../features/advisory/api/use-advisory-chat.ts';
 import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
 import { getActiveModelSpec, useAiConfig } from '../../features/ai-config/ai-settings-store.ts';
 import { TOP_FREE_MODEL_ID } from '../../features/ai-config/models-data.ts';
 import { createPasskeyAssertion } from '../../features/auth/api/passkey-client.ts';
 import { authApi } from '../../features/auth/api/auth-api.ts';
-import { wealthApi } from '../../features/wealth/api/wealth-api.ts';
-import { apiRequest } from '../../lib/api-client.ts';
+import { useConstructPortfolio } from '../../features/wealth/api/use-construct-portfolio.ts';
+import { useExecuteTrade } from '../../features/wealth/api/use-execute-trade.ts';
+import { useOptimize } from '../../features/wealth/api/use-optimize.ts';
+import { useCreateShareLink } from '../../features/sharing/api/use-create-share-link.ts';
 import { type StringKey, useStrings } from '../../lib/dictionaries.ts';
 import { ENGAGEMENT_EVENTS, track } from '../../lib/engagement.ts';
 import { formatMoney } from '../../lib/format-money.ts';
@@ -50,20 +53,7 @@ interface Message {
   notice?: string;
 }
 
-const SEED: Message[] = [
-  { role: 'user', key: 'advisory.q1', text: '' },
-  {
-    role: 'assistant',
-    key: 'advisory.a1',
-    text: '',
-    threePillarRationale: {
-      personalFinance: 'Monthly net burn is €4,780. Family liquid buffer is restored from 3.2 to 6.0 months.',
-      crossBorder: 'Shields EUR/CNY and GBP/SGD family remittance obligations against currency volatility.',
-      wealthStrategy: 'Shifts portfolio from 60% equities down to 40% target weight to match recalibrated risk tolerance.',
-    },
-    complianceDisclaimer: 'Syntropy AI runs deterministic simulations for education only and does not constitute formal investment solicitation.',
-  },
-];
+// The thread starts empty: every assistant turn arrives from POST /advisory/chat.
 
 // The proposal card mirrors the latest PROPOSAL action card, never a hardcoded sleeve mix.
 function parseProposalCard(res: AdvisoryChatResponse): ProposalPayloadDto | undefined {
@@ -84,17 +74,22 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
   const strings = useStrings();
   const aiConfig = useAiConfig();
   const activeModelSpec = getActiveModelSpec(aiConfig.selectedModelId);
-  const [messages, setMessages] = useState<Message[]>(() => [...SEED]);
+  const [messages, setMessages] = useState<Message[]>(() => []);
   const [draft, setDraft] = useState('');
   const [stepUp, setStepUp] = useState(false);
   const [pending, setPending] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState(false);
-  const [sharePending, setSharePending] = useState(false);
   const [advisorApproved, setAdvisorApproved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [stressPending, setStressPending] = useState(false);
   const [instrumentModalOpen, setInstrumentModalOpen] = useState(false);
+  const chat = useAdvisoryChat();
+  const construct = useConstructPortfolio();
+  const optimize = useOptimize();
+  const executeTrade = useExecuteTrade();
+  const createShareLinkMutation = useCreateShareLink();
 
   async function send(event: React.FormEvent): Promise<void> {
     event.preventDefault();
@@ -112,14 +107,10 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     setLoading(true);
 
     try {
-      const res = await apiRequest('/advisory/chat', {
-        method: 'POST',
-        body: {
-          message: text,
-          locale: (document.documentElement.lang as 'en' | 'de' | 'zh-CN' | 'zh-HK') || 'en',
-          householdMode: context.householdMode,
-        },
-        response: AdvisoryChatResponse,
+      const res = await chat.mutateAsync({
+        message: text,
+        locale: (document.documentElement.lang as 'en' | 'de' | 'zh-CN' | 'zh-HK') || 'en',
+        householdMode: context.householdMode,
       });
 
       setMessages((all) => [
@@ -157,42 +148,58 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     }
   }
 
-  function runStressSimulation(): void {
+  // Stress outcomes come from the backend construction engine (POST /wealth/construct),
+  // never from a client-side fabricated reply.
+  async function runStressSimulation(): Promise<void> {
     track(ENGAGEMENT_EVENTS.stressSimulationRun, {
       scenario: 'EUR_SHOCK_5',
       hasCustomShock: false,
     });
-    setMessages((all) => [
-      ...all,
-      { role: 'user', key: null, text: 'Simulate −5% EUR shock on family remittances' },
-      {
-        role: 'assistant',
-        key: null,
-        text: `Stress test complete: A −5% EUR depreciation against CNY/SGD increases monthly remittance obligations for ${context.displayName} by €145. Rebalancing 10% into EUR money-market preserves 6+ months of runway.`,
-        threePillarRationale: {
-          personalFinance: 'Post-shock runway reduces by 0.3 months without rebalancing; restored to >6.0m with proposal.',
-          crossBorder: 'Simulated 500 bps adverse FX move on EUR/CNY and GBP/SGD remittance corridors.',
-          wealthStrategy: 'Rebalances €19,000 from US equities to EUR overnight cash (XEON) to cover 12 months of remittances.',
+    setStressPending(true);
+    const userMessage: Message = { role: 'user', key: null, text: 'Simulate −5% EUR shock on family remittances' };
+    setMessages((all) => [...all, userMessage]);
+    try {
+      const res = await construct.mutateAsync(undefined);
+      const outcome = res.stressTestOutcomes[0];
+      setMessages((all) => [
+        ...all,
+        {
+          role: 'assistant',
+          key: null,
+          text: outcome
+            ? `Stress test complete: ${outcome.scenarioName} — ${outcome.description} Portfolio value change ${outcome.portfolioValueChangePct.toFixed(1)}%, estimated drawdown ${outcome.estimatedDrawdownPct.toFixed(1)}%.`
+            : `Stress test complete: simulated portfolio volatility ${res.portfolioVolatility.toFixed(1)}% at a ${(res.portfolioExpectedReturn * 100).toFixed(1)}% expected return.`,
+          threePillarRationale: {
+            personalFinance: res.rationale.personalFinance,
+            crossBorder: res.rationale.crossBorder,
+            wealthStrategy: res.rationale.wealthStrategy,
+          },
         },
-      },
-    ]);
+      ]);
+    } catch {
+      setMessages((all) => [
+        ...all,
+        {
+          role: 'assistant',
+          key: null,
+          text: 'The stress simulation is unavailable right now.',
+          notice: 'The construction engine could not run the stress scenario for this portfolio.',
+        },
+      ]);
+    } finally {
+      setStressPending(false);
+    }
   }
 
   async function createShareLink(): Promise<void> {
     setShareError(false);
     setCopiedShare(false);
-    setSharePending(true);
     try {
-      const res = await apiRequest('/sharing/create', {
-        method: 'POST',
-        body: {
-          privacyMasked: true,
-          ownerDisplayName: context.displayName,
-          ttlHours: 72,
-          ...(context.shareClientId ? { clientId: context.shareClientId } : {}),
-        },
-        response: CreateShareLinkResponse,
-        authenticated: true,
+      const res = await createShareLinkMutation.mutateAsync({
+        privacyMasked: true,
+        ownerDisplayName: context.displayName,
+        ttlHours: 72,
+        ...(context.shareClientId ? { clientId: context.shareClientId } : {}),
       });
       const url = `${window.location.origin}${res.url}`;
       setShareUrl(url);
@@ -204,8 +211,6 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
       }
     } catch {
       setShareError(true);
-    } finally {
-      setSharePending(false);
     }
   }
 
@@ -218,6 +223,8 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
 
   const [executionResult, setExecutionResult] = useState<string | null>(null);
 
+  // Sign executes the optimizer's own proposal: actions come from POST /wealth/optimize,
+  // never from a hardcoded symbol list. The passkey step-up gate stays in front.
   function sign(): void {
     setPending(true);
     setAdvisorApproved(true);
@@ -227,18 +234,17 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     });
     void (async () => {
       try {
+        const proposal = await optimize.mutateAsync(undefined);
+        if (proposal.actions.length === 0) {
+          setExecutionResult('No rebalance needed: holdings are within the drift corridor.');
+          setPending(false);
+          return;
+        }
         const { challenge } = await authApi.passkeyStepUpChallenge();
         const assertion = await createPasskeyAssertion(undefined, challenge);
-        const res = await wealthApi.executeTrade({
+        const res = await executeTrade.mutateAsync({
           orderType: 'PORTFOLIO_REBALANCE',
-          trades: [
-            {
-              assetSymbol: 'CSPX.LSE',
-              action: 'SELL',
-              amountBase: 1900000,
-              targetWeight: 0.4,
-            },
-          ],
+          trades: proposal.actions,
           passkeyAssertion: assertion,
         });
         if (res?.ledgerEntry?.transactionHash) {
@@ -450,13 +456,17 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           <Button variant="outline" onClick={() => setInstrumentModalOpen(true)}>
             Compare Products
           </Button>
-          <Button variant="outline" onClick={runStressSimulation}>
-            Simulate −5% EUR shock
+          <Button
+            variant="outline"
+            onClick={() => void runStressSimulation()}
+            disabled={stressPending}
+          >
+            {stressPending ? 'Simulating…' : 'Simulate −5% EUR shock'}
           </Button>
           <Button
             variant="outline"
             onClick={createShareLink}
-            disabled={sharePending || context.shareClientId === null}
+            disabled={createShareLinkMutation.isPending || context.shareClientId === null}
             title={context.shareClientId === null ? strings['advisory.shareUnavailable'] : undefined}
             className="flex items-center gap-1.5"
           >

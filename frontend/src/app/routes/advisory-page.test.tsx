@@ -76,18 +76,67 @@ describe('AdvisoryPage', () => {
     trackSpy.mockRestore();
   });
 
-  it('runs stress simulation and tracks event', async () => {
+  it('runs stress simulation against the backend construct engine', async () => {
     const trackSpy = vi.spyOn(engagement, 'track');
+    const realApiRequest = apiClient.apiRequest;
+    const requestSpy = vi.spyOn(apiClient, 'apiRequest').mockImplementation(((path: string, options?: object) => {
+      if (path === '/wealth/construct') {
+        return Promise.resolve({
+          riskTier: 'moderate',
+          riskAversionLambda: 2,
+          holdings: [],
+          portfolioExpectedReturn: 0.06,
+          portfolioVolatility: 12.5,
+          portfolioSharpeRatio: 0.4,
+          durationWeightedExposure: 3,
+          complianceChecks: {
+            shariaPassed: true,
+            liquidityPassed: true,
+            sectorCapsPassed: true,
+            fundHouseCapPassed: true,
+            durationCapPassed: true,
+          },
+          stressTestOutcomes: [
+            {
+              scenarioName: 'EUR shock −5%',
+              description: 'A −5% EUR depreciation against CNY/SGD.',
+              portfolioValueChangePct: -2.1,
+              estimatedDrawdownPct: 3.4,
+              violatesConstraint: false,
+            },
+          ],
+          monteCarlo: {
+            numSimulations: 100,
+            projectionMonths: 12,
+            percentiles: { p5: -4, p25: -1, p50: 2, p75: 5, p95: 9 },
+            valueAtRisk95: -4,
+            cvar95: -5,
+            maxSimulatedDrawdown: -6,
+          },
+          rationale: {
+            personalFinance: 'p',
+            crossBorder: 'c',
+            wealthStrategy: 'w',
+            technicalAttribution: 't',
+            fundamentalAttribution: 'f',
+            regulatoryAttribution: 'r',
+          },
+          sourceAttribution: [],
+        });
+      }
+      return (realApiRequest as (path: string, options?: object) => Promise<unknown>)(path, options);
+    }) as typeof apiClient.apiRequest);
     renderAdvisory();
 
     const stressBtn = await screen.findByRole('button', { name: /Simulate −5% EUR shock/ });
     await userEvent.click(stressBtn);
 
-    expect(screen.getByText(/Stress test complete:/)).toBeVisible();
+    expect(await screen.findByText(/Stress test complete: EUR shock −5%/)).toBeVisible();
     expect(trackSpy).toHaveBeenCalledWith(engagement.ENGAGEMENT_EVENTS.stressSimulationRun, {
       scenario: 'EUR_SHOCK_5',
       hasCustomShock: false,
     });
+    requestSpy.mockRestore();
     trackSpy.mockRestore();
   });
 

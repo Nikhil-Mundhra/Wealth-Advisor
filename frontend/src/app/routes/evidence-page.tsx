@@ -26,7 +26,6 @@ import { SettingsNav } from './settings-nav.tsx';
 import { Spinner } from '../../components/ui/spinner.tsx';
 import { useSandboxLedger } from '../../features/wealth/api/use-sandbox-ledger.ts';
 import { downloadCsv, serializeLedgerToCsv, type LedgerRow } from '../../lib/csv-export.ts';
-import { DEMO_LEDGER } from '../../lib/demo-data.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatMoney } from '../../lib/format-money.ts';
 import type { SandboxLedgerEntryDto } from '@wealth-advisor/contracts';
@@ -55,34 +54,9 @@ export function EvidencePage() {
   } | null>(null);
 
   const rawEntries = ledgerData?.entries ?? [];
-  const hasLiveEntries = rawEntries.length > 0;
 
-  // Fallback demo items if database ledger is empty in standalone test mode
-  const displayEntries: Array<SandboxLedgerEntryDto> = hasLiveEntries
-    ? rawEntries
-    : DEMO_LEDGER.map((demo, idx) => ({
-        id: `demo-ledger-${idx}`,
-        tenantId: 'tenant_demo',
-        userId: 'user_elena_vance',
-        orderType: 'PORTFOLIO_REBALANCE' as const,
-        initialPortfolioStateHash: '3b879c941e7f62d47f9e8a09b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2',
-        executedTrades: [
-          { assetSymbol: 'VTI', action: 'SELL' as const, amountBase: 2500000, targetWeight: 0.40 },
-          { assetSymbol: 'BND', action: 'BUY' as const, amountBase: 2500000, targetWeight: 0.25 },
-        ],
-        resultingPortfolioStateHash: 'a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0',
-        passkeyAssertionProof: {
-          credentialId: 'cred_p256_mock_hw_enclave',
-          clientDataJson: 'eyJjaGFsbGVuZ2UiOiJzYW5kYm94X2V4ZWN1dGlvbl9jaGFsbGVuZ2UiLCJvcmlnaW4iOiJodHRwczovL3dlYWx0aC5zeW50cm9weS5haSJ9',
-          authenticatorData: 'SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAg',
-          signature: '3045022100e4b2d18728a47ff0f1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f402202f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5',
-          verifiedAt: demo.at,
-        },
-        auditDigest: 'e4f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1',
-        transactionHash: '0xe4f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3',
-        status: 'COMMITTED' as const,
-        timestamp: new Date().toISOString(),
-      }));
+  // The ledger reads only the API: an empty ledger renders the empty table, never a seeded baseline.
+  const displayEntries: Array<SandboxLedgerEntryDto> = rawEntries;
 
   const handleVerifyEntry = async (entry: SandboxLedgerEntryDto, customSignature?: string) => {
     setIsVerifying(true);
