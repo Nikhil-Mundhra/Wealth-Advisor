@@ -95,11 +95,11 @@ function parseFrontend(output) {
 }
 
 function parseBackend(output) {
-  const tests = output.match(/ℹ tests (\d+)/)?.[1] ?? '0';
-  const suites = output.match(/ℹ suites (\d+)/)?.[1] ?? '0';
-  const pass = output.match(/ℹ pass (\d+)/)?.[1] ?? '0';
-  const fail = output.match(/ℹ fail (\d+)/)?.[1] ?? '0';
-  const durationMs = output.match(/ℹ duration_ms ([0-9.]+)/)?.[1];
+  const tests = output.match(/(?:ℹ|#) tests (\d+)/)?.[1] ?? '0';
+  const suites = output.match(/(?:ℹ|#) suites (\d+)/)?.[1] ?? '0';
+  const pass = output.match(/(?:ℹ|#) pass (\d+)/)?.[1] ?? '0';
+  const fail = output.match(/(?:ℹ|#) fail (\d+)/)?.[1] ?? '0';
+  const durationMs = output.match(/(?:ℹ|#) duration_ms ([0-9.]+)/)?.[1];
   const duration = durationMs ? `${(parseFloat(durationMs) / 1000).toFixed(1)}s` : '';
 
   // Extract failed lines if any
