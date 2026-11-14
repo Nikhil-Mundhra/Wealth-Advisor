@@ -11,7 +11,7 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e lint ci db-indexes db-migrate jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e eval lint ci db-indexes db-migrate jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
 
 
 help:  ## List targets
@@ -111,7 +111,10 @@ test-ui:  ## Stage 2C: Frontend Vitest component, native <dialog>, and A11y test
 test-e2e:  ## Stage 3: Live cross-module HTTP E2E orchestration and <400ms P99 SLA gate
 	npm run test:sla -w backend
 
-ci: lint test-property test-contracts test-sla test build  ## Run the complete 3-stage guardrail pipeline locally (Lint -> Unit/Property/Contract -> Live E2E & SLA)
+eval:  ## Run versioned LLM guardrail and grounding evaluation suite
+	npm run eval -w backend
+
+ci: lint test-property test-contracts test-sla eval test build  ## Run the complete 3-stage guardrail pipeline locally (Lint -> Unit/Property/Contract/Eval -> Live E2E & SLA)
 
 check-ai:  ## Check AI platform API health on deployed site or local (e.g. make check-ai ARGS="--provider openrouter")
 	@node scripts/check-ai-health.mjs $(ARGS)

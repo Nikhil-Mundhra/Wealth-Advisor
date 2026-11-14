@@ -5,7 +5,14 @@ import type { FinanceApi } from '../finance/public.ts';
 import type { MarketApi } from '../market/public.ts';
 import type { WealthApi } from '../wealth/public.ts';
 import { AdvisoryErrors } from './domain/errors/advisory-errors.ts';
+import {
+  createAgentOrchestrator,
+  type OrchestratorBudgetConfig,
+  type OrchestratorExecutionResult,
+  type PlannedToolStep,
+} from './domain/agent-orchestrator.ts';
 import { LlmGateway } from './domain/llm-gateway.ts';
+import { sanitizeUntrustedInput } from './domain/prompt-guard.ts';
 import { createToolRegistry } from './domain/tool-registry.ts';
 
 export interface AdvisoryApiDeps {
@@ -20,11 +27,40 @@ export interface AdvisoryApiDeps {
 export function createAdvisoryApi(deps: AdvisoryApiDeps) {
   const { finance, wealth, market, analytics, gateway, getActiveProvider } = deps;
   const tools = createToolRegistry({ finance, wealth, market, analytics });
+  const orchestrator = createAgentOrchestrator({ tools, wealth, gateway });
 
   return {
+    async orchestrate(
+      tenantId: string,
+      userId: string,
+      input: AdvisoryChatRequest,
+      options?: {
+        readonly provider?: LlmProvider;
+        readonly plannedSteps?: readonly PlannedToolStep[];
+        readonly budget?: Partial<OrchestratorBudgetConfig>;
+      },
+    ): Promise<OrchestratorExecutionResult> {
+      let provider: LlmProvider = options?.provider ?? 'mock';
+      if (!options?.provider && getActiveProvider) {
+        try {
+          provider = await getActiveProvider();
+        } catch {
+          throw AdvisoryErrors.gatewayUnavailable('active provider could not be determined');
+        }
+      }
+      return orchestrator.run({
+        scope: { tenantId, userId },
+        input,
+        provider,
+        plannedSteps: options?.plannedSteps,
+        budget: options?.budget,
+      });
+    },
+
     async chat(tenantId: string, userId: string, input: AdvisoryChatRequest): Promise<AdvisoryChatResponse> {
       const householdMode = input.householdMode;
       const locale = input.locale ?? 'en';
+      const sanitized = sanitizeUntrustedInput(input.message);
 
       // Deterministic calculation shield: the cashflow and portfolio tools resolve from stored data
       // through the tier-enforced registry; their numbers reach the model as structured fields only.
@@ -58,7 +94,7 @@ export function createAdvisoryApi(deps: AdvisoryApiDeps) {
       }
 
       const res = await gateway.chat(provider, {
-        message: input.message,
+        message: sanitized.sanitizedText,
         locale,
         householdMode,
         cashflow,

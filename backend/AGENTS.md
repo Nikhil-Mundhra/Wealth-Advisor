@@ -88,8 +88,11 @@ backend/src/modules/admin/application/ports.ts : TenantRepository, ApiKeyReposit
 backend/src/modules/admin/public.ts : the admin surface other modules may import
 backend/src/modules/advisory/advisory.api.ts : createAdvisoryApi: multilingual copilot chat, proposal cards, calculation shield
 backend/src/modules/advisory/advisory.module.ts : composition root: llm gateway, mock adapter → api, routes, manifest
+backend/src/modules/advisory/domain/agent-orchestrator.ts : bounded multi-step tool loop with token/cost budgets, timeouts, and fallback
 backend/src/modules/advisory/domain/calculation-shield.ts : shieldText keeps model text only when every number in it matches an engine fact; factNumbers reads facts from text
+backend/src/modules/advisory/domain/eval-runner.ts : versioned deterministic advisory eval suite (currency volatility, burn spike, compliance, adversarial)
 backend/src/modules/advisory/domain/llm-gateway.ts : multi-provider LLM gateway and mock deterministic adapter; live replies pass through the calculation shield
+backend/src/modules/advisory/domain/prompt-guard.ts : PII redaction and prompt-injection filtering for untrusted inputs
 backend/src/modules/advisory/domain/tool-registry.ts : tier-enforced agent tool dispatch over the finance, wealth, market and analytics public surfaces
 backend/src/modules/advisory/public.ts : the advisory surface other modules may import
 backend/src/modules/analytics/analytics.api.ts : createAnalyticsApi: onMarketDataRefreshed (work, then mark), latestSnapshot, snapshotAt
@@ -140,5 +143,6 @@ backend/src/modules/wealth/public.ts : the wealth surface other modules may impo
 backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, risk profile, optimizer, sandbox trade execution, ledger
 backend/src/modules/wealth/wealth.module.ts : composition root: store-selected wealth repos → api, routes, manifest
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
+backend/src/scripts/run-evals.ts : CLI entrypoint executing the versioned advisory eval suite (make eval)
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 ```

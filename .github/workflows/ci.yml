@@ -36,6 +36,7 @@ jobs:
       - run: make test-property
       - run: make test-contracts
       - run: make test-sla
+      - run: make eval
       - run: make test
       - run: make build
 
