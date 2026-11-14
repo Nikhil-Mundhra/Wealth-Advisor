@@ -1,16 +1,19 @@
 import { ObjectId } from 'mongodb';
-import type {
-  AccountDto,
-  AccountListResponse,
-  CashflowSummaryResponse,
-  CreateAccountRequest,
-  CreateTransactionRequest,
-  CreateTransactionResponse,
-  RemittanceCorridorSummary,
-  TransactionDto,
-  TransactionListResponse,
+import {
+  type AccountDto,
+  type AccountListResponse,
+  type CashflowSummaryResponse,
+  type CreateAccountRequest,
+  type CreateTransactionRequest,
+  type CreateTransactionResponse,
+  type RemittanceCorridorSummary,
+  TRANSACTION_INGESTED,
+  type TransactionDto,
+  type TransactionListResponse,
 } from '@wealth-advisor/contracts';
 import { FINANCE_ERROR_CODES, type Currency, type HouseholdMode } from '@wealth-advisor/rules';
+import type { EventBus } from '#core/events/event-bus.ts';
+import { createEnvelope } from '#core/events/event-envelope.ts';
 import type { Clock } from '#core/time/clock.ts';
 import { toIsoDate } from '#core/time/calendar-date.ts';
 import { toDocumentId, DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
@@ -26,6 +29,7 @@ export interface FinanceApiDeps {
   transactions: TransactionRepository;
   clock: Clock;
   market?: MarketApi;
+  events?: EventBus;
 }
 
 function toAccountDto(doc: AccountDocument, baseBalance: number | null): AccountDto {
@@ -201,6 +205,25 @@ export function createFinanceApi(deps: FinanceApiDeps) {
         createdAt: clock.now(),
       });
 
+      if (deps.events) {
+        await deps.events.publish(
+          createEnvelope({
+            type: TRANSACTION_INGESTED.type,
+            version: TRANSACTION_INGESTED.version,
+            occurredAt: clock.now(),
+            payload: {
+              tenantId,
+              userId,
+              transactionId: created._id.toHexString(),
+              category: created.category,
+              convertedBaseAmount: created.convertedBaseAmount,
+              baseCurrency: created.baseCurrency,
+              timestamp: created.timestamp.toISOString(),
+            },
+          }),
+        );
+      }
+
       return { transaction: toTransactionDto(created), deduplicated: false };
     },
 
@@ -221,14 +244,24 @@ export function createFinanceApi(deps: FinanceApiDeps) {
 
       let eurCnyRate = 7.82;
       let gbpSgdRate = 1.71;
+      let stale = false;
+      let staleReason: string | undefined;
       if (deps.market) {
         try {
-          const eurRates = await deps.market.rates('EUR');
+          const eurRates = await deps.market.ratesResilient('EUR');
           const cny = eurRates.rates.find((r) => r.quote === 'CNY');
           if (cny) eurCnyRate = cny.rate;
-          const gbpRates = await deps.market.rates('GBP');
+          if (eurRates.stale) {
+            stale = true;
+            staleReason = eurRates.staleReason;
+          }
+          const gbpRates = await deps.market.ratesResilient('GBP');
           const sgd = gbpRates.rates.find((r) => r.quote === 'SGD');
           if (sgd) gbpSgdRate = sgd.rate;
+          if (gbpRates.stale) {
+            stale = true;
+            staleReason = staleReason ?? gbpRates.staleReason;
+          }
         } catch {
           // Keep defaults if market rates unseeded
         }
@@ -267,6 +300,7 @@ export function createFinanceApi(deps: FinanceApiDeps) {
         runwayBand: burn.runwayBand,
         reserveMultiplier: burn.reserveMultiplier,
         remittanceCorridors: corridors,
+        ...(stale ? { stale: true, ...(staleReason ? { staleReason } : {}) } : {}),
       };
     },
   };

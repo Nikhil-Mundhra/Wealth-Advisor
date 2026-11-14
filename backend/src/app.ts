@@ -5,8 +5,9 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
+import { resolveDataStore } from '#core/db/connection/data-store.ts';
 import { checkDatabase } from '#core/db/connection/database-health.ts';
-import { InProcessEventBus } from '#core/events/event-bus.ts';
+import { DurableOutboxEventBus, createMemoryOutboxStore, createMongoOutboxStore } from '#core/events/outbox-bus.ts';
 import { createHttpClient } from '#core/http-client/http-client.ts';
 import { createErrorHandler } from '#core/http/error-handler.ts';
 import { createIdempotencyMiddleware } from '#core/http/idempotency.ts';
@@ -85,11 +86,14 @@ export function createApp(context: ModuleContext): Hono {
 
 // Vercel entrypoint: Vercel imports this default export and runs it as a function.
 // Local Node runs it through node-server.ts instead.
+const defaultOutboxStore =
+  resolveDataStore(env()) === 'mongo' ? createMongoOutboxStore(getDb) : createMemoryOutboxStore();
+
 const app = createApp({
   db: getDb,
   clock: systemClock,
   ids: objectIdGenerator,
-  events: new InProcessEventBus(),
+  events: new DurableOutboxEventBus({ store: defaultOutboxStore, clock: systemClock }),
   http: createHttpClient(),
 });
 

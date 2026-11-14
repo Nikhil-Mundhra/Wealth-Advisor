@@ -1,5 +1,6 @@
 import { CURRENCIES, type AssetClass, type Currency, FX_LOOKBACK_DAYS } from '@wealth-advisor/rules';
 import type { EventBus } from '#core/events/event-bus.ts';
+import { createResilientCachedCaller } from '#core/http-client/resilient-caller.ts';
 import { addDays, toIsoDate } from '#core/time/calendar-date.ts';
 import type { Clock } from '#core/time/clock.ts';
 import type { FxRateRepository, FxSource, PriceRepository, PriceSource } from './application/ports.ts';
@@ -12,6 +13,7 @@ import { toNumber } from './domain/decimal.ts';
 import { createRateTable } from './domain/rate-table.ts';
 import { FX_BASE, FX_QUOTES, TRACKED_SYMBOL_NAMES, TRACKED_SYMBOLS } from './domain/tracked-symbols.ts';
 import type { ConversionMode } from './domain/valuation.vo.ts';
+import { buildMockFxRates } from './infrastructure/providers/mock-market-source.ts';
 
 export interface MarketApiDeps {
   readonly prices: PriceRepository;
@@ -39,6 +41,8 @@ export interface RatesResult {
   readonly asOf: string | null;
   readonly base: Currency;
   readonly rates: readonly { readonly quote: Currency; readonly rate: number; readonly date: string; readonly source: string }[];
+  readonly stale?: boolean;
+  readonly staleReason?: string;
 }
 
 export interface ConvertInput {
@@ -52,6 +56,49 @@ export type MarketApi = ReturnType<typeof createMarketApi>;
 export function createMarketApi(deps: MarketApiDeps) {
   const { prices, fxRates, priceSource, fxSource, events, clock } = deps;
   const today = () => toIsoDate(clock.now());
+
+  const resilientFxCaller = createResilientCachedCaller<
+    { base: Currency; date: string },
+    {
+      readonly asOf: string | null;
+      readonly rates: readonly { readonly quote: Currency; readonly rate: number; readonly date: string; readonly source: string }[];
+    }
+  >({
+    name: 'market-fx-rates',
+    ttlMs: 5 * 60_000,
+    clock,
+    retry: { maxRetries: 1, baseDelayMs: 5, maxDelayMs: 20 },
+    keySerializer: ({ base, date }) => `${base}:${date}`,
+    fetcher: async ({ base, date }) => {
+      const readStored = async () => {
+        const table = createRateTable(await fxRates.between(addDays(date, -FX_LOOKBACK_DAYS), date));
+        return CURRENCIES.filter((quote) => quote !== base).flatMap((quote) => {
+          const found = table.lookup(base, quote, date);
+          return found ? [{ quote, rate: toNumber(found.rate), date: found.date, source: found.source }] : [];
+        });
+      };
+
+      let rates = await readStored();
+      if (rates.length === 0) {
+        const fetched = await fxSource.fetchRange(FX_BASE, FX_QUOTES, addDays(date, -7), date);
+        if (fetched.length > 0) {
+          await fxRates.append(fetched);
+          rates = await readStored();
+        }
+      }
+
+      if (rates.length === 0) {
+        throw new Error(`No live or stored FX rates available for ${base} on ${date}`);
+      }
+
+      const asOf = rates.reduce<string | null>((max, rate) => (max === null || rate.date > max ? rate.date : max), null);
+      return { asOf, rates };
+    },
+    mockFallback: ({ base, date }) => ({
+      asOf: date,
+      rates: buildMockFxRates(base, date),
+    }),
+  });
 
   return {
     // Fetches FX first: the ECB source is free, so its failure spends none of the metered price quota. Both
@@ -87,6 +134,16 @@ export function createMarketApi(deps: MarketApiDeps) {
         return found ? [{ quote, rate: toNumber(found.rate), date: found.date, source: found.source }] : [];
       });
       return { asOf: rates.reduce<string | null>((max, rate) => (max === null || rate.date > max ? rate.date : max), null), base, rates };
+    },
+
+    async ratesResilient(base: Currency, date: string = today()): Promise<RatesResult> {
+      const res = await resilientFxCaller.call({ base, date });
+      return {
+        asOf: res.value.asOf,
+        base,
+        rates: res.value.rates,
+        ...(res.stale ? { stale: true, staleReason: res.reason ?? res.source } : {}),
+      };
     },
 
     async convert(input: ConvertInput): Promise<ConversionResult[]> {

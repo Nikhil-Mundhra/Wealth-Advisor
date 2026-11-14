@@ -23,5 +23,7 @@ export const FxRatesResponse = z.object({
   asOf: IsoDateField.nullable(),
   base: CurrencyField,
   rates: z.array(FxRate),
+  stale: z.boolean().optional(),
+  staleReason: z.string().optional(),
 });
 export type FxRatesResponse = z.infer<typeof FxRatesResponse>;

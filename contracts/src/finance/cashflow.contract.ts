@@ -34,5 +34,7 @@ export const CashflowSummaryResponse = z.object({
   runwayBand: z.enum(RUNWAY_BANDS),
   reserveMultiplier: z.number(),
   remittanceCorridors: z.array(RemittanceCorridorSummary),
+  stale: z.boolean().optional(),
+  staleReason: z.string().optional(),
 });
 export type CashflowSummaryResponse = z.infer<typeof CashflowSummaryResponse>;

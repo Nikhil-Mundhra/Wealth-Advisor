@@ -16,6 +16,7 @@ export * from './fields/currency.field.ts';
 export * from './fields/iso-date.field.ts';
 export * from './fields/money.field.ts';
 export * from './events/market-data-refreshed.event.ts';
+export * from './events/transaction-ingested.event.ts';
 export * from './market/quotes.contract.ts';
 export * from './market/fx-rates.contract.ts';
 export * from './market/refresh.contract.ts';

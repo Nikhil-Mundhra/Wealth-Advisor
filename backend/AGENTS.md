@@ -61,6 +61,8 @@ backend/src/core/events/event-bus.ts : in-process publish/subscribe of envelopes
 backend/src/core/events/event-envelope.ts : EventEnvelope (id, type, version, occurredAt, correlationId, payload) and createEnvelope
 backend/src/core/events/memory-processed-events.ts : processed-event marks in memory; same first/duplicate semantics
 backend/src/core/events/mongo-processed-events.ts : processed-event marks on Mongo; the unique index decides the race
+backend/src/core/events/outbox-bus.ts : MongoDB/in-memory backed durable outbox event bus with bounded retry and dead-letter queue
+backend/src/core/events/outbox.schema.ts : outbox_events and dead_letter_events collection schemas and $jsonSchema validators
 backend/src/core/events/processed-events.schema.ts : processed_events collection: unique (handler, eventId) and $jsonSchema
 backend/src/core/events/processed-events.ts : ProcessedEvents port (markProcessed → first | duplicate) and store-based factory
 backend/src/core/http-client/http-client.ts : getJson over fetch with a timeout; failures → transient or fatal HttpClientError, URL query never in messages
@@ -69,6 +71,7 @@ backend/src/core/http-client/mongo-request-budget.ts : monthly request budget on
 backend/src/core/http-client/request-budget-rules.ts : UTC month key and reservation argument checks shared by both stores
 backend/src/core/http-client/request-budget.ts : RequestBudget port (reserve provider, count, monthly limit) and store-based factory
 backend/src/core/http-client/request-budgets.schema.ts : request_budgets collection: one counter per provider and month, $jsonSchema
+backend/src/core/http-client/resilient-caller.ts : circuit breaker, exponential backoff with jitter retry, TTL cache, stale and mock fallback
 backend/src/core/http/error-handler.ts : turns AppError, DomainError (status from the catalog) and unknown errors into the error contract
 backend/src/core/http/idempotency-keys.schema.ts : idempotency_keys collection (unique scope, 24h TTL) and $jsonSchema
 backend/src/core/http/idempotency.ts : Idempotency-Key middleware for state-changing routes (replay & 409 conflict)
@@ -126,6 +129,7 @@ backend/src/modules/market/domain/tracked-symbols.ts : tracked ETFs and their as
 backend/src/modules/market/domain/valuation.vo.ts : Valuation: original, converted, rate, rate date, mode (provenance of a conversion)
 backend/src/modules/market/infrastructure/providers/frankfurter-fx-source.ts : FxSource over Frankfurter v1 (ECB) range endpoint
 backend/src/modules/market/infrastructure/providers/marketstack-price-source.ts : PriceSource over Marketstack v2 /eod; one budget reservation per page; missing key → MK_1903
+backend/src/modules/market/infrastructure/providers/mock-market-source.ts : deterministic mock FX fallback builder marked stale downstream
 backend/src/modules/market/infrastructure/providers/provider-call.ts : provider call → parsed body; network, status, error-body, shape and invalid-value failures → MK_1901
 backend/src/modules/market/market.api.ts : createMarketApi: refresh, quotes, history, rates, convert orchestrators
 backend/src/modules/market/market.module.ts : composition root: store-selected repositories, provider adapters, request budget → api, routes, manifest

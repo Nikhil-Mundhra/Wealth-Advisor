@@ -1,6 +1,8 @@
 import { ObjectId } from 'mongodb';
 import { sha256Hex } from '#core/crypto/sha256.ts';
 import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
+import type { EventEnvelope } from '#core/events/event-envelope.ts';
+import type { MarkResult, ProcessedEvents } from '#core/events/processed-events.ts';
 import type { Clock } from '#core/time/clock.ts';
 import { DomainError } from '#core/domain/domain-error.ts';
 import {
@@ -15,25 +17,28 @@ import {
   type OptimizationConstraints,
   type RiskTier,
 } from '@wealth-advisor/rules';
-import type {
-  AssetProductDto,
-  AssetProductListResponse,
-  ConstructPortfolioRequest,
-  ConstructPortfolioResponse,
-  ExecuteTradeRequest,
-  ExecuteTradeResponse,
-  OptimizePortfolioRequest,
-  PortfolioResponse,
-  ProfileSummary,
-  ProfilingAnswers,
-  RebalanceActionDto,
-  RebalanceProposalResponse,
-  RiskProfileResponse,
-  SandboxLedgerEntryDto,
-  SandboxLedgerResponse,
+import {
+  type AssetProductDto,
+  type AssetProductListResponse,
+  type ConstructPortfolioRequest,
+  type ConstructPortfolioResponse,
+  type ExecuteTradeRequest,
+  type ExecuteTradeResponse,
+  type OptimizePortfolioRequest,
+  type PortfolioResponse,
+  type ProfileSummary,
+  type ProfilingAnswers,
+  type RebalanceActionDto,
+  type RebalanceProposalResponse,
+  type RiskProfileResponse,
+  type SandboxLedgerEntryDto,
+  type SandboxLedgerResponse,
+  TRANSACTION_INGESTED,
+  TransactionIngestedPayload,
 } from '@wealth-advisor/contracts';
 import { INSTITUTIONAL_CANDIDATE_SECURITIES } from './domain/institutional-securities.ts';
 import type { AnalyticsApi } from '../analytics/public.ts';
+import type { FinanceApi } from '../finance/public.ts';
 import type {
   AssetProductRepository,
   PasskeyVerifier,
@@ -46,6 +51,8 @@ import type { PortfolioDocument } from './infrastructure/db/documents/portfolio.
 import type { RiskProfileDocument } from './infrastructure/db/documents/risk-profile.document.ts';
 import type { SandboxLedgerDocument } from './infrastructure/db/documents/sandbox-ledger.document.ts';
 
+export const WEALTH_TX_INGESTED_HANDLER = 'wealth.burn_rate_recalibration';
+
 export interface WealthApiDeps {
   products: AssetProductRepository;
   portfolios: PortfolioRepository;
@@ -54,6 +61,8 @@ export interface WealthApiDeps {
   passkeys: PasskeyVerifier;
   clock: Clock;
   analytics?: AnalyticsApi;
+  finance?: FinanceApi;
+  processed?: ProcessedEvents;
 }
 
 function toProductDto(doc: AssetProductDocument): AssetProductDto {
@@ -479,6 +488,36 @@ export function createWealthApi(deps: WealthApiDeps) {
         summary: doc.summary,
         updatedAt: doc.updatedAt.toISOString(),
       };
+    },
+
+    async onTransactionIngested(
+      event: EventEnvelope,
+    ): Promise<{ outcome: 'ignored' | 'recalibrated'; mark?: MarkResult }> {
+      if (event.type !== TRANSACTION_INGESTED.type || event.version !== TRANSACTION_INGESTED.version) {
+        return { outcome: 'ignored' };
+      }
+      const payload = TransactionIngestedPayload.parse(event.payload);
+      const doc = await portfolios.findByUser(payload.tenantId, payload.userId);
+      if (doc) {
+        if (deps.finance) {
+          const summary = await deps.finance.getCashflowSummary(payload.tenantId, payload.userId);
+          doc.burnRateRunwayMonths = summary.runwayMonths;
+        } else if (!payload.category.startsWith('INCOME_') && payload.convertedBaseAmount > 0) {
+          doc.burnRateRunwayMonths = Math.max(
+            0.5,
+            Number((doc.burnRateRunwayMonths - payload.convertedBaseAmount / 500_000).toFixed(1)),
+          );
+        }
+        doc.effectiveRiskScore = recalibrateRiskScore({
+          baseRiskScore: doc.baseRiskScore,
+          runwayMonths: doc.burnRateRunwayMonths,
+          householdMode: 'FAMILY_HOUSEHOLD',
+        });
+        doc.updatedAt = clock.now();
+        await portfolios.save(doc);
+      }
+      const mark = deps.processed ? await deps.processed.markProcessed(WEALTH_TX_INGESTED_HANDLER, event.id) : undefined;
+      return mark ? { outcome: 'recalibrated', mark } : { outcome: 'recalibrated' };
     },
   };
 }

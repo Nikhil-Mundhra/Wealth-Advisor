@@ -1,6 +1,8 @@
+import { TRANSACTION_INGESTED } from '@wealth-advisor/contracts';
 import { ERROR_CODE_PREFIXES } from '@wealth-advisor/rules';
 import { env } from '#core/config/env.ts';
 import { resolveDataStore } from '#core/db/connection/data-store.ts';
+import { createProcessedEvents } from '#core/events/processed-events.ts';
 import { defineModule, type ModuleManifest } from '#core/module/define-module.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { createWealthApi, type WealthApi } from './wealth.api.ts';
@@ -31,6 +33,7 @@ import {
 } from './infrastructure/db/repositories/mongo-wealth.repository.ts';
 import type { MiddlewareHandler } from 'hono';
 import type { AnalyticsApi } from '../analytics/public.ts';
+import type { FinanceApi } from '../finance/public.ts';
 import { unregisteredPasskeyVerifier } from './infrastructure/crypto/unregistered-passkey-verifier.ts';
 import { wealthCollections } from './infrastructure/db/schema/wealth-collections.ts';
 import { WEALTH_ERROR_STATUSES } from './presentation/wealth-error-statuses.ts';
@@ -38,6 +41,7 @@ import { wealthRoutes } from './presentation/routes/wealth.routes.ts';
 
 export interface WealthModuleDeps {
   analytics?: AnalyticsApi;
+  finance?: FinanceApi;
   auth: MiddlewareHandler;
   // Writes need a signed-in caller: an anonymous request never writes into the demo account.
   writeAuth: MiddlewareHandler;
@@ -79,6 +83,8 @@ export function createWealthModule(
     passkeys: deps?.passkeys ?? unregisteredPasskeyVerifier,
     clock,
     analytics: deps?.analytics,
+    finance: deps?.finance,
+    processed: createProcessedEvents(store, db, clock),
   });
 
   const manifest = defineModule({
@@ -87,6 +93,14 @@ export function createWealthModule(
     collections: wealthCollections,
     errors: { prefix: ERROR_CODE_PREFIXES.wealth, statuses: WEALTH_ERROR_STATUSES },
     routes: wealthRoutes(api, deps.auth, deps.writeAuth),
+    subscriptions: [
+      {
+        eventType: TRANSACTION_INGESTED.type,
+        handler: async (event) => {
+          await api.onTransactionIngested(event);
+        },
+      },
+    ],
   });
 
   return { manifest, api };

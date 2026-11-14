@@ -34,7 +34,7 @@ export function createFinanceModule(
   context: ModuleContext,
   deps: FinanceModuleDeps,
 ): { manifest: ModuleManifest; api: FinanceApi } {
-  const { db, clock } = context;
+  const { db, clock, events } = context;
   const store = resolveDataStore(env());
 
   const accounts =
@@ -47,7 +47,7 @@ export function createFinanceModule(
       ? new MemoryTransactionRepository()
       : new MongoTransactionRepository(async () => (await db()).collection<TransactionDocument>(TRANSACTIONS_COLLECTION));
 
-  const api = createFinanceApi({ accounts, transactions, clock, market: deps?.market });
+  const api = createFinanceApi({ accounts, transactions, clock, market: deps?.market, events });
 
   const manifest = defineModule({
     name: 'finance',

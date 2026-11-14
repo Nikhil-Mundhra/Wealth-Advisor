@@ -29,6 +29,7 @@ contracts/src/auth/signup.contract.ts : signup request and response
 contracts/src/auth/token-pair.contract.ts : token response (refreshToken only for mobile)
 contracts/src/common/error.contract.ts : error response envelope { code, message, issues? }
 contracts/src/events/market-data-refreshed.event.ts : MARKET_DATA_REFRESHED type and version; v1 payload (asOf, symbols, fxBase)
+contracts/src/events/transaction-ingested.event.ts : TRANSACTION_INGESTED type and version; v1 payload (tenantId, userId, transactionId, category, convertedBaseAmount, baseCurrency, timestamp)
 contracts/src/fields/client-type.field.ts : WEB | IOS | ANDROID
 contracts/src/fields/currency.field.ts : ISO currency from CURRENCIES; fails with currency.invalid
 contracts/src/fields/display-name.field.ts : trimmed display name with length limit

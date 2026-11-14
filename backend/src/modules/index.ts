@@ -80,6 +80,7 @@ export function buildModules(context: ModuleContext): ModuleManifest[] {
 
   const wealth = createWealthModule(context, {
     analytics: analytics.api,
+    finance: finance.api,
     auth: auth.optionalAuthGuard,
     writeAuth: auth.authGuard,
     passkeys: passkeyService,
