@@ -25,7 +25,7 @@ export class Money extends ValueObject<MoneyValue> {
     return Money.fromRatio(ratioOf(major), currency);
   }
 
-  static fromRatio(major: Ratio, currency: Currency): Money {
+  private static fromRatio(major: Ratio, currency: Currency): Money {
     const minor = roundHalfEven(scaleByPowerOfTen(major, CURRENCY_MINOR_UNITS[currency]));
     if (minor > BigInt(Number.MAX_SAFE_INTEGER) || minor < BigInt(Number.MIN_SAFE_INTEGER)) {
       throw MarketErrors.invariantViolated('money amount exceeds the safe integer range');
@@ -43,11 +43,6 @@ export class Money extends ValueObject<MoneyValue> {
 
   get currency(): Currency {
     return this.value.currency;
-  }
-
-  // The amount as an exact ratio of major units (1234 cents → 1234/100).
-  toMajorRatio(): Ratio {
-    return scaleByPowerOfTen({ num: BigInt(this.amount), den: 1n }, -CURRENCY_MINOR_UNITS[this.currency]);
   }
 
   protected override postInit(): void {

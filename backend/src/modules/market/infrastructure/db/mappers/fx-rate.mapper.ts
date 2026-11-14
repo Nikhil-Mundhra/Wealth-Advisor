@@ -4,7 +4,14 @@ import { storedCurrency } from './stored-currency.ts';
 
 export const fxRateMapper = {
   toDocument(rate: FxRate, createdAt: Date): FxRateDocument {
-    return { ...rate.value, createdAt };
+    return {
+      base: rate.base,
+      quote: rate.quote,
+      date: rate.date,
+      rate: rate.rate,
+      source: rate.source,
+      createdAt,
+    };
   },
 
   toDomain(document: FxRateDocument): FxRate {

@@ -1,10 +1,11 @@
-import type { AnyBulkWriteOperation, Collection } from 'mongodb';
+import type { Collection } from 'mongodb';
 import { withReadRetry } from '#core/db/retry/with-read-retry.ts';
 import type { Clock } from '#core/time/clock.ts';
 import type { FxRateRepository } from '../../../application/ports.ts';
 import type { FxRate } from '../../../domain/fx-rate.vo.ts';
 import type { FxRateDocument } from '../documents/fx-rate.document.ts';
 import { fxRateMapper } from '../mappers/fx-rate.mapper.ts';
+import { appendFacts } from './append-facts.ts';
 
 // Same append semantics as MongoPriceRepository, keyed by (base, quote, date).
 export class MongoFxRateRepository implements FxRateRepository {
@@ -17,17 +18,13 @@ export class MongoFxRateRepository implements FxRateRepository {
   }
 
   async append(rates: readonly FxRate[]): Promise<number> {
-    if (rates.length === 0) return 0;
-    const now = this.clock.now();
-    const operations: AnyBulkWriteOperation<FxRateDocument>[] = rates.map((rate) => ({
-      updateOne: {
-        filter: { base: rate.base, quote: rate.quote, date: rate.date },
-        update: { $setOnInsert: fxRateMapper.toDocument(rate, now) },
-        upsert: true,
-      },
-    }));
-    const result = await (await this.collection()).bulkWrite(operations, { ordered: false });
-    return result.upsertedCount;
+    return appendFacts(
+      await this.collection(),
+      rates,
+      (rate) => ({ base: rate.base, quote: rate.quote, date: rate.date }),
+      (rate, now) => fxRateMapper.toDocument(rate, now),
+      this.clock.now(),
+    );
   }
 
   async latestDate(): Promise<string | null> {

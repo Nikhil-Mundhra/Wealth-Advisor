@@ -10,6 +10,7 @@
 ## File structure
 
 ```
+frontend/public/.well-known/assetlinks.json : Digital Asset Links for Android Passkey domain association
 frontend/public/apple-touch-icon.png : high-resolution web app touch icon (180x180)
 frontend/public/favicon-32x32.png : standard transparent favicon for browser tabs (32x32)
 frontend/public/favicon.png : high-DPI transparent browser favicon (64x64)

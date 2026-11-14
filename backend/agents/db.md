@@ -79,6 +79,7 @@ backend/src/modules/market/infrastructure/db/mappers/price.mapper.ts : PriceDocu
 backend/src/modules/market/infrastructure/db/mappers/stored-currency.ts : stored currency code → Currency, or corruption error
 backend/src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts : fx rate repository in memory; first write per (base, quote, date) wins
 backend/src/modules/market/infrastructure/db/memory/memory-price.repository.ts : price repository in memory; first write per (symbol, date) wins
+backend/src/modules/market/infrastructure/db/repositories/append-facts.ts : shared append-only fact upsert helper on Mongo ($setOnInsert bulkWrite)
 backend/src/modules/market/infrastructure/db/repositories/mongo-fx-rate.repository.ts : fx rate repository on Mongo; append = $setOnInsert upserts
 backend/src/modules/market/infrastructure/db/repositories/mongo-price.repository.ts : price repository on Mongo; append = $setOnInsert upserts; latest per symbol by aggregation
 backend/src/modules/market/infrastructure/db/schema/fx-rates.schema.ts : fx_rates indexes (unique base+quote+date, date) and $jsonSchema

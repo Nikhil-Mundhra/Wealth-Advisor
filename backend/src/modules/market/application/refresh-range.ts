@@ -1,11 +1,8 @@
 import { MARKET_HISTORY_DAYS } from '@wealth-advisor/rules';
-import { addDays } from '#core/time/calendar-date.ts';
+import { addDays, type DateRange, maxDate, minDate } from '#core/time/calendar-date.ts';
 import type { Price } from '../domain/price.vo.ts';
 
-export interface DateRange {
-  readonly from: string;
-  readonly to: string;
-}
+export type { DateRange } from '#core/time/calendar-date.ts';
 
 // Starts at the oldest "last stored day" across every tracked symbol and the FX series, inclusive, so a day the
 // provider had only partly published is fetched again (append ignores what is already stored). Anything missing
@@ -14,10 +11,10 @@ export function refreshRange(latest: readonly Price[], fxLatest: string | null, 
   const earliest = addDays(asOf, -MARKET_HISTORY_DAYS);
   const stored = new Map(latest.map((price) => [price.symbol, price.date]));
   if (fxLatest === null || symbols.some((symbol) => !stored.has(symbol))) return { from: earliest, to: asOf };
-  const oldest = [fxLatest, ...stored.values()].reduce((a, b) => (a < b ? a : b));
+  const oldest = minDate([fxLatest, ...stored.values()]) ?? earliest;
   return { from: oldest < earliest ? earliest : oldest, to: asOf };
 }
 
 export function latestDate(prices: readonly Price[]): string | null {
-  return prices.reduce<string | null>((latest, price) => (latest === null || price.date > latest ? price.date : latest), null);
+  return maxDate(prices.map((price) => price.date));
 }

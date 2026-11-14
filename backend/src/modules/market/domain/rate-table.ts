@@ -1,4 +1,4 @@
-import type { Currency } from '@wealth-advisor/rules';
+import { CURRENCIES, type Currency } from '@wealth-advisor/rules';
 import { type Ratio, divide, ratioOf } from './decimal.ts';
 import type { FxRate } from './fx-rate.vo.ts';
 
@@ -10,8 +10,16 @@ export interface RateQuote {
   readonly source: string;
 }
 
+export interface ResolvedQuote {
+  readonly quote: Currency;
+  readonly rate: Ratio;
+  readonly date: string;
+  readonly source: string;
+}
+
 export interface RateTable {
   lookup(from: Currency, to: Currency, onOrBefore: string): RateQuote | null;
+  quotesFor(base: Currency, day: string): readonly ResolvedQuote[];
 }
 
 interface Published {
@@ -28,7 +36,7 @@ export function createRateTable(rates: readonly FxRate[]): RateTable {
   const bases = [...new Set(rates.map((rate) => rate.base))];
   const latest = (base: Currency, quote: Currency, day: string) => latestOnOrBefore(series.get(pairKey(base, quote)), day);
 
-  return {
+  const table: RateTable = {
     lookup(from, to, onOrBefore) {
       if (from === to) return { rate: ONE, date: onOrBefore, source: 'identity' };
       const direct = latest(from, to, onOrBefore);
@@ -42,7 +50,15 @@ export function createRateTable(rates: readonly FxRate[]): RateTable {
       }
       return null;
     },
+    quotesFor(base, day) {
+      return CURRENCIES.filter((quote) => quote !== base).flatMap((quote) => {
+        const found = table.lookup(base, quote, day);
+        return found ? [{ quote, rate: found.rate, date: found.date, source: found.source }] : [];
+      });
+    },
   };
+
+  return table;
 }
 
 function crossed(pivotToFrom: Published, pivotToTo: Published): RateQuote {

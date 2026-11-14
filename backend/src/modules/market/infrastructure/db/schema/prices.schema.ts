@@ -1,9 +1,8 @@
 import { CURRENCIES } from '@wealth-advisor/rules';
 import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
+import { ISO_DATE_PATTERN } from '#core/time/calendar-date.ts';
 import { SYMBOL_PATTERN } from '../../../domain/price.vo.ts';
 import { PRICES_COLLECTION } from '../documents/price.document.ts';
-
-const ISO_DATE = '^\\d{4}-\\d{2}-\\d{2}$';
 
 const money = {
   bsonType: 'object',
@@ -21,7 +20,7 @@ export const pricesSchema: CollectionDefinition = {
       required: ['symbol', 'date', 'close', 'adjClose', 'source', 'createdAt'],
       properties: {
         symbol: { bsonType: 'string', pattern: SYMBOL_PATTERN.source },
-        date: { bsonType: 'string', pattern: ISO_DATE },
+        date: { bsonType: 'string', pattern: ISO_DATE_PATTERN },
         close: money,
         adjClose: { ...money, bsonType: ['object', 'null'] },
         source: { bsonType: 'string', minLength: 1 },

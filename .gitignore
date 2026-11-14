@@ -9,3 +9,5 @@ REQS.md
 .agents/
 skills-lock.json
 *.log
+frontend/android/
+frontend/ios/

@@ -21,6 +21,7 @@
 ## File structure
 
 ```
+frontend/capacitor.config.ts : Capacitor mobile configuration (appId: com.wealthadvisor.dewa, webDir: dist)
 frontend/index.html : SPA shell; DM Sans and Fraunces fonts
 frontend/package.json : frontend scripts (dev, build, test) and dependencies
 frontend/src/app/app.tsx : providers + router

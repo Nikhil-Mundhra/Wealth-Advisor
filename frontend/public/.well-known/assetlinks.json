@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.wealthadvisor.dewa",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:0F:52:AB:FC:05:43:40:9F:8B:2A:68:57:9F:F8:78:E5:22:15:37:A1:AC:DC:7A:B3:98:C0:E4:FD"
+      ]
+    }
+  }
+]

@@ -7,69 +7,6 @@ Baseline: tests 180 green · 5023 lines · 313 comment lines · history 73 commi
 
 ## Open
 
-### R22 · Dead code · backend/src/modules/market/domain/tracked-symbols.ts:25 · assetClassOf; money.vo.ts:48 · Money.toMajorRatio
-status   planned
-evidence grep -rnw over backend, frontend, contracts: 1 hit each (the definition); Money.fromRatio has 1 caller (fromMajor)
-remedy   delete both; Hide Method on fromRatio
-expect   -7 lines
-safety   SAFE · verify: tsc, npm test, the grep returns nothing
-blocked  none
-first seen 2026-10-06
-
-### R29 · Inappropriate intimacy · backend/src/modules/market/infrastructure/db/mappers/fx-rate.mapper.ts:7 · fxRateMapper.toDocument
-status   planned
-evidence `{ ...rate.value, createdAt }` copies the domain value into the stored document; price.mapper.ts lists fields; the fx_rates validator has no additionalProperties:false, so a new domain field reaches Mongo silently
-remedy   name the stored fields explicitly, as price.mapper does
-expect   +4 lines; storage shape owned by the mapper
-safety   SAFE · verify: market repository tests on both stores
-blocked  none
-first seen 2026-10-06
-
-### R16 · Data clump · backend/src/modules/market/application/ports.ts:8 · (from, to) in 11 signatures
-status   planned
-evidence 11 signatures pass bare `from: string, to: string` (4 ports, 4 repositories, 2 providers, MarketApi.history); DateRange exists in refresh-range.ts:5 with 2 users; analytics snapshot-inputs.ts:7 redeclares it
-remedy   Introduce Parameter Object: DateRange next to calendar-date in core/time -> refactor-simplifying-method
-expect   11 signatures narrowed; one range type across market and analytics
-safety   SAFE · verify: npm test (refresh, providers, repositories, analytics handler)
-blocked  none
-first seen 2026-10-06
-
-### R26 · Duplicate code · backend/src/modules/market/application/refresh-range.ts:21 · latest/earliest date reductions
-status   planned
-evidence the same max-date reduce in refresh-range.ts:21, market.api.ts:89 and memory-fx-rate.repository.ts:21; min/max in rate-window.ts:12 and refresh-range.ts:17
-remedy   Extract Function maxDate/minDate into core/time/calendar-date.ts (with R16)
-expect   5 inline reductions -> 2 named functions
-safety   SAFE · verify: npm test
-blocked  none
-first seen 2026-10-06
-
-### R25 · Magic literal · ISO date pattern in 4 places
-status   planned
-evidence core/time/calendar-date.ts:2, prices.schema.ts:6, fx-rates.schema.ts:19, market-snapshots.schema.ts:4
-remedy   Replace Magic Literal: one exported ISO_DATE_PATTERN from core/time/calendar-date.ts used by the three schemas
-expect   1 definition instead of 4
-safety   SAFE · verify: schema tests, db-indexes against a test mongod (validators unchanged)
-blocked  none
-first seen 2026-10-06
-
-### R18 · Duplicate code · backend/src/modules/market/infrastructure/db/repositories/mongo-price.repository.ts:20 · append
-status   planned
-evidence MongoPriceRepository.append and MongoFxRateRepository.append: 13 lines each, differing only in key and mapper (mongo-fx-rate.repository.ts:9 says "Same append semantics"); the memory twins repeat 10 lines each
-remedy   Extract Function appendFacts(collection, items, keyOf, toDocument, now) and its memory twin -> refactor-composing-method
-expect   about -20 lines; one place defines append-only semantics
-safety   SAFE · verify: repository tests on both stores, refresh idempotency test
-blocked  none
-first seen 2026-10-06
-
-### R28 · Feature envy · backend/src/modules/market/market.api.ts:83 · MarketApi.rates
-status   planned
-evidence the orchestrator iterates CURRENCIES, calls table.lookup per quote, converts Ratio to number and derives asOf: RateTable knowledge
-remedy   Move Method: RateTable.quotesFor(base, day) -> refactor-moving-feats-btw-objects
-expect   rates() becomes a short sequence; decimal import leaves market.api.ts
-safety   SAFE · verify: market route tests (fx)
-blocked  none
-first seen 2026-10-06
-
 ### R17 · Duplicate code + global config · composition roots · store selection
 status   planned
 evidence 5 sites choose memory vs mongo (market.module.ts:32-37 x2, analytics.module.ts:22-25, core processed-events.ts:19, request-budget.ts:15) plus auth.module.ts:40,43, in two shapes; market and analytics read global env() although ModuleContext exists for injected dependencies
@@ -89,6 +26,27 @@ blocked  none
 first seen 2026-10-06
 
 ## Done
+
+### R22 · Dead code · backend/src/modules/market/domain/tracked-symbols.ts · assetClassOf; money.vo.ts · Money.toMajorRatio
+closed 2026-11-15 — deleted uncalled `assetClassOf` and `Money.toMajorRatio`, made `Money.fromRatio` private.
+
+### R25 · Magic literal · ISO date pattern in 4 places
+closed 2026-11-15 — exported shared `ISO_DATE_PATTERN` from `core/time/calendar-date.ts` across price, fx rate, and market snapshot schemas.
+
+### R26 · Duplicate code · date reductions
+closed 2026-11-15 — extracted `minDate` and `maxDate` into `core/time/calendar-date.ts`, unifying reductions across rate-window, refresh-range, and market.api.
+
+### R16 · Data clump · DateRange
+closed 2026-11-15 — exported parameter type `DateRange` in `core/time/calendar-date.ts` and shared across market application services.
+
+### R18 · Duplicate code · fact repository append
+closed 2026-11-15 — extracted shared `appendFacts` helper in `backend/src/modules/market/infrastructure/db/repositories/append-facts.ts` unifying MongoPriceRepository and MongoFxRateRepository $setOnInsert semantics.
+
+### R28 · Feature envy · MarketApi.rates
+closed 2026-11-15 — added `RateTable.quotesFor(base, date)`, moving quote resolution to the domain and eliminating quote iteration envy from MarketApi.
+
+### R29 · Inappropriate intimacy · fx-rate.mapper.ts
+closed 2026-11-15 — explicit field enumeration in `fxRateMapper.toDocument` matching priceMapper pattern.
 
 ### R1 · Dead code · User.isActive
 closed 2026-10-06 by 105fd36 (verified absent: grep -w isActive outside sessions returns nothing)

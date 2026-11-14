@@ -1,5 +1,6 @@
 import { CURRENCIES } from '@wealth-advisor/rules';
 import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
+import { ISO_DATE_PATTERN } from '#core/time/calendar-date.ts';
 import { FX_RATES_COLLECTION } from '../documents/fx-rate.document.ts';
 
 export const fxRatesSchema: CollectionDefinition = {
@@ -16,7 +17,7 @@ export const fxRatesSchema: CollectionDefinition = {
       properties: {
         base: { enum: [...CURRENCIES] },
         quote: { enum: [...CURRENCIES] },
-        date: { bsonType: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+        date: { bsonType: 'string', pattern: ISO_DATE_PATTERN },
         // A whole-number rate is stored as int by the driver.
         rate: { bsonType: ['double', 'int', 'long'], minimum: 0, exclusiveMinimum: true },
         source: { bsonType: 'string', minLength: 1 },

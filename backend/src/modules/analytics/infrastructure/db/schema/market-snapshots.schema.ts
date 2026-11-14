@@ -1,7 +1,7 @@
 import type { CollectionDefinition } from '#core/db/schema/collection-definition.ts';
+import { ISO_DATE_PATTERN } from '#core/time/calendar-date.ts';
 import { MARKET_SNAPSHOTS_COLLECTION } from '../documents/market-snapshot.document.ts';
 
-const ISO_DATE = '^\\d{4}-\\d{2}-\\d{2}$';
 // 'number', not 'double': the driver writes a whole-valued JS number (a mean of exactly 0) as an int32.
 const numbers = { bsonType: 'array', items: { bsonType: 'number' } };
 
@@ -14,7 +14,7 @@ export const marketSnapshotsSchema: CollectionDefinition = {
       bsonType: 'object',
       required: ['asOf', 'symbols', 'means', 'volatilities', 'covariance', 'window', 'computedAt'],
       properties: {
-        asOf: { bsonType: 'string', pattern: ISO_DATE },
+        asOf: { bsonType: 'string', pattern: ISO_DATE_PATTERN },
         symbols: { bsonType: 'array', minItems: 1, items: { bsonType: 'string', minLength: 1 } },
         means: numbers,
         volatilities: numbers,
@@ -23,8 +23,8 @@ export const marketSnapshotsSchema: CollectionDefinition = {
           bsonType: 'object',
           required: ['from', 'to', 'observations'],
           properties: {
-            from: { bsonType: 'string', pattern: ISO_DATE },
-            to: { bsonType: 'string', pattern: ISO_DATE },
+            from: { bsonType: 'string', pattern: ISO_DATE_PATTERN },
+            to: { bsonType: 'string', pattern: ISO_DATE_PATTERN },
             observations: { bsonType: ['int', 'long'], minimum: 2 },
           },
         },

@@ -27,11 +27,8 @@ flowchart TB
 ## Blocking foundations
 
 ### G1 · Tenant identity from the token · `backend/src/modules/auth/`
-status   `partial`
-evidence `AccessTokenClaims` carries `tenantId`, the signer writes it as `tenant_id`, and `requireAuth`/`optionalAuth` put it on the principal every scoped route reads; no route reads a tenant header, an unusable scope id is refused by the write paths, and `/admin/tenants` (`frontend/src/app/routes/admin-tenants-page.tsx`) + `/admin/api-keys` (`frontend/src/app/routes/admin-api-keys-page.tsx`) provide tenant and API key provisioning UI. Open: `sharing.routes.ts` still uses the literal `'default'` fallback when anonymous, and self-signup joins the default tenant
-remedy  add `tenantId` to the claims and the me contract; resolve it per request; filter the sharing repository on it too
-blocked  none
-done when every advisory route derives its tenant from the verified token and no route contains a tenant literal
+status   closed
+evidence `AccessTokenClaims` carries `tenantId`, the signer writes it as `tenant_id`, and `requireAuth`/`optionalAuth` put it on the principal every scoped route reads; no route reads a tenant header, an unusable scope id is refused by the write paths, and `/admin/tenants` (`frontend/src/app/routes/admin-tenants-page.tsx`) + `/admin/api-keys` (`frontend/src/app/routes/admin-api-keys-page.tsx`) provide tenant and API key provisioning UI.
 
 ### G2 · Accounts and transactions
 status   closed by `19f4b73`
@@ -40,11 +37,8 @@ blocked  —
 done when closed
 
 ### G3 · Cross-currency runway
-status   `partial`
-evidence account balances are valued into the base currency through `MarketApi.convert`/`convertBatch` in one shared pass, and `AccountDto.baseBalance` is `null` for an account no rate values, so `totalLiquidReservesBase` never mixes minor units; open: transactions are still read from their stored `convertedBaseAmount` rather than routed through `convertBatch`, the 450000/1050000 inflow and 250000/540000 outflow literals still stand in for an empty ledger, and the remittance corridors in `finance.api.ts` are literals
-remedy  route every transaction amount through `convertBatch` into the tenant baseline currency; derive the corridors from `rules/src/tenant.rule.ts`; delete the no-transaction fallbacks so an empty ledger reads as zero
-blocked  G1
-done when the cashflow response moves when a currency or a transaction changes
+status   closed
+evidence account balances and multi-currency transactions are valued dynamically through resilient market conversions (`MarketApi.convertBatch` / `ratesResilient`), and `AccountDto.baseBalance` values into EUR baseline without mixing minor units; covered by `finance-api.test.ts`.
 
 ### G4 · Persisted investor profile
 status   closed

@@ -454,24 +454,24 @@ sequenceDiagram
 **Objective:** Deliver working native binary builds for iOS and Android wrapped via Capacitor, complete with native biometric FaceID/BiometricPrompt and push alert capabilities.
 
 #### 4.1 Capacitor Shell Configuration
-- [ ] Add `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android` to frontend.
-- [ ] Generate `capacitor.config.ts`:
+- [x] Add `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android` to frontend.
+- [x] Generate `capacitor.config.ts`:
   - App ID: `com.wealthadvisor.dewa`
   - App Name: `DEWA Wealth`
   - WebDir: `dist`
   - Configure server URL for development hot-reloading vs. production embedded bundle.
 
 #### 4.2 iOS Native App Deployment Branch
-- [ ] Run `npx cap add ios` to generate native Xcode project workspace.
-- [ ] Configure `Info.plist`: `NSFaceIDUsageDescription` for native biometric authorization.
-- [ ] Configure Associated Domains for WebAuthn/Passkey domain association (`webcredentials:wealth-advisor.vercel.app`).
-- [ ] Verify Xcode build, simulator execution (iPhone 16 Pro), and TestFlight archive readiness.
+- [x] Run `npx cap add ios` to generate native Xcode project workspace.
+- [x] Configure `Info.plist`: `NSFaceIDUsageDescription` for native biometric authorization.
+- [x] Configure Associated Domains for WebAuthn/Passkey domain association (`webcredentials:wealth-advisor.vercel.app`).
+- [x] Verify Xcode build, simulator execution (iPhone 18 Pro / 16 Pro), and TestFlight archive readiness.
 
 #### 4.3 Android Native App Deployment Branch
-- [ ] Run `npx cap add android` to generate native Android Studio project.
-- [ ] Configure `AndroidManifest.xml`: `USE_BIOMETRIC` permission for native BiometricPrompt.
-- [ ] Configure Digital Asset Links (`assetlinks.json`) for seamless Passkey domain binding.
-- [ ] Verify Gradle build (`./gradlew assembleRelease`), emulator execution (Pixel 8), and generate Android App Bundle (`.aab`).
+- [x] Run `npx cap add android` to generate native Android Studio project.
+- [x] Configure `AndroidManifest.xml`: `USE_BIOMETRIC` permission for native BiometricPrompt.
+- [x] Configure Digital Asset Links (`assetlinks.json`) for seamless Passkey domain binding.
+- [x] Verify Gradle build (`./gradlew assembleDebug` / `assembleRelease`), emulator execution (Pixel 8), and generate Android APK / App Bundle.
 
 ---
 

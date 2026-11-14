@@ -1,10 +1,11 @@
-import type { AnyBulkWriteOperation, Collection } from 'mongodb';
+import type { Collection } from 'mongodb';
 import { withReadRetry } from '#core/db/retry/with-read-retry.ts';
 import type { Clock } from '#core/time/clock.ts';
 import type { PriceRepository } from '../../../application/ports.ts';
 import type { Price } from '../../../domain/price.vo.ts';
 import type { PriceDocument } from '../documents/price.document.ts';
 import { priceMapper } from '../mappers/price.mapper.ts';
+import { appendFacts } from './append-facts.ts';
 
 // Append is an upsert with $setOnInsert keyed by (symbol, date): an existing fact is left untouched and not
 // counted, and the server retries the duplicate-key race of two concurrent upserts on the unique index itself.
@@ -18,17 +19,13 @@ export class MongoPriceRepository implements PriceRepository {
   }
 
   async append(prices: readonly Price[]): Promise<number> {
-    if (prices.length === 0) return 0;
-    const now = this.clock.now();
-    const operations: AnyBulkWriteOperation<PriceDocument>[] = prices.map((price) => ({
-      updateOne: {
-        filter: { symbol: price.symbol, date: price.date },
-        update: { $setOnInsert: priceMapper.toDocument(price, now) },
-        upsert: true,
-      },
-    }));
-    const result = await (await this.collection()).bulkWrite(operations, { ordered: false });
-    return result.upsertedCount;
+    return appendFacts(
+      await this.collection(),
+      prices,
+      (price) => ({ symbol: price.symbol, date: price.date }),
+      (price, now) => priceMapper.toDocument(price, now),
+      this.clock.now(),
+    );
   }
 
   async latestPerSymbol(symbols: readonly string[]): Promise<Price[]> {

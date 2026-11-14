@@ -1,7 +1,7 @@
-import { CURRENCIES, type AssetClass, type Currency, FX_LOOKBACK_DAYS } from '@wealth-advisor/rules';
+import { type AssetClass, type Currency, FX_LOOKBACK_DAYS } from '@wealth-advisor/rules';
 import type { EventBus } from '#core/events/event-bus.ts';
 import { createResilientCachedCaller } from '#core/http-client/resilient-caller.ts';
-import { addDays, toIsoDate } from '#core/time/calendar-date.ts';
+import { addDays, maxDate, toIsoDate } from '#core/time/calendar-date.ts';
 import type { Clock } from '#core/time/clock.ts';
 import type { FxRateRepository, FxSource, PriceRepository, PriceSource } from './application/ports.ts';
 import { publishRefreshed } from './application/publish-refreshed.ts';
@@ -72,10 +72,12 @@ export function createMarketApi(deps: MarketApiDeps) {
     fetcher: async ({ base, date }) => {
       const readStored = async () => {
         const table = createRateTable(await fxRates.between(addDays(date, -FX_LOOKBACK_DAYS), date));
-        return CURRENCIES.filter((quote) => quote !== base).flatMap((quote) => {
-          const found = table.lookup(base, quote, date);
-          return found ? [{ quote, rate: toNumber(found.rate), date: found.date, source: found.source }] : [];
-        });
+        return table.quotesFor(base, date).map((q) => ({
+          quote: q.quote,
+          rate: toNumber(q.rate),
+          date: q.date,
+          source: q.source,
+        }));
       };
 
       let rates = await readStored();
@@ -91,7 +93,7 @@ export function createMarketApi(deps: MarketApiDeps) {
         throw new Error(`No live or stored FX rates available for ${base} on ${date}`);
       }
 
-      const asOf = rates.reduce<string | null>((max, rate) => (max === null || rate.date > max ? rate.date : max), null);
+      const asOf = maxDate(rates.map((rate) => rate.date));
       return { asOf, rates };
     },
     mockFallback: ({ base, date }) => ({
@@ -129,11 +131,9 @@ export function createMarketApi(deps: MarketApiDeps) {
 
     async rates(base: Currency, date: string = today()): Promise<RatesResult> {
       const table = createRateTable(await fxRates.between(addDays(date, -FX_LOOKBACK_DAYS), date));
-      const rates = CURRENCIES.filter((quote) => quote !== base).flatMap((quote) => {
-        const found = table.lookup(base, quote, date);
-        return found ? [{ quote, rate: toNumber(found.rate), date: found.date, source: found.source }] : [];
-      });
-      return { asOf: rates.reduce<string | null>((max, rate) => (max === null || rate.date > max ? rate.date : max), null), base, rates };
+      const quotes = table.quotesFor(base, date);
+      const rates = quotes.map((q) => ({ quote: q.quote, rate: toNumber(q.rate), date: q.date, source: q.source }));
+      return { asOf: maxDate(rates.map((rate) => rate.date)), base, rates };
     },
 
     async ratesResilient(base: Currency, date: string = today()): Promise<RatesResult> {

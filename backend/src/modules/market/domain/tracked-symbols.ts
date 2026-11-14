@@ -24,7 +24,3 @@ export const TRACKED_SYMBOL_NAMES: readonly string[] = TRACKED_SYMBOLS.map((trac
 export const FX_BASE: Currency = 'EUR';
 // Frankfurter v1's ECB currency list omits AED.
 export const FX_QUOTES: readonly Currency[] = CURRENCIES.filter((currency) => currency !== FX_BASE && currency !== 'AED');
-
-export function assetClassOf(symbol: string): AssetClass | null {
-  return TRACKED_SYMBOLS.find((tracked) => tracked.symbol === symbol)?.assetClass ?? null;
-}
