@@ -71,6 +71,7 @@ backend/test/unit/core/require-bearer-secret.test.ts : exact bearer passes; wron
 backend/test/unit/core/resilient-caller.test.ts : circuit breaker state transitions, backoff/jitter retry, TTL cache, and stale/mock fallbacks
 backend/test/unit/core/route-builder.test.ts : response contract check returns 500 on violation; query contract parses or 400s
 backend/test/unit/core/security-headers.test.ts : security headers (CSP, HSTS, X-Content-Type-Options, X-Frame-Options) and CORS on createApp
+backend/test/unit/core/telemetry.test.ts : X-Correlation-Id propagation, PII-redacted JSON logging, OTLP spans, and /api/metrics Prometheus output
 
 backend/test/unit/finance/finance-api.test.ts : multi-currency accounts and household burn rate runway calculations
 backend/test/unit/market/convert.test.ts : convertBatch table: spot, historical, weekend gap, inverse, cross, raw, same currency, missing rate, out of range, half to even

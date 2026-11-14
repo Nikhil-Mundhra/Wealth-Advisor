@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
@@ -15,6 +14,9 @@ import type { ModuleContext } from '#core/module/module-context.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
 import { getDb } from '#core/db/connection/mongo-client.ts';
 import { objectIdGenerator } from '#core/db/ids/object-id-generator.ts';
+import { correlationMiddleware } from '#core/telemetry/correlation.ts';
+import { telemetryLogger } from '#core/telemetry/logger.ts';
+import { formatPrometheusMetrics, metricsMiddleware, normalizeRoutePath, setOutboxDepth } from '#core/telemetry/metrics.ts';
 import { systemClock } from '#core/time/clock.ts';
 import { buildModules } from '#modules/index.ts';
 
@@ -28,6 +30,19 @@ export function createApp(context: ModuleContext): Hono {
   const api = new Hono();
   api.onError(errorHandler);
   api.get('/health', async (c) => c.json({ status: 'ok', database: await checkDatabase(env()) }));
+  api.get('/metrics', async (c) => {
+    if (context.events instanceof DurableOutboxEventBus) {
+      try {
+        const stats = await context.events.stats();
+        setOutboxDepth(stats.pending, stats.deadLettered);
+      } catch {
+        // Keep last observed gauge values if backing store is unreachable.
+      }
+    }
+    return c.text(formatPrometheusMetrics(), 200, {
+      'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
+    });
+  });
   // Forward /ai to advisory copilot chat through the gateway. The caller's token travels with it, so the copilot
   // answers for the scope the token carries rather than for the demo account.
   api.post('/ai', async (c) => {
@@ -51,7 +66,20 @@ export function createApp(context: ModuleContext): Hono {
   api.all('*', (c) => c.json({ code: CORE_ERROR_CODES.notFound, message: 'not found' }, 404));
 
   const app = new Hono();
-  app.use(logger());
+  app.use('*', correlationMiddleware());
+  app.use('*', metricsMiddleware());
+  if (process.env.NODE_ENV !== 'test') {
+    app.use('*', async (c, next) => {
+      const start = performance.now();
+      await next();
+      telemetryLogger.info('http.request', {
+        method: c.req.method,
+        route: normalizeRoutePath(c.req.path),
+        status: c.res.status,
+        durationMs: Number((performance.now() - start).toFixed(2)),
+      });
+    });
+  }
   app.use(
     '*',
     secureHeaders({
@@ -73,8 +101,8 @@ export function createApp(context: ModuleContext): Hono {
     cors({
       origin: (origin) => origin || '*',
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
-      exposeHeaders: ['X-Idempotent-Replay'],
+      allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Correlation-Id'],
+      exposeHeaders: ['X-Idempotent-Replay', 'X-Correlation-Id'],
       credentials: true,
     }),
   );

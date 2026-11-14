@@ -18,4 +18,6 @@
 ```
 infra/docker-compose.yml : nginx container in front of the host backend; host port from PROXY_PORT
 infra/nginx/default.conf : serves frontend/dist, proxies /api to the host backend, cache and security headers
+infra/observability/grafana/dashboards/dewa-overview.json : Grafana dashboard for HTTP RPS/errors/latency, outbox depth, LLM cost, and guardrails
+infra/observability/prometheus.yml : Prometheus scrape config polling backend /api/metrics every 15s
 ```

@@ -40,8 +40,17 @@ async function parseResponse(schema: z.ZodType, response: Response): Promise<unk
   throw new ApiError(response.status, CLIENT_ERROR_CODES.contractMismatch, 'response did not match its contract');
 }
 
+function nextCorrelationId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return `dewa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 async function send(path: string, options: RequestOptions): Promise<Response> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'x-correlation-id': nextCorrelationId(),
+  };
   if (options.body !== undefined) headers['content-type'] = 'application/json';
   const token = options.authenticated ? authHandlers?.getAccessToken() : null;
   if (token) headers.authorization = `Bearer ${token}`;

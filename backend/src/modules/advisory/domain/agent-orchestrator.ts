@@ -1,5 +1,7 @@
 import type { AdvisoryChatRequest, AdvisoryChatResponse, CashflowSummaryResponse, ConstructPortfolioResponse } from '@wealth-advisor/contracts';
 import { mapScoreToRiskTier, type LlmProvider, type PermissionTier } from '@wealth-advisor/rules';
+import { recordGuardrailTrigger, recordLlmUsage } from '#core/telemetry/metrics.ts';
+import { withSpan } from '#core/telemetry/tracing.ts';
 import type { WealthApi } from '../../wealth/public.ts';
 import type { LlmContext, LlmGateway } from './llm-gateway.ts';
 import { sanitizeUntrustedInput } from './prompt-guard.ts';
@@ -107,134 +109,159 @@ export function createAgentOrchestrator(deps: AgentOrchestratorDeps) {
       const householdMode = options.input.householdMode;
       const locale = options.input.locale ?? 'en';
 
-      let estimatedTokensUsed = estimateTokens(sanitized.sanitizedText);
-      let estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
+      if (sanitized.piiRedacted) recordGuardrailTrigger('pii_redaction');
+      if (sanitized.injectionDetected) recordGuardrailTrigger('prompt_injection');
 
-      const portfolio = await withTimeout('wealth.getPortfolio', budget.toolTimeoutMs, () =>
-        wealth.getPortfolio(options.scope.tenantId, options.scope.userId),
-      );
+      return withSpan(
+        'agent.orchestrate',
+        { 'llm.provider': options.provider, 'household.mode': householdMode },
+        async () => {
+          let estimatedTokensUsed = estimateTokens(sanitized.sanitizedText);
+          let estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
 
-      const defaultPlan: PlannedToolStep[] = [
-        { tool: 'get_cashflow_and_runway', args: { householdMode } },
-        { tool: 'calculate_adaptive_portfolio', args: { riskTier: mapScoreToRiskTier(portfolio.effectiveRiskScore) } },
-      ];
-      const steps = options.plannedSteps ?? defaultPlan;
-
-      let cashflow: CashflowSummaryResponse | null = null;
-      let proposal: ConstructPortfolioResponse | null = null;
-      const toolTraces: OrchestratorStepTrace[] = [];
-
-      for (let idx = 0; idx < steps.length && idx < budget.maxSteps; idx += 1) {
-        const step = steps[idx]!;
-        if (estimatedTokensUsed >= budget.maxTokensBudget || estimatedCostUsdMicros >= budget.maxCostUsdMicros) {
-          toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: 0, status: 'budget_exhausted' });
-          break;
-        }
-
-        if (!tools.canInvoke(step.tool, budget.grantedTier)) {
-          toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: 0, status: 'tier_refused' });
-          continue;
-        }
-
-        const started = Date.now();
-        try {
-          const result = await withTimeout(`tool:${step.tool}`, budget.toolTimeoutMs, () =>
-            tools.dispatch(step.tool as 'get_cashflow_and_runway', options.scope, step.args, budget.grantedTier),
+          const portfolio = await withTimeout('wealth.getPortfolio', budget.toolTimeoutMs, () =>
+            wealth.getPortfolio(options.scope.tenantId, options.scope.userId),
           );
-          const payloadTokens = estimateTokens(JSON.stringify(result));
-          estimatedTokensUsed += payloadTokens;
-          estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
 
-          if (step.tool === 'get_cashflow_and_runway') {
-            cashflow = result as CashflowSummaryResponse;
-          } else if (step.tool === 'calculate_adaptive_portfolio') {
-            proposal = result as unknown as ConstructPortfolioResponse;
+          const defaultPlan: PlannedToolStep[] = [
+            { tool: 'get_cashflow_and_runway', args: { householdMode } },
+            { tool: 'calculate_adaptive_portfolio', args: { riskTier: mapScoreToRiskTier(portfolio.effectiveRiskScore) } },
+          ];
+          const steps = options.plannedSteps ?? defaultPlan;
+
+          let cashflow: CashflowSummaryResponse | null = null;
+          let proposal: ConstructPortfolioResponse | null = null;
+          const toolTraces: OrchestratorStepTrace[] = [];
+
+          for (let idx = 0; idx < steps.length && idx < budget.maxSteps; idx += 1) {
+            const step = steps[idx]!;
+            if (estimatedTokensUsed >= budget.maxTokensBudget || estimatedCostUsdMicros >= budget.maxCostUsdMicros) {
+              recordGuardrailTrigger('budget_exhausted');
+              toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: 0, status: 'budget_exhausted' });
+              break;
+            }
+
+            if (!tools.canInvoke(step.tool, budget.grantedTier)) {
+              recordGuardrailTrigger('permission_tier_refusal');
+              toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: 0, status: 'tier_refused' });
+              continue;
+            }
+
+            const started = Date.now();
+            try {
+              const result = await withSpan('tool.dispatch', { 'tool.name': step.tool }, () =>
+                withTimeout(`tool:${step.tool}`, budget.toolTimeoutMs, () =>
+                  tools.dispatch(step.tool as 'get_cashflow_and_runway', options.scope, step.args, budget.grantedTier),
+                ),
+              );
+              const payloadTokens = estimateTokens(JSON.stringify(result));
+              estimatedTokensUsed += payloadTokens;
+              estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
+
+              if (step.tool === 'get_cashflow_and_runway') {
+                cashflow = result as CashflowSummaryResponse;
+              } else if (step.tool === 'calculate_adaptive_portfolio') {
+                proposal = result as unknown as ConstructPortfolioResponse;
+              }
+
+              toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: Date.now() - started, status: 'ok' });
+            } catch (err) {
+              const status = err instanceof CallTimeoutError ? 'timeout' : 'error';
+              toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: Date.now() - started, status });
+            }
           }
 
-          toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: Date.now() - started, status: 'ok' });
-        } catch (err) {
-          const status = err instanceof CallTimeoutError ? 'timeout' : 'error';
-          toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: Date.now() - started, status });
-        }
-      }
-
-      if (!cashflow) {
-        cashflow = await tools.dispatch(
-          'get_cashflow_and_runway',
-          options.scope,
-          { householdMode },
-          budget.grantedTier,
-        );
-      }
-
-      const llmContext: LlmContext = {
-        message: sanitized.sanitizedText,
-        locale,
-        householdMode,
-        cashflow,
-        portfolio,
-        proposalHoldings: proposal?.holdings ?? [],
-      };
-
-      let usedDeterministicFallback = false;
-      let response: AdvisoryChatResponse;
-
-      const overBudgetBeforeModel =
-        estimatedTokensUsed >= budget.maxTokensBudget || estimatedCostUsdMicros >= budget.maxCostUsdMicros;
-
-      if (overBudgetBeforeModel) {
-        usedDeterministicFallback = true;
-        response = await gateway.chat('mock', llmContext);
-      } else {
-        try {
-          response = await withTimeout(`model:${options.provider}`, budget.modelTimeoutMs, () =>
-            gateway.chat(options.provider, llmContext),
-          );
-          const replyTokens = estimateTokens(response.reply);
-          estimatedTokensUsed += replyTokens;
-          estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
-        } catch (err) {
-          if (!budget.fallbackOnModelError) {
-            throw err;
+          if (!cashflow) {
+            cashflow = await withSpan('tool.dispatch', { 'tool.name': 'get_cashflow_and_runway' }, () =>
+              tools.dispatch(
+                'get_cashflow_and_runway',
+                options.scope,
+                { householdMode },
+                budget.grantedTier,
+              ),
+            );
           }
-          usedDeterministicFallback = true;
-          response = await gateway.chat('mock', llmContext);
-        }
-      }
 
-      const finalResponse: AdvisoryChatResponse =
-        proposal !== null
-          ? response
-          : {
-              ...response,
-              actionCards: [
-                ...response.actionCards,
-                {
-                  cardType: 'NOTICE',
-                  payload: {
-                    code: 'PROPOSAL_UNAVAILABLE',
-                    message: 'The optimizer could not build a proposal for this portfolio; allocations below are unavailable.',
-                  },
-                },
-              ],
-            };
+          const llmContext: LlmContext = {
+            message: sanitized.sanitizedText,
+            locale,
+            householdMode,
+            cashflow,
+            portfolio,
+            proposalHoldings: proposal?.holdings ?? [],
+          };
 
-      return {
-        response: finalResponse,
-        telemetry: {
-          stepsExecuted: toolTraces.length,
-          maxSteps: budget.maxSteps,
-          estimatedTokensUsed,
-          maxTokensBudget: budget.maxTokensBudget,
-          estimatedCostUsdMicros,
-          maxCostUsdMicros: budget.maxCostUsdMicros,
-          usedDeterministicFallback,
-          piiRedacted: sanitized.piiRedacted,
-          injectionDetected: sanitized.injectionDetected,
-          matchedInjectionPatterns: sanitized.matchedPatterns,
-          toolTraces,
+          let usedDeterministicFallback = false;
+          let response: AdvisoryChatResponse;
+
+          const overBudgetBeforeModel =
+            estimatedTokensUsed >= budget.maxTokensBudget || estimatedCostUsdMicros >= budget.maxCostUsdMicros;
+
+          if (overBudgetBeforeModel) {
+            usedDeterministicFallback = true;
+            recordGuardrailTrigger('deterministic_fallback');
+            response = await withSpan('llm.generate', { 'llm.provider': 'mock', fallback: true }, () =>
+              gateway.chat('mock', llmContext),
+            );
+          } else {
+            try {
+              response = await withSpan('llm.generate', { 'llm.provider': options.provider, fallback: false }, () =>
+                withTimeout(`model:${options.provider}`, budget.modelTimeoutMs, () =>
+                  gateway.chat(options.provider, llmContext),
+                ),
+              );
+              const replyTokens = estimateTokens(response.reply);
+              estimatedTokensUsed += replyTokens;
+              estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
+            } catch (err) {
+              if (!budget.fallbackOnModelError) {
+                throw err;
+              }
+              usedDeterministicFallback = true;
+              recordGuardrailTrigger('deterministic_fallback');
+              response = await withSpan('llm.generate', { 'llm.provider': 'mock', fallback: true }, () =>
+                gateway.chat('mock', llmContext),
+              );
+            }
+          }
+
+          recordLlmUsage(usedDeterministicFallback ? 'mock' : options.provider, estimatedTokensUsed, estimatedCostUsdMicros);
+
+          const finalResponse: AdvisoryChatResponse =
+            proposal !== null
+              ? response
+              : {
+                  ...response,
+                  actionCards: [
+                    ...response.actionCards,
+                    {
+                      cardType: 'NOTICE',
+                      payload: {
+                        code: 'PROPOSAL_UNAVAILABLE',
+                        message: 'The optimizer could not build a proposal for this portfolio; allocations below are unavailable.',
+                      },
+                    },
+                  ],
+                };
+
+          return {
+            response: finalResponse,
+            telemetry: {
+              stepsExecuted: toolTraces.length,
+              maxSteps: budget.maxSteps,
+              estimatedTokensUsed,
+              maxTokensBudget: budget.maxTokensBudget,
+              estimatedCostUsdMicros,
+              maxCostUsdMicros: budget.maxCostUsdMicros,
+              usedDeterministicFallback,
+              piiRedacted: sanitized.piiRedacted,
+              injectionDetected: sanitized.injectionDetected,
+              matchedInjectionPatterns: sanitized.matchedPatterns,
+              toolTraces,
+            },
+          };
         },
-      };
+      );
     },
   };
 }

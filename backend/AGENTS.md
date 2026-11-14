@@ -83,6 +83,10 @@ backend/src/core/module/define-module.ts : module manifest (name, basePath, rout
 backend/src/core/module/module-context.ts : shared dependencies every module receives (db, clock, ids, events, outbound http)
 backend/src/core/module/module-registry.ts : collects manifests; mounts routes, subscribes events, builds the error catalog, lists core and module collections
 backend/src/core/registry/strategy-registry.ts : keyed registry for interchangeable implementations (e.g. OAuth providers)
+backend/src/core/telemetry/correlation.ts : AsyncLocalStorage X-Correlation-Id propagation and request middleware
+backend/src/core/telemetry/logger.ts : structured JSON logger attaching correlationId and redacting PII and secrets
+backend/src/core/telemetry/metrics.ts : Prometheus metrics registry, HTTP latency histogram, LLM/outbox/guardrail gauges, and exposition formatter
+backend/src/core/telemetry/tracing.ts : OpenTelemetry-compatible span collector and OTLP JSON exporter
 backend/src/core/time/calendar-date.ts : UTC calendar dates as YYYY-MM-DD: from an instant, validity, add days
 backend/src/core/time/clock.ts : Clock interface and system clock
 backend/src/modules/admin/admin.api.ts : createAdminApi: tenants, api keys, user accounts, model provider settings

@@ -1,0 +1,94 @@
+{
+  "id": null,
+  "uid": "dewa-overview",
+  "title": "DEWA Production & Neuro-Symbolic Agent Overview",
+  "tags": ["dewa", "wealth-advisor", "observability"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Rate (RPS)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[1m])) by (route)",
+          "legendFormat": "{{route}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Error Rate (4xx/5xx)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_errors_total[1m])) by (status)",
+          "legendFormat": "HTTP {{status}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "API Latency Percentiles (P50 / P95 / P99 ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_ms_bucket[5m])) by (le))",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_ms_bucket[5m])) by (le))",
+          "legendFormat": "P99"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Transactional Outbox Depth & DLQ",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "outbox_events_depth", "legendFormat": "Outbox Pending" },
+        { "expr": "dlq_events_total", "legendFormat": "Dead Lettered" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "LLM Token Consumption & Micro-USD Spend Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_tokens_total[5m])) by (provider)",
+          "legendFormat": "Tokens/s ({{provider}})"
+        },
+        {
+          "expr": "sum(rate(llm_cost_usd_micros_total[5m])) by (provider)",
+          "legendFormat": "uUSD/s ({{provider}})"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Deterministic & Security Guardrail Triggers",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum(guardrail_triggers_total) by (category)",
+          "legendFormat": "{{category}}"
+        }
+      ]
+    }
+  ]
+}
