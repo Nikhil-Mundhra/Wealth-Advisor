@@ -1,6 +1,7 @@
 # Docs
 
 ```
+docs/adr/index.md : Architecture Decision Records (neuro-symbolic boundary, outbox queue, rational money, passkey gate, deployment)
 docs/architecture/index.md : system architecture (C4 levels)
 docs/assets/index.md : compressed README images (logo, heroes)
 docs/deployment-instructions.md : shipping targets, secrets, database, cron, verify steps
