@@ -3,15 +3,18 @@
 # so a different app on the same port is reported, never killed.
 
 # Fixed ports; see infra/docs/ports.md. Vite and nginx hard-code the backend port, so change all three together.
-BACKEND_PORT  := 3000
-FRONTEND_PORT := 5173
-PROXY_PORT    := 8088
-VERCEL_PORT   := 8089
-RUN_DIR       := .run
-COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
-DOCKER_UP     := docker info >/dev/null 2>&1
+BACKEND_PORT    := 3000
+FRONTEND_PORT   := 5173
+PROXY_PORT      := 8088
+VERCEL_PORT     := 8089
+MONGO_PORT      := 27017
+PROMETHEUS_PORT := 9090
+GRAFANA_PORT    := 3001
+RUN_DIR         := .run
+COMPOSE         := BACKEND_PORT=$(BACKEND_PORT) PROXY_PORT=$(PROXY_PORT) MONGO_PORT=$(MONGO_PORT) PROMETHEUS_PORT=$(PROMETHEUS_PORT) GRAFANA_PORT=$(GRAFANA_PORT) docker compose --progress quiet -f infra/docker-compose.yml
+DOCKER_UP       := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e eval lint ci db-indexes db-migrate jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy up down stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e eval load-test lint ci db-indexes db-migrate jwt-keys seed-demo docs-lint deps-lint infra-lint typecheck audit check-ai
 
 
 help:  ## List targets
@@ -44,10 +47,18 @@ proxy: build  ## Build the SPA and start nginx in front of the backend (needs Do
 stop-proxy:  ## Stop nginx
 	@if $(DOCKER_UP) && [ -n "$$($(COMPOSE) ps -q nginx 2>/dev/null)" ]; then $(COMPOSE) down && echo "proxy stopped"; else echo "proxy not running"; fi
 
+up: build  ## Start full containerized stack (mongo, backend, nginx, prometheus, grafana)
+	@$(DOCKER_UP) || { echo "stack NOT started: Docker is not running"; exit 1; }
+	@$(COMPOSE) --profile fullstack --profile observability up -d --build
+	@echo "stack up → http://localhost:$(PROXY_PORT) (prometheus :$(PROMETHEUS_PORT), grafana :$(GRAFANA_PORT))"
+
+down:  ## Stop full containerized stack
+	@if $(DOCKER_UP); then $(COMPOSE) --profile fullstack --profile observability down; fi
+
 vercel-dev:  ## Run the Vercel routing (vercel.json services) locally, foreground
 	vercel dev -L --listen $(VERCEL_PORT) --yes
 
-stop: stop-frontend stop-backend stop-proxy  ## Stop everything
+stop: stop-frontend stop-backend stop-proxy down  ## Stop everything
 
 restart: stop dev  ## Stop everything, then start frontend + backend
 
@@ -88,10 +99,13 @@ docs-lint:  ## Check agent guides and docs: links, file maps, reachability
 deps-lint:  ## Check cross-module imports against backend/docs/module-dependencies.md
 	node backend/scripts/module-deps.mjs
 
+infra-lint:  ## Validate Dockerfiles, Cloud Run Free Tier Terraform, observability configs, and secret patterns
+	node scripts/infra-lint.mjs
+
 audit:  ## Check dependencies for high-severity vulnerabilities
 	npm audit --omit=dev --audit-level=high
 
-lint: docs-lint deps-lint typecheck audit  ## Stage 1: Docs graph, module dependency DAG, strict TypeScript, and security audit
+lint: docs-lint deps-lint infra-lint typecheck audit  ## Stage 1: Docs graph, module dependency DAG, infra lint, strict TypeScript, and security audit
 
 test-unit:  ## Stage 2A: Isolated backend unit and deterministic financial engine tests
 	npm run test:unit -w backend
@@ -113,6 +127,9 @@ test-e2e:  ## Stage 3: Live cross-module HTTP E2E orchestration and <400ms P99 S
 
 eval:  ## Run versioned LLM guardrail and grounding evaluation suite
 	npm run eval -w backend
+
+load-test:  ## Run staged live HTTP concurrency benchmark to measure RPS, latency percentiles, and saturation
+	npm run load-test -w backend
 
 ci: lint test-property test-contracts test-sla eval test build  ## Run the complete 3-stage guardrail pipeline locally (Lint -> Unit/Property/Contract/Eval -> Live E2E & SLA)
 

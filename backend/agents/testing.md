@@ -28,6 +28,7 @@ backend/test/integration/core/request-budget.test.ts : limit, oversize refusal, 
 backend/test/integration/market/market-routes.memory.test.ts : runs the market-routes suite on the memory store
 backend/test/integration/market/market-routes.suite.ts : quotes, fx (query validation, weekend lookup), refresh (cron auth, backfill, re-run) over fixture providers
 backend/test/integration/market/market-routes.test.ts : runs the market-routes suite on mongod
+backend/test/integration/resilience/failure-injection.memory.test.ts : FX outage fallback, LLM timeout fallback, HTTP idempotency/out-of-order tx, and outbox DLQ failure injection
 backend/test/integration/scoped-routes/route-guards.memory.test.ts : ADMIN role on the admin console, householdMode query validation, a signed-in caller for every write, share only a held portfolio
 backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
 backend/test/integration/sla/stage-latency-sla.memory.test.ts : 45-iteration P99 stage latency SLA gates (<400ms) and live cross-module HTTP E2E orchestration

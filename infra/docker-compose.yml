@@ -1,4 +1,5 @@
-# Local/single-host edge. Ports: infra/docs/ports.md. The backend runs on the host (make backend); nginx reaches it via host.docker.internal.
+# Local single-host edge & full-stack compose. Ports: infra/docs/ports.md.
+# `make proxy` runs the default nginx edge; `make up` brings up the full containerized stack + observability.
 name: wealth-advisor
 
 services:
@@ -10,5 +11,63 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ../frontend/dist:/usr/share/nginx/html:ro
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # needed on Linux; Docker Desktop provides it already
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+
+  mongo:
+    image: mongo:8.0
+    profiles: ["fullstack"]
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/docker/backend.Dockerfile
+    profiles: ["fullstack"]
+    environment:
+      PORT: "3000"
+      NODE_ENV: production
+      DATA_STORE: mongo
+      MONGODB_URI: mongodb://mongo:27017/wealth_advisor
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    profiles: ["observability"]
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    profiles: ["observability"]
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

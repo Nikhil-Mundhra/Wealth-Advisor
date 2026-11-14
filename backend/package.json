@@ -12,6 +12,7 @@
     "test:contracts": "node --test test/unit/core/contract-parity.test.ts",
     "test:sla": "node --test test/integration/sla/stage-latency-sla.memory.test.ts",
     "eval": "node --env-file-if-exists=../.env src/scripts/run-evals.ts",
+    "load-test": "node --env-file-if-exists=../.env src/scripts/load-test.ts",
     "db:indexes": "node --env-file-if-exists=../.env src/scripts/ensure-indexes.ts",
     "db:migrate": "node --env-file-if-exists=../.env src/scripts/migrate.ts",
     "keys:generate": "node src/scripts/generate-jwt-keypair.ts",

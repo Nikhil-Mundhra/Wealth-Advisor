@@ -16,8 +16,15 @@
 ## File structure
 
 ```
-infra/docker-compose.yml : nginx container in front of the host backend; host port from PROXY_PORT
+infra/docker-compose.yml : nginx edge plus optional fullstack (mongo, backend) and observability (prometheus, grafana) profiles
+infra/docker/backend.Dockerfile : multi-stage non-root node:24-alpine container build with /api/health probe
+infra/docker/frontend.Dockerfile : multi-stage node:24-alpine SPA build into nginx:1.29-alpine runtime
+infra/k6/load-test.js : k6 staged load test script (10 to 300 VUs, <250ms P95 and <400ms P99 thresholds)
 infra/nginx/default.conf : serves frontend/dist, proxies /api to the host backend, cache and security headers
 infra/observability/grafana/dashboards/dewa-overview.json : Grafana dashboard for HTTP RPS/errors/latency, outbox depth, LLM cost, and guardrails
 infra/observability/prometheus.yml : Prometheus scrape config polling backend /api/metrics every 15s
+infra/terraform/main.tf : GCP Cloud Run v2 Always Free service (min_instance_count=0), Artifact Registry, Secret Manager bindings
+infra/terraform/outputs.tf : Cloud Run URL, runtime service account email, and Artifact Registry URI outputs
+infra/terraform/variables.tf : GCP project_id, region (us-central1), service_name, and image_tag variables
+infra/terraform/versions.tf : Terraform >= 1.6 and Google provider ~> 6.0 constraints
 ```

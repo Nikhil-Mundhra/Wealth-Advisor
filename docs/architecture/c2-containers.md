@@ -35,9 +35,10 @@ flowchart LR
 |---|---|---|
 | Frontend | React, Vite; static build | UI; access token in memory; calls `/api` |
 | Edge routing | Vercel Services (`vercel.json`) | sends each request to frontend or backend |
-| Backend | Hono on Vercel Functions; Node runner locally | API, auth, contract validation; outbound calls to market data and LLM providers |
-| Database | MongoDB Atlas, wherever `MONGODB_URI` points; tests use an in-memory mongod; local runs without it use the in-process memory store (`infra/docs/env.md`) | persistence |
-| nginx | Docker, local only | production-like edge for testing |
+| Backend | Hono on Vercel Functions / Cloud Run container; Node runner locally | API, auth, contract validation; outbound calls to market data and LLM providers; `/api/metrics` |
+| Database | MongoDB Atlas (prod) or local `mongo:8.0` container; tests use an in-memory mongod; local runs without it use the in-process memory store (`infra/docs/env.md`) | persistence & durable transactional outbox |
+| nginx | Docker, local / container edge (`infra/docker/frontend.Dockerfile`) | serves built SPA and proxies `/api` |
+| Prometheus & Grafana | Docker Compose `observability` profile | scrapes `/api/metrics` and renders DEWA overview dashboard |
 
 ## Request mapping
 `infra/docs/routing.md`. Ports: `infra/docs/ports.md`.

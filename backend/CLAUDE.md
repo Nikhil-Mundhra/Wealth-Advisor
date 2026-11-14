@@ -151,6 +151,7 @@ backend/src/modules/wealth/public.ts : the wealth surface other modules may impo
 backend/src/modules/wealth/wealth.api.ts : createWealthApi: products, portfolio, risk profile, optimizer, sandbox trade execution, ledger
 backend/src/modules/wealth/wealth.module.ts : composition root: store-selected wealth repos → api, routes, manifest
 backend/src/node-server.ts : local Node runner; serves frontend/dist in production mode
+backend/src/scripts/load-test.ts : staged HTTP concurrency load benchmark measuring RPS, P50/P95/P99, and saturation
 backend/src/scripts/run-evals.ts : CLI entrypoint executing the versioned advisory eval suite (make eval)
 backend/tsconfig.json : typecheck settings (erasable syntax only)
 ```
