@@ -8,6 +8,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test --test-concurrency=4 \"test/**/*.test.ts\"",
     "test:unit": "node --test \"test/unit/**/*.test.ts\"",
+    "test:property": "node --test test/unit/rules/property-invariants.test.ts",
+    "test:contracts": "node --test test/unit/core/contract-parity.test.ts",
+    "test:sla": "node --test test/integration/sla/stage-latency-sla.memory.test.ts",
     "db:indexes": "node --env-file-if-exists=../.env src/scripts/ensure-indexes.ts",
     "keys:generate": "node src/scripts/generate-jwt-keypair.ts",
     "db:seed-demo": "node --env-file-if-exists=../.env src/scripts/seed-demo-user.ts"

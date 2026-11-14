@@ -27,7 +27,7 @@ flowchart LR
     llm[advisory · gateway and chat]
   end
   subgraph action[9-11 · Authorisation, execution, proof]
-    passkey[passkey step-up · absent]
+    passkey[passkey step-up · built]
     share[sharing · token and ttl]
   end
   auth --> tenant --> profile
@@ -41,16 +41,16 @@ flowchart LR
 ## Stages
 | # | Stage | Input | Output | Owner | Status |
 |---|---|---|---|---|---|
-| 1 | Identity and tenant scope | email, password, API key | user, session, tenant-scoped query | `backend/src/modules/auth/`; `backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts` | `partial` — the tenant travels in the token and every scoped route reads it from there (no header can move a caller), but the deployment is single-tenant: signup joins the default tenant and there is no tenant provisioning |
-| 2 | Investor profiling | seven questionnaire answers | base risk score, stress band, ratios | `rules/src/profiling.rule.ts`, `contracts/src/profiling/profile-answers.contract.ts` | `partial` — pure functions with a frontend questionnaire in `frontend/src/features/profiling/profile-store.ts`; nothing persists |
+| 1 | Identity and tenant scope | email, password, API key | user, session, tenant-scoped query | `backend/src/modules/auth/`; `backend/src/modules/admin/infrastructure/db/schema/admin-collections.ts` | `partial` — the tenant travels in the token and every scoped route reads it from there (no header can move a caller), and `/admin/tenants` + `/admin/api-keys` provide provisioning UI; signup still joins the default tenant unless provisioned |
+| 2 | Investor profiling | seven questionnaire answers | base risk score, stress band, ratios | `rules/src/profiling.rule.ts`, `contracts/src/profiling/profile-answers.contract.ts` | `built` — pure rules persisted via `GET` / `PUT /api/wealth/profile` (`risk_profiles`) |
 | 3 | Financial position | accounts, transactions | balances, runway months and band | `backend/src/modules/finance/` | `partial` — accounts are valued into the base currency through the market FX spot rates and both endpoints agree, but an account no rate can value is left out of the reserves (reported as `unvaluedAccountCount`) and the monthly flow fallbacks are still literals |
 | 4 | Market state | provider responses | `prices`, `fx_rates` | `backend/src/modules/market/` | `built` |
 | 5 | Risk measurement | 365 days of closes | annualized mean, volatility, covariance | `backend/src/modules/analytics/` | `built` |
-| 6 | Risk profiling | profile, runway, FX mismatch, volatilities | effective risk score | `rules/src/profiling.rule.ts` | `partial` — scoring runs in the browser; no backend reads it |
-| 7 | Portfolio construction | holdings, target weights | drift, actions, rationale | `backend/src/modules/wealth/wealth.api.ts` | `built` — actions are derived from the holdings' own drift, buys are capped at the sell proceeds, and the rationale names the holding actually rebalanced |
-| 8 | Recommendation and explanation | chat turn | reply, three-pillar rationale | `backend/src/modules/advisory/domain/llm-gateway.ts` | `built` — Gemini Generative AI adapter with dynamic fallback deriving proposal weights directly from portfolio holdings |
-| 9 | Authorisation gate | step-up assertion | permitted or refused | `backend/src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts`; `contracts/src/auth/passkey.contract.ts` holds the shapes only | `partial` — `/wealth/execute` refuses every assertion (`WL_1004`): no passkey registration stores a key to verify against |
-| 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `partial` — the ledger row is written before the portfolio moves and each trade is checked against the recorded target, but no assertion can pass verification yet, so the route refuses every execution with `WL_1004` (stage 9) |
+| 6 | Risk profiling | profile, runway, FX mismatch, volatilities | effective risk score | `rules/src/profiling.rule.ts`, `backend/src/modules/wealth/wealth.api.ts` | `built` — base risk score computed server-side on `saveProfile` and recalibrated dynamically with liquidity runway and FX mismatch |
+| 7 | Portfolio construction | holdings, target weights | drift, actions, rationale | `backend/src/modules/wealth/wealth.api.ts`, `rules/src/portfolio-optimizer.rule.ts` | `built` — `constructPortfolio` performs MVO, Sharia screening, and jurisdiction allocation; `optimizePortfolio` derives drift-based self-financing actions and dynamic three-pillar rationale (`personalFinance`, `crossBorder`, `investmentStrategy`) |
+| 8 | Recommendation and explanation | chat turn | reply, three-pillar rationale | `backend/src/modules/advisory/domain/llm-gateway.ts`, `backend/src/modules/advisory/domain/tool-registry.ts` | `built` — live Gemini/Claude/OpenAI/OpenRouter adapters with calculation shield, mock fallback, and 6-tool registry integration |
+| 9 | Authorisation gate | step-up assertion | permitted or refused | `backend/src/modules/wealth/wealth.api.ts`, `backend/src/modules/auth/` | `built` — WebAuthn ECDSA P-256 verification and challenge binding gate `/api/wealth/execute` (`WL_1004` fail-closed on missing or invalid assertions) |
+| 10 | Execution and evidence | permitted proposal, assertion | sandbox ledger row, audit digest | `backend/src/modules/wealth/wealth.api.ts` | `built` — verified passkey assertion unlocks atomic sandbox ledger append with SHA-256 digest before portfolio rebalance |
 | 11 | Sharing | plan snapshot, token, mask flag | public read-only plan | `backend/src/modules/sharing/` | `built` — TTL and expiry enforced; the snapshot is the sharer's rebalance proposal; holdings and amounts are redacted when privacyMasked is true |
 
 ## Permission tiers and rules-based guardrails
@@ -74,24 +74,24 @@ Every advice-bearing number is meant to come from a pure function over stored da
 
 | Engine | Computes | Status |
 |---|---|---|
-| `createRateTable`, `convertBatch` (`backend/src/modules/market/domain/`) | direct, inverted and EUR-crossed lookup; per-item conversion with round-half-even minor units | `partial` — tested, still no caller |
+| `createRateTable`, `convertBatch` (`backend/src/modules/market/domain/`) | direct, inverted and EUR-crossed lookup; per-item conversion with round-half-even minor units | `built` — called across finance valuation and `get_currency_exposure` |
 | `measureSnapshot` (`backend/src/modules/analytics/domain/`) | aligned log returns, annualized mean, volatility, covariance over a 365-day window | `built` |
 | `runwayBand` (`rules/src/burn-rate.rule.ts`) | bands a months figure into `critical`, `warning`, `healthy` | `built` — computed by the finance module and served by `contracts/src/finance/cashflow.contract.ts` |
 | Burn-rate calculator (`backend/src/modules/finance/domain/burn-rate-calculator.ts`) | inflow, outflow, liquid reserves and runway from transactions, scaled by household mode | `partial` — monthly flows are averaged over the calendar months present and reserves are valued into the base currency by `finance.api.ts`, but inflow and outflow still fall back to literals when a tenant has no transactions |
-| `calculateBaseRiskScore`, `mapStressAnswerToRiskBand` (`rules/src/profiling.rule.ts`) | base 1–10 score and stress band from questionnaire answers | `partial` — runs in the frontend only |
-| Portfolio optimizer | target allocation from the effective score and covariance, with carve-outs | `fixture` — `POST /wealth/optimize` returns a fixed action list |
+| `calculateBaseRiskScore`, `mapStressAnswerToRiskBand` (`rules/src/profiling.rule.ts`) | base 1–10 score and stress band from questionnaire answers | `built` — computed server-side in `WealthApi.saveProfile` |
+| Portfolio optimizer (`rules/src/portfolio-optimizer.rule.ts`, `backend/src/modules/wealth/wealth.api.ts`) | MVO constrained target weights, Sharia zero-debt filtering, jurisdiction allocation, self-financing rebalance actions | `built` |
 
 ## Agent tools
-There is no tool registry, function-calling schema or tool dispatch in the codebase: `POST /advisory/chat` hands the whole context to the gateway. Every tool below is therefore unwired, including the two whose engine now exists.
+All six domain tools are registered in `backend/src/modules/advisory/domain/tool-registry.ts` via `createToolRegistry`, enforcing permission tiers (`AV_1003` refusal on insufficient grant) and dispatching from `backend/src/modules/advisory/advisory.api.ts`.
 
 | Tool | Engine it needs | Tier | Status |
 |---|---|---|---|
-| `get_cashflow_and_runway` | burn-rate calculator | `TIER_1_ADVISORY` | `absent` — engine built, no tool |
-| `get_currency_exposure` | `convertBatch` | `TIER_0_READ` | `absent` — engine still uncalled |
-| `calculate_adaptive_portfolio` | risk profiler, optimizer | `TIER_1_ADVISORY` | `absent` — scoring runs client-side, optimizer is literal |
-| `simulate_stress_test` | snapshot covariance | `TIER_2_SIMULATE` | `absent` |
-| `create_rebalance_proposal` | optimizer | `TIER_2_SIMULATE` | `absent` — route exists, no tool |
-| `execute_sandbox_trade` | sandbox ledger | `TIER_3_EXECUTE` | `absent` — route exists, no tool; every assertion refused until passkey registration exists |
+| `get_cashflow_and_runway` | burn-rate calculator (`finance.getCashflow`) | `TIER_1_ADVISORY` | `built` |
+| `get_currency_exposure` | `MarketApi.convertBatch` over portfolio accounts | `TIER_0_READ` | `built` |
+| `calculate_adaptive_portfolio` | risk profiler & MVO portfolio constructor (`wealth.constructPortfolio`) | `TIER_1_ADVISORY` | `built` |
+| `simulate_stress_test` | portfolio stress simulator & snapshot covariance (`wealth.constructPortfolio` + `analytics.latestSnapshot`) | `TIER_2_SIMULATE` | `built` |
+| `create_rebalance_proposal` | self-financing rebalance planner (`wealth.optimizePortfolio`) | `TIER_2_SIMULATE` | `built` |
+| `execute_sandbox_trade` | sandbox ledger with WebAuthn passkey step-up (`wealth.executeTrade`) | `TIER_3_EXECUTE` | `built` — fail-closed without verified P-256 assertion |
 
 ## Data flow today
 ```mermaid

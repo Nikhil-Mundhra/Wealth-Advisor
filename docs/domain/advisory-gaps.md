@@ -28,8 +28,8 @@ flowchart TB
 
 ### G1 · Tenant identity from the token · `backend/src/modules/auth/`
 status   `partial`
-evidence `AccessTokenClaims` carries `tenantId`, the signer writes it as `tenant_id`, and `requireAuth`/`optionalAuth` put it on the principal every scoped route reads; no route reads a tenant header, and an unusable scope id is refused by the write paths rather than falling back to the demo tenant. Open: `sharing.routes.ts` still passes the literal `'default'` (its repository filters on `shareToken` alone), and signup joins one tenant because there is no tenant provisioning
-remedy  add `tenantId` to the claims and the me contract; resolve it per request; filter the sharing repository on it too (`mongo-sharing.repository.ts:13` filters on `shareToken` alone)
+evidence `AccessTokenClaims` carries `tenantId`, the signer writes it as `tenant_id`, and `requireAuth`/`optionalAuth` put it on the principal every scoped route reads; no route reads a tenant header, an unusable scope id is refused by the write paths, and `/admin/tenants` (`frontend/src/app/routes/admin-tenants-page.tsx`) + `/admin/api-keys` (`frontend/src/app/routes/admin-api-keys-page.tsx`) provide tenant and API key provisioning UI. Open: `sharing.routes.ts` still uses the literal `'default'` fallback when anonymous, and self-signup joins the default tenant
+remedy  add `tenantId` to the claims and the me contract; resolve it per request; filter the sharing repository on it too
 blocked  none
 done when every advisory route derives its tenant from the verified token and no route contains a tenant literal
 
@@ -66,25 +66,22 @@ blocked  —
 done when closed
 
 ### G7 · Computed optimizer
-status   `fixture`
-evidence `planRebalance` in `wealth.api.ts` derives every action from the holdings' own drift, sizes it off `totalValuationBase`, lists sells first, and caps the buys at the sell proceeds so the list is always executable; the strategy sentence names the holding actually rebalanced. Open: the personal-finance and cross-border pillars are still literal strings, and the target weights themselves come from the profile rather than from the effective risk score and the covariance in `market_snapshots`
-remedy  target weights from the effective score and the covariance in `market_snapshots`, carve-outs ring-fenced into money-market buckets, actions derived from the difference
-blocked  G5
-done when changing a holding or the risk score changes the returned actions
+status   closed
+evidence `constructPortfolio` in `rules/src/portfolio-optimizer.rule.ts` and `optimizePortfolio`/`planRebalance` in `backend/src/modules/wealth/wealth.api.ts` execute MVO optimization, Sharia zero-debt filtering, jurisdiction allocation, and drift-based self-financing rebalancing (`BUY <= SELL`); `rationale` builds `personalFinance`, `crossBorder`, and `investmentStrategy` dynamically from runtime runway, household mode, FX mismatch, and holding weights
+blocked  —
+done when closed
 
 ### G8 · Real LLM adapter · `backend/src/modules/advisory/domain/llm-gateway.ts`
-status   `partial`
-evidence `LlmAdapter` and the four provider keys exist, but `llm-gateway.ts:97` binds gemini, claude, openai and mock to the same `MockLlmAdapter`, so the admin model switch cannot change an answer
-remedy  one real hosted adapter behind the existing interface, selected by `admin.api.getActiveProvider()`, with the mock kept as the offline default
-blocked  none
-done when switching provider in `/admin/models` changes the reply and the mock remains reachable
+status   closed
+evidence `LlmAdapter` dispatches live Gemini, Claude, OpenAI, and OpenRouter adapters alongside the deterministic mock adapter in `backend/src/modules/advisory/domain/llm-gateway.ts`, selected dynamically via platform/admin settings, with calculation-shield fact checking and offline mock fallback
+blocked  —
+done when closed
 
 ### G9 · Agent tool registry
-status   `absent`
-evidence `POST /advisory/chat` passes the request straight to the gateway; no tool registry, function-calling schema or dispatch exists in `backend/src`, `contracts/src` or `rules/src`
-remedy  one tool per engine in the table in `docs/domain/advisory-pipeline.md`, each returning a typed result and tagged with the tier it is served at
-blocked  G3, G7
-done when a chat turn resolves the cashflow and portfolio tools from stored data instead of seeded text
+status   closed
+evidence `createToolRegistry` in `backend/src/modules/advisory/domain/tool-registry.ts` registers all 6 typed domain tools (`get_cashflow_and_runway`, `get_currency_exposure`, `calculate_adaptive_portfolio`, `simulate_stress_test`, `create_rebalance_proposal`, `execute_sandbox_trade`), enforcing permission tiers with `AV_1003` refusal and dispatching from `backend/src/modules/advisory/advisory.api.ts`
+blocked  —
+done when closed
 
 ### G10 · Passkey verification · `backend/src/modules/auth/`
 status   `done`
@@ -101,11 +98,10 @@ blocked  G10
 done when `/evidence` lists rows read from the API whose digests recompute from their own fields
 
 ### G12 · Computed rationale
-status   `fixture`
-evidence the three-pillar structure in `contracts/src/advisory/advisory-chat.contract.ts:19` is filled from a per-locale literal record in the mock adapter (`llm-gateway.ts:41`)
-remedy  build each pillar from the tool result that produced it — personal finance from the runway, cross-border from the exposure, strategy from the target weights — so the same numbers cannot be narrated differently
-blocked  G9
-done when a rationale sentence changes when its underlying engine output changes
+status   closed
+evidence `optimizePortfolio` in `backend/src/modules/wealth/wealth.api.ts` computes `personalFinance`, `crossBorder`, and `investmentStrategy` dynamically from runtime runway, household mode, target runway, FX mismatch, and holding drift; `advisory.api.ts` feeds `createToolRegistry` outputs into the calculation-shielded three-pillar narrative
+blocked  —
+done when closed
 
 ## Surfaces
 

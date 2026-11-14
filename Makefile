@@ -11,7 +11,7 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e lint ci db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
 
 
 help:  ## List targets
@@ -87,6 +87,28 @@ deps-lint:  ## Check cross-module imports against backend/docs/module-dependenci
 
 audit:  ## Check dependencies for high-severity vulnerabilities
 	npm audit --omit=dev --audit-level=high
+
+lint: docs-lint deps-lint typecheck audit  ## Stage 1: Docs graph, module dependency DAG, strict TypeScript, and security audit
+
+test-unit:  ## Stage 2A: Isolated backend unit and deterministic financial engine tests
+	npm run test:unit -w backend
+
+test-property:  ## Run L1.5 property-based mathematical and regulatory invariant fuzzing
+	npm run test:property -w backend
+
+test-contracts:  ## Run L2 cross-workspace schema, error catalog, and validation key parity checks
+	npm run test:contracts -w backend
+
+test-sla:  ## Run L3 45-iteration P99 stage latency benchmark gates (<400ms SLA)
+	npm run test:sla -w backend
+
+test-ui:  ## Stage 2C: Frontend Vitest component, native <dialog>, and A11y tests
+	node scripts/run-tests.mjs --frontend
+
+test-e2e:  ## Stage 3: Live cross-module HTTP E2E orchestration and <400ms P99 SLA gate
+	npm run test:sla -w backend
+
+ci: lint test-property test-contracts test-sla test build  ## Run the complete 3-stage guardrail pipeline locally (Lint -> Unit/Property/Contract -> Live E2E & SLA)
 
 check-ai:  ## Check AI platform API health on deployed site or local (e.g. make check-ai ARGS="--provider openrouter")
 	@node scripts/check-ai-health.mjs $(ARGS)

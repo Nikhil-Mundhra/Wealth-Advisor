@@ -6,6 +6,7 @@ docs/architecture/c2-containers.md : L2 containers: frontend, edge routing, back
 docs/architecture/c3-backend.md : L3 backend components: core, module registry, auth, market, analytics, admin, finance, wealth, advisory, sharing modules
 docs/architecture/c3-frontend.md : L3 frontend components: app, features (admin, auth, marketing, profiling), shared UI, lib
 docs/architecture/data-classification.md : data classification taxonomy, field levels, LLM provider egress allow-list, and retention rules
+docs/architecture/testing-guardrails.md : neuro-symbolic 5-layer testing pyramid, pipeline DAG, enforced P99 latency ratchets, and CI command reference
 docs/architecture/threat-model.md : STRIDE threat model, load-bearing security controls, and defense-in-depth architecture
 ```
 

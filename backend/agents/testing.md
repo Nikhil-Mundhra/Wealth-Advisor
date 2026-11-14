@@ -30,6 +30,7 @@ backend/test/integration/market/market-routes.suite.ts : quotes, fx (query valid
 backend/test/integration/market/market-routes.test.ts : runs the market-routes suite on mongod
 backend/test/integration/scoped-routes/route-guards.memory.test.ts : ADMIN role on the admin console, householdMode query validation, a signed-in caller for every write, share only a held portfolio
 backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
+backend/test/integration/sla/stage-latency-sla.memory.test.ts : 45-iteration P99 stage latency SLA gates (<400ms) and live cross-module HTTP E2E orchestration
 backend/test/integration/wealth/wealth-optimize-routes.memory.test.ts : optimize body reaches recalibration; FX mismatch penalty in the route response
 backend/test/integration/wealth/wealth-portfolio-access.memory.test.ts : cross-user portfolio and optimize reads refuse with 404 for clients and anonymous callers
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
@@ -54,6 +55,7 @@ backend/test/unit/auth/refresh-rotation.policy.test.ts : every rotation decision
 backend/test/unit/auth/session.entity.test.ts : session and email invariants
 backend/test/unit/auth/validation.test.ts : email and password rules shared with the contracts
 backend/test/unit/core/calendar-date.test.ts : isIsoDate refuses impossible dates without throwing; addDays boundaries
+backend/test/unit/core/contract-parity.test.ts : cross-workspace parity checks for error catalog, validation keys, Zod enums, and Mongo schemas
 backend/test/unit/core/db/classify-db-error.test.ts : duplicate-key, transient, fatal
 backend/test/unit/core/db/data-store.test.ts : store resolution and health without a database
 backend/test/unit/core/db/with-read-retry.test.ts : retries transient failures only, up to the policy
@@ -75,6 +77,7 @@ backend/test/unit/rules/fundamental-ratios.rule.test.ts : valuation tilts, corpo
 backend/test/unit/rules/mutual-fund-analysis.rule.test.ts : Sharpe, Sortino, Jensen Alpha, Information Ratio, Modigliani M2, expense screens, and diversification caps
 backend/test/unit/rules/portfolio-optimizer.rule.test.ts : risk tier mapping, composite security scoring, constrained solver, Monte Carlo simulation, and macro stress tests
 backend/test/unit/rules/profiling.rule.test.ts : stress answer mapping, age horizon derivation, supported corridor currency ranking, risk scoring bounds
+backend/test/unit/rules/property-invariants.test.ts : L1.5 seeded property-based invariant fuzzing across MVO, Sharia, risk recalibration, rebalance, shield, and rational FX
 backend/test/unit/rules/technical-analysis.rule.test.ts : RSI normalization, MA crossovers, MACD, Bollinger Bands, ADX, VWAP, Ichimoku, liquidity adjustments, and conservative trend filters
 backend/test/unit/scripts/module-deps.test.ts : edge parsing, allowed/non-public/off-graph imports on a fixture tree, core importing a module, cycle detection
 backend/test/unit/sharing/sharing-api.test.ts : share tokens and TTL, snapshot from the caller's rebalance proposal, no portfolio refused, seeded demo link

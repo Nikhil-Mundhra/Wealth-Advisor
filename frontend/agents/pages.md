@@ -113,6 +113,7 @@ frontend/src/features/marketing/components/neuro-symbolic-simulator.tsx : intera
 frontend/src/features/marketing/components/particles-background.test.tsx : unit test verifying decorative canvas rendering and lifecycle cleanup
 frontend/src/features/marketing/components/particles-background.tsx : theme-aware browser-side canvas particle background with gentle repulsion and link physics
 frontend/src/features/marketing/components/positioning-matrix-section.tsx : strategic positioning comparison matrix for B2B2C vs B2C
+frontend/src/features/marketing/components/testing-guardrails-section.tsx : 5-layer neuro-symbolic testing pyramid, pipeline DAG, and <400ms P99 SLA subtab
 frontend/src/features/marketing/components/triad-overview-section.tsx : overview of the triad architecture (Workflow OS, Semantic Graph, MIT Sloan)
 frontend/src/features/marketing/data/highlights.ts : highlight copy
 frontend/src/features/sharing/components/share-strategy-modal.test.tsx : masked share URL issuance and privacy toggle

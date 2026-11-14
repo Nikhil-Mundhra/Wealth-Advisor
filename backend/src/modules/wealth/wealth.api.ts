@@ -188,6 +188,19 @@ export function createWealthApi(deps: WealthApiDeps) {
         null,
       );
 
+      const effectiveRunway = input?.runwayMonths ?? doc.burnRateRunwayMonths;
+      const activeHouseholdMode = input?.householdMode ?? 'FAMILY_HOUSEHOLD';
+      const targetRunwayMonths = activeHouseholdMode === 'FAMILY_HOUSEHOLD' ? 6 : 3;
+      const fxMismatchPct = input?.fxMismatchPct;
+      const personalFinance =
+        effectiveRunway < targetRunwayMonths
+          ? `Household liquid runway is ${effectiveRunway.toFixed(1)} months against the ${targetRunwayMonths}-month ${activeHouseholdMode === 'FAMILY_HOUSEHOLD' ? 'family' : 'individual'} threshold; expanding liquid reserves restores the emergency buffer to ${targetRunwayMonths}+ months.`
+          : `Household liquid runway sits at ${effectiveRunway.toFixed(1)} months, exceeding the ${targetRunwayMonths}-month ${activeHouseholdMode === 'FAMILY_HOUSEHOLD' ? 'family' : 'individual'} floor and supporting disciplined target rebalancing.`;
+      const crossBorder =
+        fxMismatchPct !== undefined && fxMismatchPct > 0
+          ? `Foreign currency exposure mismatch of ${Math.round(fxMismatchPct * 100)}% raises conversion risk across ${doc.baseCurrency} cross-border remittance obligations; short-duration ${doc.baseCurrency} overnight liquidity shields upcoming transfers.`
+          : `Allocating to short-duration ${doc.baseCurrency} overnight liquidity shields upcoming cross-border family remittances from FX volatility.`;
+
       return {
         effectiveRiskScore,
         currentWeights,
@@ -195,10 +208,8 @@ export function createWealthApi(deps: WealthApiDeps) {
         driftPercentages,
         actions,
         rationale: {
-          personalFinance:
-            'Household runway dropped towards the 3-month threshold under elevated cross-border expenses. Expanding liquid cash reserves restores family buffer to 6+ months.',
-          crossBorder:
-            'Recent FX headwinds increased EUR conversion cost for family remittances. Allocating to short-duration EUR overnight liquidity shields upcoming remittance obligations from currency shocks.',
+          personalFinance,
+          crossBorder,
           wealthStrategy: largest
             ? `Rebalancing ${largest.assetSymbol} from ${(largest.currentWeight * 100).toFixed(0)}% to ${(largest.targetWeight * 100).toFixed(0)}%${snapshot ? ` against 365-day risk analytics (${snapshot.window.observations} observations)` : ''}, and holding any surplus proceeds in cash rather than deploying them past the target.`
             : 'Every holding already sits at its target weight; no rebalance is due.',

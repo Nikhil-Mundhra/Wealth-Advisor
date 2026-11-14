@@ -33,6 +33,9 @@ jobs:
       - run: make deps-lint
       - run: make typecheck
       - run: make audit
+      - run: make test-property
+      - run: make test-contracts
+      - run: make test-sla
       - run: make test
       - run: make build
 

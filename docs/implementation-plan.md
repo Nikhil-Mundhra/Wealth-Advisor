@@ -393,7 +393,7 @@ sequenceDiagram
   - `ClaudeAdapter` (`@anthropic-ai/sdk` or REST)
   - `OpenAiAdapter` (`openai` or REST)
   - `MockLlmAdapter` (deterministic offline engine with canned tool calling & explainability)
-- [ ] Registered Agent Tools — see `docs/domain/advisory-gaps.md` G9:
+- [x] Registered Agent Tools — `backend/src/modules/advisory/domain/tool-registry.ts` (`G9`):
   1. `get_cashflow_and_runway` (with Individual vs. Family mode)
   2. `get_currency_exposure`
   3. `calculate_adaptive_portfolio`
@@ -437,7 +437,7 @@ sequenceDiagram
 - [x] **Tier 3 Biometric Step-Up Modal:** Triggers browser Passkey prompt (TouchID/FaceID) to sign transaction before submission.
 
 #### 3.5 Public Shared Plan View (`/share/:token`)
-- [ ] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile. See `docs/domain/advisory-gaps.md` G13.
+- [x] Read-only strategy presentation rendering asset allocation, three-pillar explainability, and interactive stress simulation. Fully responsive on mobile (`G13`).
 - [x] Privacy toggle: view as exact amounts or relative percentages.
 
 #### 3.6 Evidence Explorer & Admin Console (`/evidence`, `/admin/*`)
@@ -479,15 +479,15 @@ sequenceDiagram
 **Objective:** Fulfill all 6 FinTechathon submission checklist requirements and verify production stability on Vercel and mobile.
 
 #### 5.1 Competition Submission Checklist Production
-- [ ] **01 Technical Documentation:** Complete `docs/architecture/` with C1–C3 diagrams, algorithm specs, multi-tenancy models, native mobile architecture, and Passkey/permission-tier security design.
-- [ ] **02 Presentation Deck (docs/submission/presentation-deck.md):** 10-slide outline structured for the 10-minute presentation: Problem $\to$ DEWA Solution $\to$ Architecture $\to$ 3-Topic Synergy $\to$ Live Demo (Desktop + Mobile) $\to$ Passkey Security & Compliance $\to$ Multi-Tenant Future.
-- [ ] **03 Demo Video Storyboard (docs/submission/demo-video-script.md):** Step-by-step 5-minute script featuring Elena's journey (burn rate spike + FX dip $\to$ mobile web / iOS TestFlight alert $\to$ agent consultation $\to$ share link generation $\to$ FaceID Passkey execution in dark mode).
-- [ ] **04 Source Code Cleanliness:** `npm run typecheck` zero errors, `npm test` green, clean deployment on Vercel, reproducible mobile builds.
-- [ ] **05 Security Self-Assessment Report (docs/submission/security-self-assessment.md):** Formal permission-tier implementation matrix, WebAuthn cryptographic proof, tokenized sharing privacy controls, and known-risk list.
-- [ ] **06 Execution Evidence Package (docs/submission/execution-evidence.md):** Seeded sandbox run logs and sample audit digests.
+- [x] **01 Technical Documentation:** Complete `docs/architecture/` with C1–C3 diagrams, algorithm specs, multi-tenancy models, native mobile architecture, and Passkey/permission-tier security design.
+- [x] **02 Presentation Deck (docs/submission/presentation-deck.md):** 10-slide outline structured for the 10-minute presentation: Problem $\to$ DEWA Solution $\to$ Architecture $\to$ 3-Topic Synergy $\to$ Live Demo (Desktop + Mobile) $\to$ Passkey Security & Compliance $\to$ Multi-Tenant Future.
+- [x] **03 Demo Video Storyboard (docs/submission/demo-video-script.md):** Step-by-step 5-minute script featuring Elena's journey (burn rate spike + FX dip $\to$ mobile web / iOS TestFlight alert $\to$ agent consultation $\to$ share link generation $\to$ FaceID Passkey execution in dark mode).
+- [x] **04 Source Code Cleanliness:** `npm run typecheck` zero errors, `npm test` green, clean deployment on Vercel, reproducible mobile builds.
+- [x] **05 Security Self-Assessment Report (docs/submission/security-self-assessment.md):** Formal permission-tier implementation matrix, WebAuthn cryptographic proof, tokenized sharing privacy controls, and known-risk list.
+- [x] **06 Execution Evidence Package (docs/submission/execution-evidence.md):** Seeded sandbox run logs and sample audit digests.
 
 #### 5.2 Deployment & Cloud Verification
-- [ ] Run `make build` and test production bundle.
+- [x] Run `make build` and test production bundle.
 - [ ] Verify Vercel deployment with edge routing and serverless Hono execution.
 - [ ] Verify end-to-end user session flow on desktop and mobile viewports: Passkey registration $\to$ login $\to$ dashboard $\to$ advisory dialogue $\to$ share link generation $\to$ biometric sandbox rebalance $\to$ evidence verification.
 

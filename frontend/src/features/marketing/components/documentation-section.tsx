@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { BookOpen, ChevronRight, Cpu, Layers, Network, Scale, ShieldCheck, Workflow } from 'lucide-react';
+import { BookOpen, Cpu, Layers, Network, Scale, ShieldAlert, ShieldCheck, Workflow } from 'lucide-react';
 import { AdvisorLifecycleSection } from './advisor-lifecycle-section.tsx';
 import { MITSloanShockSection } from './mit-sloan-shock-section.tsx';
 import { KnowledgeGraphSection } from './knowledge-graph-section.tsx';
 import { PositioningMatrixSection } from './positioning-matrix-section.tsx';
 import { ComplianceSecuritySection } from './compliance-security-section.tsx';
 import { ExecutionBlueprintSection } from './execution-blueprint-section.tsx';
+import { TestingGuardrailsSection } from './testing-guardrails-section.tsx';
 
-export type DocSubtab = 'lifecycle' | 'mit-sloan' | 'knowledge-graph' | 'positioning' | 'compliance' | 'blueprint';
+export type DocSubtab = 'lifecycle' | 'mit-sloan' | 'knowledge-graph' | 'positioning' | 'compliance' | 'blueprint' | 'guardrails';
 
 interface DocumentationSectionProps {
   activeSubtab?: DocSubtab;
@@ -50,6 +51,12 @@ const SUBTABS: { id: DocSubtab; label: string; icon: typeof Workflow; descriptio
     label: 'Execution Blueprint',
     icon: Layers,
     description: '4-phase engineering roadmap from structured intake to synthetic persona eval suite.',
+  },
+  {
+    id: 'guardrails',
+    label: 'Testing & CI/CD Guardrails',
+    icon: ShieldAlert,
+    description: '5-layer neuro-symbolic testing pyramid, property invariant fuzzing, and <400ms P99 SLA gates.',
   },
 ];
 
@@ -142,6 +149,7 @@ export function DocumentationSection({ activeSubtab: controlledSubtab, onSubtabC
             {currentSubtab === 'positioning' && <PositioningMatrixSection />}
             {currentSubtab === 'compliance' && <ComplianceSecuritySection />}
             {currentSubtab === 'blueprint' && <ExecutionBlueprintSection />}
+            {currentSubtab === 'guardrails' && <TestingGuardrailsSection />}
           </div>
         </div>
       </div>
