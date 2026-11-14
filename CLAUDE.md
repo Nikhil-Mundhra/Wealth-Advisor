@@ -23,7 +23,6 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 - dependency: `rules` (imports nothing) ← `contracts` (rules, zod) ← `backend`, `frontend`; `backend` and `frontend` also import `rules` directly and never import each other.
 - change: one file, one responsibility; update the owning map in the same change.
 - delete/rename: grep the symbol or path, remove its references first, re-grep returns nothing.
-- commit: `make test` green; never commit `.env`, `.env.local`, `.vercel/`, `dist/`; no AI attribution lines.
 - commands: `make help` lists every task (dev, build, test, db, deploy).
 - ci: a new check goes into `.github/workflows/ci.yml` as a `make` target; the Node major lives in `.nvmrc` and ci.yml `node-version` together; the runner image is pinned and moves only after a green run on the new image.
 - process control: Makefile start/stop/status act only on processes running inside this checkout; new services reuse `start_svc`, `stop_svc`, `status_svc`.
@@ -31,6 +30,10 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 - docs: kebab-case `.md` names (`docs/implementation-plan.md`); root standards (`AGENTS.md`, `README.md`, `CLAUDE.md`, `SECURITY.md`) stay UPPER.
 - entry: every `CLAUDE.md` is a byte copy of the `AGENTS.md` beside it; edit `AGENTS.md`, then `cp AGENTS.md CLAUDE.md` in that folder.
 - icons: strict no-emoji policy across UI, copy, code, commit messages, and docs; use vector SVG icons (e.g. lucide-react) for all icons, badges, and visual indicators.
+
+## Commit policy
+- **When**: commit after each complete, self-contained change once `make test` is green (or only when requested during an active task).
+- **How**: use Conventional Commits (`type(scope): summary`), no emojis, no AI attribution lines, and never commit `.env`, `.env.local`, `.vercel/`, or `dist/`.
 
 ## File structure
 
