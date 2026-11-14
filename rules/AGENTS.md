@@ -38,7 +38,7 @@ rules/src/market-data.rule.ts : Marketstack quota, page size and page cap; histo
 rules/src/mutual-fund-analysis.rule.ts : FUND_CATEGORIES, calculateSharpeRatio, calculateSortinoRatio, calculateJensenAlpha, calculateInformationRatio, calculateModiglianiM2, evaluateMutualFund
 rules/src/password.rule.ts : min/max length, isPasswordLength
 rules/src/permission-tier.rule.ts : PERMISSION_TIERS, PermissionTier, isPermissionTier
-rules/src/portfolio-optimizer.rule.ts : RISK_TIERS, TIER_COMPOSITE_WEIGHTS, calculateCompositeSecurityScore, solveConstrainedPortfolio, runMonteCarloSimulation, runPortfolioStressTests, constructOptimalPortfolio
+rules/src/portfolio-optimizer.rule.ts : RISK_TIERS, TIER_COMPOSITE_WEIGHTS, REBALANCE_DRIFT_THRESHOLD, dampRebalanceWeight, dampRebalancePortfolio, calculateCompositeSecurityScore, solveConstrainedPortfolio, runMonteCarloSimulation, runPortfolioStressTests, constructOptimalPortfolio
 rules/src/profiling.rule.ts : PROFILING_QUESTIONS, per-currency holdings, calculateBaseRiskScore, mapStressAnswerToRiskBand, deriveTimeHorizonYears, deriveCorridorCurrencies
 rules/src/refresh-token.rule.ts : byte count, base64url pattern, isRefreshToken
 rules/src/role.rule.ts : ROLES (USER, ADVISOR, ADMIN), Role, ADVISOR_ROLE, ADMIN_ROLE, DEFAULT_ROLES, USER_STATUSES, UserStatus, hasAdvisorRole

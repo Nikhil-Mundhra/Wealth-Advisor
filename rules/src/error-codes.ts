@@ -16,6 +16,7 @@ export const CORE_ERROR_CODES = {
   validationFailed: 'CORE_VALIDATION_FAILED',
   invalidJson: 'CORE_INVALID_JSON',
   payloadTooLarge: 'CORE_PAYLOAD_TOO_LARGE',
+  idempotencyConflict: 'CORE_IDEMPOTENCY_CONFLICT',
   notFound: 'CORE_NOT_FOUND',
   internal: 'CORE_INTERNAL',
   databaseUnconfigured: 'CORE_DB_UNCONFIGURED',

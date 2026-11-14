@@ -29,6 +29,8 @@ backend/src/core/db/document-id.ts : default tenant and demo user ids; string â†
 backend/src/core/db/errors/classify-db-error.ts : driver error â†’ duplicate-key, transient or fatal
 backend/src/core/db/ids/object-id-generator.ts : IdGenerator backed by ObjectId hex strings
 backend/src/core/db/mapping/mapper.ts : Mapper<Entity, Document> interface
+backend/src/core/db/migrations/migration-runner.ts : versioned idempotent database migration runner (mongo and memory)
+backend/src/core/db/migrations/schema-migrations.schema.ts : schema_migrations collection (unique version) and $jsonSchema
 backend/src/core/db/repository/base-repository.ts : collection access; applies lifecycle hooks on insert and update
 backend/src/core/db/repository/lifecycle-hooks.ts : static, inherited insert/update hooks (timestamps)
 backend/src/core/db/retry/retry-policy.ts : read retry attempts, backoff, retryable errors
@@ -93,5 +95,6 @@ backend/src/modules/wealth/infrastructure/db/memory/memory-wealth.repository.ts 
 backend/src/modules/wealth/infrastructure/db/repositories/mongo-wealth.repository.ts : asset-product, portfolio and sandbox-ledger repositories on Mongo
 backend/src/modules/wealth/infrastructure/db/schema/wealth-collections.ts : the wealth module's collection definitions
 backend/src/scripts/ensure-indexes.ts : applies every module's collection definitions (deploy step)
+backend/src/scripts/migrate.ts : executes versioned migrations against Mongo or memory dry-run (make db-migrate)
 backend/src/scripts/seed-demo-user.ts : seeds the demo account into Mongo (refuses NODE_ENV=production)
 ```

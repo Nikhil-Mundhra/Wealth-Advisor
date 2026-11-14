@@ -120,6 +120,76 @@ describe('FinanceApi', () => {
     // Individual runway is longer than family runway because reserve requirement is lower
     assert.ok(individual.runwayMonths >= family.runwayMonths);
   });
+
+  it('deduplicates ingested transactions by externalId and handles out-of-order arrivals deterministically', async () => {
+    const accounts = new MemoryAccountRepository();
+    const transactionsA = new MemoryTransactionRepository();
+    const transactionsB = new MemoryTransactionRepository();
+    const market = seededMarket();
+    await market.seed();
+    const clock = { now: () => NOW };
+
+    const apiA = createFinanceApi({ accounts, transactions: transactionsA, clock, market: market.api });
+    const apiB = createFinanceApi({ accounts, transactions: transactionsB, clock, market: market.api });
+    const accountId = (await apiA.getAccounts('default', 'default')).accounts[0]!.id;
+
+    const first = await apiA.ingestTransaction('default', 'default', {
+      externalId: 'bank_tx_901',
+      accountId,
+      category: 'BILL_HOUSING',
+      amount: 85000,
+      currency: 'GBP',
+      timestamp: '2026-10-05T10:00:00Z',
+      description: 'October rent settlement',
+    });
+    assert.equal(first.deduplicated, false);
+    assert.equal(first.transaction.convertedBaseAmount, 100000); // 85,000p / 0.85 = 100,000 cents
+
+    const dup = await apiA.ingestTransaction('default', 'default', {
+      externalId: 'bank_tx_901',
+      accountId,
+      category: 'BILL_HOUSING',
+      amount: 85000,
+      currency: 'GBP',
+      timestamp: '2026-10-05T10:00:00Z',
+    });
+    assert.equal(dup.deduplicated, true);
+    assert.equal(dup.transaction.id, first.transaction.id);
+
+    // Earlier historical event arrives out of order after October event
+    await apiA.ingestTransaction('default', 'default', {
+      externalId: 'bank_tx_802',
+      accountId,
+      category: 'EXPENSE_DISCRETIONARY',
+      amount: 50000,
+      currency: 'EUR',
+      timestamp: '2026-08-15T10:00:00Z',
+    });
+
+    // Reverse arrival order on apiB -> identical burn rate and ordering
+    await apiB.ingestTransaction('default', 'default', {
+      externalId: 'bank_tx_802',
+      accountId,
+      category: 'EXPENSE_DISCRETIONARY',
+      amount: 50000,
+      currency: 'EUR',
+      timestamp: '2026-08-15T10:00:00Z',
+    });
+    await apiB.ingestTransaction('default', 'default', {
+      externalId: 'bank_tx_901',
+      accountId,
+      category: 'BILL_HOUSING',
+      amount: 85000,
+      currency: 'GBP',
+      timestamp: '2026-10-05T10:00:00Z',
+      description: 'October rent settlement',
+    });
+
+    const summaryA = await apiA.getCashflowSummary('default', 'default', 'FAMILY_HOUSEHOLD');
+    const summaryB = await apiB.getCashflowSummary('default', 'default', 'FAMILY_HOUSEHOLD');
+    assert.equal(summaryA.monthlyOutflowBase, summaryB.monthlyOutflowBase);
+    assert.equal(summaryA.runwayMonths, summaryB.runwayMonths);
+  });
 });
 
 describe('calculateBurnRate', () => {

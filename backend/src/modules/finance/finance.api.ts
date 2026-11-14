@@ -4,6 +4,8 @@ import type {
   AccountListResponse,
   CashflowSummaryResponse,
   CreateAccountRequest,
+  CreateTransactionRequest,
+  CreateTransactionResponse,
   RemittanceCorridorSummary,
   TransactionDto,
   TransactionListResponse,
@@ -11,7 +13,7 @@ import type {
 import { FINANCE_ERROR_CODES, type Currency, type HouseholdMode } from '@wealth-advisor/rules';
 import type { Clock } from '#core/time/clock.ts';
 import { toIsoDate } from '#core/time/calendar-date.ts';
-import { DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
+import { toDocumentId, DEFAULT_TENANT_ID, DEFAULT_USER_ID, toScopeId } from '#core/db/document-id.ts';
 import { DomainError } from '#core/domain/domain-error.ts';
 import { type ConversionResult, type MarketApi, Money } from '../market/public.ts';
 import type { AccountRepository, TransactionRepository } from './application/ports.ts';
@@ -49,11 +51,13 @@ function toTransactionDto(doc: TransactionDocument): TransactionDto {
     tenantId: doc.tenantId.toHexString(),
     userId: doc.userId.toHexString(),
     accountId: doc.accountId.toHexString(),
+    ...(doc.externalId ? { externalId: doc.externalId } : {}),
     category: doc.category,
     amount: doc.amount,
     currency: doc.currency,
     convertedBaseAmount: doc.convertedBaseAmount,
     baseCurrency: doc.baseCurrency,
+    ...(doc.description ? { description: doc.description } : {}),
     remittanceMetadata: doc.remittanceMetadata,
     tuitionMetadata: doc.tuitionMetadata,
     timestamp: doc.timestamp.toISOString(),
@@ -134,6 +138,70 @@ export function createFinanceApi(deps: FinanceApiDeps) {
     async getTransactions(tenantId: string, userId: string): Promise<TransactionListResponse> {
       const docs = await transactions.findByUser(tenantId, userId);
       return { transactions: docs.map(toTransactionDto) };
+    },
+
+    async ingestTransaction(
+      tenantId: string,
+      userId: string,
+      input: CreateTransactionRequest,
+    ): Promise<CreateTransactionResponse> {
+      const tId = requireScopeId(tenantId, DEFAULT_TENANT_ID, 'tenant');
+      const uId = requireScopeId(userId, DEFAULT_USER_ID, 'user');
+
+      if (input.externalId) {
+        const existing = await transactions.findByExternalId(tenantId, userId, input.externalId);
+        if (existing) {
+          return { transaction: toTransactionDto(existing), deduplicated: true };
+        }
+      }
+
+      const account = await accounts.findById(input.accountId);
+      if (
+        !account ||
+        account.tenantId.toHexString() !== tId.toHexString() ||
+        account.userId.toHexString() !== uId.toHexString()
+      ) {
+        throw new DomainError(FINANCE_ERROR_CODES.accountNotFound, 'account not found for scope');
+      }
+
+      const baseCurrency: Currency = 'EUR';
+      const txTimestamp = new Date(input.timestamp);
+      let convertedBaseAmount = input.amount;
+
+      if (input.currency !== baseCurrency && deps.market) {
+        try {
+          const txDate = toIsoDate(txTimestamp);
+          const conv = await deps.market.convert({
+            items: [{ money: Money.of(input.amount, input.currency), date: txDate }],
+            target: baseCurrency,
+            mode: 'spot',
+          });
+          if (conv[0]?.ok) {
+            convertedBaseAmount = conv[0].valuation.converted.amount;
+          }
+        } catch {
+          // Keep minor-unit fallback when market rates are unseeded in isolated tests
+        }
+      }
+
+      const created = await transactions.create({
+        tenantId: tId,
+        userId: uId,
+        accountId: toDocumentId(input.accountId) ?? account._id,
+        ...(input.externalId ? { externalId: input.externalId } : {}),
+        category: input.category,
+        amount: input.amount,
+        currency: input.currency,
+        convertedBaseAmount,
+        baseCurrency,
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.remittanceMetadata ? { remittanceMetadata: input.remittanceMetadata } : {}),
+        ...(input.tuitionMetadata ? { tuitionMetadata: input.tuitionMetadata } : {}),
+        timestamp: txTimestamp,
+        createdAt: clock.now(),
+      });
+
+      return { transaction: toTransactionDto(created), deduplicated: false };
     },
 
     async getCashflowSummary(

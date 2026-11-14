@@ -15,5 +15,10 @@ export interface SandboxLedgerDocument {
   auditDigest: string;
   transactionHash: string;
   status: 'COMMITTED' | 'REJECTED';
+  inputs?: Record<string, unknown>;
+  rulesEvaluated?: string[];
+  engineOutputs?: Record<string, unknown>;
+  modelVersion?: string;
+  decision?: 'APPROVED' | 'REJECTED';
   timestamp: Date;
 }

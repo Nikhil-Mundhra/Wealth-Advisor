@@ -32,6 +32,18 @@ export const SandboxLedgerEntryDto = z.object({
   auditDigest: z.string(),
   transactionHash: z.string(),
   status: z.enum(['COMMITTED', 'REJECTED']),
+  inputs: z.record(z.string(), z.unknown()).optional(),
+  rulesEvaluated: z
+    .array(z.string())
+    .default([
+      'TIER_3_PASSKEY_ASSERTION',
+      'PERMITTED_REBALANCE_TARGETS',
+      'NON_NEGATIVE_HOLDINGS',
+      'SELF_FINANCING_PROCEEDS',
+    ]),
+  engineOutputs: z.record(z.string(), z.unknown()).optional(),
+  modelVersion: z.string().default('deterministic-engine-v1'),
+  decision: z.enum(['APPROVED', 'REJECTED']).default('APPROVED'),
   timestamp: z.string(),
 });
 export type SandboxLedgerEntryDto = z.infer<typeof SandboxLedgerEntryDto>;

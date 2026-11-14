@@ -12,6 +12,10 @@
 - responsibility: return the caller's transactions
 - contract: request none, response `TransactionListResponse` 200, errors `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`
 
+## POST /api/finance/transactions
+- responsibility: ingest a transaction event with rational FX base conversion, `externalId` deduplication, and timestamp-ordered storage
+- contract: request `CreateTransactionRequest`, response `CreateTransactionResponse` 201, errors `CORE_INVALID_JSON`, `CORE_VALIDATION_FAILED`, `CORE_IDEMPOTENCY_CONFLICT`, `AU_1005`, `AU_1901`, `FN_1001`, `FN_1900`, `CORE_DB_UNCONFIGURED`; auth required Bearer (`backend/docs/auth-token.md` `requireAuth`): no token or an invalid token → `AU_1005`
+
 ## GET /api/finance/cashflow
 - responsibility: return the caller's monthly inflow, outflow, net cashflow, liquid reserves (accounts valued as in `GET /api/finance/accounts`; unvalued accounts counted in `unvaluedAccountCount`, left out of reserves), runway and the EUR_CNY and GBP_SGD remittance corridors; corridor `lastRate` is the stored ECB rate, 7.82 (EUR_CNY) and 1.71 (GBP_SGD) when none is stored; corridor targets and recipients are fixed values
 - contract: request query `CashflowQuery`, response `CashflowSummaryResponse` 200, errors `CORE_VALIDATION_FAILED`, `AU_1005`, `AU_1901`, `CORE_DB_UNCONFIGURED`; auth optional Bearer (`backend/docs/auth-token.md` `optionalAuth`): no token → demo account; a present but invalid token → `AU_1005`

@@ -12,6 +12,7 @@ export const financeCollections: readonly CollectionDefinition[] = [
     indexes: [
       { key: { tenantId: 1, userId: 1, timestamp: -1 }, name: 'idx_transactions_tenant_user_time' },
       { key: { tenantId: 1, userId: 1, category: 1, timestamp: -1 }, name: 'idx_transactions_category_time' },
+      { key: { tenantId: 1, userId: 1, externalId: 1 }, name: 'idx_transactions_external_id' },
     ],
   },
 ];

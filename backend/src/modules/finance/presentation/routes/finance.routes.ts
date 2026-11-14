@@ -5,6 +5,8 @@ import {
   CashflowQuery,
   CashflowSummaryResponse,
   CreateAccountRequest,
+  CreateTransactionRequest,
+  CreateTransactionResponse,
   TransactionListResponse,
 } from '@wealth-advisor/contracts';
 import { type RouteDefinition, RouteBuilder } from '#core/http/route-builder.ts';
@@ -41,6 +43,15 @@ export function financeRoutes(api: FinanceApi, auth: MiddlewareHandler, writeAut
       .handle(async ({ c }) => {
         const { tenantId, userId } = scope(c);
         return api.getTransactions(tenantId, userId);
+      }),
+
+    RouteBuilder.post('/transactions')
+      .use(writeAuth)
+      .body(CreateTransactionRequest)
+      .responds(CreateTransactionResponse, 201)
+      .handle(async ({ c, body }) => {
+        const { tenantId, userId } = scope(c);
+        return api.ingestTransaction(tenantId, userId, body);
       }),
 
     RouteBuilder.get('/cashflow')

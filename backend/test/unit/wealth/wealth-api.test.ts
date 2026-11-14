@@ -103,6 +103,10 @@ describe('WealthApi', () => {
 
     assert.equal(res.success, true);
     assert.equal(res.ledgerEntry.status, 'COMMITTED');
+    assert.equal(res.ledgerEntry.decision, 'APPROVED');
+    assert.equal(res.ledgerEntry.modelVersion, 'deterministic-engine-v1');
+    assert.ok(res.ledgerEntry.rulesEvaluated?.includes('TIER_3_PASSKEY_ASSERTION'));
+    assert.ok(res.ledgerEntry.engineOutputs);
     assert.ok(res.ledgerEntry.auditDigest.length === 64);
     assert.ok(res.ledgerEntry.transactionHash.startsWith('0x'));
 

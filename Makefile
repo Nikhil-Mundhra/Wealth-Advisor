@@ -11,7 +11,7 @@ RUN_DIR       := .run
 COMPOSE       := PROXY_PORT=$(PROXY_PORT) docker compose --progress quiet -f infra/docker-compose.yml
 DOCKER_UP     := docker info >/dev/null 2>&1
 
-.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e lint ci db-indexes jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
+.PHONY: help install frontend backend dev proxy stop-frontend stop-backend stop-proxy stop restart status logs build prod vercel-dev test test-unit test-property test-contracts test-sla test-ui test-e2e lint ci db-indexes db-migrate jwt-keys seed-demo docs-lint deps-lint typecheck audit check-ai
 
 
 help:  ## List targets
@@ -66,6 +66,9 @@ test: | $(RUN_DIR)  ## Run every workspace's tests with concise terminal output 
 
 db-indexes:  ## Apply collection validators and indexes to MONGODB_URI (deploy step)
 	npm run db:indexes -w backend
+
+db-migrate:  ## Run versioned database migrations against MONGODB_URI or memory store
+	npm run db:migrate -w backend
 
 jwt-keys:  ## Print a new Ed25519 key pair as env lines
 	npm run keys:generate -w backend

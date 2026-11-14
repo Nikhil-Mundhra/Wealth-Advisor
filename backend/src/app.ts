@@ -9,6 +9,7 @@ import { checkDatabase } from '#core/db/connection/database-health.ts';
 import { InProcessEventBus } from '#core/events/event-bus.ts';
 import { createHttpClient } from '#core/http-client/http-client.ts';
 import { createErrorHandler } from '#core/http/error-handler.ts';
+import { createIdempotencyMiddleware } from '#core/http/idempotency.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
 import { getDb } from '#core/db/connection/mongo-client.ts';
@@ -70,11 +71,13 @@ export function createApp(context: ModuleContext): Hono {
     '/api/*',
     cors({
       origin: (origin) => origin || '*',
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
+      exposeHeaders: ['X-Idempotent-Replay'],
       credentials: true,
     }),
   );
+  app.use('/api/*', createIdempotencyMiddleware({ clock: context.clock }));
   app.onError(errorHandler);
   app.route('/api', api);
   return app;

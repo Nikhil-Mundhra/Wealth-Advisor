@@ -62,6 +62,8 @@ backend/test/unit/core/db/with-read-retry.test.ts : retries transient failures o
 backend/test/unit/core/document-id.test.ts : document id and tenant/user scope resolution, including the demo scope key
 backend/test/unit/core/error-catalog.test.ts : code → status mapping, prefix and duplicate checks
 backend/test/unit/core/http-client/http-client.test.ts : status, network, timeout and body failures → transient or fatal; no query string in messages
+backend/test/unit/core/idempotency.test.ts : Idempotency-Key replay headers and 409 conflict on mutated payload
+backend/test/unit/core/migration-runner.test.ts : idempotent versioned database migration execution
 backend/test/unit/core/read-json-body.test.ts : json body parsing, empty body handling, 1MB size limit and 413 CORE_PAYLOAD_TOO_LARGE
 backend/test/unit/core/require-bearer-secret.test.ts : exact bearer passes; wrong, missing, or unset secret → rejected
 backend/test/unit/core/route-builder.test.ts : response contract check returns 500 on violation; query contract parses or 400s

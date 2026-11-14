@@ -70,6 +70,8 @@ backend/src/core/http-client/request-budget-rules.ts : UTC month key and reserva
 backend/src/core/http-client/request-budget.ts : RequestBudget port (reserve provider, count, monthly limit) and store-based factory
 backend/src/core/http-client/request-budgets.schema.ts : request_budgets collection: one counter per provider and month, $jsonSchema
 backend/src/core/http/error-handler.ts : turns AppError, DomainError (status from the catalog) and unknown errors into the error contract
+backend/src/core/http/idempotency-keys.schema.ts : idempotency_keys collection (unique scope, 24h TTL) and $jsonSchema
+backend/src/core/http/idempotency.ts : Idempotency-Key middleware for state-changing routes (replay & 409 conflict)
 backend/src/core/http/read-json-body.ts : reads the request body; empty body becomes {}
 backend/src/core/http/require-bearer-secret.ts : machine-caller middleware: Bearer must equal a shared secret (constant time); unset secret refuses all
 backend/src/core/http/route-builder.ts : fluent route declaration: method → query contract → body contract → middleware → handler → response contract

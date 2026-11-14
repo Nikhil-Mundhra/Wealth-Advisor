@@ -9,5 +9,6 @@ export interface AccountRepository {
 
 export interface TransactionRepository {
   findByUser(tenantId: string, userId: string): Promise<TransactionDocument[]>;
+  findByExternalId(tenantId: string, userId: string, externalId: string): Promise<TransactionDocument | null>;
   create(tx: Omit<TransactionDocument, '_id'>): Promise<TransactionDocument>;
 }

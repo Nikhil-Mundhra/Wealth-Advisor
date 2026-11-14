@@ -9,11 +9,13 @@ export interface TransactionDocument {
   tenantId: ObjectId;
   userId: ObjectId;
   accountId: ObjectId;
+  externalId?: string;
   category: TransactionCategory;
   amount: number; // minor units
   currency: Currency;
   convertedBaseAmount: number; // minor units
   baseCurrency: Currency;
+  description?: string;
   remittanceMetadata?: RemittanceMetadataDto;
   tuitionMetadata?: TuitionMetadataDto;
   timestamp: Date;

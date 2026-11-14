@@ -3,7 +3,10 @@ import { describe, it } from 'node:test';
 import {
   constructOptimalPortfolio,
   CURRENCIES,
+  dampRebalancePortfolio,
+  dampRebalanceWeight,
   HOUSEHOLD_MODES,
+  REBALANCE_DRIFT_THRESHOLD,
   recalibrateRiskScore,
   RISK_TIERS,
 } from '@wealth-advisor/rules';
@@ -232,6 +235,37 @@ describe('L1.5 Property-Based & Formal Regulatory Invariants', () => {
           );
         }
       }
+    }
+  });
+
+  it('damped rebalancing suppresses sub-threshold drift and moves monotonically without overshoot across 50 trials', () => {
+    const rand = mulberry32(808080);
+    for (let i = 0; i < 50; i += 1) {
+      const current = Number((0.1 + rand() * 0.7).toFixed(4));
+      const smallDelta = (rand() - 0.5) * REBALANCE_DRIFT_THRESHOLD * 1.8;
+      const smallTarget = Math.max(0, Math.min(1, Number((current + smallDelta).toFixed(4))));
+      if (Math.abs(smallTarget - current) <= REBALANCE_DRIFT_THRESHOLD) {
+        assert.equal(
+          dampRebalanceWeight(current, smallTarget),
+          current,
+          `case ${i}: expected zero churn inside drift deadband (${current} -> ${smallTarget})`,
+        );
+      }
+
+      const largeDelta = (rand() < 0.5 ? -1 : 1) * (0.02 + rand() * 0.25);
+      const largeTarget = Math.max(0, Math.min(1, Number((current + largeDelta).toFixed(4))));
+      const damped = dampRebalanceWeight(current, largeTarget);
+      const minW = Math.min(current, largeTarget);
+      const maxW = Math.max(current, largeTarget);
+      assert.ok(damped >= minW - 0.0001 && damped <= maxW + 0.0001, `case ${i}: damped ${damped} overshot [${minW}, ${maxW}]`);
+
+      const trio = dampRebalancePortfolio([
+        { currentWeight: 0.5, targetWeight: 0.35 },
+        { currentWeight: 0.3, targetWeight: 0.45 },
+        { currentWeight: 0.2, targetWeight: 0.2 },
+      ]);
+      const sum = trio.reduce((s, w) => s + w, 0);
+      assert.ok(Math.abs(sum - 1.0) <= 0.001, `case ${i}: damped simplex summed to ${sum}`);
     }
   });
 });

@@ -126,6 +126,16 @@ function toLedgerEntryDto(doc: SandboxLedgerDocument): SandboxLedgerEntryDto {
     auditDigest: doc.auditDigest,
     transactionHash: doc.transactionHash,
     status: doc.status,
+    inputs: doc.inputs,
+    rulesEvaluated: doc.rulesEvaluated ?? [
+      'TIER_3_PASSKEY_ASSERTION',
+      'PERMITTED_REBALANCE_TARGETS',
+      'NON_NEGATIVE_HOLDINGS',
+      'SELF_FINANCING_PROCEEDS',
+    ],
+    engineOutputs: doc.engineOutputs,
+    modelVersion: doc.modelVersion ?? 'deterministic-engine-v1',
+    decision: doc.decision ?? (doc.status === 'COMMITTED' ? 'APPROVED' : 'REJECTED'),
     timestamp: doc.timestamp.toISOString(),
   };
 }
@@ -369,6 +379,24 @@ export function createWealthApi(deps: WealthApiDeps) {
         auditDigest,
         transactionHash,
         status: 'COMMITTED',
+        inputs: {
+          orderType,
+          requestedTradeCount: trades.length,
+          baseCurrency: p.baseCurrency,
+        },
+        rulesEvaluated: [
+          'TIER_3_PASSKEY_ASSERTION',
+          'PERMITTED_REBALANCE_TARGETS',
+          'NON_NEGATIVE_HOLDINGS',
+          'SELF_FINANCING_PROCEEDS',
+        ],
+        engineOutputs: {
+          totalValuationBase: p.totalValuationBase,
+          baseRiskScore: p.baseRiskScore,
+          effectiveRiskScore: p.effectiveRiskScore,
+        },
+        modelVersion: 'deterministic-engine-v1',
+        decision: 'APPROVED',
         timestamp: now,
       });
 

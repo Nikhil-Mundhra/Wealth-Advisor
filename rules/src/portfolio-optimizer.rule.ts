@@ -408,3 +408,37 @@ export function constructOptimalPortfolio(
     monteCarlo,
   };
 }
+
+export const REBALANCE_DRIFT_THRESHOLD = 0.005;
+export const REBALANCE_DAMPING_FACTOR = 0.75;
+
+/**
+ * Applies a drift deadband and damping factor so minor signal jitter does not trigger
+ * erratic rebalancing turnover.
+ */
+export function dampRebalanceWeight(
+  currentWeight: number,
+  targetWeight: number,
+  options?: { driftThreshold?: number; dampingFactor?: number },
+): number {
+  const current = Math.max(0, Math.min(1, currentWeight));
+  const target = Math.max(0, Math.min(1, targetWeight));
+  const threshold = options?.driftThreshold ?? REBALANCE_DRIFT_THRESHOLD;
+  const damping = Math.max(0, Math.min(1, options?.dampingFactor ?? REBALANCE_DAMPING_FACTOR));
+  const drift = target - current;
+  if (Math.abs(drift) <= threshold) {
+    return Number(current.toFixed(4));
+  }
+  return Number((current + drift * damping).toFixed(4));
+}
+
+export function dampRebalancePortfolio(
+  weights: ReadonlyArray<{ currentWeight: number; targetWeight: number }>,
+  options?: { driftThreshold?: number; dampingFactor?: number },
+): number[] {
+  if (weights.length === 0) return [];
+  const raw = weights.map((item) => dampRebalanceWeight(item.currentWeight, item.targetWeight, options));
+  const total = raw.reduce((sum, w) => sum + w, 0);
+  if (total <= 0) return raw;
+  return raw.map((w) => Number((w / total).toFixed(4)));
+}

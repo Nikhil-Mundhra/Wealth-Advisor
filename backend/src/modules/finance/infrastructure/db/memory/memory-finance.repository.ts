@@ -154,7 +154,14 @@ export class MemoryTransactionRepository implements TransactionRepository {
   }
 
   async findByUser(tenantId: string, userId: string): Promise<TransactionDocument[]> {
-    return scopedTo(this.transactions.values(), tenantId, userId);
+    return scopedTo(this.transactions.values(), tenantId, userId).sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+    );
+  }
+
+  async findByExternalId(tenantId: string, userId: string, externalId: string): Promise<TransactionDocument | null> {
+    const scoped = scopedTo(this.transactions.values(), tenantId, userId);
+    return scoped.find((tx) => tx.externalId === externalId) ?? null;
   }
 
   async create(tx: Omit<TransactionDocument, '_id'>): Promise<TransactionDocument> {

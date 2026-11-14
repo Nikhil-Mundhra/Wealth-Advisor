@@ -49,6 +49,13 @@ export class MongoTransactionRepository implements TransactionRepository {
       .toArray();
   }
 
+  async findByExternalId(tenantId: string, userId: string, externalId: string): Promise<TransactionDocument | null> {
+    const tId = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const uId = toScopeId(userId, DEFAULT_USER_ID);
+    if (!tId || !uId) return null;
+    return (await this.col()).findOne({ tenantId: tId, userId: uId, externalId });
+  }
+
   async create(tx: Omit<TransactionDocument, '_id'>): Promise<TransactionDocument> {
     const id = new ObjectId();
     const doc: TransactionDocument = { ...tx, _id: id };
