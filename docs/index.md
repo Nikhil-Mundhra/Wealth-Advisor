@@ -7,4 +7,5 @@ docs/deployment-instructions.md : shipping targets, secrets, database, cron, ver
 docs/domain/index.md : advisory domain: pipeline stages, engines and tiers; capability gaps
 docs/implementation-plan.md : phase-wise roadmap for FinTechathon 2026 DEWA agent
 docs/refactor-backlog.md : refactor backlog: open, done, dropped and refused items
+docs/submission/index.md : FinTechathon submission deliverables: presentation deck, demo video script, security self-assessment, and execution evidence
 ```
