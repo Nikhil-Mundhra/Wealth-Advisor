@@ -10,12 +10,12 @@ export function bufferToBase64url(buffer: ArrayBuffer | Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
-export function base64urlToBuffer(base64url: string): Uint8Array {
+export function base64urlToBuffer(base64url: string): Uint8Array<ArrayBuffer> {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const pad = base64.length % 4;
   const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
   const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
+  const bytes = new Uint8Array(new ArrayBuffer(binary.length));
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
@@ -35,14 +35,14 @@ export async function enrollPasskey(deviceName = 'Biometric Sensor (TouchID / Fa
 
       const credential = (await navigator.credentials.create({
         publicKey: {
-          challenge: challengeBuf as any,
+          challenge: challengeBuf,
           rp: options.rp,
           user: {
-            id: userIdBuf as any,
+            id: userIdBuf,
             name: options.user.name,
             displayName: options.user.displayName,
           },
-          pubKeyCredParams: options.pubKeyCredParams as any,
+          pubKeyCredParams: options.pubKeyCredParams.map((p) => ({ type: 'public-key' as const, alg: p.alg })),
           authenticatorSelection: {
             userVerification: 'preferred',
             residentKey: 'preferred',
@@ -54,8 +54,8 @@ export async function enrollPasskey(deviceName = 'Biometric Sensor (TouchID / Fa
       if (credential && 'response' in credential) {
         const resp = credential.response as AuthenticatorAttestationResponse;
         let publicKeySpki: string | undefined;
-        if (typeof (resp as any).getPublicKey === 'function') {
-          const rawKey = (resp as any).getPublicKey();
+        if (typeof resp.getPublicKey === 'function') {
+          const rawKey = resp.getPublicKey();
           if (rawKey) publicKeySpki = bufferToBase64url(rawKey);
         }
 
@@ -92,7 +92,7 @@ export async function enrollPasskey(deviceName = 'Biometric Sensor (TouchID / Fa
 
     const spkiBuffer = await window.crypto.subtle.exportKey('spki', keyPair.publicKey);
     const jwkPrivate = await window.crypto.subtle.exportKey('jwk', keyPair.privateKey);
-    const credId = `passkey_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const credId = `passkey_${globalThis.crypto.randomUUID()}`;
 
     try {
       window.localStorage.setItem(`${LOCAL_KEY_STORAGE}_${credId}`, JSON.stringify(jwkPrivate));
@@ -134,19 +134,19 @@ export async function createPasskeyAssertion(
     credentialId ||
     (typeof window !== 'undefined' ? window.localStorage.getItem(LOCAL_KEY_STORAGE) : null);
 
-  const challenge = serverChallenge ?? `chal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const challenge = serverChallenge ?? `chal_${globalThis.crypto.randomUUID()}`;
 
   // 1. Try Hardware WebAuthn API if supported in browser
   if (typeof window !== 'undefined' && window.PublicKeyCredential && typeof navigator !== 'undefined' && navigator.credentials) {
     try {
       const challengeBuf = base64urlToBuffer(challenge);
       const allowCredentials = activeCredId && activeCredId !== 'demo_passkey_credential'
-        ? [{ id: base64urlToBuffer(activeCredId) as unknown as ArrayBuffer, type: 'public-key' as const }]
+        ? [{ id: base64urlToBuffer(activeCredId), type: 'public-key' as const }]
         : undefined;
 
       const assertion = (await navigator.credentials.get({
         publicKey: {
-          challenge: challengeBuf as unknown as ArrayBuffer,
+          challenge: challengeBuf,
           rpId: window.location.hostname || 'localhost',
           allowCredentials,
           userVerification: 'preferred',

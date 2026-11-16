@@ -1,8 +1,8 @@
-import type { ConstructPortfolioResponse, RiskTierEnum } from '@wealth-advisor/contracts';
-import { CheckCircle2 } from 'lucide-react';
+import type { ConstructPortfolioResponse, RiskTierDto } from '@wealth-advisor/contracts';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { useStrings } from '../../../../lib/dictionaries.ts';
 
-function complianceRows(result: ConstructPortfolioResponse, riskTier: RiskTierEnum, shariaOnly: boolean, strings: ReturnType<typeof useStrings>) {
+function complianceRows(result: ConstructPortfolioResponse, riskTier: RiskTierDto, shariaOnly: boolean, strings: ReturnType<typeof useStrings>) {
   const checks = result.complianceChecks;
   return [
     {
@@ -38,7 +38,11 @@ function complianceRows(result: ConstructPortfolioResponse, riskTier: RiskTierEn
 function ComplianceRow({ title, body, passed }: { title: string; body: string; passed: boolean }) {
   return (
     <div className="flex items-start gap-3 p-2.5 rounded bg-surface-subtle">
-      <CheckCircle2 className={`size-4 mt-0.5 ${passed ? 'text-emerald-600' : 'text-danger'}`} />
+      {passed ? (
+        <CheckCircle2 aria-hidden="true" className="size-4 mt-0.5 text-emerald-600" />
+      ) : (
+        <XCircle aria-hidden="true" className="size-4 mt-0.5 text-danger" />
+      )}
       <div className="text-xs">
         <span className="font-semibold text-ink block">{title}</span>
         <span className="text-subtle">{body}</span>
@@ -53,7 +57,7 @@ export function ComplianceTab({
   shariaOnly,
 }: {
   result: ConstructPortfolioResponse;
-  riskTier: RiskTierEnum;
+  riskTier: RiskTierDto;
   shariaOnly: boolean;
 }) {
   const strings = useStrings();

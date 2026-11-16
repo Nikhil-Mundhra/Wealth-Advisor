@@ -1,5 +1,5 @@
 import { ArrowRight, BookOpen, ChevronDown, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import logoImg from '../../../assets/logo.png';
 import logoDarkImg from '../../../assets/logo-dark.png';
@@ -14,8 +14,27 @@ interface HomepageNavProps {
 export function HomepageNav({ onNavigateSection }: HomepageNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [docsDropdownOpen, setDocsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const sessionStatus = useSessionStatus();
   const isAuthenticated = sessionStatus === 'authenticated';
+
+  useEffect(() => {
+    if (!docsDropdownOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDocsDropdownOpen(false);
+    };
+    const handlePointerDown = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDocsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [docsDropdownOpen]);
 
   const navigateTo = (id: string, subtab?: string) => {
     setMobileMenuOpen(false);
@@ -69,7 +88,7 @@ export function HomepageNav({ onNavigateSection }: HomepageNavProps) {
           </button>
 
           {/* Documentation Dropdown */}
-          <div className="relative">
+          <div ref={dropdownRef} className="relative">
             <button
               type="button"
               onClick={() => setDocsDropdownOpen((open) => !open)}

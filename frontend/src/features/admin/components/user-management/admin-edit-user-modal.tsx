@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 import {
   type AdminUserDto,
   type TenantDto,
@@ -37,8 +38,6 @@ export function AdminEditUserModal({
 
   const isSelf = user ? user.id === currentUserId : false;
 
-  const [selectedRole, setSelectedRole] = useState<'USER' | 'ADVISOR' | 'ADMIN'>('USER');
-
   const {
     register,
     handleSubmit,
@@ -46,8 +45,8 @@ export function AdminEditUserModal({
     watch,
     setValue,
     formState: { errors },
-  } = useForm<UpdateAdminUserRequest>({
-    resolver: zodResolver(UpdateAdminUserRequest) as any,
+  } = useForm<z.input<typeof UpdateAdminUserRequest>, unknown, UpdateAdminUserRequest>({
+    resolver: zodResolver(UpdateAdminUserRequest),
     defaultValues: {
       displayName: '',
       roles: ['USER'],
@@ -64,7 +63,6 @@ export function AdminEditUserModal({
         : user.roles.includes('ADVISOR')
         ? 'ADVISOR'
         : 'USER';
-      setSelectedRole(primaryRole);
       reset({
         displayName: user.displayName || '',
         roles: primaryRole === 'ADMIN' ? ['USER', 'ADMIN'] : primaryRole === 'ADVISOR' ? ['USER', 'ADVISOR'] : ['USER'],
@@ -87,30 +85,30 @@ export function AdminEditUserModal({
     try {
       setSubmitting(true);
       setServerError(null);
-      const computedRoles = selectedRole === 'ADMIN'
-        ? ['USER', 'ADMIN']
-        : selectedRole === 'ADVISOR'
-        ? ['USER', 'ADVISOR']
-        : ['USER'];
-
       await onSubmit(user.id, {
         displayName: data.displayName?.trim() || null,
-        roles: computedRoles as any,
+        roles: data.roles,
         status: data.status,
         tenantId: data.tenantId || null,
         emailVerified: data.emailVerified,
       });
       handleClose();
-    } catch (err: any) {
-      setServerError(err.message || 'Could not update user account.');
+    } catch (err: unknown) {
+      setServerError(err instanceof Error ? err.message : 'Could not update user account.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!user) return null;
-
+  const watchedRoles = watch('roles') ?? ['USER'];
+  const selectedRole: 'USER' | 'ADVISOR' | 'ADMIN' = watchedRoles.includes('ADMIN')
+    ? 'ADMIN'
+    : watchedRoles.includes('ADVISOR')
+    ? 'ADVISOR'
+    : 'USER';
   const emailVerified = watch('emailVerified');
+
+  if (!user) return null;
 
   return (
     <Dialog open={open} onClose={handleClose} title={strings['admin.users.edit']} className="max-w-lg">
@@ -140,7 +138,12 @@ export function AdminEditUserModal({
               id="edit-user-role"
               disabled={isSelf}
               value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value as any)}
+              onChange={(e) => {
+                const role = e.target.value as 'USER' | 'ADVISOR' | 'ADMIN';
+                const nextRoles: Array<'USER' | 'ADVISOR' | 'ADMIN'> =
+                  role === 'ADMIN' ? ['USER', 'ADMIN'] : role === 'ADVISOR' ? ['USER', 'ADVISOR'] : ['USER'];
+                setValue('roles', nextRoles, { shouldValidate: true, shouldDirty: true });
+              }}
               className="h-11 rounded-field border border-line bg-surface px-3 text-sm text-ink disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-brand-600"
             >
               <option value="USER">USER (Client)</option>

@@ -1,4 +1,4 @@
-import type { Currency } from '@wealth-advisor/rules';
+import { isCurrency, type Currency } from '@wealth-advisor/rules';
 import { FxRate } from '../../domain/fx-rate.vo.ts';
 
 const MOCK_EUR_RATES: Readonly<Record<string, number>> = {
@@ -8,7 +8,7 @@ const MOCK_EUR_RATES: Readonly<Record<string, number>> = {
   CNY: 7.82,
   AED: 3.97,
   INR: 90.5,
-  CHF: 0.94,
+  HKD: 8.41,
   JPY: 162.5,
 };
 
@@ -19,7 +19,7 @@ const MOCK_EUR_RATES: Readonly<Record<string, number>> = {
 export function buildMockFxRates(base: Currency, date: string): Array<{ quote: Currency; rate: number; date: string; source: string }> {
   const basePerEur = base === 'EUR' ? 1 : (MOCK_EUR_RATES[base] ?? 1);
   return Object.entries(MOCK_EUR_RATES)
-    .filter(([quote]) => quote !== base)
+    .filter(([quote]) => quote !== base && isCurrency(quote))
     .map(([quote, eurToQuote]) => {
       const rate = Number((eurToQuote / basePerEur).toFixed(4));
       return {

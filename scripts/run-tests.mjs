@@ -64,8 +64,8 @@ function parseFrontend(output) {
   const testsMatch = output.match(/Tests\s+([^\n]+)/);
   const durationMatch = output.match(/Duration\s+([0-9.]+[a-z]+)/);
 
-  const filesStr = filesMatch ? filesMatch[1].trim() : '32 passed';
-  const testsStr = testsMatch ? testsMatch[1].trim() : '96 passed';
+  const filesStr = filesMatch ? filesMatch[1].trim() : '0 passed';
+  const testsStr = testsMatch ? testsMatch[1].trim() : '0 passed';
   const duration = durationMatch ? durationMatch[1] : '';
 
   const passedTests = testsStr.match(/(\d+)\s+passed/)?.[1] ?? '0';

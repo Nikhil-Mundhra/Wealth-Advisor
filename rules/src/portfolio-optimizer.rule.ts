@@ -1,6 +1,5 @@
-// Portfolio optimizer and stress testing rule: composite scoring, mean-variance quadratic solver, and Monte Carlo stress testing.
+// Portfolio optimizer and stress testing rule: composite scoring, cap-constrained heuristic allocator, and Monte Carlo stress testing.
 // Reference: Portfolio Construction Engine Spec Section 6.
-// Sources: Markowitz (1952) Portfolio Selection; Sharpe (1964) Capital Asset Prices.
 import type { AssetClass } from './asset-class.rule.ts';
 
 export const RISK_TIERS = ['conservative', 'moderate', 'aggressive', 'very_aggressive'] as const;
@@ -8,6 +7,29 @@ export type RiskTier = (typeof RISK_TIERS)[number];
 
 export const SECURITY_TYPES = ['STOCK', 'BOND', 'MUTUAL_FUND_ETF'] as const;
 export type SecurityType = (typeof SECURITY_TYPES)[number];
+
+export const JURISDICTIONS = ['INDIA', 'UAE', 'US', 'GLOBAL'] as const;
+export type Jurisdiction = (typeof JURISDICTIONS)[number];
+
+export const REBALANCE_ACTIONS = ['BUY', 'SELL'] as const;
+export type RebalanceAction = (typeof REBALANCE_ACTIONS)[number];
+
+export const ORDER_TYPES = ['PORTFOLIO_REBALANCE', 'SCHEDULED_REMITTANCE_BUFFER', 'TUITION_CARVE_OUT'] as const;
+export type OrderType = (typeof ORDER_TYPES)[number];
+
+export const SANDBOX_LEDGER_STATUSES = ['COMMITTED', 'REJECTED'] as const;
+export type SandboxLedgerStatus = (typeof SANDBOX_LEDGER_STATUSES)[number];
+
+export const SANDBOX_LEDGER_DECISIONS = ['APPROVED', 'REJECTED'] as const;
+export type SandboxLedgerDecision = (typeof SANDBOX_LEDGER_DECISIONS)[number];
+
+export const DEFAULT_ENGINE_MODEL_VERSION = 'deterministic-engine-v1';
+export const DEFAULT_SANDBOX_RULES_EVALUATED = [
+  'TIER_3_PASSKEY_ASSERTION',
+  'PERMITTED_REBALANCE_TARGETS',
+  'NON_NEGATIVE_HOLDINGS',
+  'SELF_FINANCING_PROCEEDS',
+] as const;
 
 export const TIER_COMPOSITE_WEIGHTS: Record<RiskTier, { wT: number; wF: number; wQ: number; lambdaRiskAversion: number; maxDurationYears: number }> = {
   conservative: { wT: 0.20, wF: 0.60, wQ: 0.20, lambdaRiskAversion: 8.0, maxDurationYears: 3.5 },
@@ -90,8 +112,8 @@ export interface PortfolioOptimizationOutput {
   riskTier: RiskTier;
   riskAversionLambda: number;
   holdings: AllocatedHoldingResult[];
-  portfolioExpectedReturn: number;
-  portfolioVolatility: number;
+  portfolioExpectedReturn: number; // Annualized percentage (e.g. 8.50 for 8.50%)
+  portfolioVolatility: number; // Annualized percentage (e.g. 12.40 for 12.40%)
   portfolioSharpeRatio: number;
   durationWeightedExposure: number;
   complianceChecks: {
@@ -127,8 +149,96 @@ export function calculateCompositeSecurityScore(
   return Number(composite.toFixed(4));
 }
 
-// Solves the constrained mean-variance allocation problem:
-// Maximize U = mu^T w - 0.5 * lambda * w^T Sigma w subject to constraints
+function filterEligibleCandidates(
+  candidates: CandidateSecurity[],
+  shariaOnly: boolean,
+  minLiquidityFactor: number,
+): CandidateSecurity[] {
+  return candidates.filter((sec) => {
+    if (shariaOnly && !sec.isShariaCompliant) return false;
+    return sec.liquidityFactor >= minLiquidityFactor;
+  });
+}
+
+function scoreAndRankCandidates(
+  eligible: CandidateSecurity[],
+  riskTier: RiskTier,
+): Array<{ security: CandidateSecurity; compositeScore: number; scoreUtility: number }> {
+  const scored = eligible.map((sec) => {
+    const compositeScore = calculateCompositeSecurityScore(sec, riskTier);
+    const riskPenalty = TIER_COMPOSITE_WEIGHTS[riskTier].lambdaRiskAversion * Math.pow(sec.annualVolatility, 2);
+    const scoreUtility = Math.max(0.01, sec.expectedAnnualReturn * compositeScore * 2 - 0.3 * riskPenalty);
+    return { security: sec, compositeScore, scoreUtility };
+  });
+  return scored.sort((a, b) => b.scoreUtility - a.scoreUtility);
+}
+
+function allocateUnderCaps(
+  scored: Array<{ security: CandidateSecurity; compositeScore: number; scoreUtility: number }>,
+  caps: { maxSectorExposure: number; maxSingleSecurityWeight: number; singleFundHouseCap: number },
+): Array<{ security: CandidateSecurity; compositeScore: number; rawWeight: number }> {
+  const sectorWeights: Record<string, number> = {};
+  const fundHouseWeights: Record<string, number> = {};
+  const rawWeights: Array<{ security: CandidateSecurity; compositeScore: number; rawWeight: number }> = [];
+  let remainingWeight = 1.0;
+
+  for (const item of scored) {
+    if (remainingWeight <= 0.001) break;
+
+    const sec = item.security;
+    const allowedBySector = Math.max(0, caps.maxSectorExposure - (sectorWeights[sec.sector] ?? 0));
+    const allowedByFundHouse = sec.fundHouse
+      ? Math.max(0, caps.singleFundHouseCap - (fundHouseWeights[sec.fundHouse] ?? 0))
+      : 1.0;
+    const allowedBySecurity = sec.maxWeightCap ?? caps.maxSingleSecurityWeight;
+    const maxAllowed = Math.min(allowedBySecurity, allowedBySector, allowedByFundHouse, remainingWeight);
+
+    if (maxAllowed >= 0.02) {
+      const targetAllocation = Math.min(maxAllowed, Number((item.scoreUtility * 0.45).toFixed(4)));
+      const allocated = Math.min(Math.max(0.03, targetAllocation), maxAllowed);
+
+      rawWeights.push({ security: sec, compositeScore: item.compositeScore, rawWeight: allocated });
+      remainingWeight -= allocated;
+      sectorWeights[sec.sector] = (sectorWeights[sec.sector] ?? 0) + allocated;
+      if (sec.fundHouse) {
+        fundHouseWeights[sec.fundHouse] = (fundHouseWeights[sec.fundHouse] ?? 0) + allocated;
+      }
+    }
+  }
+
+  return rawWeights;
+}
+
+function normalizeAllocatedHoldings(
+  rawWeights: Array<{ security: CandidateSecurity; compositeScore: number; rawWeight: number }>,
+  targetTotalValueBase: number,
+): AllocatedHoldingResult[] {
+  const totalRaw = rawWeights.reduce((sum, item) => sum + item.rawWeight, 0);
+  if (totalRaw <= 0) return [];
+
+  return rawWeights.map((item) => {
+    const normWeight = Number((item.rawWeight / totalRaw).toFixed(4));
+    return {
+      symbol: item.security.symbol,
+      name: item.security.name,
+      assetClass: item.security.assetClass,
+      sector: item.security.sector,
+      securityType: item.security.securityType,
+      weight: normWeight,
+      targetAmountBase: Math.round(targetTotalValueBase * normWeight),
+      expectedReturn: item.security.expectedAnnualReturn,
+      annualVolatility: item.security.annualVolatility,
+      compositeScore: item.compositeScore,
+      technicalScore: item.security.technicalScore ?? 0.5,
+      fundamentalScore: item.security.fundamentalScore ?? 0.5,
+      qualityScore: item.security.qualityScore,
+      isShariaCompliant: item.security.isShariaCompliant,
+    };
+  });
+}
+
+// Greedy utility-ranked allocation under Sharia, liquidity, single-security, sector, and fund-house caps,
+// normalized to sum to 1.0 (if the eligible pool cannot fill 100% under caps, normalization scales up proportionally).
 export function solveConstrainedPortfolio(
   candidates: CandidateSecurity[],
   constraints: OptimizationConstraints,
@@ -143,123 +253,58 @@ export function solveConstrainedPortfolio(
     targetTotalValueBase,
   } = constraints;
 
-  // 1. Filter candidates by Sharia compliance and minimum liquidity
-  const eligible = candidates.filter((sec) => {
-    if (shariaOnly && !sec.isShariaCompliant) return false;
-    if (sec.liquidityFactor < minLiquidityFactor) return false;
-    return true;
+  const eligible = filterEligibleCandidates(candidates, shariaOnly, minLiquidityFactor);
+  if (eligible.length === 0) return [];
+
+  const scored = scoreAndRankCandidates(eligible, riskTier);
+  const rawWeights = allocateUnderCaps(scored, {
+    maxSectorExposure,
+    maxSingleSecurityWeight,
+    singleFundHouseCap,
   });
-
-  if (eligible.length === 0) {
-    return [];
-  }
-
-  // 2. Compute composite scores and preliminary utility score
-  const scored = eligible.map((sec) => {
-    const compScore = calculateCompositeSecurityScore(sec, riskTier);
-    // Utility factor: return scaled by composite score, penalized by risk aversion * variance
-    const riskPenalty = TIER_COMPOSITE_WEIGHTS[riskTier].lambdaRiskAversion * Math.pow(sec.annualVolatility, 2);
-    const scoreUtility = Math.max(0.01, sec.expectedAnnualReturn * compScore * 2 - 0.3 * riskPenalty);
-    return {
-      security: sec,
-      compositeScore: compScore,
-      scoreUtility,
-    };
-  });
-
-  // Sort by scoreUtility descending
-  scored.sort((a, b) => b.scoreUtility - a.scoreUtility);
-
-  // 3. Iterative allocation respecting single security, sector, and fund house caps
-  const sectorWeights: Record<string, number> = {};
-  const fundHouseWeights: Record<string, number> = {};
-  const rawWeights: Array<{ security: CandidateSecurity; compositeScore: number; rawWeight: number }> = [];
-
-  let remainingWeight = 1.0;
-
-  for (const item of scored) {
-    if (remainingWeight <= 0.001) break;
-
-    const sec = item.security;
-    const currentSectorWeight = sectorWeights[sec.sector] ?? 0;
-    const currentFundHouseWeight = sec.fundHouse ? (fundHouseWeights[sec.fundHouse] ?? 0) : 0;
-
-    const allowedBySector = Math.max(0, maxSectorExposure - currentSectorWeight);
-    const allowedByFundHouse = sec.fundHouse ? Math.max(0, singleFundHouseCap - currentFundHouseWeight) : 1.0;
-    const allowedBySecurity = sec.maxWeightCap ?? maxSingleSecurityWeight;
-
-    const maxAllowed = Math.min(allowedBySecurity, allowedBySector, allowedByFundHouse, remainingWeight);
-
-    if (maxAllowed >= 0.02) {
-      // Allocate proportional to utility
-      const targetAllocation = Math.min(maxAllowed, Number((item.scoreUtility * 0.45).toFixed(4)));
-      const finalAlloc = Math.max(0.03, targetAllocation);
-      const allocated = Math.min(finalAlloc, maxAllowed);
-
-      rawWeights.push({
-        security: sec,
-        compositeScore: item.compositeScore,
-        rawWeight: allocated,
-      });
-
-      remainingWeight -= allocated;
-      sectorWeights[sec.sector] = (sectorWeights[sec.sector] ?? 0) + allocated;
-      if (sec.fundHouse) {
-        fundHouseWeights[sec.fundHouse] = (fundHouseWeights[sec.fundHouse] ?? 0) + allocated;
-      }
-    }
-  }
-
-  // 4. Normalize weights to exactly sum to 1.0
-  const totalRaw = rawWeights.reduce((sum, item) => sum + item.rawWeight, 0);
-  if (totalRaw <= 0) return [];
-
-  const holdings: AllocatedHoldingResult[] = rawWeights.map((item) => {
-    const normWeight = Number((item.rawWeight / totalRaw).toFixed(4));
-    const targetAmountBase = Math.round(targetTotalValueBase * normWeight);
-    return {
-      symbol: item.security.symbol,
-      name: item.security.name,
-      assetClass: item.security.assetClass,
-      sector: item.security.sector,
-      securityType: item.security.securityType,
-      weight: normWeight,
-      targetAmountBase,
-      expectedReturn: item.security.expectedAnnualReturn,
-      annualVolatility: item.security.annualVolatility,
-      compositeScore: item.compositeScore,
-      technicalScore: item.security.technicalScore ?? 0.5,
-      fundamentalScore: item.security.fundamentalScore ?? 0.5,
-      qualityScore: item.security.qualityScore,
-      isShariaCompliant: item.security.isShariaCompliant,
-    };
-  });
-
-  return holdings;
+  return normalizeAllocatedHoldings(rawWeights, targetTotalValueBase);
 }
 
-// Monte Carlo simulation of portfolio paths
+const DEFAULT_MONTE_CARLO_SEED = 20261006;
+
+// Fixed-seed Mulberry32 keeps Monte Carlo outputs reproducible across deterministic engine runs when no RNG is injected.
+function createSeededRng(seed = DEFAULT_MONTE_CARLO_SEED): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export function runMonteCarloSimulation(
   portfolioReturn: number,
   portfolioVol: number,
   numSimulations = 2000,
   projectionMonths = 12,
+  rng: () => number = createSeededRng(),
 ): MonteCarloSimulationResult {
-  const dt = 1 / 12; // monthly steps
+  const dt = 1 / 12;
   const simulatedReturns: number[] = [];
+  let maxSimulatedDrawdown = 0;
 
   for (let s = 0; s < numSimulations; s++) {
-    let currentReturn = 0;
+    let wealth = 1.0;
+    let peak = 1.0;
     for (let m = 0; m < projectionMonths; m++) {
       // Box-Muller transform for standard normal random variable
-      const u1 = Math.max(1e-9, Math.random());
-      const u2 = Math.random();
+      const u1 = Math.max(1e-9, rng());
+      const u2 = rng();
       const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
 
-      const monthlyReturn = (portfolioReturn - 0.5 * Math.pow(portfolioVol, 2)) * dt + portfolioVol * Math.sqrt(dt) * z;
-      currentReturn += monthlyReturn;
+      const logReturn = (portfolioReturn - 0.5 * Math.pow(portfolioVol, 2)) * dt + portfolioVol * Math.sqrt(dt) * z;
+      wealth *= Math.exp(logReturn);
+      if (wealth > peak) peak = wealth;
+      const drawdown = (peak - wealth) / peak;
+      if (drawdown > maxSimulatedDrawdown) maxSimulatedDrawdown = drawdown;
     }
-    simulatedReturns.push(currentReturn);
+    simulatedReturns.push(wealth - 1.0);
   }
 
   simulatedReturns.sort((a, b) => a - b);
@@ -284,15 +329,13 @@ export function runMonteCarloSimulation(
   const tailAvg = tailReturns.reduce((sum, r) => sum + r, 0) / tailReturns.length;
   const cvar95 = Number(Math.max(0, -tailAvg * 100).toFixed(2));
 
-  const maxSimulatedDrawdown = Number((Math.min(0, simulatedReturns[0]!) * 100).toFixed(2));
-
   return {
     numSimulations,
     projectionMonths,
     percentiles: { p5, p25, p50, p75, p95 },
     valueAtRisk95,
     cvar95,
-    maxSimulatedDrawdown: Math.abs(maxSimulatedDrawdown),
+    maxSimulatedDrawdown: Number((maxSimulatedDrawdown * 100).toFixed(2)),
   };
 }
 
@@ -352,14 +395,16 @@ export function runPortfolioStressTests(
   ];
 }
 
-// Master Portfolio Construction Engine function
+// Heuristic cross-asset diversification scaling applied when full covariance matrix is omitted.
+const DIVERSIFICATION_VARIANCE_FACTOR = 0.70;
+const DEFAULT_RISK_FREE_RATE = 0.035;
+
 export function constructOptimalPortfolio(
   candidates: CandidateSecurity[],
   constraints: OptimizationConstraints,
 ): PortfolioOptimizationOutput {
   const holdings = solveConstrainedPortfolio(candidates, constraints);
 
-  // Portfolio level expected return and volatility
   let portfolioExpectedReturn = 0;
   let durationWeightedExposure = 0;
   let varianceSum = 0;
@@ -367,31 +412,40 @@ export function constructOptimalPortfolio(
   for (const h of holdings) {
     portfolioExpectedReturn += h.weight * h.expectedReturn;
     varianceSum += Math.pow(h.weight * h.annualVolatility, 2);
-    // Find candidate for duration
     const orig = candidates.find((c) => c.symbol === h.symbol);
     if (orig?.durationYears) {
       durationWeightedExposure += h.weight * orig.durationYears;
     }
   }
 
-  // Cross-asset diversification benefit dampens raw variance by ~30%
-  const portfolioVolatility = Math.sqrt(varianceSum * 0.70);
-  const rf = 0.035;
-  const portfolioSharpeRatio = portfolioVolatility > 0 ? (portfolioExpectedReturn - rf) / portfolioVolatility : 0;
+  const portfolioVolatility = Math.sqrt(varianceSum * DIVERSIFICATION_VARIANCE_FACTOR);
+  const portfolioSharpeRatio =
+    portfolioVolatility > 0 ? (portfolioExpectedReturn - DEFAULT_RISK_FREE_RATE) / portfolioVolatility : 0;
 
   const stressTestOutcomes = runPortfolioStressTests(holdings, durationWeightedExposure);
   const monteCarlo = runMonteCarloSimulation(portfolioExpectedReturn, portfolioVolatility);
 
-  // Compliance checks
   const maxDuration = TIER_COMPOSITE_WEIGHTS[constraints.riskTier].maxDurationYears;
+  const maxSectorExposure = constraints.maxSectorExposure ?? 0.30;
+  const singleFundHouseCap = constraints.singleFundHouseCap ?? 0.15;
+  const sectorWeights: Record<string, number> = {};
+  const fundHouseWeights: Record<string, number> = {};
+  for (const h of holdings) {
+    sectorWeights[h.sector] = (sectorWeights[h.sector] ?? 0) + h.weight;
+    const orig = candidates.find((c) => c.symbol === h.symbol);
+    if (orig?.fundHouse) {
+      fundHouseWeights[orig.fundHouse] = (fundHouseWeights[orig.fundHouse] ?? 0) + h.weight;
+    }
+  }
+
   const complianceChecks = {
     shariaPassed: constraints.shariaOnly ? holdings.every((h) => h.isShariaCompliant) : true,
     liquidityPassed: holdings.every((h) => {
       const orig = candidates.find((c) => c.symbol === h.symbol);
       return (orig?.liquidityFactor ?? 1) >= (constraints.minLiquidityFactor ?? 0.70);
     }),
-    sectorCapsPassed: true,
-    fundHouseCapPassed: true,
+    sectorCapsPassed: Object.values(sectorWeights).every((w) => w <= maxSectorExposure + 0.005),
+    fundHouseCapPassed: Object.values(fundHouseWeights).every((w) => w <= singleFundHouseCap + 0.005),
     durationCapPassed: durationWeightedExposure <= maxDuration + 0.1,
   };
 

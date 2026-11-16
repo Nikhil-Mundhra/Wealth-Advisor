@@ -1,13 +1,21 @@
 import { z } from 'zod';
+import {
+  DEFAULT_ENGINE_MODEL_VERSION,
+  DEFAULT_SANDBOX_RULES_EVALUATED,
+  ORDER_TYPES,
+  REBALANCE_ACTIONS,
+  SANDBOX_LEDGER_DECISIONS,
+  SANDBOX_LEDGER_STATUSES,
+  type OrderType,
+} from '@wealth-advisor/rules';
 
-export const ORDER_TYPES = ['PORTFOLIO_REBALANCE', 'SCHEDULED_REMITTANCE_BUFFER', 'TUITION_CARVE_OUT'] as const;
-export type OrderType = (typeof ORDER_TYPES)[number];
+export { ORDER_TYPES, type OrderType };
 
 export const ExecutedTradeDto = z.object({
   assetSymbol: z.string(),
-  action: z.enum(['BUY', 'SELL']),
+  action: z.enum(REBALANCE_ACTIONS),
   amountBase: z.number().int(),
-  targetWeight: z.number(),
+  targetWeight: z.number().min(0).max(1),
 });
 export type ExecutedTradeDto = z.infer<typeof ExecutedTradeDto>;
 
@@ -31,19 +39,12 @@ export const SandboxLedgerEntryDto = z.object({
   passkeyAssertionProof: PasskeyProofDto,
   auditDigest: z.string(),
   transactionHash: z.string(),
-  status: z.enum(['COMMITTED', 'REJECTED']),
+  status: z.enum(SANDBOX_LEDGER_STATUSES),
   inputs: z.record(z.string(), z.unknown()).optional(),
-  rulesEvaluated: z
-    .array(z.string())
-    .default([
-      'TIER_3_PASSKEY_ASSERTION',
-      'PERMITTED_REBALANCE_TARGETS',
-      'NON_NEGATIVE_HOLDINGS',
-      'SELF_FINANCING_PROCEEDS',
-    ]),
+  rulesEvaluated: z.array(z.string()).default([...DEFAULT_SANDBOX_RULES_EVALUATED]),
   engineOutputs: z.record(z.string(), z.unknown()).optional(),
-  modelVersion: z.string().default('deterministic-engine-v1'),
-  decision: z.enum(['APPROVED', 'REJECTED']).default('APPROVED'),
+  modelVersion: z.string().default(DEFAULT_ENGINE_MODEL_VERSION),
+  decision: z.enum(SANDBOX_LEDGER_DECISIONS).default('APPROVED'),
   timestamp: z.string(),
 });
 export type SandboxLedgerEntryDto = z.infer<typeof SandboxLedgerEntryDto>;

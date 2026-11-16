@@ -24,7 +24,7 @@ import { AiSettingsPage } from './routes/ai-settings-page.tsx';
 import { RouteErrorBoundary } from './routes/route-error-boundary.tsx';
 import { SharedPlanPage } from './routes/shared-plan-page.tsx';
 import { SignupPage } from './routes/signup-page.tsx';
-import { AppShell } from '../components/layout/app-shell.tsx';
+import { AppShell } from './app-shell.tsx';
 
 export const router = createBrowserRouter([
   { path: '/home', element: <HomePage />, errorElement: <RouteErrorBoundary /> },

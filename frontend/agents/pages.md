@@ -16,6 +16,8 @@ frontend/public/favicon-32x32.png : standard transparent favicon for browser tab
 frontend/public/favicon.png : high-DPI transparent browser favicon (64x64)
 frontend/public/logo.png : transparent brand logo asset for public web use
 frontend/public/og-image.jpg : Open Graph and Twitter social link preview image (1024x576)
+frontend/src/app/app-shell.test.tsx : page body with sidebar and bottom-tab links
+frontend/src/app/app-shell.tsx : signed-in frame: header, desktop sidebar, mobile bottom tabs
 frontend/src/app/route-guards.test.tsx : admins pass, other roles redirect home
 frontend/src/app/route-guards.tsx : ProtectedRoute and GuestRoute redirects by session status; AdminRoute checks the admin role
 frontend/src/app/router.tsx : route table: /home (public); /signup, /login, /admin/login, /advisor/login (guest); / (root HomePage or Dashboard); /onboarding /portfolio /cashflow /advisory /evidence /settings/security /settings/ledger /settings/ai /admin* (protected); /share/:token (public)
@@ -62,6 +64,7 @@ frontend/src/app/routes/settings-nav.tsx : settings subnavigation tabs between S
 frontend/src/app/routes/shared-plan-page.test.tsx : privacy masking toggle
 frontend/src/app/routes/shared-plan-page.tsx : public read-only strategy view with privacy masking
 frontend/src/app/routes/signup-page.tsx : signup page: highlight panel + signup form
+frontend/src/app/routes/use-launch-demo-session.ts : hook launching a demo persona session and recording admin acting state
 frontend/src/assets/advisor-meeting.jpg : advisor and client strategic consultation photo
 frontend/src/assets/auth-portrait-1.jpg : auth panel portrait photo 1 (skyline advisor analysis)
 frontend/src/assets/auth-portrait-2.jpg : auth panel portrait photo 2 (accounting & financial statements)

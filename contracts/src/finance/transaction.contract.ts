@@ -1,17 +1,7 @@
 import { z } from 'zod';
-import { CURRENCIES } from '@wealth-advisor/rules';
+import { CURRENCIES, TRANSACTION_CATEGORIES, type TransactionCategory } from '@wealth-advisor/rules';
 
-export const TRANSACTION_CATEGORIES = [
-  'INCOME_SALARY',
-  'INCOME_FREELANCE',
-  'BILL_HOUSING',
-  'BILL_UTILITIES',
-  'EXPENSE_DISCRETIONARY',
-  'FAMILY_REMITTANCE',
-  'TUITION_FEE',
-  'FX_CONVERSION',
-] as const;
-export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
+export { TRANSACTION_CATEGORIES, type TransactionCategory };
 
 export const RemittanceMetadataDto = z.object({
   recipientCountry: z.string(),

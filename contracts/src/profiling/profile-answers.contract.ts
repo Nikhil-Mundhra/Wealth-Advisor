@@ -15,7 +15,8 @@ export const HoldingBucketSchema = z.object({
   amount: z.number().min(0, { message: K.profilingAmountNegative }),
   currency: CurrencyField,
 });
-export type HoldingBucket = z.infer<typeof HoldingBucketSchema>;
+export type HoldingBucketSchema = z.infer<typeof HoldingBucketSchema>;
+export type HoldingBucket = HoldingBucketSchema;
 
 export const ProfilingHoldingsSchema = z.object({
   cashSavings: HoldingBucketSchema,
@@ -23,20 +24,23 @@ export const ProfilingHoldingsSchema = z.object({
   retirementPension: HoldingBucketSchema,
   otherAssets: HoldingBucketSchema,
 });
-export type ProfilingHoldings = z.infer<typeof ProfilingHoldingsSchema>;
+export type ProfilingHoldingsSchema = z.infer<typeof ProfilingHoldingsSchema>;
+export type ProfilingHoldings = ProfilingHoldingsSchema;
 
 export const CorridorCountriesSchema = z.object({
   residence: z.string().min(1, { message: K.profilingResidenceRequired }),
   incomeSources: z.array(z.string()),
   remittanceDestinations: z.array(z.string()),
 });
-export type CorridorCountries = z.infer<typeof CorridorCountriesSchema>;
+export type CorridorCountriesSchema = z.infer<typeof CorridorCountriesSchema>;
+export type CorridorCountries = CorridorCountriesSchema;
 
 export const ProfilingGoalsSchema = z.object({
   tags: z.array(z.enum(PROFILING_GOAL_TAGS)),
   notes: z.string().max(500).default(''),
 });
-export type ProfilingGoals = z.infer<typeof ProfilingGoalsSchema>;
+export type ProfilingGoalsSchema = z.infer<typeof ProfilingGoalsSchema>;
+export type ProfilingGoals = ProfilingGoalsSchema;
 
 export const ProfilingAnswersSchema = z.object({
   psychology: z
@@ -57,7 +61,8 @@ export const ProfilingAnswersSchema = z.object({
     error: K.profilingStressRequired,
   }),
 });
-export type ProfilingAnswers = z.infer<typeof ProfilingAnswersSchema>;
+export type ProfilingAnswersSchema = z.infer<typeof ProfilingAnswersSchema>;
+export type ProfilingAnswers = ProfilingAnswersSchema;
 
 export const ProfileSummarySchema = z.object({
   baseRiskScore: z.number(),
@@ -66,4 +71,5 @@ export const ProfileSummarySchema = z.object({
   corridorCurrencies: z.array(CurrencyField),
   completedAt: z.string(),
 });
-export type ProfileSummary = z.infer<typeof ProfileSummarySchema>;
+export type ProfileSummarySchema = z.infer<typeof ProfileSummarySchema>;
+export type ProfileSummary = ProfileSummarySchema;

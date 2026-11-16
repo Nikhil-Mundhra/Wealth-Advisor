@@ -1,3 +1,4 @@
+import { telemetryLogger } from '#core/telemetry/logger.ts';
 import type { EventEnvelope } from './event-envelope.ts';
 
 export type EventHandler = (event: EventEnvelope) => Promise<void> | void;
@@ -13,7 +14,7 @@ export interface EventBus {
 }
 
 // Runs handlers in-process, in order, after the publisher's own writes. A failing handler is logged and never
-// fails the caller. A durable outbox can replace this class behind the same interface.
+// fails the caller. DurableOutboxEventBus shares this interface for persistent/retryable delivery.
 export class InProcessEventBus implements EventBus {
   private readonly handlers = new Map<string, EventHandler[]>();
 
@@ -27,7 +28,12 @@ export class InProcessEventBus implements EventBus {
       try {
         await handler(event);
       } catch (error) {
-        console.error(`[event-bus] handler for ${event.type} v${event.version} (${event.id}) failed`, error);
+        telemetryLogger.error('event-bus.handler_failed', {
+          eventType: event.type,
+          version: event.version,
+          eventId: event.id,
+          error,
+        });
       }
     }
   }

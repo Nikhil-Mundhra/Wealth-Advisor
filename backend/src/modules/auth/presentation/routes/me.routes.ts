@@ -16,6 +16,8 @@ import {
   PasskeyStepUpVerifyResponse,
   TokenPairResponse,
 } from '@wealth-advisor/contracts';
+import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
+import { AppError } from '#core/errors/app-error.ts';
 import { RouteBuilder, type RouteDefinition } from '#core/http/route-builder.ts';
 import type { AccessTokenSignerPort } from '../../application/ports/access-token-signer.port.ts';
 import type { AdvisorInvitesUseCase } from '../../application/use-cases/advisor-invites.use-case.ts';
@@ -61,7 +63,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .body(ConnectAdvisorRequest)
       .responds(MeResponse)
       .handle(async ({ c, body }) => {
-        if (!deps.connectAdvisor) throw new Error('connectAdvisor use case not configured');
+        if (!deps.connectAdvisor) throw new AppError(503, CORE_ERROR_CODES.internal, 'connectAdvisor use case not configured');
         return toMeResponse(await deps.connectAdvisor.execute({ userId: getPrincipal(c).userId, inviteCode: body.inviteCode }));
       }),
 
@@ -95,7 +97,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .body(CreateAdvisorInviteRequest)
       .responds(AdvisorInviteDto, 201)
       .handle(async ({ c, body }) => {
-        if (!deps.advisorInvites) throw new Error('advisorInvites use case not configured');
+        if (!deps.advisorInvites) throw new AppError(503, CORE_ERROR_CODES.internal, 'advisorInvites use case not configured');
         const origin = new URL(c.req.url).origin;
         return deps.advisorInvites.createInvite(getPrincipal(c).userId, body, origin);
       }),
@@ -104,7 +106,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .use(authenticated)
       .responds(PasskeyRegistrationOptionsResponse)
       .handle(async ({ c }) => {
-        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        if (!deps.passkeys) throw new AppError(503, CORE_ERROR_CODES.internal, 'passkeys use case not configured');
         return deps.passkeys.getRegistrationOptions(getPrincipal(c).userId);
       }),
 
@@ -113,7 +115,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .body(PasskeyRegisterVerifyRequest)
       .responds(PasskeyStepUpVerifyResponse)
       .handle(async ({ c, body }) => {
-        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        if (!deps.passkeys) throw new AppError(503, CORE_ERROR_CODES.internal, 'passkeys use case not configured');
         const { userId, tenantId } = getPrincipal(c);
         const res = await deps.passkeys.verifyRegistration(userId, tenantId ?? 'default', body);
         return { verified: res.verified, assertionProof: body.credentialId };
@@ -123,7 +125,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .body(PasskeyLoginOptionsRequest)
       .responds(PasskeyLoginOptionsResponse)
       .handle(async ({ body }) => {
-        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        if (!deps.passkeys) throw new AppError(503, CORE_ERROR_CODES.internal, 'passkeys use case not configured');
         return deps.passkeys.loginOptions(body.email);
       }),
 
@@ -131,7 +133,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .body(PasskeyLoginVerifyWithEmailRequest)
       .responds(TokenPairResponse)
       .handle(async ({ c, body }) => {
-        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        if (!deps.passkeys) throw new AppError(503, CORE_ERROR_CODES.internal, 'passkeys use case not configured');
         return deliverTokens(c, await deps.passkeys.verifyLogin(body.email, body));
       }),
 
@@ -139,7 +141,7 @@ export function meRoutes(deps: MeRouteDeps): RouteDefinition[] {
       .use(authenticated)
       .responds(PasskeyStepUpChallengeResponse)
       .handle(async ({ c }) => {
-        if (!deps.passkeys) throw new Error('passkeys use case not configured');
+        if (!deps.passkeys) throw new AppError(503, CORE_ERROR_CODES.internal, 'passkeys use case not configured');
         return deps.passkeys.stepUpChallenge(getPrincipal(c).userId);
       }),
 

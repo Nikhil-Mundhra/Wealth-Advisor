@@ -10,10 +10,10 @@ export const AssetProductDto = z.object({
   securityType: CandidateSecurityTypeDto,
   denominationCurrency: z.enum(CURRENCIES),
   riskRating: z.number().int().min(1).max(10),
-  expenseRatio: z.number(),
-  annualizedYield: z.number(),
-  threeYearReturn: z.number(),
-  fiveYearReturn: z.number(),
+  expenseRatio: z.number(), // decimal fraction (e.g. 0.0007 = 0.07%)
+  annualizedYield: z.number(), // decimal fraction (e.g. 0.035 = 3.5%)
+  threeYearReturn: z.number(), // cumulative decimal fraction (e.g. 0.32 = 32%)
+  fiveYearReturn: z.number(), // cumulative decimal fraction (e.g. 0.78 = 78%)
   domicileCountry: z.string(),
   description: z.string(),
   isActive: z.boolean(),

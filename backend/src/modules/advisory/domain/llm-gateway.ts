@@ -45,8 +45,18 @@ export function summarizeProposal(holdings: readonly { symbol: string; securityT
   };
 }
 
-export function buildAdvisoryFacts(context: LlmContext) {
-  const burn = Math.round(context.cashflow.netCashflowBase / 100);
+export interface AdvisoryFactsInput {
+  locale: Locale;
+  householdMode: HouseholdMode;
+  cashflow: CashflowSummaryResponse;
+  portfolio: PortfolioResponse;
+  proposalHoldings: readonly { symbol: string; securityType: string; weight: number }[];
+}
+
+export function buildAdvisoryFacts(context: AdvisoryFactsInput) {
+  const netCashflow = Math.round(context.cashflow.netCashflowBase / 100);
+  // netCashflowBase = monthlyInflowBase - monthlyOutflowBase; only negative values represent monthly reserve burn.
+  const burn = netCashflow < 0 ? -netCashflow : 0;
   const runway = context.cashflow.runwayMonths;
   const portfolioVal = Math.round(context.portfolio.totalValuationBase / 100);
   const mix = summarizeProposal(context.proposalHoldings);
@@ -70,11 +80,13 @@ export function buildAdvisoryFacts(context: LlmContext) {
     `- Liquid Runway: ${runway.toFixed(1)} months (${context.cashflow.runwayBand})`,
     burn > 0
       ? `- Net Monthly Burn / Outflow: €${burn}`
-      : `- Net Monthly Cashflow: €${burn} (monthly net inflow; reserves are not being spent)`,
+      : `- Net Monthly Cashflow: €${netCashflow} (monthly net inflow; reserves are not being spent)`,
     `- Total Portfolio Valuation: €${portfolioVal}`,
     `- Household Mode: ${context.householdMode}`,
     `- Preferred Locale: ${context.locale}`,
-    `- Target Allocations (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%`,
+    context.proposalHoldings.length > 0
+      ? `- Target Allocations (${context.proposalHoldings.length} holdings): ${mix.stockPct}% stocks, ${mix.bondPct}% bonds, ${mix.etfPct}% ETFs; top holding ${mix.topSymbol} at ${mix.topWeightPct}%`
+      : `- Target Allocations: none provided`,
     burn > 0
       ? `- Spending Reduction Benchmarks (Deterministic Engine Calculations):`
       : `- Spending Reduction Benchmarks: not applicable while the household runs a monthly net inflow`,
@@ -93,6 +105,7 @@ export function buildAdvisoryFacts(context: LlmContext) {
 
   const extraFactNumbers = [
     runway,
+    netCashflow,
     burn,
     portfolioVal,
     mix.stockPct,
@@ -104,7 +117,7 @@ export function buildAdvisoryFacts(context: LlmContext) {
     ...cuts.flatMap((c) => [c.pct, c.savings, c.newBurn, c.newRunway]),
   ].filter((n) => typeof n === 'number' && !Number.isNaN(n) && n !== 0);
 
-  return { burn, runway, portfolioVal, mix, cuts, benchmarksSummary, extraFactNumbers };
+  return { netCashflow, burn, runway, portfolioVal, mix, cuts, benchmarksSummary, extraFactNumbers };
 }
 
 // Every live adapter must produce its whole reply in the user's locale; the mock is locale-aware,
@@ -179,7 +192,7 @@ export class MockLlmAdapter implements LlmAdapter {
       { personalFinance: string; crossBorder: string; wealthStrategy: string }
     > = {
       en: {
-        personalFinance: `Monthly net burn is €${(cashflow.netCashflowBase / 100).toFixed(0)}. Family buffer is restored from ${burnMonths.toFixed(1)} to ${targetRunway.toFixed(1)} months.`,
+        personalFinance: `Monthly net cashflow is €${(cashflow.netCashflowBase / 100).toFixed(0)}. Family buffer is restored from ${burnMonths.toFixed(1)} to ${targetRunway.toFixed(1)} months.`,
         crossBorder: 'Shields EUR/CNY and GBP/SGD family remittance obligations against currency volatility.',
         wealthStrategy: `Shifts portfolio from ${equityPct}% equities down to ${targetEquityPct}% target weight to match recalibrated risk tolerance.${mixLine.en}`,
       },
@@ -309,6 +322,50 @@ async function resolveApiKey(resolver: ApiKeyResolver | undefined, provider: str
   }
 }
 
+interface GeminiCompletionResponse {
+  candidates?: readonly { content?: { parts?: readonly { text?: string }[] } }[];
+}
+
+interface OpenAiCompletionResponse {
+  choices?: readonly { message?: { content?: string } }[];
+}
+
+interface AnthropicCompletionResponse {
+  content?: readonly { type?: string; text?: string }[];
+}
+
+function buildAdvisorySystemPrompt(
+  benchmarksSummary: string,
+  locale: Locale,
+  style: 'standard' | 'claude' = 'standard',
+): string {
+  if (style === 'claude') {
+    return `You are an expat wealth advisor for Syntropy AI.
+${benchmarksSummary}
+
+Instructions:
+- Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. Never invent ungrounded financial returns or account balances.
+- ${localeDirective(locale)}
+- Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+  }
+
+  return `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
+${benchmarksSummary}
+
+Instructions:
+1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
+2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
+3. ${localeDirective(locale)}
+
+Respond ONLY in valid JSON with these keys:
+{
+  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
+  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
+  "crossBorder": "One sentence on currency corridors and remittance obligations",
+  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
+}`;
+}
+
 export class GeminiLlmAdapter implements LlmAdapter {
   private readonly apiKey: ApiKeyResolver | undefined;
   private readonly fallback: LlmAdapter;
@@ -326,23 +383,9 @@ export class GeminiLlmAdapter implements LlmAdapter {
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-    const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
-${facts.benchmarksSummary}
+    const systemPrompt = buildAdvisorySystemPrompt(facts.benchmarksSummary, context.locale);
 
-Instructions:
-1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
-2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
-3. ${localeDirective(context.locale)}
-
-Respond ONLY in valid JSON with these keys:
-{
-  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
-  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
-  "crossBorder": "One sentence on currency corridors and remittance obligations",
-  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
-}`;
-
-    let data: any;
+    let data: GeminiCompletionResponse;
     try {
       data = (await this.http.postJson(
         url,
@@ -355,7 +398,7 @@ Respond ONLY in valid JSON with these keys:
           },
         },
         { timeoutMs: ADVISORY_HTTP_TIMEOUT_MS },
-      )) as any;
+      )) as GeminiCompletionResponse;
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `Gemini request failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -391,23 +434,9 @@ export class OpenAiLlmAdapter implements LlmAdapter {
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenAI API key is not configured');
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
-    const systemPrompt = `You are a cross-border expat private wealth and cashflow advisory assistant for Syntropy AI.
-${facts.benchmarksSummary}
+    const systemPrompt = buildAdvisorySystemPrompt(facts.benchmarksSummary, context.locale);
 
-Instructions:
-1. Directly answer the user's specific inquiry or life event in "reply" with actionable, empathetic, personalized fiduciary guidance.
-2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
-3. ${localeDirective(context.locale)}
-
-Respond ONLY in valid JSON with these keys:
-{
-  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
-  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
-  "crossBorder": "One sentence on currency corridors and remittance obligations",
-  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
-}`;
-
-    let data: any;
+    let data: OpenAiCompletionResponse;
     try {
       data = (await this.http.postJson(
         'https://api.openai.com/v1/chat/completions',
@@ -429,7 +458,7 @@ Respond ONLY in valid JSON with these keys:
             authorization: `Bearer ${key}`,
           },
         },
-      )) as any;
+      )) as OpenAiCompletionResponse;
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `OpenAI request failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -464,9 +493,9 @@ export class ClaudeLlmAdapter implements LlmAdapter {
     if (!key) throw AdvisoryErrors.gatewayUnavailable('Anthropic API key is not configured');
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
-    const systemPrompt = `You are an expat wealth advisor for Syntropy AI. Runway: ${context.cashflow.runwayMonths} months. Portfolio: €${(context.portfolio.totalValuationBase / 100).toFixed(0)}. Net Cashflow: €${(context.cashflow.netCashflowBase / 100).toFixed(0)}. Household Mode: ${context.householdMode}. Preferred Locale: ${context.locale}. ${localeDirective(context.locale)} Respond in JSON with "reply", "personalFinance", "crossBorder", and "wealthStrategy". Do not use numbered lists (such as 1., 2., 3.); use concise prose or unordered bullet points.`;
+    const systemPrompt = buildAdvisorySystemPrompt(facts.benchmarksSummary, context.locale, 'claude');
 
-    let data: any;
+    let data: AnthropicCompletionResponse;
     try {
       data = (await this.http.postJson(
         'https://api.anthropic.com/v1/messages',
@@ -484,14 +513,14 @@ export class ClaudeLlmAdapter implements LlmAdapter {
             'anthropic-version': '2023-06-01',
           },
         },
-      )) as any;
+      )) as AnthropicCompletionResponse;
     } catch (err: unknown) {
       throw AdvisoryErrors.gatewayUnavailable(
         `Anthropic request failed: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
 
-    const block = (data?.content ?? []).find((part: any) => part?.type === 'text');
+    const block = (data?.content ?? []).find((part) => part?.type === 'text');
     if (!block?.text) throw AdvisoryErrors.gatewayUnavailable('Anthropic returned an empty completion');
     try {
       // Claude has no enforced JSON response format and routinely wraps the object in a markdown
@@ -528,21 +557,7 @@ export class OpenRouterLlmAdapter implements LlmAdapter {
     if (!key) throw AdvisoryErrors.gatewayUnavailable('OpenRouter API key is not configured');
     const base = await this.fallback.chat(context);
     const facts = buildAdvisoryFacts(context);
-    const systemPrompt = `You are a cross-border private wealth and cashflow advisor for Syntropy AI.
-${facts.benchmarksSummary}
-
-Instructions:
-1. Directly answer the user's specific life event or question in "reply" with actionable, personalized fiduciary guidance.
-2. Fiduciary Calculation Shield: If citing any numbers, figures, percentages, savings, or runway lengths, strictly use the verified engine figures provided above. You may use action steps (1., 2., 3.) and ranges (e.g. 20 - 30%). Never invent ungrounded financial returns or account balances.
-3. ${localeDirective(context.locale)}
-
-Respond ONLY in valid JSON with these keys:
-{
-  "reply": "Direct, empathetic, personalized guidance answering the user inquiry",
-  "personalFinance": "One sentence on liquid runway, monthly burn, and emergency buffer",
-  "crossBorder": "One sentence on currency corridors and remittance obligations",
-  "wealthStrategy": "One sentence on asset reallocation and portfolio safety"
-}`;
+    const systemPrompt = buildAdvisorySystemPrompt(facts.benchmarksSummary, context.locale);
 
     const candidateModels = [
       this.model,
@@ -577,7 +592,7 @@ Respond ONLY in valid JSON with these keys:
               'x-title': 'Syntropy Wealth Advisor',
             },
           },
-        )) as any;
+        )) as OpenAiCompletionResponse;
 
         const content = data?.choices?.[0]?.message?.content;
         if (!content) {

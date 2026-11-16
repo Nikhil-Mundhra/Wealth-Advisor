@@ -5,6 +5,7 @@ import { AppError } from '#core/errors/app-error.ts';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { readJsonBody } from '#core/http/read-json-body.ts';
 import { parseContract } from '#core/http/validate-contract.ts';
+import { telemetryLogger } from '#core/telemetry/logger.ts';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -111,6 +112,6 @@ export function mountRoutes(router: Hono, routes: readonly RouteDefinition[]): v
 function parseResponse(schema: z.ZodType, out: unknown): unknown {
   const result = schema.safeParse(out);
   if (result.success) return result.data;
-  console.error('[route-builder] response violated its contract', result.error.issues);
+  telemetryLogger.error('route-builder.contract_violation', { issues: result.error.issues });
   throw new AppError(500, CORE_ERROR_CODES.internal, 'internal error');
 }

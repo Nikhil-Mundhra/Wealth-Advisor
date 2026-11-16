@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppShell } from './app-shell.tsx';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { saveAdminActingSession } from '../../features/auth/session/acting-session.ts';
-import { clearSession, setAccessToken } from '../../features/auth/session/session-store.ts';
+import { saveAdminActingSession } from '../features/auth/session/acting-session.ts';
+import { clearSession, setAccessToken } from '../features/auth/session/session-store.ts';
 
 function stubMe(roles: string[], email = 'testing@example.com') {
   vi.stubGlobal(

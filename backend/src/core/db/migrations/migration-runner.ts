@@ -103,24 +103,6 @@ export const BUILTIN_MIGRATIONS: readonly MigrationDefinition[] = [
       }
     },
   },
-  {
-    version: '003_sandbox_ledger_audit_metadata',
-    description: 'Backfill decision, modelVersion, and rulesEvaluated audit defaults on legacy sandbox_ledgers rows',
-    async up(ctx) {
-      if (ctx.db) {
-        await ctx.db.collection('sandbox_ledgers').updateMany(
-          { modelVersion: { $exists: false } },
-          {
-            $set: {
-              modelVersion: 'deterministic-engine-v1',
-              rulesEvaluated: ['TIER_3_PASSKEY_ASSERTION', 'PERMITTED_REBALANCE_TARGETS'],
-              decision: 'APPROVED',
-            },
-          },
-        );
-      }
-    },
-  },
 ];
 
 export async function runMigrations(options: {
@@ -147,7 +129,7 @@ export async function runMigrations(options: {
     await options.store.recordApplied({
       version: migration.version,
       description: migration.description,
-      checksum: sha256Hex(`${migration.version}:${migration.description}`),
+      checksum: sha256Hex(`${migration.version}:${migration.description}:${migration.up.toString()}`),
       appliedAt: clock.now(),
     });
     applied.push(migration.version);

@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { API_KEY_PERMISSIONS, API_KEY_STATUSES } from '@wealth-advisor/rules';
+import {
+  API_KEY_DEFAULT_MONTHLY_TOKEN_QUOTA,
+  API_KEY_DEFAULT_RATE_LIMIT_PER_MINUTE,
+  API_KEY_NAME_MAX_LENGTH,
+  API_KEY_NAME_MIN_LENGTH,
+  API_KEY_PERMISSIONS,
+  API_KEY_STATUSES,
+} from '@wealth-advisor/rules';
 
 export const ApiKeyDto = z.object({
   id: z.string(),
@@ -19,10 +26,10 @@ export type ApiKeyDto = z.infer<typeof ApiKeyDto>;
 
 export const CreateApiKeyRequest = z.object({
   tenantId: z.string(),
-  name: z.string().min(2).max(100),
+  name: z.string().min(API_KEY_NAME_MIN_LENGTH).max(API_KEY_NAME_MAX_LENGTH),
   permissions: z.array(z.enum(API_KEY_PERMISSIONS)).min(1),
-  rateLimitPerMinute: z.number().int().positive().default(60),
-  monthlyTokenQuota: z.number().int().positive().default(100000),
+  rateLimitPerMinute: z.number().int().positive().default(API_KEY_DEFAULT_RATE_LIMIT_PER_MINUTE),
+  monthlyTokenQuota: z.number().int().positive().default(API_KEY_DEFAULT_MONTHLY_TOKEN_QUOTA),
   expiresAt: z.string().nullable().optional(),
 });
 export type CreateApiKeyRequest = z.infer<typeof CreateApiKeyRequest>;

@@ -12,6 +12,7 @@ import {
 } from '#modules/finance/infrastructure/db/memory/memory-finance.repository.ts';
 import { MemoryFxRateRepository } from '#modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts';
 import { MemoryPriceRepository } from '#modules/market/infrastructure/db/memory/memory-price.repository.ts';
+import { buildMockFxRates } from '#modules/market/infrastructure/providers/mock-market-source.ts';
 import { createMarketApi } from '#modules/market/market.api.ts';
 import { unregisteredPasskeyVerifier } from '#modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts';
 import {
@@ -31,6 +32,7 @@ const market = createMarketApi({
   fxSource: { fetchRange: async () => [] },
   events,
   clock,
+  mockFxFallback: buildMockFxRates,
 });
 const analytics = createAnalyticsApi({
   market,

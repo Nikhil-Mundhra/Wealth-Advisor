@@ -49,7 +49,7 @@ export function AdminUserStatCards({ users }: AdminUserStatCardsProps) {
         <div key={label} className={cn(cardClassName, 'flex items-center justify-between p-4')}>
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-subtle">{label}</span>
-            <span className="font-serif text-2xl font-bold tracking-tight text-ink font-mono tabular-nums">
+            <span className="font-mono text-2xl font-bold tracking-tight text-ink tabular-nums">
               {value}
             </span>
           </div>

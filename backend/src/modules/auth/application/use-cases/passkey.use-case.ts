@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import type {
   ListPasskeysResponse,
   PasskeyLoginOptionsResponse,
@@ -74,15 +73,8 @@ export class PasskeyUseCase {
 
     let publicKeySpki = req.publicKeySpki;
     if (!publicKeySpki && req.attestationObject) {
-      // Decode CBOR attestationObject authData to extract credential public key if spki was not directly transmitted
-      try {
-        const rawAtt = Buffer.from(req.attestationObject, 'base64url');
-        // Basic fallback: store raw attestation or extract authData bytes
-        publicKeySpki = rawAtt.toString('base64');
-      } catch {
-        // Fallback
-        publicKeySpki = req.attestationObject;
-      }
+      // Normalize base64url attestation payloads to standard base64 when an explicit SPKI key is omitted.
+      publicKeySpki = Buffer.from(req.attestationObject, 'base64url').toString('base64');
     }
 
     if (!publicKeySpki) {
@@ -93,7 +85,7 @@ export class PasskeyUseCase {
     if (existing.length >= MAX_PASSKEYS_PER_USER) throw AuthErrors.passkeyFailed('too many passkeys registered');
 
     await this.deps.passkeys.saveCredential({
-      id: randomBytes(16).toString('hex'),
+      id: this.deps.ids.next(),
       userId,
       tenantId,
       credentialId: req.credentialId,

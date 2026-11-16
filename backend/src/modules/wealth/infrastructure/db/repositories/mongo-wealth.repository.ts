@@ -42,7 +42,11 @@ export class MongoPortfolioRepository implements PortfolioRepository {
   }
 
   async save(portfolio: PortfolioDocument): Promise<void> {
-    await (await this.col()).replaceOne({ _id: portfolio._id }, portfolio, { upsert: true });
+    await (await this.col()).replaceOne(
+      { tenantId: portfolio.tenantId, userId: portfolio.userId },
+      portfolio,
+      { upsert: true },
+    );
   }
 }
 
@@ -66,7 +70,7 @@ export class MongoSandboxLedgerRepository implements SandboxLedgerRepository {
   async append(entry: Omit<SandboxLedgerDocument, '_id'>): Promise<SandboxLedgerDocument> {
     const id = new ObjectId();
     const doc: SandboxLedgerDocument = { ...entry, _id: id };
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return doc;
   }
 }

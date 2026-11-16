@@ -12,6 +12,7 @@ import type { SignupCommand } from '../dto/signup.command.ts';
 import type { SignupResult } from '../dto/signup.result.ts';
 import type { PasswordHasherPort } from '../ports/password-hasher.port.ts';
 import type { UserRepositoryPort } from '../ports/user-repository.port.ts';
+import { resolveAdvisorByCode } from './connect-advisor.use-case.ts';
 
 interface SignupDeps {
   readonly users: UserRepositoryPort;
@@ -36,17 +37,8 @@ export class SignupUseCase implements UseCase<SignupCommand, SignupResult> {
     assertPasswordAllowed(command.password);
     if (await users.findActiveByProvider('EMAIL', email.value)) throw AuthErrors.emailTaken();
 
-    let advisorId: string | null = null;
-    if (command.advisorCode && command.advisorCode.trim().length > 0) {
-      const rawCode = command.advisorCode.trim();
-      const candidateId = rawCode.startsWith('ADV-') ? rawCode.slice(4) : rawCode;
-      const advisor = candidateId.includes('@')
-        ? await users.findActiveByProvider('EMAIL', candidateId)
-        : await users.findActiveById(candidateId);
-      if (advisor && (advisor.roles.includes('ADVISOR') || advisor.roles.includes('ADMIN'))) {
-        advisorId = advisor.id;
-      }
-    }
+    const advisor = command.advisorCode ? await resolveAdvisorByCode(users, command.advisorCode) : null;
+    const advisorId = advisor?.id ?? null;
 
     // Public signup always issues the base role; elevated roles are granted through the admin console only.
     const roles = ['USER'] as const;

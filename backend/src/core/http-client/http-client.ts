@@ -16,6 +16,7 @@ export class HttpClientError extends Error {
 
 export interface GetJsonOptions {
   readonly timeoutMs: number;
+  readonly headers?: Record<string, string>;
 }
 
 export interface PostJsonOptions {
@@ -32,10 +33,10 @@ type Fetch = (input: string, init: RequestInit) => Promise<Response>;
 
 export function createHttpClient(fetchImpl: Fetch = (input, init) => fetch(input, init)): HttpClient {
   return {
-    async getJson(url, { timeoutMs }) {
+    async getJson(url, { timeoutMs, headers = {} }) {
       const target = describeUrl(url);
       const signal = AbortSignal.timeout(timeoutMs);
-      const response = await fetchImpl(url, { headers: { accept: 'application/json' }, signal }).catch((error: unknown) => {
+      const response = await fetchImpl(url, { headers: { accept: 'application/json', ...headers }, signal }).catch((error: unknown) => {
         throw new HttpClientError('transient', `GET ${target} failed: ${failureName(error)}`);
       });
       if (!response.ok) {

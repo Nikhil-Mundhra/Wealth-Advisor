@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as engagement from '../../lib/engagement.ts';
@@ -63,13 +63,16 @@ describe('AdvisoryPage', () => {
     });
     expect(screen.getByRole('dialog', { name: 'Biometric approval' })).toBeVisible();
 
-    // jsdom has no WebAuthn: the gate must show verification status instead of failing silently.
-    await userEvent.click(screen.getByRole('button', { name: 'Sign & execute' }));
+    // Without an optimizer proposal or WebAuthn hardware in jsdom, step-up fails cleanly rather than
+    // claiming success:true prematurely or leaving the dialog stuck in pending state.
+    const dialog = screen.getByRole('dialog', { name: 'Biometric approval' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Sign & execute' }));
+    expect(await within(dialog).findByRole('alert')).toBeVisible();
     expect(trackSpy).toHaveBeenCalledWith(engagement.ENGAGEMENT_EVENTS.passkeyStepupCompleted, {
-      success: true,
+      success: false,
       flow: 'REBALANCE',
     });
-    expect(screen.getByText('Verifying biometric passkey and committing to sandbox ledger…')).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Sign & execute' })).not.toBeDisabled();
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

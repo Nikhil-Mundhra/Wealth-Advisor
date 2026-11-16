@@ -41,11 +41,23 @@ async function computeSha256(text: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function computeVerificationProof(entry: SandboxLedgerEntryDto, signature: string) {
+  const tradeDiffJson = JSON.stringify(entry.executedTrades);
+  const payload = `${entry.userId}:${entry.tenantId}:${entry.timestamp}:${signature}:${tradeDiffJson}`;
+  const computedDigest = await computeSha256(payload);
+  const computedTxHash = `0x${(await computeSha256(computedDigest)).slice(0, 40)}`;
+  return {
+    computedDigest,
+    computedTxHash,
+    matches: computedDigest === entry.auditDigest,
+    payload,
+  };
+}
+
 export function EvidencePage() {
   const { data: ledgerData, isLoading, refetch } = useSandboxLedger();
   const [selectedEntry, setSelectedEntry] = useState<SandboxLedgerEntryDto | null>(null);
   const [tamperInput, setTamperInput] = useState<string>('');
-  const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     computedDigest: string;
     computedTxHash: string;
@@ -59,43 +71,19 @@ export function EvidencePage() {
   const displayEntries: Array<SandboxLedgerEntryDto> = rawEntries;
 
   const handleVerifyEntry = async (entry: SandboxLedgerEntryDto, customSignature?: string) => {
-    setIsVerifying(true);
     setSelectedEntry(entry);
     const signatureToUse = customSignature !== undefined
       ? customSignature
       : entry.passkeyAssertionProof?.signature || '';
-    const tradeDiffJson = JSON.stringify(entry.executedTrades);
-    const payload = `${entry.userId}:${entry.tenantId}:${entry.timestamp}:${signatureToUse}:${tradeDiffJson}`;
-
-    const computed = await computeSha256(payload);
-    const computedTx = `0x${(await computeSha256(computed)).slice(0, 40)}`;
-    const matches = computed === entry.auditDigest;
-
-    setVerificationResult({
-      computedDigest: computed,
-      computedTxHash: computedTx,
-      matches,
-      payload,
-    });
+    const result = await computeVerificationProof(entry, signatureToUse);
+    setVerificationResult(result);
     setTamperInput(signatureToUse);
-    setIsVerifying(false);
   };
 
   const handleTamperSignature = async (tamperedVal: string) => {
     if (!selectedEntry) return;
     setTamperInput(tamperedVal);
-    const tradeDiffJson = JSON.stringify(selectedEntry.executedTrades);
-    const payload = `${selectedEntry.userId}:${selectedEntry.tenantId}:${selectedEntry.timestamp}:${tamperedVal}:${tradeDiffJson}`;
-    const computed = await computeSha256(payload);
-    const computedTx = `0x${(await computeSha256(computed)).slice(0, 40)}`;
-    const matches = computed === selectedEntry.auditDigest;
-
-    setVerificationResult({
-      computedDigest: computed,
-      computedTxHash: computedTx,
-      matches,
-      payload,
-    });
+    setVerificationResult(await computeVerificationProof(selectedEntry, tamperedVal));
   };
 
   const handleExportJson = () => {
@@ -135,8 +123,13 @@ export function EvidencePage() {
       };
     });
 
+    const latest = displayEntries[0]?.timestamp ? new Date(displayEntries[0].timestamp) : new Date();
+    const period = (Number.isNaN(latest.getTime()) ? new Date() : latest).toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
     const csv = serializeLedgerToCsv(rows, {
-      period: 'October 2026',
+      period,
       baselineCurrency: 'EUR',
     });
     downloadCsv(`fiduciary-evidence-audit-${Date.now()}.csv`, csv);

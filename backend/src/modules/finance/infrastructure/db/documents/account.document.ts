@@ -1,6 +1,5 @@
 import type { ObjectId } from 'mongodb';
-import type { Currency, HouseholdMode } from '@wealth-advisor/rules';
-import type { AccountType } from '@wealth-advisor/contracts';
+import type { AccountType, Currency, HouseholdMode } from '@wealth-advisor/rules';
 
 export const ACCOUNTS_COLLECTION = 'accounts';
 

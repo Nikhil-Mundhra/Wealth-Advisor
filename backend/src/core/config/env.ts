@@ -16,6 +16,7 @@ const EnvSchema = z.object({
   AUTH_REFRESH_REUSE_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(5),
   MARKETSTACK_ACCESS_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
+  CORS_ORIGINS: z.string().optional(),
   PASSKEY_RP_ID: z.string().min(1).optional(),
   PASSKEY_RP_NAME: z.string().min(1).default('Syntropy AI'),
   PASSKEY_CHALLENGE_TTL_SECONDS: z.coerce.number().int().positive().default(300),

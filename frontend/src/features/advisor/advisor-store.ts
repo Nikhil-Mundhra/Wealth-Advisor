@@ -15,8 +15,7 @@ function recomputeScopedClients(): void {
     scopedClientsCache = clients;
     return;
   }
-  const assigned = clients.filter((c) => c.advisorEmail?.toLowerCase() === currentAdvisorEmail);
-  scopedClientsCache = assigned.length > 0 ? assigned : clients;
+  scopedClientsCache = clients.filter((c) => c.advisorEmail?.toLowerCase() === currentAdvisorEmail);
 }
 
 let activeClientId: string = (() => {

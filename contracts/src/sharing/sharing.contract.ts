@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SHARE_LINK_TTL_DEFAULT_HOURS, SHARE_LINK_TTL_MAX_HOURS } from '@wealth-advisor/rules';
 import { DisplayNameField } from '../fields/display-name.field.ts';
 
 export const PlanSnapshotDto = z.object({
@@ -21,7 +22,7 @@ export type PlanSnapshotDto = z.infer<typeof PlanSnapshotDto>;
 
 export const CreateShareLinkRequest = z.object({
   privacyMasked: z.boolean().default(true),
-  ttlHours: z.number().int().positive().max(720).default(72),
+  ttlHours: z.number().int().positive().max(SHARE_LINK_TTL_MAX_HOURS).default(SHARE_LINK_TTL_DEFAULT_HOURS),
   ownerDisplayName: DisplayNameField.optional(),
   // Another user's plan, accepted only from an advisor or admin caller.
   clientId: z.string().optional(),

@@ -23,6 +23,8 @@ export const VALIDATION_KEYS = {
 
 export type ValidationKey = (typeof VALIDATION_KEYS)[keyof typeof VALIDATION_KEYS];
 
+const VALIDATION_KEY_SET: ReadonlySet<string> = new Set(Object.values(VALIDATION_KEYS));
+
 export function isValidationKey(value: string): value is ValidationKey {
-  return (Object.values(VALIDATION_KEYS) as string[]).includes(value);
+  return VALIDATION_KEY_SET.has(value);
 }

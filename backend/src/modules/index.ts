@@ -14,9 +14,11 @@ import { createAdminModule } from './admin/admin.module.ts';
 import { createAnalyticsModule } from './analytics/analytics.module.ts';
 import { createAuthModule } from './auth/auth.module.ts';
 import { createAdvisoryModule } from './advisory/advisory.module.ts';
+import type { FinanceApi } from './finance/public.ts';
 import { createFinanceModule } from './finance/finance.module.ts';
 import { createMarketModule } from './market/market.module.ts';
 import { createSharingModule } from './sharing/sharing.module.ts';
+import type { WealthApi } from './wealth/public.ts';
 import { createWealthModule } from './wealth/wealth.module.ts';
 
 // Explicit module list. Static imports keep every module visible to Vercel's bundler; add new modules here.
@@ -33,8 +35,8 @@ export function buildModules(context: ModuleContext): ModuleManifest[] {
   });
 
   const sharedUserDocs = new Map<string, any>();
-  let wealthApiRef: any = null;
-  let financeApiRef: any = null;
+  let wealthApiRef: WealthApi | null = null;
+  let financeApiRef: FinanceApi | null = null;
 
   const auth = createAuthModule(context, {
     sharedUserDocs,
@@ -45,7 +47,9 @@ export function buildModules(context: ModuleContext): ModuleManifest[] {
         try {
           if (wealthApiRef) {
             const portfolio = await wealthApiRef.getPortfolio(tenantId, clientId);
-            const cashflow = financeApiRef ? await financeApiRef.getCashflow(tenantId, clientId, 'FAMILY_HOUSEHOLD').catch(() => null) : null;
+            const cashflow = financeApiRef
+              ? await financeApiRef.getCashflowSummary(tenantId, clientId, 'FAMILY_HOUSEHOLD').catch(() => null)
+              : null;
             const score = portfolio.effectiveRiskScore ?? 6.0;
             const riskBand = score >= 8 ? 'AGGRESSIVE' : score >= 5 ? 'BALANCED' : 'CONSERVATIVE';
             map.set(clientId, {

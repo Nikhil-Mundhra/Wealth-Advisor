@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, Copy, FileText, Globe, Layers, Sparkles, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useActiveClient } from '../advisor-store.ts';
 import type { AdvisorClient } from '../types.ts';
 
@@ -14,17 +14,29 @@ export function PreMeetingBriefModal({ open, onClose, client: propClient, onNavi
   const activeClient = useActiveClient();
   const client = propClient ?? activeClient;
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   if (!open) return null;
 
   const brief = client.preMeetingBrief;
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     const text = `PRE-MEETING BRIEF: ${client.name}\n${brief.headline}\n\nSUMMARY:\n${brief.summary}\n\nRUNWAY & DRIFT:\n- ${brief.runwayStatus}\n- ${brief.driftAlert ?? 'Within tolerance'}\n\nAGENDA:\n${brief.recommendedAgenda.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nPROPOSED ACTIONS:\n${brief.proposedActions.map((a) => `- ${a}`).join('\n')}`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text).catch(() => {});
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setCopied(false), 2500);
+      } catch {
+        setCopied(false);
+      }
     }
   };
 

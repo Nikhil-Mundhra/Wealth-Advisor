@@ -77,13 +77,13 @@ export function createLogger(options?: LoggerOptions) {
     const sanitizedFields = fields ? (redactLogValue(fields) as Record<string, unknown>) : {};
 
     const entry: StructuredLogEntry = {
+      ...sanitizedFields,
       timestamp: new Date().toISOString(),
       level,
       service,
       ...(correlationId ? { correlationId } : {}),
       ...(requestId ? { requestId } : {}),
       message: redactLogString(message),
-      ...sanitizedFields,
     };
 
     sink(JSON.stringify(entry), level);

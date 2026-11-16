@@ -20,6 +20,31 @@ import { formatPrometheusMetrics, metricsMiddleware, normalizeRoutePath, setOutb
 import { systemClock } from '#core/time/clock.ts';
 import { buildModules } from '#modules/index.ts';
 
+const LOCAL_DEV_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8088',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+];
+
+function allowedCorsOrigins(): Set<string> {
+  const origins = new Set<string>();
+  const config = env();
+  if (config.NODE_ENV !== 'production') {
+    for (const origin of LOCAL_DEV_ORIGINS) origins.add(origin);
+  }
+  for (const raw of config.CORS_ORIGINS?.split(',') ?? []) {
+    const trimmed = raw.trim();
+    if (trimmed) origins.add(trimmed);
+  }
+  if (process.env.VERCEL_URL) origins.add(`https://${process.env.VERCEL_URL}`);
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    origins.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
+  return origins;
+}
+
 // Builds the HTTP app from the registered modules. Tests call this with fake dependencies.
 export function createApp(context: ModuleContext): Hono {
   const registry = new ModuleRegistry();
@@ -96,10 +121,11 @@ export function createApp(context: ModuleContext): Hono {
       referrerPolicy: 'strict-origin-when-cross-origin',
     }),
   );
+  const allowedOrigins = allowedCorsOrigins();
   app.use(
     '/api/*',
     cors({
-      origin: (origin) => origin || '*',
+      origin: (origin) => (origin && allowedOrigins.has(origin) ? origin : undefined),
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Correlation-Id'],
       exposeHeaders: ['X-Idempotent-Replay', 'X-Correlation-Id'],

@@ -15,3 +15,18 @@ export type ApiKeyPermission = (typeof API_KEY_PERMISSIONS)[number];
 
 export const API_KEY_STATUSES = ['ACTIVE', 'REVOKED'] as const;
 export type ApiKeyStatus = (typeof API_KEY_STATUSES)[number];
+
+export const API_KEY_NAME_MIN_LENGTH = 2;
+export const API_KEY_NAME_MAX_LENGTH = 100;
+export const API_KEY_DEFAULT_RATE_LIMIT_PER_MINUTE = 60;
+export const API_KEY_DEFAULT_MONTHLY_TOKEN_QUOTA = 100_000;
+
+export const TENANT_SLUG_MIN_LENGTH = 2;
+export const TENANT_SLUG_MAX_LENGTH = 50;
+export const TENANT_NAME_MIN_LENGTH = 2;
+export const TENANT_NAME_MAX_LENGTH = 100;
+export const TENANT_DEFAULT_MAX_MEMBERS = 50;
+export const DEFAULT_ALLOWED_CORRIDORS = ['EUR_CNY', 'GBP_SGD'] as const;
+
+export const SHARE_LINK_TTL_DEFAULT_HOURS = 72;
+export const SHARE_LINK_TTL_MAX_HOURS = 720;

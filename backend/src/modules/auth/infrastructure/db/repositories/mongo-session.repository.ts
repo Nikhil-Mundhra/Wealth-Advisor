@@ -47,10 +47,12 @@ export class MongoSessionRepository extends BaseRepository<SessionDocument> impl
   }
 
   async revokeFamily(familyId: string, reason: RevokeReason, now: Date): Promise<number> {
+    if (!ObjectId.isValid(familyId)) return 0;
     return this.setMany({ familyId: new ObjectId(familyId), revokedAt: null }, { revokedAt: now, revokeReason: reason });
   }
 
   async revokeAllForUser(userId: string, reason: RevokeReason, now: Date): Promise<number> {
+    if (!ObjectId.isValid(userId)) return 0;
     return this.setMany({ userId: new ObjectId(userId), revokedAt: null }, { revokedAt: now, revokeReason: reason });
   }
 

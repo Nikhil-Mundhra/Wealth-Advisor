@@ -25,17 +25,13 @@ export interface StoredPasskeyCredential {
 }
 
 function toBuffer(input: string, encodingFallback: BufferEncoding = 'utf8'): Buffer {
-  if (input.includes('{') || input.includes('webauthn')) {
+  if (encodingFallback === 'utf8' && input.trimStart().startsWith('{')) {
     return Buffer.from(input, 'utf8');
   }
   const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
   const pad = normalized.length % 4;
   const padded = pad ? normalized + '='.repeat(4 - pad) : normalized;
-  try {
-    return Buffer.from(padded, 'base64');
-  } catch {
-    return Buffer.from(input, encodingFallback);
-  }
+  return Buffer.from(padded, 'base64');
 }
 
 interface ParsedClientData {
@@ -277,6 +273,7 @@ export type PasskeyChallengeType = (typeof PASSKEY_CHALLENGE_TYPES)[number];
 // WEBAUTHN_RP_ID) wins; on Vercel the deployment hostname is used; local runs stay on localhost.
 export function defaultRpId(explicit?: string): string {
   if (explicit) return explicit;
+  if (process.env.PASSKEY_RP_ID) return process.env.PASSKEY_RP_ID;
   if (process.env.WEBAUTHN_RP_ID) return process.env.WEBAUTHN_RP_ID;
   if (process.env.VERCEL_URL) {
     try {

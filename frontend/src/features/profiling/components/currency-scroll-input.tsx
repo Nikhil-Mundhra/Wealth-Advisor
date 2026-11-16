@@ -30,7 +30,7 @@ export function CurrencyScrollInput({
     tier: number;
   } | null>(null);
 
-  const badgeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const momentumTracker = useRef<{ lastTime: number; lastSpeed: number }>({
     lastTime: 0,
     lastSpeed: 0,

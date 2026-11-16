@@ -61,7 +61,7 @@ function DashboardView() {
     ? activeClient.baseCurrency
     : (profile.preferredCurrency || (profile.answers.countries.residence && COUNTRY_CURRENCY_MAP[profile.answers.countries.residence.toUpperCase()]) || 'EUR');
 
-  const netWorthBasis = isDemo ? activeClient.netWorth : (profile.totalHoldings || activeClient.netWorth);
+  const netWorthBasis = isDemo ? activeClient.netWorth : profile.totalHoldings;
   const netWorth = useCountUp(netWorthBasis);
 
   // Timeframe selection: defaults to 6M for demo fixture, 1W for new users (< 6 months history)
@@ -139,9 +139,11 @@ function DashboardView() {
     return {
       points,
       periodLabel: '7-day trailing',
-      insight: `7-Day Baseline: Valuation tracked across active corridors for ${activeClient.name} in ${activeClient.baseCurrency}.`,
+      insight: isDemo
+        ? `7-Day Baseline: Valuation tracked across active corridors for ${activeClient.name} in ${activeClient.baseCurrency}.`
+        : `7-Day Baseline: Valuation tracked across active corridors in ${primaryCurrency}.`,
     };
-  }, [timeframe, isDemo, netWorthBasis, activeClient]);
+  }, [timeframe, isDemo, netWorthBasis, activeClient, primaryCurrency]);
 
   // Runway: the API value wins when the backend answers; otherwise the roster
   // fixture (demo) or the local profile buffer math (signed-in user).

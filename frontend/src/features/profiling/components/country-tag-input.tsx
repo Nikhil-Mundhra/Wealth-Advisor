@@ -154,9 +154,11 @@ export function CountryTagInput(props: CountryTagInputProps) {
               className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-field border border-line bg-surface shadow-lg motion-safe:animate-fade-up"
             >
               {suggestions.map((item) => (
-                <li key={item.code} role="option" aria-selected="false">
+                <li key={item.code} role="none">
                   <button
                     type="button"
+                    role="option"
+                    aria-selected="false"
                     onClick={() => handleSelectCountry(item.code)}
                     aria-label={`Select ${item.name}`}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-subtle focus:bg-surface-subtle"

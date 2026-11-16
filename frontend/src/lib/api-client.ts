@@ -8,9 +8,20 @@ export interface AuthHandlers {
 
 // Registered by the auth feature at startup, so this module never imports from features/.
 let authHandlers: AuthHandlers | null = null;
+let inflightRefresh: Promise<boolean> | null = null;
 
 export function setAuthHandlers(handlers: AuthHandlers | null): void {
   authHandlers = handlers;
+  inflightRefresh = null;
+}
+
+function refreshOnce(handlers: AuthHandlers): Promise<boolean> {
+  if (!inflightRefresh) {
+    inflightRefresh = handlers.refreshAccessToken().finally(() => {
+      inflightRefresh = null;
+    });
+  }
+  return inflightRefresh;
 }
 
 interface RequestOptions {
@@ -25,7 +36,7 @@ export async function apiRequest<S extends z.ZodType>(path: string, options: Req
 export async function apiRequest(path: string, options?: RequestOptions): Promise<void>;
 export async function apiRequest(path: string, options: RequestOptions & { response?: z.ZodType } = {}): Promise<unknown> {
   let response = await send(path, options);
-  if (response.status === 401 && options.authenticated && authHandlers && (await authHandlers.refreshAccessToken())) {
+  if (response.status === 401 && options.authenticated && authHandlers && (await refreshOnce(authHandlers))) {
     response = await send(path, options);
   }
   if (!response.ok) throw await ApiError.fromResponse(response);

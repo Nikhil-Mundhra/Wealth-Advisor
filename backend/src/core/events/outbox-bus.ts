@@ -26,6 +26,8 @@ export interface OutboxStore {
   listDeadLetters(): Promise<DeadLetterEventDocument[]>;
 }
 
+const CLAIM_LEASE_MS = 30_000;
+
 export function createMemoryOutboxStore(): OutboxStore {
   const outbox = new Map<string, OutboxEventDocument>();
   const dlq: DeadLetterEventDocument[] = [];
@@ -37,10 +39,16 @@ export function createMemoryOutboxStore(): OutboxStore {
       }
     },
     async findDue(now, limit) {
-      return Array.from(outbox.values())
+      const due = Array.from(outbox.values())
         .filter((d) => d.status === 'PENDING' && d.nextAttemptAt.getTime() <= now.getTime())
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
         .slice(0, limit);
+      // Reserve a short visibility lease so concurrent drainOnce() calls do not pick up the same rows.
+      const leaseUntil = new Date(now.getTime() + CLAIM_LEASE_MS);
+      for (const row of due) {
+        outbox.set(row.eventId, { ...row, nextAttemptAt: leaseUntil, updatedAt: now });
+      }
+      return due;
     },
     async markDelivered(eventId, now) {
       const existing = outbox.get(eventId);
@@ -97,11 +105,19 @@ export function createMongoOutboxStore(db: () => Promise<Db>): OutboxStore {
       );
     },
     async findDue(now, limit) {
-      return (await outboxCol())
-        .find({ status: 'PENDING', nextAttemptAt: { $lte: now } })
-        .sort({ createdAt: 1 })
-        .limit(limit)
-        .toArray();
+      const col = await outboxCol();
+      const leaseUntil = new Date(now.getTime() + CLAIM_LEASE_MS);
+      const claimed: OutboxEventDocument[] = [];
+      for (let i = 0; i < limit; i += 1) {
+        const doc = await col.findOneAndUpdate(
+          { status: 'PENDING', nextAttemptAt: { $lte: now } },
+          { $set: { nextAttemptAt: leaseUntil, updatedAt: now } },
+          { sort: { createdAt: 1 }, returnDocument: 'before' },
+        );
+        if (!doc) break;
+        claimed.push(doc);
+      }
+      return claimed;
     },
     async markDelivered(eventId, now) {
       await (await outboxCol()).updateOne(

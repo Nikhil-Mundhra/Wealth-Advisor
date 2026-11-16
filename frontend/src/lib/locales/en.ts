@@ -301,6 +301,19 @@ export const en = {
   'portfolio.construction.compliance.durationBody': 'Duration-weighted bond exposure ({duration} yrs) sits within the risk tier fiduciary ceiling.',
   'portfolio.construction.compliance.sectorTitle': 'Single Sector Exposure Limit (≤ 30%)',
   'portfolio.construction.compliance.sectorBody': 'No single macroeconomic industry sector exceeds 30% of total equity and credit exposure.',
+  'settings.evidence': 'Evidence Explorer',
+  'security.passkey.enroll': 'Enroll Passkey',
+  'security.passkey.enrolled': 'Passkey enrolled successfully for Tier 3 execution.',
+  'security.passkey.cancelled': 'Passkey enrollment was cancelled.',
+  'security.passkey.failed': 'Passkey enrollment failed.',
+  'security.passkey.tier3Active': 'Tier 3 Active',
+  'security.currency.title': 'Reporting currency',
+  'security.currency.desc': 'Base currency for your portfolio net worth and emergency runway. Defaults to your country of residence ({country}).',
+  'security.currency.residenceDefault': '(Residence default)',
+  'share.stress.fxShockLabel': 'FX Shock',
+  'share.stress.fxShockValue': '{pct}% adverse move',
+  'share.stress.drawdownLabel': 'Estimated Drawdown',
+  'share.stress.drawdownValue': '{pct}% portfolio value',
 } as const;
 
 export type StringKey = keyof typeof en;

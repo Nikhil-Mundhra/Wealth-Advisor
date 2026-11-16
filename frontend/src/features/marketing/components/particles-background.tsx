@@ -259,7 +259,12 @@ export function ParticlesBackground() {
       mouse.y = -9999;
     };
 
-    window.addEventListener('resize', handleResize);
+    const onResize = () => {
+      handleResize();
+      if (prefersReducedMotion) render();
+    };
+
+    window.addEventListener('resize', onResize);
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseleave', handleMouseLeave);
 
@@ -271,7 +276,7 @@ export function ParticlesBackground() {
       themeObserver.disconnect();
       io.disconnect();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handleMouseLeave);
     };

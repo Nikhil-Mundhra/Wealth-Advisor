@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 import { CreateAdminUserRequest, type TenantDto } from '@wealth-advisor/contracts';
+import type { Role } from '@wealth-advisor/rules';
 import { Button } from '../../../../components/ui/button.tsx';
 import { Dialog } from '../../../../components/ui/dialog.tsx';
 import { FormField } from '../../../../components/ui/form-field.tsx';
@@ -27,8 +29,8 @@ export function AdminCreateUserModal({ open, onClose, onSubmit, tenants }: Admin
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateAdminUserRequest>({
-    resolver: zodResolver(CreateAdminUserRequest) as any,
+  } = useForm<z.input<typeof CreateAdminUserRequest>, unknown, CreateAdminUserRequest>({
+    resolver: zodResolver(CreateAdminUserRequest),
     defaultValues: {
       email: '',
       displayName: '',
@@ -49,7 +51,7 @@ export function AdminCreateUserModal({ open, onClose, onSubmit, tenants }: Admin
       setSubmitting(true);
       setServerError(null);
       const roleChoice = data.roles?.[0];
-      const computedRoles = roleChoice === 'ADMIN'
+      const computedRoles: Role[] = roleChoice === 'ADMIN'
         ? ['USER', 'ADMIN']
         : roleChoice === 'ADVISOR'
         ? ['USER', 'ADVISOR']
@@ -58,12 +60,12 @@ export function AdminCreateUserModal({ open, onClose, onSubmit, tenants }: Admin
       await onSubmit({
         ...data,
         displayName: data.displayName?.trim() || null,
-        roles: computedRoles as any,
+        roles: computedRoles,
         tenantId: data.tenantId || null,
       });
       handleClose();
-    } catch (err: any) {
-      setServerError(err.message || 'Could not create user account.');
+    } catch (err: unknown) {
+      setServerError(err instanceof Error && err.message ? err.message : 'Could not create user account.');
     } finally {
       setSubmitting(false);
     }

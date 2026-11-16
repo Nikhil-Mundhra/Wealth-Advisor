@@ -121,8 +121,8 @@ export function exportOtlpResourceSpans(serviceName = 'dewa-backend') {
               spanId: s.spanId,
               ...(s.parentSpanId ? { parentSpanId: s.parentSpanId } : {}),
               name: s.name,
-              startTimeUnixNano: String(s.startTimeUnixMs * 1_000_000),
-              endTimeUnixNano: String(s.endTimeUnixMs * 1_000_000),
+              startTimeUnixNano: (BigInt(Math.trunc(s.startTimeUnixMs)) * 1_000_000n).toString(),
+              endTimeUnixNano: (BigInt(Math.trunc(s.endTimeUnixMs)) * 1_000_000n).toString(),
               status: { code: s.status === 'OK' ? 1 : 2, ...(s.errorMessage ? { message: s.errorMessage } : {}) },
               attributes: Object.entries(s.attributes).map(([key, val]) => ({
                 key,

@@ -18,6 +18,7 @@ import {
 } from '../../../src/modules/finance/infrastructure/db/memory/memory-finance.repository.ts';
 import { MemoryFxRateRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts';
 import { MemoryPriceRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-price.repository.ts';
+import { buildMockFxRates } from '../../../src/modules/market/infrastructure/providers/mock-market-source.ts';
 import { createMarketApi } from '../../../src/modules/market/market.api.ts';
 import { unregisteredPasskeyVerifier } from '../../../src/modules/wealth/infrastructure/crypto/unregistered-passkey-verifier.ts';
 import {
@@ -55,6 +56,7 @@ describe('Failure injection integration suite', () => {
       },
       events: new DurableOutboxEventBus({ clock }),
       clock,
+      mockFxFallback: buildMockFxRates,
     });
 
     const finance = createFinanceApi({
@@ -81,6 +83,7 @@ describe('Failure injection integration suite', () => {
       fxSource: { fetchRange: async () => [] },
       events: bus,
       clock,
+      mockFxFallback: buildMockFxRates,
     });
     const analytics = createAnalyticsApi({
       market: { history: async () => [] },

@@ -6,10 +6,9 @@ import { clearSession, setAccessToken } from '../../features/auth/session/sessio
 import { setLocale } from '../../lib/locale-store.ts';
 import { AdvisorRoute, ProtectedRoute } from '../route-guards.tsx';
 import { AdvisoryPage } from './advisory-page.tsx';
-import { AppShell } from '../../components/layout/app-shell.tsx';
+import { AppShell } from '../app-shell.tsx';
 
-// Router-level test on the real route table: /advisory serves the client copilot,
-// while advisor roles bounce to the workstation.
+// Router-level test on the real route table: /advisory serves the client copilot across all signed-in roles in the personal app.
 function renderAdvisoryRoute(roles: string[], email: string) {
   vi.stubGlobal(
     'fetch',

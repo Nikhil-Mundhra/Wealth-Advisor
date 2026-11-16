@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LoginEmailField } from '../fields/email.field.ts';
 
 export const PasskeyRegistrationOptionsResponse = z.object({
   challenge: z.string(),
@@ -31,7 +32,7 @@ export const ListPasskeysResponse = z.object({
 export type ListPasskeysResponse = z.infer<typeof ListPasskeysResponse>;
 
 export const PasskeyLoginOptionsRequest = z.object({
-  email: z.string().min(1),
+  email: LoginEmailField,
 });
 export type PasskeyLoginOptionsRequest = z.infer<typeof PasskeyLoginOptionsRequest>;
 
@@ -51,7 +52,7 @@ export const PasskeyLoginVerifyRequest = z.object({
 export type PasskeyLoginVerifyRequest = z.infer<typeof PasskeyLoginVerifyRequest>;
 
 export const PasskeyLoginVerifyWithEmailRequest = PasskeyLoginVerifyRequest.extend({
-  email: z.string().min(1),
+  email: LoginEmailField,
 });
 export type PasskeyLoginVerifyWithEmailRequest = z.infer<typeof PasskeyLoginVerifyWithEmailRequest>;
 

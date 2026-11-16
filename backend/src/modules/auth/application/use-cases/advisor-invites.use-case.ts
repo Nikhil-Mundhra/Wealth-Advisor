@@ -1,3 +1,4 @@
+import { hasAdvisorRole } from '@wealth-advisor/rules';
 import type { AdvisorInviteDto, AdvisorInviteListResponse, CreateAdvisorInviteRequest } from '@wealth-advisor/contracts';
 import { generateOpaqueToken } from '#core/crypto/random-token.ts';
 import type { Clock } from '#core/time/clock.ts';
@@ -19,16 +20,16 @@ export class AdvisorInvitesUseCase {
 
   async createInvite(advisorId: string, input: CreateAdvisorInviteRequest, origin = ''): Promise<AdvisorInviteDto> {
     const advisor = await this.deps.users.findActiveById(advisorId);
-    if (!advisor || (!advisor.roles.includes('ADVISOR') && !advisor.roles.includes('ADMIN'))) {
+    if (!advisor || !hasAdvisorRole(advisor.roles)) {
       throw AuthErrors.unauthenticated();
     }
 
-    const inviteCode = `ADV-${advisor.id}`;
+    const id = generateOpaqueToken(12);
+    const inviteCode = `ADV-${advisor.id}:${id}`;
     const now = this.deps.clock.now();
     const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    const id = generateOpaqueToken(12);
-    const inviteUrl = `${origin}/signup?advisor=${inviteCode}`;
+    const inviteUrl = `${origin}/signup?advisor=${encodeURIComponent(inviteCode)}`;
 
     const dto: AdvisorInviteDto = {
       id,

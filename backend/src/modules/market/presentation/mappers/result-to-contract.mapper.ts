@@ -19,6 +19,8 @@ export function toFxRatesResponse(result: RatesResult): FxRatesResponse {
     asOf: result.asOf,
     base: result.base,
     rates: result.rates.map((rate) => ({ ...rate })),
+    ...(result.stale !== undefined ? { stale: result.stale } : {}),
+    ...(result.staleReason !== undefined ? { staleReason: result.staleReason } : {}),
   };
 }
 

@@ -5,7 +5,7 @@ import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const ActionCardDto = z.object({
   cardType: z.enum(['PROPOSAL', 'STRESS_TEST', 'RUNWAY_ALERT', 'PRODUCT_COMPARISON', 'NOTICE']),
-  payload: z.record(z.string(), z.any()),
+  payload: z.record(z.string(), z.unknown()),
 });
 export type ActionCardDto = z.infer<typeof ActionCardDto>;
 

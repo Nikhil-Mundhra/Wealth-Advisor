@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle, Scale, Share2 } from 'lucide-react';
-import { listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
+import { isCurrency, listHoldingAmounts, type AssetClass } from '@wealth-advisor/rules';
 import { Link, Navigate } from 'react-router';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { Button } from '../../components/ui/button.tsx';
@@ -126,12 +126,12 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
                 Share strategy
               </Button>
             )}
-            <a
-              href="/advisory"
+            <Link
+              to="/advisory"
               className="rounded-field bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 dark:text-brand-950"
             >
               Propose Rebalance →
-            </a>
+            </Link>
           </div>
         </div>
       ) : (
@@ -166,9 +166,9 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
             >
               Compare Products
             </Button>
-            <a href="/portfolio" className="text-xs text-subtle hover:text-ink">
+            <Link to="/portfolio" className="text-xs text-subtle hover:text-ink">
               {strings['portfolio.holdings']} &rarr;
-            </a>
+            </Link>
           </div>
         </div>
       )}
@@ -248,7 +248,7 @@ function PortfolioView({ showTitle = true }: PortfolioSectionProps) {
                   </th>
                   <td className="px-4 py-3 text-right font-display font-semibold">{holding.weight}%</td>
                   <td className="px-4 py-3 text-right font-display text-subtle">
-                    {formatMoney(holding.amount, holding.currency as any)}
+                    {formatMoney(holding.amount, isCurrency(holding.currency) ? holding.currency : 'EUR')}
                   </td>
                 </tr>
               ))}

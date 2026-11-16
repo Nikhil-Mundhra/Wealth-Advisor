@@ -154,13 +154,15 @@ export function SharedPlanPage() {
                 </p>
                 <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
                   <div className="rounded-field border border-line bg-surface-subtle p-3">
-                    <span className="mb-1 block font-semibold text-ink">FX Shock</span>
-                    <p className="text-muted">{plan.planSnapshot.stressTestScenario.fxShockPercent}% adverse move</p>
+                    <span className="mb-1 block font-semibold text-ink">{strings['share.stress.fxShockLabel']}</span>
+                    <p className="text-muted">
+                      {strings['share.stress.fxShockValue'].replace('{pct}', String(plan.planSnapshot.stressTestScenario.fxShockPercent))}
+                    </p>
                   </div>
                   <div className="rounded-field border border-line bg-surface-subtle p-3">
-                    <span className="mb-1 block font-semibold text-ink">Estimated Drawdown</span>
+                    <span className="mb-1 block font-semibold text-ink">{strings['share.stress.drawdownLabel']}</span>
                     <p className="text-muted">
-                      {plan.planSnapshot.stressTestScenario.estimatedDrawdownPercent}% portfolio value
+                      {strings['share.stress.drawdownValue'].replace('{pct}', String(plan.planSnapshot.stressTestScenario.estimatedDrawdownPercent))}
                     </p>
                   </div>
                 </div>

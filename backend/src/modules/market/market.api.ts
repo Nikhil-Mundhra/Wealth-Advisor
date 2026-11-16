@@ -13,7 +13,11 @@ import { toNumber } from './domain/decimal.ts';
 import { createRateTable } from './domain/rate-table.ts';
 import { FX_BASE, FX_QUOTES, TRACKED_SYMBOL_NAMES, TRACKED_SYMBOLS } from './domain/tracked-symbols.ts';
 import type { ConversionMode } from './domain/valuation.vo.ts';
-import { buildMockFxRates } from './infrastructure/providers/mock-market-source.ts';
+
+export type MockFxFallback = (
+  base: Currency,
+  date: string,
+) => readonly { readonly quote: Currency; readonly rate: number; readonly date: string; readonly source: string }[];
 
 export interface MarketApiDeps {
   readonly prices: PriceRepository;
@@ -22,6 +26,7 @@ export interface MarketApiDeps {
   readonly fxSource: FxSource;
   readonly events: EventBus;
   readonly clock: Clock;
+  readonly mockFxFallback?: MockFxFallback;
 }
 
 export interface RefreshResult {
@@ -54,7 +59,7 @@ export interface ConvertInput {
 export type MarketApi = ReturnType<typeof createMarketApi>;
 
 export function createMarketApi(deps: MarketApiDeps) {
-  const { prices, fxRates, priceSource, fxSource, events, clock } = deps;
+  const { prices, fxRates, priceSource, fxSource, events, clock, mockFxFallback } = deps;
   const today = () => toIsoDate(clock.now());
 
   const resilientFxCaller = createResilientCachedCaller<
@@ -82,7 +87,7 @@ export function createMarketApi(deps: MarketApiDeps) {
 
       let rates = await readStored();
       if (rates.length === 0) {
-        const fetched = await fxSource.fetchRange(FX_BASE, FX_QUOTES, addDays(date, -7), date);
+        const fetched = await fxSource.fetchRange(FX_BASE, FX_QUOTES, addDays(date, -FX_LOOKBACK_DAYS), date);
         if (fetched.length > 0) {
           await fxRates.append(fetched);
           rates = await readStored();
@@ -96,10 +101,12 @@ export function createMarketApi(deps: MarketApiDeps) {
       const asOf = maxDate(rates.map((rate) => rate.date));
       return { asOf, rates };
     },
-    mockFallback: ({ base, date }) => ({
-      asOf: date,
-      rates: buildMockFxRates(base, date),
-    }),
+    mockFallback: mockFxFallback
+      ? ({ base, date }) => ({
+          asOf: date,
+          rates: mockFxFallback(base, date),
+        })
+      : undefined,
   });
 
   return {

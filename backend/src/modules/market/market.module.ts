@@ -13,6 +13,7 @@ import { MongoPriceRepository } from './infrastructure/db/repositories/mongo-pri
 import { marketCollections } from './infrastructure/db/schema/market-collections.ts';
 import { createFrankfurterFxSource } from './infrastructure/providers/frankfurter-fx-source.ts';
 import { createMarketstackPriceSource } from './infrastructure/providers/marketstack-price-source.ts';
+import { buildMockFxRates } from './infrastructure/providers/mock-market-source.ts';
 import { createMarketApi, type MarketApi } from './market.api.ts';
 import { MARKET_ERROR_STATUSES } from './presentation/market-error-statuses.ts';
 import { marketRoutes } from './presentation/routes/market.routes.ts';
@@ -51,6 +52,7 @@ export function createMarketModule(context: ModuleContext, deps?: MarketModuleDe
     fxSource: createFrankfurterFxSource({ http }),
     events,
     clock,
+    mockFxFallback: buildMockFxRates,
   });
 
   const manifest = defineModule({

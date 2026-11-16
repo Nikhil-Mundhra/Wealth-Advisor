@@ -83,7 +83,6 @@ export function metricsMiddleware(): MiddlewareHandler {
     const start = performance.now();
     await next();
     const durationMs = performance.now() - start;
-    // Skip self-scrape noise if desired or record all API routes accurately
     recordHttpRequest(c.req.method, c.req.path, c.res.status, durationMs);
   };
 }

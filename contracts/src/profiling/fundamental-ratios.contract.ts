@@ -9,7 +9,7 @@ export const AssetFundamentalMetricsSchema = z.object({
   foreignRevenueRatio: z.number().min(0).max(1),
   fcfPayoutRatio: z.number().optional(),
 });
-export type AssetFundamentalMetricsContract = z.infer<typeof AssetFundamentalMetricsSchema>;
+export type AssetFundamentalMetricsSchema = z.infer<typeof AssetFundamentalMetricsSchema>;
 
 export const FundamentalEvaluationSchema = z.object({
   symbol: z.string().min(1),
@@ -19,4 +19,4 @@ export const FundamentalEvaluationSchema = z.object({
   signal: z.enum(FUNDAMENTAL_SIGNALS),
   clientSummaryKey: z.string(),
 });
-export type FundamentalEvaluationContract = z.infer<typeof FundamentalEvaluationSchema>;
+export type FundamentalEvaluationSchema = z.infer<typeof FundamentalEvaluationSchema>;

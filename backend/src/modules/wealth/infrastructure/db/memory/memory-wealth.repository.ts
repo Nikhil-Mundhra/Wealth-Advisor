@@ -42,7 +42,7 @@ export class MemoryAssetProductRepository implements AssetProductRepository {
 }
 
 export class MemoryPortfolioRepository implements PortfolioRepository {
-  private portfolio: PortfolioDocument | null = null;
+  private readonly portfolios = new Map<string, PortfolioDocument>();
 
   constructor() {
     this.seedDefault();
@@ -53,7 +53,7 @@ export class MemoryPortfolioRepository implements PortfolioRepository {
     const demoTenantId = new ObjectId(DEFAULT_TENANT_ID);
     const demoUserId = new ObjectId(DEFAULT_USER_ID);
 
-    this.portfolio = {
+    const doc: PortfolioDocument = {
       _id: new ObjectId(),
       tenantId: demoTenantId,
       userId: demoUserId,
@@ -103,16 +103,22 @@ export class MemoryPortfolioRepository implements PortfolioRepository {
         },
       ],
     };
+
+    const key = `${demoTenantId.toHexString()}:${demoUserId.toHexString()}`;
+    this.portfolios.set(key, doc);
   }
 
-  // The portfolio is a single row per user, so an unmatched scope reads nothing rather than the demo portfolio.
+  // Scoped by tenantId:userId so different users never overwrite or read another account's portfolio.
   async findByUser(tenantId: string, userId: string): Promise<PortfolioDocument | null> {
-    const owned = this.portfolio && belongsTo(this.portfolio, tenantId, userId);
-    return owned ? this.portfolio : null;
+    const tenant = toScopeId(tenantId, DEFAULT_TENANT_ID);
+    const user = toScopeId(userId, DEFAULT_USER_ID);
+    if (!tenant || !user) return null;
+    return this.portfolios.get(`${tenant.toHexString()}:${user.toHexString()}`) ?? null;
   }
 
   async save(portfolio: PortfolioDocument): Promise<void> {
-    this.portfolio = portfolio;
+    const key = `${portfolio.tenantId.toHexString()}:${portfolio.userId.toHexString()}`;
+    this.portfolios.set(key, portfolio);
   }
 }
 
@@ -120,7 +126,9 @@ export class MemorySandboxLedgerRepository implements SandboxLedgerRepository {
   private readonly entries: SandboxLedgerDocument[] = [];
 
   async findAllByUser(tenantId: string, userId: string): Promise<SandboxLedgerDocument[]> {
-    return this.entries.filter((entry) => belongsTo(entry, tenantId, userId));
+    return this.entries
+      .filter((entry) => belongsTo(entry, tenantId, userId))
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 
   async append(entry: Omit<SandboxLedgerDocument, '_id'>): Promise<SandboxLedgerDocument> {

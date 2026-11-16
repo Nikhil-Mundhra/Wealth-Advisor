@@ -1,14 +1,14 @@
 import { z } from 'zod';
-import { ASSET_CLASSES, SECURITY_TYPES } from '@wealth-advisor/rules';
+import { ASSET_CLASSES, JURISDICTIONS, RISK_TIERS, SECURITY_TYPES } from '@wealth-advisor/rules';
 
 export const CandidateSecurityTypeDto = z.enum(SECURITY_TYPES);
 export type CandidateSecurityTypeDto = z.infer<typeof CandidateSecurityTypeDto>;
 
-export const RiskTierEnum = z.enum(['conservative', 'moderate', 'aggressive', 'very_aggressive']);
-export type RiskTierEnum = z.infer<typeof RiskTierEnum>;
+export const RiskTierDto = z.enum(RISK_TIERS);
+export type RiskTierDto = z.infer<typeof RiskTierDto>;
 
-export const JurisdictionEnum = z.enum(['INDIA', 'UAE', 'US', 'GLOBAL']);
-export type JurisdictionEnum = z.infer<typeof JurisdictionEnum>;
+export const JurisdictionDto = z.enum(JURISDICTIONS);
+export type JurisdictionDto = z.infer<typeof JurisdictionDto>;
 
 export const AllocatedHoldingDto = z.object({
   symbol: z.string(),
@@ -57,9 +57,9 @@ export const MonteCarloResultDto = z.object({
 export type MonteCarloResultDto = z.infer<typeof MonteCarloResultDto>;
 
 export const ConstructPortfolioRequest = z.object({
-  riskTier: RiskTierEnum.optional(),
+  riskTier: RiskTierDto.optional(),
   statedRiskScore: z.number().min(1).max(10).optional(),
-  jurisdiction: JurisdictionEnum.optional(),
+  jurisdiction: JurisdictionDto.optional(),
   shariaOnly: z.boolean().optional(),
   minLiquidityFactor: z.number().min(0).max(1).optional(),
   maxSectorExposure: z.number().min(0.05).max(1).optional(),
@@ -69,7 +69,7 @@ export const ConstructPortfolioRequest = z.object({
 export type ConstructPortfolioRequest = z.infer<typeof ConstructPortfolioRequest>;
 
 export const ConstructPortfolioResponse = z.object({
-  riskTier: RiskTierEnum,
+  riskTier: RiskTierDto,
   riskAversionLambda: z.number(),
   holdings: z.array(AllocatedHoldingDto),
   portfolioExpectedReturn: z.number(),

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import {
-  rankRelevantCurrencies,
   listHoldingAmounts,
+  PROFILING_MAX_AGE,
+  PROFILING_MIN_AGE,
+  PROFILING_QUESTIONS,
+  rankRelevantCurrencies,
   type CorridorCountriesInput,
   type Currency,
   type HoldingKind,
@@ -25,7 +28,7 @@ interface ProfilingQuestionnaireProps {
   startFresh?: boolean;
 }
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = PROFILING_QUESTIONS.length;
 
 export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh = false }: ProfilingQuestionnaireProps) {
   const strings = useStrings();
@@ -71,7 +74,7 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
       setError(strings['profiling.q3.prompt']);
       return;
     }
-    if (step === 5 && (answers.age < 18 || answers.age > 100)) {
+    if (step === 5 && (answers.age < PROFILING_MIN_AGE || answers.age > PROFILING_MAX_AGE)) {
       setError(strings['profiling.q5.prompt']);
       return;
     }
@@ -81,7 +84,6 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
       setStep(nextStep);
       saveDraft(nextStep, answers, email);
     } else {
-      // Step 7 complete: persist
       saveProfile(answers, email);
       onComplete();
     }
@@ -357,10 +359,10 @@ export function ProfilingQuestionnaire({ onComplete, onCancel, email, startFresh
           <div className="flex items-center gap-3">
             <input
               type="number"
-              min="18"
-              max="100"
+              min={PROFILING_MIN_AGE}
+              max={PROFILING_MAX_AGE}
               value={answers.age}
-              onChange={(e) => updateAnswers((prev) => ({ ...prev, age: Number(e.target.value) || 18 }))}
+              onChange={(e) => updateAnswers((prev) => ({ ...prev, age: Number(e.target.value) || PROFILING_MIN_AGE }))}
               className="w-24 rounded-field border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
             />
             <span className="text-sm font-medium">{strings['profiling.q5.years']}</span>

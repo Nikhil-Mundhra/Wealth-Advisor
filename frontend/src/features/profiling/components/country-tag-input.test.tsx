@@ -79,7 +79,7 @@ describe('CountryTagInput', () => {
     const input = screen.getByPlaceholderText('Type country…');
     await userEvent.type(input, 'Singapore');
 
-    const suggestion = await screen.findByRole('button', { name: 'Select Singapore' });
+    const suggestion = await screen.findByRole('option', { name: 'Select Singapore' });
     expect(suggestion).toBeVisible();
 
     await userEvent.click(suggestion);

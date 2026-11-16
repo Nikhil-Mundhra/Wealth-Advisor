@@ -10,5 +10,5 @@ export const USER_STATUSES = ['ACTIVE', 'WITHDRAWN'] as const;
 export type UserStatus = (typeof USER_STATUSES)[number];
 
 export function hasAdvisorRole(roles: readonly string[]): boolean {
-  return roles.includes('ADVISOR') || roles.includes('ADMIN');
+  return roles.includes(ADVISOR_ROLE) || roles.includes(ADMIN_ROLE);
 }

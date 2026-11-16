@@ -1,7 +1,9 @@
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { CredentialsTab } from '../../features/admin/components/credentials-tab.tsx';
+import { useLaunchDemoSession } from './use-launch-demo-session.ts';
 
 export function AdminCredentialsPage() {
+  const launchDemoSession = useLaunchDemoSession();
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -11,7 +13,7 @@ export function AdminCredentialsPage() {
         </p>
       </div>
 
-      <CredentialsTab />
+      <CredentialsTab onLaunchSession={launchDemoSession} />
     </div>
   );
 }

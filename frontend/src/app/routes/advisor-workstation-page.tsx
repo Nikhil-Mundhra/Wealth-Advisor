@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ArrowRight,
@@ -18,6 +18,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
+import { isCurrency } from '@wealth-advisor/rules';
 import type { AdvisorClientSummaryDto } from '@wealth-advisor/contracts';
 import { Button } from '../../components/ui/button.tsx';
 import { Card, cardClassName } from '../../components/ui/card.tsx';
@@ -38,8 +39,9 @@ import { InviteClientModal } from '../../features/advisor/components/invite-clie
 import { PreMeetingBriefModal } from '../../features/advisor/components/pre-meeting-brief-modal.tsx';
 import { InstrumentComparisonModal } from '../../features/advisor/components/instrument-comparison-modal.tsx';
 import { ClientRoster } from '../../features/advisor/components/client-roster.tsx';
+import { wealthApi } from '../../features/wealth/api/wealth-api.ts';
 import { cn } from '../../lib/cn.ts';
-import { formatMoney } from '../../lib/format-money.ts';
+import { formatMinorMoney, formatMoney } from '../../lib/format-money.ts';
 import { AdvisoryThread } from './advisory-thread.tsx';
 
 type WorkstationTab = 'overview' | 'active' | 'copilot' | 'instruments' | 'invites';
@@ -93,6 +95,7 @@ export function AdvisorWorkstationPage() {
   const activeClient = useActiveClient();
   const allClients = useAdvisorClients();
 
+  const queryClient = useQueryClient();
   const { data: clientsData, isLoading: loadingClients } = useQuery({
     queryKey: ['advisor', 'clients'],
     queryFn: authApi.listAdvisorClients,
@@ -103,13 +106,37 @@ export function AdvisorWorkstationPage() {
     queryFn: authApi.listAdvisorInvites,
   });
 
+  const { data: selectedPortfolio, isLoading: loadingSelectedPortfolio } = useQuery({
+    queryKey: ['advisor', 'client-portfolio', selectedClient?.id],
+    queryFn: () => wealthApi.getPortfolio(selectedClient?.id),
+    enabled: Boolean(selectedClient?.id),
+  });
+
+  const createInviteMutation = useMutation({
+    mutationFn: authApi.createAdvisorInvite,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['advisor', 'invites'] });
+    },
+  });
+
   const dbClients = clientsData?.clients ?? [];
   const invites = invitesData?.invites ?? [];
   // The roster is local seed data; only a connected account has a backend user id to snapshot a plan for.
   const shareClientId = dbClients.find((client) => client.email.toLowerCase() === activeClient.email.toLowerCase())?.id ?? null;
 
-  // Aggregated valuation across seeded + database clients
-  const totalAum = allClients.reduce((sum, c) => sum + c.netWorth, 0);
+  // Book AUM sums each assigned seeded client's nominal net worth alongside connected API accounts.
+  const seededAum = allClients.reduce((sum, c) => sum + c.netWorth, 0);
+  const liveDbAum = dbClients.reduce((sum, c) => sum + Math.round(c.totalValuationBase / 100), 0);
+  const totalAum = seededAum + liveDbAum;
+
+  const avgRunwayMonths = (() => {
+    const samples = [
+      ...allClients.map((c) => c.runwayMonths),
+      ...dbClients.map((c) => c.runwayMonths),
+    ];
+    if (samples.length === 0) return null;
+    return (samples.reduce((sum, r) => sum + r, 0) / samples.length).toFixed(1);
+  })();
 
   const handleCopyLink = async (url: string, id: string) => {
     await navigator.clipboard.writeText(url);
@@ -179,7 +206,11 @@ export function AdvisorWorkstationPage() {
               <span className="font-serif text-2xl font-bold text-ink">
                 {formatMoney(totalAum, 'EUR')}
               </span>
-              <span className="text-[11px] text-subtle">Total client book valuation</span>
+              <span className="text-[11px] text-subtle">
+                {dbClients.length > 0
+                  ? `Seeded + ${dbClients.length} live client book`
+                  : 'Seeded client book valuation'}
+              </span>
             </div>
 
             <div className={cn(cardClassName, 'flex flex-col gap-1')}>
@@ -187,7 +218,9 @@ export function AdvisorWorkstationPage() {
                 <span className="text-xs font-medium">Avg Liquid Runway</span>
                 <Briefcase aria-hidden className="size-4 text-brand-600 dark:text-brand-400" />
               </div>
-              <span className="font-serif text-2xl font-bold text-ink">18.4 Mo</span>
+              <span className="font-serif text-2xl font-bold text-ink">
+                {avgRunwayMonths !== null ? `${avgRunwayMonths} Mo` : '—'}
+              </span>
               <span className="text-[11px] text-subtle">Liquidity cushion across book</span>
             </div>
 
@@ -223,7 +256,11 @@ export function AdvisorWorkstationPage() {
           </div>
 
           {/* Connected Database Accounts Table */}
-          {dbClients.length > 0 && (
+          {loadingClients ? (
+            <div className={cn(cardClassName, 'flex justify-center p-6 text-brand-600')}>
+              <Spinner label="Loading connected clients..." />
+            </div>
+          ) : dbClients.length > 0 && (
             <div className={cn(cardClassName, 'flex flex-col gap-3')}>
               <div className="flex items-center justify-between border-b border-line pb-3">
                 <div>
@@ -254,7 +291,7 @@ export function AdvisorWorkstationPage() {
                           <div className="text-subtle text-[11px] font-mono">{c.email}</div>
                         </td>
                         <td className="px-3 py-3 font-mono font-semibold tabular-nums">
-                          {formatMoney(c.totalValuationBase, c.currency as any)}
+                          {formatMinorMoney(c.totalValuationBase, isCurrency(c.currency) ? c.currency : 'EUR')}
                         </td>
                         <td className="px-3 py-3 font-mono tabular-nums text-brand-600 dark:text-brand-400">
                           {c.runwayMonths} Mo
@@ -544,11 +581,17 @@ export function AdvisorWorkstationPage() {
       )}
 
       {/* Modals */}
-      <InviteClientModal open={inviteModalOpen} onOpenChange={setInviteModalOpen} />
+      <InviteClientModal
+        open={inviteModalOpen}
+        onOpenChange={setInviteModalOpen}
+        onCreateInvite={(payload) => createInviteMutation.mutateAsync(payload)}
+      />
       <ClientPortfolioModal
         open={!!selectedClient}
         onOpenChange={(open) => !open && setSelectedClient(null)}
         client={selectedClient}
+        portfolio={selectedPortfolio}
+        isLoading={loadingSelectedPortfolio}
       />
       <PreMeetingBriefModal
         open={briefOpen}

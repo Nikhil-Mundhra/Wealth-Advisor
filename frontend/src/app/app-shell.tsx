@@ -20,22 +20,22 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { hasAdvisorRole } from '@wealth-advisor/rules';
-import logoImg from '../../assets/logo.png';
-import logoDarkImg from '../../assets/logo-dark.png';
-import { ME_QUERY_KEY, useMe } from '../../features/auth/api/use-me.ts';
-import { MeErrorState } from '../../features/auth/components/me-gate.tsx';
+import logoImg from '../assets/logo.png';
+import logoDarkImg from '../assets/logo-dark.png';
+import { ME_QUERY_KEY, useMe } from '../features/auth/api/use-me.ts';
+import { MeErrorState } from '../features/auth/components/me-gate.tsx';
 import {
   getAdminActingSession,
   returnToAdminSession,
   type ActingSessionInfo,
-} from '../../features/auth/session/acting-session.ts';
-import { setAdvisorScope } from '../../features/advisor/advisor-store.ts';
-import { ClientSelector } from '../../features/advisor/components/client-selector.tsx';
-import { cn } from '../../lib/cn.ts';
-import { useStrings } from '../../lib/dictionaries.ts';
-import { LanguageSelect } from '../ui/language-select.tsx';
-import { Spinner } from '../ui/spinner.tsx';
-import { ThemeToggle } from '../ui/theme-toggle.tsx';
+} from '../features/auth/session/acting-session.ts';
+import { setAdvisorScope } from '../features/advisor/advisor-store.ts';
+import { ClientSelector } from '../features/advisor/components/client-selector.tsx';
+import { cn } from '../lib/cn.ts';
+import { useStrings } from '../lib/dictionaries.ts';
+import { LanguageSelect } from '../components/ui/language-select.tsx';
+import { Spinner } from '../components/ui/spinner.tsx';
+import { ThemeToggle } from '../components/ui/theme-toggle.tsx';
 
 // Client Den Navigation (Strictly private personal wealth management)
 const CLIENT_TABS = [
@@ -126,6 +126,93 @@ function ActingBanner() {
   );
 }
 
+function AdminSidebarNav({ actingActive }: { actingActive: boolean }) {
+  return (
+    <nav aria-label="Admin console navigation" className="flex flex-col gap-1 px-3 mt-2">
+      {ADMIN_NAV_ITEMS.map(({ to, label, Icon, ...rest }) => (
+        <NavLink key={to} to={to} {...rest} className={linkClass}>
+          <Icon aria-hidden className="size-5 text-gold" />
+          <span>{label}</span>
+        </NavLink>
+      ))}
+      <div className="my-3 border-t border-line" />
+      {actingActive && (
+        <NavLink to="/" className={linkClass}>
+          <ArrowLeft aria-hidden className="size-5 text-subtle" />
+          <span>Exit to Client App</span>
+        </NavLink>
+      )}
+      <NavLink to="/advisor" className={linkClass}>
+        <Briefcase aria-hidden className="size-5 text-gold" />
+        <span>Advisor Workstation</span>
+      </NavLink>
+    </nav>
+  );
+}
+
+function AdvisorSidebarNav({ settingsLabel }: { settingsLabel: string }) {
+  return (
+    <nav aria-label="Advisor workstation navigation" className="flex flex-col gap-1 px-3 mt-2">
+      {ADVISOR_NAV_ITEMS.map(({ to, label, Icon, ...rest }) => (
+        <NavLink key={to} to={to} {...rest} className={linkClass}>
+          <Icon aria-hidden className="size-5 text-gold" />
+          <span>{label}</span>
+        </NavLink>
+      ))}
+      <div className="my-2 border-t border-line" />
+      <NavLink to="/advisor/settings" className={linkClass}>
+        <Settings aria-hidden className="size-5" />
+        {settingsLabel}
+      </NavLink>
+    </nav>
+  );
+}
+
+function ClientSidebarNav({
+  strings,
+  isAdvisorOrAdmin,
+  isAdminUser,
+}: {
+  strings: ReturnType<typeof useStrings>;
+  isAdvisorOrAdmin: boolean;
+  isAdminUser: boolean;
+}) {
+  return (
+    <nav aria-label={strings['nav.main']} className="flex flex-col gap-1 px-3 mt-2">
+      {CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
+        <NavLink key={to} to={to} {...rest} className={linkClass}>
+          <Icon aria-hidden className="size-5" />
+          {strings[key]}
+        </NavLink>
+      ))}
+      <div className="my-2 border-t border-line" />
+      <NavLink to="/settings/security" className={linkClass}>
+        <Settings aria-hidden className="size-5" />
+        {strings['header.settings']}
+      </NavLink>
+      <NavLink to="/settings/ledger" className={linkClass}>
+        <ScrollText aria-hidden className="size-5" />
+        {strings['settings.ledger']}
+      </NavLink>
+      {isAdvisorOrAdmin && (
+        <>
+          <div className="my-3 border-t border-line" />
+          <NavLink to="/advisor" className={linkClass}>
+            <Briefcase aria-hidden className="size-5 text-gold" />
+            <span>Advisor Workstation</span>
+          </NavLink>
+          {isAdminUser && (
+            <NavLink to="/admin" className={linkClass}>
+              <Shield aria-hidden className="size-5 text-gold" />
+              <span>Admin Console</span>
+            </NavLink>
+          )}
+        </>
+      )}
+    </nav>
+  );
+}
+
 // Signed-in frame: Clean separation between Client Den, Advisor Workstation, and Admin Console.
 export function AppShell() {
   const strings = useStrings();
@@ -186,76 +273,16 @@ export function AppShell() {
           </Link>
         </div>
 
-        {/* 1. Admin Console Sidebar */}
         {isAdminSection ? (
-          <nav aria-label="Admin console navigation" className="flex flex-col gap-1 px-3 mt-2">
-            {ADMIN_NAV_ITEMS.map(({ to, label, Icon, ...rest }) => (
-              <NavLink key={to} to={to} {...rest} className={linkClass}>
-                <Icon aria-hidden className="size-5 text-gold" />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-            <div className="my-3 border-t border-line" />
-            {actingActive && (
-              <NavLink to="/" className={linkClass}>
-                <ArrowLeft aria-hidden className="size-5 text-subtle" />
-                <span>Exit to Client App</span>
-              </NavLink>
-            )}
-            <NavLink to="/advisor" className={linkClass}>
-              <Briefcase aria-hidden className="size-5 text-gold" />
-              <span>Advisor Workstation</span>
-            </NavLink>
-          </nav>
+          <AdminSidebarNav actingActive={actingActive} />
         ) : isAdvisorSection ? (
-          /* 2. Advisor Workstation Sidebar */
-          <nav aria-label="Advisor workstation navigation" className="flex flex-col gap-1 px-3 mt-2">
-            {ADVISOR_NAV_ITEMS.map(({ to, label, Icon, ...rest }) => (
-              <NavLink key={to} to={to} {...rest} className={linkClass}>
-                <Icon aria-hidden className="size-5 text-gold" />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-            <div className="my-2 border-t border-line" />
-            <NavLink to="/advisor/settings" className={linkClass}>
-              <Settings aria-hidden className="size-5" />
-              {strings['header.settings']}
-            </NavLink>
-          </nav>
+          <AdvisorSidebarNav settingsLabel={strings['header.settings']} />
         ) : (
-          /* 3. Client's Den Sidebar (Personal portfolio, with explicit portal switch for advisors/admins) */
-          <nav aria-label={strings['nav.main']} className="flex flex-col gap-1 px-3 mt-2">
-            {CLIENT_TABS.map(({ to, key, Icon, ...rest }) => (
-              <NavLink key={to} to={to} {...rest} className={linkClass}>
-                <Icon aria-hidden className="size-5" />
-                {strings[key]}
-              </NavLink>
-            ))}
-            <div className="my-2 border-t border-line" />
-            <NavLink to="/settings/security" className={linkClass}>
-              <Settings aria-hidden className="size-5" />
-              {strings['header.settings']}
-            </NavLink>
-            <NavLink to="/settings/ledger" className={linkClass}>
-              <ScrollText aria-hidden className="size-5" />
-              {strings['settings.ledger']}
-            </NavLink>
-            {isAdvisorOrAdmin && (
-              <>
-                <div className="my-3 border-t border-line" />
-                <NavLink to="/advisor" className={linkClass}>
-                  <Briefcase aria-hidden className="size-5 text-gold" />
-                  <span>Advisor Workstation</span>
-                </NavLink>
-                {isAdminUser && (
-                  <NavLink to="/admin" className={linkClass}>
-                    <Shield aria-hidden className="size-5 text-gold" />
-                    <span>Admin Console</span>
-                  </NavLink>
-                )}
-              </>
-            )}
-          </nav>
+          <ClientSidebarNav
+            strings={strings}
+            isAdvisorOrAdmin={isAdvisorOrAdmin}
+            isAdminUser={isAdminUser}
+          />
         )}
         {!isAdminSection && !isAdvisorSection && me && (
           <div className="mt-auto border-t border-line px-4 py-3 text-xs">

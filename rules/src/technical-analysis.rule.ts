@@ -1,6 +1,7 @@
 // Technical analysis rule: quantitative indicators, normalization, liquidity adjustment, and trend filters.
 // Reference: Portfolio Construction Engine Spec Section 2.
 // Sources: Murphy (1999) Technical Analysis of Financial Markets; Bollinger (2001) Bollinger on Bollinger Bands.
+import type { RiskTier } from './portfolio-optimizer.rule.ts';
 
 export const TECHNICAL_INDICATOR_WEIGHTS = {
   movingAverages: 0.18, // Trend crossover
@@ -57,8 +58,7 @@ export interface TechnicalScoreResult {
   technicalScore: number; // T_i in [0, 1]
 }
 
-// Normalizes RSI: RSI <= 30 is oversold (value 0.2 / bullish reversal potential), 30-70 linear, RSI >= 70 is overbought (cautious).
-// Following Spec Section 2.3: RSI 30 -> 0, 70 -> 1 for trend momentum.
+// Normalizes RSI to [0, 1] for trend momentum: <= 30 maps to 0.0, >= 70 maps to 1.0, linear between.
 export function normalizeRsi(rsi: number): number {
   if (rsi <= 30) return 0.0;
   if (rsi >= 70) return 1.0;
@@ -126,7 +126,7 @@ export function computeLiquidityFactor(avgDailyVolume: number, requiredVolume = 
 export function evaluateTrendFilter(
   price: number,
   ema200?: number,
-  riskTier?: 'conservative' | 'moderate' | 'aggressive' | 'very_aggressive',
+  riskTier?: RiskTier,
 ): boolean {
   if (riskTier === 'conservative' && ema200 !== undefined && price < ema200) {
     return false; // Trend filter fails for conservative client under 200 EMA
@@ -134,10 +134,9 @@ export function evaluateTrendFilter(
   return true;
 }
 
-// Full technical scoring algorithm
 export function calculateTechnicalScore(
   input: RawTechnicalIndicators,
-  riskTier: 'conservative' | 'moderate' | 'aggressive' | 'very_aggressive' = 'moderate',
+  riskTier: RiskTier = 'moderate',
 ): TechnicalScoreResult {
   const normMA = normalizeMovingAverages(input.currentPrice, input.ema20, input.sma50, input.sma200);
   const normMacd = normalizeMacd(input.macd, input.macdSignal);

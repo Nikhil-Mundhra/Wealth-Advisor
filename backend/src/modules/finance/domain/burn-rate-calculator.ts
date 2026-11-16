@@ -4,13 +4,18 @@ import {
   runwayBand,
   type RunwayBand,
 } from '@wealth-advisor/rules';
-import type { TransactionDocument } from '../infrastructure/db/documents/transaction.document.ts';
+
+export interface BurnRateTransaction {
+  readonly category: string;
+  readonly convertedBaseAmount: number;
+  readonly timestamp: Date;
+}
 
 export interface BurnRateCalculationInput {
   householdMode: HouseholdMode;
   // Liquid reserves in base minor units, already valued into one currency by the caller.
   totalLiquidReservesBase: number;
-  transactions: readonly TransactionDocument[];
+  transactions: readonly BurnRateTransaction[];
 }
 
 export interface BurnRateCalculationResult {
@@ -24,6 +29,16 @@ export interface BurnRateCalculationResult {
 }
 
 const MONTH_KEY = /^\d{4}-\d{2}/;
+
+// Heuristic monthly cashflow baselines (base minor units) when no historical ledger rows exist yet.
+const BASELINE_MINOR_FLOWS_BY_MODE: Readonly<Record<HouseholdMode, { readonly inflow: number; readonly outflow: number }>> = {
+  INDIVIDUAL: { inflow: 450_000, outflow: 250_000 },
+  FAMILY_HOUSEHOLD: { inflow: 1_050_000, outflow: 540_000 },
+};
+
+// Multiplier divisor normalizing INDIVIDUAL (1.0 -> 0.5x) and FAMILY_HOUSEHOLD (2.0 -> 1.0x)
+// against a single household monthly reserve floor.
+const HOUSEHOLD_OBLIGATION_DIVISOR = 2;
 
 export function calculateBurnRate(input: BurnRateCalculationInput): BurnRateCalculationResult {
   const { householdMode, transactions } = input;
@@ -47,16 +62,15 @@ export function calculateBurnRate(input: BurnRateCalculationInput): BurnRateCalc
   let monthlyInflowBase = Math.round(mean(inflowByMonth, divisor));
   let monthlyOutflowBase = Math.round(mean(outflowByMonth, divisor));
 
-  // Fallback defaults if no transactions logged yet
   if (monthlyInflowBase === 0 && monthlyOutflowBase === 0) {
-    monthlyInflowBase = householdMode === 'INDIVIDUAL' ? 450000 : 1050000;
-    monthlyOutflowBase = householdMode === 'INDIVIDUAL' ? 250000 : 540000;
+    const fallback = BASELINE_MINOR_FLOWS_BY_MODE[householdMode];
+    monthlyInflowBase = fallback.inflow;
+    monthlyOutflowBase = fallback.outflow;
   }
 
   const netCashflowBase = monthlyInflowBase - monthlyOutflowBase;
 
-  // Monthly reserve needed incorporates household obligations
-  const monthlyNeed = (monthlyOutflowBase * reserveMultiplier) / 2;
+  const monthlyNeed = (monthlyOutflowBase * reserveMultiplier) / HOUSEHOLD_OBLIGATION_DIVISOR;
   const runwayMonths =
     monthlyNeed > 0
       ? Number((totalLiquidReservesBase / monthlyNeed).toFixed(1))

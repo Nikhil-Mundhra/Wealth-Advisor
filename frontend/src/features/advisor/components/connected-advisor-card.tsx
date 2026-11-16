@@ -1,40 +1,35 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Briefcase, Check, LinkIcon, ShieldCheck, UserCheck } from 'lucide-react';
+import type { ClientAdvisorProfileDto } from '@wealth-advisor/contracts';
+import { Briefcase, LinkIcon, ShieldCheck, UserCheck } from 'lucide-react';
 import { Button } from '../../../components/ui/button.tsx';
 import { cardClassName } from '../../../components/ui/card.tsx';
-import { authApi } from '../../auth/api/auth-api.ts';
-import { ME_QUERY_KEY } from '../../auth/api/use-me.ts';
 import { cn } from '../../../lib/cn.ts';
 
-export function ConnectedAdvisorCard() {
-  const queryClient = useQueryClient();
+interface ConnectedAdvisorCardProps {
+  advisor?: ClientAdvisorProfileDto | null;
+  isLoading?: boolean;
+  onConnect: (inviteCode: string) => Promise<void>;
+}
+
+export function ConnectedAdvisorCard({ advisor, isLoading = false, onConnect }: ConnectedAdvisorCardProps) {
   const [inviteCode, setInviteCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: advisor, isLoading } = useQuery({
-    queryKey: ['me', 'advisor'],
-    queryFn: authApi.getConnectedAdvisor,
-  });
-
-  const mutation = useMutation({
-    mutationFn: authApi.connectAdvisor,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['me', 'advisor'] });
-      void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
-      setInviteCode('');
-      setError(null);
-    },
-    onError: () => {
-      setError('Invalid or expired invitation code. Please check with your advisor.');
-    },
-  });
-
-  const handleConnect = (e: React.FormEvent) => {
+  const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteCode.trim()) return;
+    const trimmed = inviteCode.trim();
+    if (!trimmed) return;
     setError(null);
-    mutation.mutate({ inviteCode: inviteCode.trim() });
+    setSubmitting(true);
+    try {
+      await onConnect(trimmed);
+      setInviteCode('');
+    } catch {
+      setError('Invalid or expired invitation code. Please check with your advisor.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (isLoading) return null;
@@ -93,7 +88,7 @@ export function ConnectedAdvisorCard() {
               onChange={(e) => setInviteCode(e.target.value)}
               className="flex-1 rounded-field border border-line bg-surface px-3 py-1.5 text-xs text-ink placeholder:text-subtle/50 focus:border-brand-600 focus:outline-none"
             />
-            <Button type="submit" variant="primary" className="h-9 px-3 text-xs" loading={mutation.isPending} disabled={!inviteCode.trim()}>
+            <Button type="submit" variant="primary" className="h-9 px-3 text-xs" loading={submitting} disabled={!inviteCode.trim()}>
               <LinkIcon aria-hidden className="mr-1.5 size-3.5" />
               Connect Analyst
             </Button>

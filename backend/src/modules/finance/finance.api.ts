@@ -236,7 +236,7 @@ export function createFinanceApi(deps: FinanceApiDeps) {
       const txDocs = await transactions.findByUser(tenantId, userId);
       const valued = await valueAccounts(accDocs, deps.market, toIsoDate(clock.now()));
 
-      // Runway is measured against what could be valued; an account left out is reported rather than silently counted.
+      // All valued checking/wallet accounts contribute to liquid reserves; isPrimaryLiquidity only designates the primary settlement account.
       const reserves = accDocs.reduce((sum, doc) => sum + (valued.get(doc._id.toHexString()) ?? 0), 0);
       const unvaluedAccountCount = accDocs.filter((doc) => valued.get(doc._id.toHexString()) == null).length;
 
@@ -267,26 +267,42 @@ export function createFinanceApi(deps: FinanceApiDeps) {
         }
       }
 
-      const corridors: RemittanceCorridorSummary[] = [
-        {
-          corridor: 'EUR_CNY',
-          sourceCurrency: 'EUR',
-          targetCurrency: 'CNY',
-          monthlyTargetAmount: 2500000, // 25,000 RMB in fen
-          monthlyBaseEquivalent: 320000, // ~€3,200
-          lastRate: eurCnyRate,
-          recipientName: 'Family Support (Shanghai)',
-        },
-        {
-          corridor: 'GBP_SGD',
-          sourceCurrency: 'GBP',
-          targetCurrency: 'SGD',
-          monthlyTargetAmount: 480000, // S$4,800
-          monthlyBaseEquivalent: 330000, // ~€3,300
-          lastRate: gbpSgdRate,
-          recipientName: 'Education Reserve (Singapore)',
-        },
-      ];
+      const isDemoScope = tenantId === 'default' && userId === 'default';
+      const corridors: RemittanceCorridorSummary[] = isDemoScope
+        ? [
+            {
+              corridor: 'EUR_CNY',
+              sourceCurrency: 'EUR',
+              targetCurrency: 'CNY',
+              monthlyTargetAmount: 2500000, // 25,000 RMB in fen
+              monthlyBaseEquivalent: Math.round(2500000 / eurCnyRate),
+              lastRate: eurCnyRate,
+              recipientName: 'Family Support (Shanghai)',
+            },
+            {
+              corridor: 'GBP_SGD',
+              sourceCurrency: 'GBP',
+              targetCurrency: 'SGD',
+              monthlyTargetAmount: 480000, // S$4,800
+              monthlyBaseEquivalent: Math.round((480000 / gbpSgdRate) / 0.85),
+              lastRate: gbpSgdRate,
+              recipientName: 'Education Reserve (Singapore)',
+            },
+          ]
+        : txDocs
+            .filter((tx) => tx.remittanceMetadata)
+            .map((tx) => {
+              const meta = tx.remittanceMetadata!;
+              return {
+                corridor: `${tx.currency}_${meta.destinationCurrency}`,
+                sourceCurrency: tx.currency,
+                targetCurrency: meta.destinationCurrency as Currency,
+                monthlyTargetAmount: Math.round(tx.amount * meta.exchangeRateApplied),
+                monthlyBaseEquivalent: tx.convertedBaseAmount,
+                lastRate: meta.exchangeRateApplied,
+                recipientName: tx.description ?? meta.recipientCountry,
+              };
+            });
 
       return {
         baseCurrency: 'EUR' as Currency,

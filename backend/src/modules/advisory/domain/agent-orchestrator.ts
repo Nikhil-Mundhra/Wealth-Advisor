@@ -149,20 +149,30 @@ export function createAgentOrchestrator(deps: AgentOrchestratorDeps) {
 
             const started = Date.now();
             try {
-              const result = await withSpan('tool.dispatch', { 'tool.name': step.tool }, () =>
-                withTimeout(`tool:${step.tool}`, budget.toolTimeoutMs, () =>
-                  tools.dispatch(step.tool as 'get_cashflow_and_runway', options.scope, step.args, budget.grantedTier),
-                ),
+              const dispatched = await withSpan('tool.dispatch', { 'tool.name': step.tool }, () =>
+                withTimeout(`tool:${step.tool}`, budget.toolTimeoutMs, async () => {
+                  switch (step.tool) {
+                    case 'get_cashflow_and_runway':
+                      return { kind: 'cashflow' as const, value: await tools.dispatch('get_cashflow_and_runway', options.scope, step.args, budget.grantedTier) };
+                    case 'get_currency_exposure':
+                      return { kind: 'other' as const, value: await tools.dispatch('get_currency_exposure', options.scope, step.args, budget.grantedTier) };
+                    case 'calculate_adaptive_portfolio':
+                      return { kind: 'proposal' as const, value: await tools.dispatch('calculate_adaptive_portfolio', options.scope, step.args, budget.grantedTier) };
+                    case 'simulate_stress_test':
+                      return { kind: 'other' as const, value: await tools.dispatch('simulate_stress_test', options.scope, step.args, budget.grantedTier) };
+                    case 'create_rebalance_proposal':
+                      return { kind: 'other' as const, value: await tools.dispatch('create_rebalance_proposal', options.scope, step.args, budget.grantedTier) };
+                    case 'execute_sandbox_trade':
+                      return { kind: 'other' as const, value: await tools.dispatch('execute_sandbox_trade', options.scope, step.args, budget.grantedTier) };
+                  }
+                }),
               );
-              const payloadTokens = estimateTokens(JSON.stringify(result));
+              if (dispatched.kind === 'cashflow') cashflow = dispatched.value;
+              else if (dispatched.kind === 'proposal') proposal = dispatched.value;
+
+              const payloadTokens = estimateTokens(JSON.stringify(dispatched.value));
               estimatedTokensUsed += payloadTokens;
               estimatedCostUsdMicros = estimateCostMicros(estimatedTokensUsed);
-
-              if (step.tool === 'get_cashflow_and_runway') {
-                cashflow = result as CashflowSummaryResponse;
-              } else if (step.tool === 'calculate_adaptive_portfolio') {
-                proposal = result as unknown as ConstructPortfolioResponse;
-              }
 
               toolTraces.push({ stepIndex: idx, tool: step.tool, durationMs: Date.now() - started, status: 'ok' });
             } catch (err) {
@@ -173,11 +183,13 @@ export function createAgentOrchestrator(deps: AgentOrchestratorDeps) {
 
           if (!cashflow) {
             cashflow = await withSpan('tool.dispatch', { 'tool.name': 'get_cashflow_and_runway' }, () =>
-              tools.dispatch(
-                'get_cashflow_and_runway',
-                options.scope,
-                { householdMode },
-                budget.grantedTier,
+              withTimeout('tool:get_cashflow_and_runway', budget.toolTimeoutMs, () =>
+                tools.dispatch(
+                  'get_cashflow_and_runway',
+                  options.scope,
+                  { householdMode },
+                  budget.grantedTier,
+                ),
               ),
             );
           }

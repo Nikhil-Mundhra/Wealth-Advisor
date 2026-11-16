@@ -1,11 +1,12 @@
 import { z } from 'zod';
+import { REBALANCE_ACTIONS } from '@wealth-advisor/rules';
 import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
 export const RebalanceActionDto = z.object({
   assetSymbol: z.string(),
-  action: z.enum(['BUY', 'SELL']),
+  action: z.enum(REBALANCE_ACTIONS),
   amountBase: z.number().int(), // minor units
-  targetWeight: z.number(), // 0 - 1
+  targetWeight: z.number().min(0).max(1),
 });
 export type RebalanceActionDto = z.infer<typeof RebalanceActionDto>;
 

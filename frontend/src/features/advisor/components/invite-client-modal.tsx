@@ -1,47 +1,61 @@
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import type { CreateAdvisorInviteRequest } from '@wealth-advisor/contracts';
 import { Check, Copy, Link as LinkIcon, Send } from 'lucide-react';
 import { Button } from '../../../components/ui/button.tsx';
 import { Dialog } from '../../../components/ui/dialog.tsx';
 import { FormField } from '../../../components/ui/form-field.tsx';
 import { Input } from '../../../components/ui/input.tsx';
-import { authApi } from '../../auth/api/auth-api.ts';
 
 interface InviteClientModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreateInvite: (payload: CreateAdvisorInviteRequest) => Promise<{ inviteUrl: string }>;
 }
 
-export function InviteClientModal({ open, onOpenChange }: InviteClientModalProps) {
-  const queryClient = useQueryClient();
+export function InviteClientModal({ open, onOpenChange, onCreateInvite }: InviteClientModalProps) {
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [note, setNote] = useState('');
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: authApi.createAdvisorInvite,
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: ['advisor', 'invites'] });
-      setGeneratedLink(data.inviteUrl);
-    },
-  });
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({
-      clientName: clientName.trim() || null,
-      clientEmail: clientEmail.trim() || null,
-      note: note.trim() || null,
-    });
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const data = await onCreateInvite({
+        clientName: clientName.trim() || null,
+        clientEmail: clientEmail.trim() || null,
+        note: note.trim() || null,
+      });
+      setGeneratedLink(data.inviteUrl);
+    } catch {
+      setErrorMsg('Failed to generate invitation link. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCopy = async () => {
     if (!generatedLink) return;
-    await navigator.clipboard.writeText(generatedLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+    try {
+      await navigator.clipboard.writeText(generatedLink);
+      setCopied(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 3000);
+    } catch {
+      setErrorMsg('Could not copy invite link to clipboard.');
+    }
   };
 
   const handleClose = () => {
@@ -50,6 +64,7 @@ export function InviteClientModal({ open, onOpenChange }: InviteClientModalProps
     setNote('');
     setGeneratedLink(null);
     setCopied(false);
+    setErrorMsg(null);
     onOpenChange(false);
   };
 
@@ -83,6 +98,8 @@ export function InviteClientModal({ open, onOpenChange }: InviteClientModalProps
               {copied ? 'Copied' : 'Copy'}
             </Button>
           </div>
+
+          {errorMsg && <p className="text-xs text-red-600 dark:text-red-400">{errorMsg}</p>}
 
           <div className="flex justify-end pt-2">
             <Button type="button" variant="primary" onClick={handleClose}>
@@ -124,11 +141,13 @@ export function InviteClientModal({ open, onOpenChange }: InviteClientModalProps
             )}
           </FormField>
 
+          {errorMsg && <p className="text-xs text-red-600 dark:text-red-400">{errorMsg}</p>}
+
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-line">
             <Button type="button" variant="ghost" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" loading={mutation.isPending}>
+            <Button type="submit" variant="primary" loading={submitting}>
               <Send aria-hidden className="mr-1.5 size-3.5" />
               Generate Delegation Link
             </Button>

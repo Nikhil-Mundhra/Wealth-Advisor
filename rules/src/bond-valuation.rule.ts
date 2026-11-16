@@ -93,7 +93,7 @@ export function calculateYtm(
     }
 
     const diff = priceEstimate - currentPrice;
-    if (Math.abs(diff) < 1e-6) break;
+    if (Math.abs(diff) < 1e-6 || Math.abs(derivative) < 1e-12) break;
 
     const step = diff / derivative;
     y = y - step;
@@ -147,7 +147,7 @@ export function calculateDurationAndConvexity(
   };
 }
 
-// Yield curve bootstrapping for spot rates
+// Bootstraps annual spot rates from a par yield curve assuming annual coupon payments on par 100.
 export function bootstrapSpotCurve(parRates: Array<{ maturityYears: number; parYield: number }>): Array<{ maturityYears: number; spotRate: number }> {
   const sorted = [...parRates].sort((a, b) => a.maturityYears - b.maturityYears);
   const spotRates: Array<{ maturityYears: number; spotRate: number }> = [];

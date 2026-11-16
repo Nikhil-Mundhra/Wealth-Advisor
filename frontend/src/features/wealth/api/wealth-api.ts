@@ -2,15 +2,12 @@ import {
   AssetProductListResponse,
   ConstructPortfolioRequest,
   ConstructPortfolioResponse,
-  CreateShareLinkRequest,
-  CreateShareLinkResponse,
   ExecuteTradeRequest,
   ExecuteTradeResponse,
   OptimizePortfolioRequest,
   PortfolioResponse,
   RebalanceProposalResponse,
   SandboxLedgerResponse,
-  SharedPlanResponse,
 } from '@wealth-advisor/contracts';
 import { apiRequest } from '../../../lib/api-client.ts';
 
@@ -56,18 +53,5 @@ export const wealthApi = {
       body,
       response: ExecuteTradeResponse,
       authenticated: true,
-    }),
-
-  createShareLink: (body: CreateShareLinkRequest) =>
-    apiRequest('/sharing/create', {
-      method: 'POST',
-      body,
-      response: CreateShareLinkResponse,
-      authenticated: true,
-    }),
-
-  getSharedPlan: (token: string) =>
-    apiRequest(`/sharing/${encodeURIComponent(token)}`, {
-      response: SharedPlanResponse,
     }),
 };

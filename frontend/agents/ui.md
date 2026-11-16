@@ -14,8 +14,6 @@
 ## File structure
 
 ```
-frontend/src/components/layout/app-shell.test.tsx : page body with sidebar and bottom-tab links
-frontend/src/components/layout/app-shell.tsx : signed-in frame: header, desktop sidebar, mobile bottom tabs
 frontend/src/components/layout/split-layout.tsx : two-pane page: media aside (desktop) + centered content
 frontend/src/components/ui/alert.tsx : form-level message (role=alert), error/info tones
 frontend/src/components/ui/area-chart.test.tsx : series renders as an accessible image

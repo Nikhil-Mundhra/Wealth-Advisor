@@ -18,6 +18,7 @@ import {
 import { FxRate } from '../../../src/modules/market/domain/fx-rate.vo.ts';
 import { MemoryFxRateRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts';
 import { MemoryPriceRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-price.repository.ts';
+import { buildMockFxRates } from '../../../src/modules/market/infrastructure/providers/mock-market-source.ts';
 import { createMarketApi } from '../../../src/modules/market/market.api.ts';
 import { InProcessEventBus } from '../../../src/core/events/event-bus.ts';
 import { createWealthApi } from '../../../src/modules/wealth/wealth.api.ts';
@@ -57,6 +58,7 @@ async function setup() {
     fxSource: { fetchRange: async () => [] },
     events: new InProcessEventBus(),
     clock,
+    mockFxFallback: buildMockFxRates,
   });
   const snapshots = new MemoryMarketSnapshotRepository();
   await snapshots.upsert(

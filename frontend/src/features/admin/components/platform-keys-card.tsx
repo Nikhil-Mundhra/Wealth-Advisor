@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, Database, Key, RotateCcw, Server, ShieldCheck, X } from 'lucide-react';
 import type { PlatformKeysStatusDto } from '@wealth-advisor/contracts';
 import { Button } from '../../../components/ui/button.tsx';
 import { cardClassName } from '../../../components/ui/card.tsx';
 import { updatePlatformKeys } from '../api/admin-api.ts';
+import { ApiError } from '../../../lib/api-error.ts';
 import { cn } from '../../../lib/cn.ts';
 
 interface PlatformKeysCardProps {
@@ -29,7 +30,20 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
     openrouter: '',
     marketstack: '',
   });
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
+
+  const showFeedback = (text: string, tone: 'ok' | 'error') => {
+    setFeedback({ text, tone });
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => setFeedback(null), 4000);
+  };
 
   const mutation = useMutation({
     mutationFn: updatePlatformKeys,
@@ -37,8 +51,11 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'models'] });
       setEditingKey(null);
       setDraftKeys({ gemini: '', openai: '', anthropic: '', openrouter: '', marketstack: '' });
-      setFeedbackMessage('Platform keys updated successfully');
-      setTimeout(() => setFeedbackMessage(null), 4000);
+      showFeedback('Platform keys updated successfully', 'ok');
+    },
+    onError: (err) => {
+      const msg = err instanceof ApiError ? err.message : 'Failed to update platform keys';
+      showFeedback(msg, 'error');
     },
   });
 
@@ -113,10 +130,18 @@ export function PlatformKeysCard({ platformKeys }: PlatformKeysCardProps) {
             Configure platform provider credentials in the database with automatic fallback to system environment variables.
           </p>
         </div>
-        {feedbackMessage && (
-          <div className="flex items-center gap-1.5 rounded-field bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <Check aria-hidden className="size-3.5" />
-            <span>{feedbackMessage}</span>
+        {feedback && (
+          <div
+            role={feedback.tone === 'error' ? 'alert' : 'status'}
+            className={cn(
+              'flex items-center gap-1.5 rounded-field px-2.5 py-1 text-xs font-medium',
+              feedback.tone === 'error'
+                ? 'bg-danger/10 text-danger'
+                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+            )}
+          >
+            {feedback.tone === 'error' ? <X aria-hidden className="size-3.5" /> : <Check aria-hidden className="size-3.5" />}
+            <span>{feedback.text}</span>
           </div>
         )}
       </div>

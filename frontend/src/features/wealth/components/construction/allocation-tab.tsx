@@ -1,9 +1,10 @@
 import type { ConstructPortfolioResponse } from '@wealth-advisor/contracts';
+import type { Currency } from '@wealth-advisor/rules';
 import { CheckCircle2 } from 'lucide-react';
 import { formatMoney } from '../../../../lib/format-money.ts';
 import { useStrings } from '../../../../lib/dictionaries.ts';
 
-export function AllocationTab({ result, defaultCurrency }: { result: ConstructPortfolioResponse; defaultCurrency: string }) {
+export function AllocationTab({ result, defaultCurrency }: { result: ConstructPortfolioResponse; defaultCurrency: Currency }) {
   const strings = useStrings();
 
   return (
@@ -39,7 +40,7 @@ export function AllocationTab({ result, defaultCurrency }: { result: ConstructPo
                 {(h.weight * 100).toFixed(1)}%
               </td>
               <td className="px-3 py-3 text-right font-mono text-ink">
-                {formatMoney(Math.round(h.targetAmountBase / 100), defaultCurrency as any)}
+                {formatMoney(Math.round(h.targetAmountBase / 100), defaultCurrency)}
               </td>
               <td className="px-3 py-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
                 +{(h.expectedReturn * 100).toFixed(1)}%

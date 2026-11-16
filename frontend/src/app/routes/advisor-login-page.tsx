@@ -29,6 +29,8 @@ export function AdvisorLoginPage() {
     setLoading(true);
 
     try {
+      // Preserve an existing signed-in session if the submitted credentials fail the role check,
+      // so an accidental wrong-role login never silently logs out an active session.
       const hadSession = getAccessToken() !== null;
       await login.mutateAsync({ email, password, clientType: 'WEB', rememberMe: false });
       const me = await authApi.me();

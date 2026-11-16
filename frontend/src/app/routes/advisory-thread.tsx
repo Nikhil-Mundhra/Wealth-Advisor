@@ -130,7 +130,7 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
         err instanceof Error
           ? err.message
           : typeof err === 'object' && err !== null && 'message' in err
-            ? String((err as any).message)
+            ? String((err as { message: unknown }).message)
             : 'Server error: unable to connect to advisory AI gateway';
 
       setMessages((all) => [
@@ -222,22 +222,20 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
   }
 
   const [executionResult, setExecutionResult] = useState<string | null>(null);
+  const [executionError, setExecutionError] = useState<string | null>(null);
 
   // Sign executes the optimizer's own proposal: actions come from POST /wealth/optimize,
   // never from a hardcoded symbol list. The passkey step-up gate stays in front.
   function sign(): void {
     setPending(true);
-    setAdvisorApproved(true);
-    track(ENGAGEMENT_EVENTS.passkeyStepupCompleted, {
-      success: true,
-      flow: 'REBALANCE',
-    });
+    setExecutionError(null);
+    setExecutionResult(null);
     void (async () => {
       try {
         const proposal = await optimize.mutateAsync(undefined);
         if (proposal.actions.length === 0) {
+          setAdvisorApproved(true);
           setExecutionResult('No rebalance needed: holdings are within the drift corridor.');
-          setPending(false);
           return;
         }
         const { challenge } = await authApi.passkeyStepUpChallenge();
@@ -247,12 +245,23 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
           trades: proposal.actions,
           passkeyAssertion: assertion,
         });
-        if (res?.ledgerEntry?.transactionHash) {
-          setExecutionResult(`Committed on Ledger: ${res.ledgerEntry.transactionHash.slice(0, 18)}…`);
-          setPending(false);
+        if (!res?.ledgerEntry?.transactionHash) {
+          throw new Error('Ledger commitment did not return a transaction hash.');
         }
-      } catch {
-        // Degrades gracefully when passkey assertion verification or backend is in demo sandbox mode
+        setAdvisorApproved(true);
+        track(ENGAGEMENT_EVENTS.passkeyStepupCompleted, {
+          success: true,
+          flow: 'REBALANCE',
+        });
+        setExecutionResult(`Committed on Ledger: ${res.ledgerEntry.transactionHash.slice(0, 18)}…`);
+      } catch (err) {
+        track(ENGAGEMENT_EVENTS.passkeyStepupCompleted, {
+          success: false,
+          flow: 'REBALANCE',
+        });
+        setExecutionError(err instanceof Error ? err.message : 'Passkey verification failed.');
+      } finally {
+        setPending(false);
       }
     })();
   }
@@ -264,6 +273,7 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
     });
     setPending(false);
     setExecutionResult(null);
+    setExecutionError(null);
     setStepUp(true);
   }
 
@@ -518,6 +528,11 @@ export function AdvisoryThread({ context }: { context: AdvisoryContext }) {
         {executionResult && (
           <div className="mt-2 text-xs font-mono text-emerald-600 dark:text-emerald-400">
             {executionResult}
+          </div>
+        )}
+        {executionError && (
+          <div className="mt-2">
+            <Alert>{executionError}</Alert>
           </div>
         )}
         <div className="mt-4 flex gap-2">

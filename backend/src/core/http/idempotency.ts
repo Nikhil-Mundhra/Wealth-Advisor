@@ -19,9 +19,10 @@ export interface IdempotencyStore {
 }
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_MAX_MEMORY_ENTRIES = 10_000;
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-export function createMemoryIdempotencyStore(): IdempotencyStore {
+export function createMemoryIdempotencyStore(maxEntries = DEFAULT_MAX_MEMORY_ENTRIES): IdempotencyStore {
   const entries = new Map<string, IdempotencyRecord>();
   return {
     get(scopeKey, nowMs) {
@@ -34,6 +35,16 @@ export function createMemoryIdempotencyStore(): IdempotencyStore {
       return existing;
     },
     set(scopeKey, record) {
+      if (entries.size >= maxEntries) {
+        const now = Date.now();
+        for (const [k, v] of entries) {
+          if (v.expiresAtMs <= now) entries.delete(k);
+        }
+        if (entries.size >= maxEntries) {
+          const oldestKey = entries.keys().next().value;
+          if (oldestKey !== undefined) entries.delete(oldestKey);
+        }
+      }
       entries.set(scopeKey, record);
     },
   };

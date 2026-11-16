@@ -165,11 +165,11 @@ export function calculateQualityScore(roe: number, debtToEquity: number, operati
   return Math.max(0, Math.min(1, Number(score.toFixed(4))));
 }
 
-// Evaluates Growth Score based on 5-year EPS CAGR (target > 10% = 0.10)
+// Evaluates Growth Score on [0.1, 1.0] from 5-year EPS CAGR (target >= 20% = 0.20).
 export function calculateGrowthScore(epsGrowth5YCagr: number): number {
   if (epsGrowth5YCagr >= 0.20) return 1.0;
   if (epsGrowth5YCagr <= 0.0) return 0.1;
-  return Number((epsGrowth5YCagr / 0.20).toFixed(4));
+  return Number((0.1 + 0.9 * (epsGrowth5YCagr / 0.20)).toFixed(4));
 }
 
 // Normalizes ESG score from 0-100 to [0, 1]

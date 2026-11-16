@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LLM_PROVIDERS, type LlmProvider } from '@wealth-advisor/rules';
 import { cardClassName } from '../../components/ui/card.tsx';
@@ -73,12 +74,12 @@ export function AdminModelsPage() {
                 Configure user API keys and select models benchmarked on FinanceBench Factual Correctness % (including NVIDIA Nemotron 3 Ultra #1 Free).
               </p>
             </div>
-            <a
-              href="/settings/ai"
+            <Link
+              to="/settings/ai"
               className="inline-flex items-center gap-1 rounded bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors"
             >
               <span>Configure AI Keys</span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

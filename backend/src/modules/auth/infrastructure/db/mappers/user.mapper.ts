@@ -32,8 +32,11 @@ export const userMapper: Mapper<User, UserDocument> = {
 
   toDocument(user) {
     const snapshot = user.toSnapshot();
+    if (!ObjectId.isValid(snapshot.id)) {
+      throw AuthErrors.invariantViolated('user id must be a valid ObjectId');
+    }
     return {
-      _id: ObjectId.isValid(snapshot.id) ? new ObjectId(snapshot.id) : new ObjectId(),
+      _id: new ObjectId(snapshot.id),
       tenantId: snapshot.tenantId && ObjectId.isValid(snapshot.tenantId) ? new ObjectId(snapshot.tenantId) : null,
       advisorId: snapshot.advisorId && ObjectId.isValid(snapshot.advisorId) ? new ObjectId(snapshot.advisorId) : null,
       email: snapshot.email.value,

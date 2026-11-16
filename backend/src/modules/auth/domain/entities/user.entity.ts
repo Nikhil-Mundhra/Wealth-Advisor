@@ -126,6 +126,7 @@ export class User extends BaseEntity<UserProps> {
   }
 
   assignAdvisor(advisorId: string | null, now: Date): void {
+    invariant(advisorId !== this.id, () => AuthErrors.invalidAdvisorCode());
     this.props.advisorId = advisorId;
     this.props.updatedAt = now;
     this.assertInvariants();

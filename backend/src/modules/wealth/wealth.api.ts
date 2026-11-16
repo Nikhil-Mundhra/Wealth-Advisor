@@ -206,6 +206,8 @@ export function createWealthApi(deps: WealthApiDeps) {
         (worst, h) => (!worst || Math.abs(h.targetWeight - h.currentWeight) > Math.abs(worst.targetWeight - worst.currentWeight) ? h : worst),
         null,
       );
+      const hasActionableDrift =
+        largest !== null && Math.abs(largest.targetWeight - largest.currentWeight) >= WEIGHT_EPSILON;
 
       const effectiveRunway = input?.runwayMonths ?? doc.burnRateRunwayMonths;
       const activeHouseholdMode = input?.householdMode ?? 'FAMILY_HOUSEHOLD';
@@ -229,7 +231,7 @@ export function createWealthApi(deps: WealthApiDeps) {
         rationale: {
           personalFinance,
           crossBorder,
-          wealthStrategy: largest
+          wealthStrategy: hasActionableDrift
             ? `Rebalancing ${largest.assetSymbol} from ${(largest.currentWeight * 100).toFixed(0)}% to ${(largest.targetWeight * 100).toFixed(0)}%${snapshot ? ` against 365-day risk analytics (${snapshot.window.observations} observations)` : ''}, and holding any surplus proceeds in cash rather than deploying them past the target.`
             : 'Every holding already sits at its target weight; no rebalance is due.',
         },
@@ -529,7 +531,9 @@ const WEIGHT_EPSILON = 0.001;
 // drift order and whatever is left over stays in cash rather than being deployed past the target.
 function planRebalance(doc: PortfolioDocument): RebalanceActionDto[] {
   const sells = doc.holdings.filter((h) => h.currentWeight - h.targetWeight >= WEIGHT_EPSILON);
-  const buys = doc.holdings.filter((h) => h.targetWeight - h.currentWeight >= WEIGHT_EPSILON);
+  const buys = doc.holdings
+    .filter((h) => h.targetWeight - h.currentWeight >= WEIGHT_EPSILON)
+    .sort((a, b) => (b.targetWeight - b.currentWeight) - (a.targetWeight - a.currentWeight));
   const amountOf = (weight: number) => Math.round(doc.totalValuationBase * weight);
 
   let proceeds = sells.reduce((sum, h) => sum + amountOf(h.currentWeight - h.targetWeight), 0);

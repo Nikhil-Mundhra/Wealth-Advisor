@@ -44,6 +44,14 @@ export type ProfilingStressOption = (typeof PROFILING_STRESS_OPTIONS)[number];
 export const PROFILING_RISK_BANDS = ['conservative', 'moderate', 'aggressive'] as const;
 export type ProfilingRiskBand = (typeof PROFILING_RISK_BANDS)[number];
 
+export interface ProfileSummaryData {
+  baseRiskScore: number;
+  effectiveRiskBand: ProfilingRiskBand;
+  timeHorizonYears: number;
+  corridorCurrencies: Currency[];
+  completedAt: string;
+}
+
 export interface HoldingBucketInput {
   amount: number;
   currency: Currency;

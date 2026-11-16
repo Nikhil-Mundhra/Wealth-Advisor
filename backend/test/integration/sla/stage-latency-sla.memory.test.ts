@@ -17,6 +17,7 @@ import {
 } from '../../../src/modules/finance/infrastructure/db/memory/memory-finance.repository.ts';
 import { MemoryFxRateRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-fx-rate.repository.ts';
 import { MemoryPriceRepository } from '../../../src/modules/market/infrastructure/db/memory/memory-price.repository.ts';
+import { buildMockFxRates } from '../../../src/modules/market/infrastructure/providers/mock-market-source.ts';
 import { createMarketApi } from '../../../src/modules/market/market.api.ts';
 import { MemoryPasskeyStore, createPasskeyService, MemoryPasskeyChallengeStore } from '#core/crypto/passkey-verifier.ts';
 import {
@@ -191,6 +192,7 @@ describe('L3 & L4 Stage Latency SLA Gates & Live Cross-Module E2E', () => {
       fxSource: { fetchRange: async () => [] },
       events: new InProcessEventBus(),
       clock,
+      mockFxFallback: buildMockFxRates,
     });
     const analytics = createAnalyticsApi({
       market: { history: async () => [] },

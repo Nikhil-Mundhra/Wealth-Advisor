@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck } from 'lucide-react';
-import { COUNTRY_CURRENCY_MAP, CURRENCIES, PERMISSION_TIERS, type Currency } from '@wealth-advisor/rules';
+import { COUNTRY_CURRENCY_MAP, CURRENCIES, isCurrency, PERMISSION_TIERS } from '@wealth-advisor/rules';
 import { Alert } from '../../components/ui/alert.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card } from '../../components/ui/card.tsx';
@@ -13,7 +13,7 @@ import { authApi } from '../../features/auth/api/auth-api.ts';
 import { enrollPasskey } from '../../features/auth/api/passkey-client.ts';
 import { useDeleteAccount } from '../../features/auth/api/use-delete-account.ts';
 import { useLogout } from '../../features/auth/api/use-logout.ts';
-import { useMe } from '../../features/auth/api/use-me.ts';
+import { ME_QUERY_KEY, useMe } from '../../features/auth/api/use-me.ts';
 import { ConnectedAdvisorCard } from '../../features/advisor/components/connected-advisor-card.tsx';
 import { setPreferredCurrency, useProfile, wipeUserDataFromBrowser } from '../../features/profiling/profile-store.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
@@ -23,6 +23,7 @@ import { SettingsNav } from './settings-nav.tsx';
 export function SecuritySettingsPage() {
   const strings = useStrings();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const me = useMe();
   const isAdvisorWorkstation = location.pathname === '/advisor' || location.pathname.startsWith('/advisor/');
   const isAdvisor = me.data?.roles.includes('ADVISOR') ?? false;
@@ -41,6 +42,20 @@ export function SecuritySettingsPage() {
 
   const passkeys = passkeysData?.passkeys ?? [];
 
+  const { data: connectedAdvisor, isLoading: loadingAdvisor } = useQuery({
+    queryKey: ['me', 'advisor'],
+    queryFn: authApi.getConnectedAdvisor,
+    enabled: !isAdvisor && Boolean(me.data),
+  });
+
+  const connectAdvisorMutation = useMutation({
+    mutationFn: authApi.connectAdvisor,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['me', 'advisor'] });
+      void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+    },
+  });
+
   async function handleEnroll() {
     setEnrolling(true);
     setEnrollMsg(null);
@@ -48,12 +63,12 @@ export function SecuritySettingsPage() {
       const ok = await enrollPasskey();
       if (ok) {
         await refetchPasskeys();
-        setEnrollMsg('Passkey enrolled successfully for Tier 3 execution.');
+        setEnrollMsg(strings['security.passkey.enrolled']);
       } else {
-        setEnrollMsg('Passkey enrollment was cancelled.');
+        setEnrollMsg(strings['security.passkey.cancelled']);
       }
     } catch {
-      setEnrollMsg('Passkey enrollment failed.');
+      setEnrollMsg(strings['security.passkey.failed']);
     } finally {
       setEnrolling(false);
     }
@@ -83,7 +98,15 @@ export function SecuritySettingsPage() {
         )}
       </Card>
 
-      {!isAdvisor && <ConnectedAdvisorCard />}
+      {!isAdvisor && (
+        <ConnectedAdvisorCard
+          advisor={connectedAdvisor}
+          isLoading={loadingAdvisor}
+          onConnect={async (inviteCode) => {
+            await connectAdvisorMutation.mutateAsync({ inviteCode });
+          }}
+        />
+      )}
 
       <Card aria-label={strings['security.tiers']}>
         <h2 className="text-sm font-medium text-subtle">{strings['security.tiers']}</h2>
@@ -108,7 +131,7 @@ export function SecuritySettingsPage() {
             onClick={handleEnroll}
           >
             <ShieldCheck className="size-3 mr-1 text-brand-600" />
-            Enroll Passkey
+            {strings['security.passkey.enroll']}
           </Button>
         </div>
         {enrollMsg && (
@@ -127,7 +150,7 @@ export function SecuritySettingsPage() {
                   <p className="font-mono text-[10px] text-subtle">ID: {pk.credentialId.slice(0, 16)}…</p>
                 </div>
                 <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                  Tier 3 Active
+                  {strings['security.passkey.tier3Active']}
                 </span>
               </li>
             ))}
@@ -135,19 +158,20 @@ export function SecuritySettingsPage() {
         )}
       </Card>
 
-      <Card aria-label="Reporting currency section">
+      <Card aria-label={`${strings['security.currency.title']} section`}>
         <label htmlFor="reporting-currency-select" className="text-sm font-medium text-subtle block">
-          Reporting currency
+          {strings['security.currency.title']}
         </label>
         <p className="mt-1 text-xs text-subtle">
-          Base currency for your portfolio net worth and emergency runway. Defaults to your country of residence (
-          {profile.answers.countries.residence || 'DE'}).
+          {strings['security.currency.desc'].replace('{country}', profile.answers.countries.residence || 'DE')}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <select
             id="reporting-currency-select"
             value={profile.preferredCurrency}
-            onChange={(e) => setPreferredCurrency(e.target.value as Currency, me.data?.email)}
+            onChange={(e) => {
+              if (isCurrency(e.target.value)) setPreferredCurrency(e.target.value, me.data?.email);
+            }}
             className="rounded-field border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand-600 min-h-[44px]"
           >
             {CURRENCIES.map((curr) => {
@@ -155,7 +179,7 @@ export function SecuritySettingsPage() {
               const isResidence = resCode && COUNTRY_CURRENCY_MAP[resCode] === curr;
               return (
                 <option key={curr} value={curr}>
-                  {curr} {isResidence ? '(Residence default)' : ''}
+                  {curr} {isResidence ? strings['security.currency.residenceDefault'] : ''}
                 </option>
               );
             })}

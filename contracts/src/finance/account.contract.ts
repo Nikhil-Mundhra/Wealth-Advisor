@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { CURRENCIES, HOUSEHOLD_MODES } from '@wealth-advisor/rules';
+import { ACCOUNT_TYPES, type AccountType, CURRENCIES, HOUSEHOLD_MODES } from '@wealth-advisor/rules';
 import { HouseholdModeField } from '../fields/household-mode.field.ts';
 
-export const ACCOUNT_TYPES = ['CHECKING', 'SAVINGS', 'MULTI_CURRENCY_WALLET', 'BROKERAGE_CASH'] as const;
-export type AccountType = (typeof ACCOUNT_TYPES)[number];
+export { ACCOUNT_TYPES, type AccountType };
 
 export const AccountDto = z.object({
   id: z.string(),

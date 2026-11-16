@@ -1,6 +1,6 @@
 import { ArrowLeftRight } from 'lucide-react';
 import { Navigate } from 'react-router';
-import { listHoldingAmounts } from '@wealth-advisor/rules';
+import { isCurrency, listHoldingAmounts } from '@wealth-advisor/rules';
 import { Card } from '../../components/ui/card.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
 import { MeGate } from '../../features/auth/components/me-gate.tsx';
@@ -127,7 +127,7 @@ function CashflowView() {
                   <p className="text-[11px] text-subtle">{account.institution}</p>
                 )}
                 <dd className="mt-2 font-display text-2xl font-semibold tracking-tight">
-                  {formatMoney(account.balance, account.currency as any)}
+                  {formatMoney(account.balance, isCurrency(account.currency) ? account.currency : 'EUR')}
                 </dd>
               </div>
             ))}
@@ -143,7 +143,7 @@ function CashflowView() {
                   </span>
                 </dt>
                 <dd className="mt-1 font-display text-2xl font-semibold tracking-tight">
-                  {formatMoney(account.balance, account.currency as any)}
+                  {formatMoney(account.balance, isCurrency(account.currency) ? account.currency : 'EUR')}
                 </dd>
               </div>
             ))}

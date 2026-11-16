@@ -7,14 +7,11 @@ export function RouteErrorBoundary() {
   const error = useRouteError();
 
   let message = 'An unexpected error occurred while rendering this page.';
-  let details: string | undefined;
 
   if (isRouteErrorResponse(error)) {
     message = `${error.status} ${error.statusText}`;
-    details = typeof error.data === 'string' ? error.data : undefined;
   } else if (error instanceof Error) {
     message = error.message;
-    details = error.stack;
   }
 
   return (

@@ -75,7 +75,7 @@ export function ClientRoster({
                   <div>
                     <span className="text-[10px] uppercase font-medium text-subtle block">Net Worth</span>
                     <span className="font-semibold text-ink font-mono text-xs">
-                      {client.netWorth === 95000 ? '~€0.1M' : formatMoney(client.netWorth, client.baseCurrency)}
+                      {formatMoney(client.netWorth, client.baseCurrency)}
                     </span>
                   </div>
                   <div>

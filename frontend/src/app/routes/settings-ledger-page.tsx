@@ -2,6 +2,7 @@ import { Download, FileJson } from 'lucide-react';
 import type { ExecutedTradeDto } from '@wealth-advisor/contracts';
 import { Button } from '../../components/ui/button.tsx';
 import { PageTitle } from '../../components/ui/page-title.tsx';
+import { Spinner } from '../../components/ui/spinner.tsx';
 import { downloadCsv, serializeLedgerToCsv, type LedgerRow } from '../../lib/csv-export.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
 import { downloadJson, serializeLedgerToJson } from '../../lib/json-export.ts';
@@ -21,9 +22,18 @@ interface DisplayEntry {
   resultingHash: string | null;
   transactionHash: string | null;
   trades: string[];
-  // Raw API values for export fidelity; null for the demo baseline, which only has display strings.
+  // Raw API values preserved for lossless CSV/JSON export.
   rawTimestamp: string | null;
   rawTrades: ExecutedTradeDto[] | null;
+}
+
+function deriveExportMetadata(entries: readonly DisplayEntry[]): { period: string; fileSlug: string } {
+  const refDate = entries[0]?.rawTimestamp ? new Date(entries[0].rawTimestamp) : new Date();
+  const validDate = Number.isNaN(refDate.getTime()) ? new Date() : refDate;
+  return {
+    period: validDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    fileSlug: validDate.toISOString().slice(0, 7),
+  };
 }
 
 // Tamper-evident sandbox executions with audit digests, settings subnav and CSV/JSON export.
@@ -75,14 +85,16 @@ export function SettingsLedgerPage() {
       auditDigest: entry.fullDigest ?? entry.digest,
       passkeyProofPresent: entry.passkeyVerified,
     }));
+    const { period, fileSlug } = deriveExportMetadata(displayEntries);
     const csv = serializeLedgerToCsv(rows, {
-      period: 'September 2026',
+      period,
       baselineCurrency: 'EUR',
     });
-    downloadCsv('tax-sandbox-ledger-2026-09.csv', csv);
+    downloadCsv(`tax-sandbox-ledger-${fileSlug}.csv`, csv);
   }
 
   function handleExportJson() {
+    const { period, fileSlug } = deriveExportMetadata(displayEntries);
     const entries = displayEntries.map((entry) => ({
       timestamp: entry.rawTimestamp ?? entry.at,
       action: entry.action,
@@ -96,9 +108,9 @@ export function SettingsLedgerPage() {
       executedTrades: entry.rawTrades ?? entry.trades,
     }));
     downloadJson(
-      'tax-sandbox-ledger-2026-09.json',
+      `tax-sandbox-ledger-${fileSlug}.json`,
       serializeLedgerToJson(entries, {
-        period: 'September 2026',
+        period,
         baselineCurrency: 'EUR',
         source: 'live-api',
       }),
@@ -159,7 +171,11 @@ export function SettingsLedgerPage() {
         aria-label={strings['settings.ledger']}
         className="overflow-hidden rounded-field border border-line bg-surface"
       >
-        {displayEntries.length > 0 ? (
+        {isLoading && displayEntries.length === 0 ? (
+          <div className="flex justify-center p-8 text-brand-600">
+            <Spinner label="Loading ledger..." />
+          </div>
+        ) : displayEntries.length > 0 ? (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line text-left text-subtle">

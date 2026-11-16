@@ -171,12 +171,15 @@ function maskPlanSnapshot(snapshot: PlanSnapshotDto): PlanSnapshotDto {
     }
     return masked;
   };
-  const maskAmounts = (text: string) => text.replace(/[$€£¥]\s*\d+(?:[.,]\d+)*/g, '€***');
-  // The rationale names tickers even when the weight map is anonymized; the mask has to cover both.
+  const maskAmounts = (text: string) =>
+    text.replace(/([$€£¥]|(?:AED|INR)\s*)\s*\d+(?:[.,]\d+)*/g, (_match, prefix: string) => `${prefix.trim()}***`);
+  // The rationale names tickers even when the weight map is anonymized; word boundaries keep short symbols from
+  // rewriting regular words while still redacting dotted tickers like CSPX.LSE.
   const maskText = (text: string) => {
     let masked = maskAmounts(text);
     for (const [symbol, label] of [...labels.entries()].sort(([a], [b]) => b.length - a.length)) {
-      masked = masked.split(symbol).join(label);
+      const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      masked = masked.replace(new RegExp(`(?<![A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])`, 'g'), label);
     }
     return masked;
   };

@@ -1,6 +1,10 @@
 import type { ObjectId } from 'mongodb';
-import type { Currency } from '@wealth-advisor/rules';
-import type { RemittanceMetadataDto, TransactionCategory, TuitionMetadataDto } from '@wealth-advisor/contracts';
+import type {
+  Currency,
+  RemittanceMetadata,
+  TransactionCategory,
+  TuitionMetadata,
+} from '@wealth-advisor/rules';
 
 export const TRANSACTIONS_COLLECTION = 'transactions';
 
@@ -16,8 +20,8 @@ export interface TransactionDocument {
   convertedBaseAmount: number; // minor units
   baseCurrency: Currency;
   description?: string;
-  remittanceMetadata?: RemittanceMetadataDto;
-  tuitionMetadata?: TuitionMetadataDto;
+  remittanceMetadata?: RemittanceMetadata;
+  tuitionMetadata?: TuitionMetadata;
   timestamp: Date;
   createdAt: Date;
 }

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { ChevronRight, RefreshCw, Scale, ShieldCheck, X } from 'lucide-react';
-import type { ConstructPortfolioResponse, JurisdictionEnum, RiskTierEnum } from '@wealth-advisor/contracts';
-import { mapScoreToRiskTier } from '@wealth-advisor/rules';
+import type { ConstructPortfolioResponse, JurisdictionDto, RiskTierDto } from '@wealth-advisor/contracts';
+import { mapScoreToRiskTier, type Currency } from '@wealth-advisor/rules';
 import { Button } from '../../../components/ui/button.tsx';
 import { useConstructPortfolio } from '../api/use-construct-portfolio.ts';
 import { AllocationTab } from './construction/allocation-tab.tsx';
@@ -15,7 +15,7 @@ interface PortfolioConstructionModalProps {
   open: boolean;
   onClose: () => void;
   clientName?: string;
-  defaultCurrency?: string;
+  defaultCurrency?: Currency;
   defaultRiskScore?: number;
   initialTotalValue?: number;
 }
@@ -92,8 +92,8 @@ export function PortfolioConstructionModal({
   ] as const;
 
   // Lazy: the first solve reads this state, so it must start from the client's own score.
-  const [riskTier, setRiskTier] = useState<RiskTierEnum>(() => mapScoreToRiskTier(defaultRiskScore));
-  const [jurisdiction, setJurisdiction] = useState<JurisdictionEnum>('GLOBAL');
+  const [riskTier, setRiskTier] = useState<RiskTierDto>(() => mapScoreToRiskTier(defaultRiskScore));
+  const [jurisdiction, setJurisdiction] = useState<JurisdictionDto>('GLOBAL');
   const [shariaOnly, setShariaOnly] = useState(false);
   const [whatIfRateShiftBps, setWhatIfRateShiftBps] = useState(0); // -200 to +200 bps
   const [activeTab, setActiveTab] = useState<TabId>('allocation');
@@ -197,7 +197,7 @@ export function PortfolioConstructionModal({
             <select
               id="pc-construction-risk-tier"
               value={riskTier}
-              onChange={(e) => setRiskTier(e.target.value as RiskTierEnum)}
+              onChange={(e) => setRiskTier(e.target.value as RiskTierDto)}
               className="w-full text-xs rounded border border-line bg-surface px-2.5 py-1.5 font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="conservative">{strings['portfolio.construction.riskTier.conservative']}</option>
@@ -214,7 +214,7 @@ export function PortfolioConstructionModal({
             <select
               id="pc-construction-jurisdiction"
               value={jurisdiction}
-              onChange={(e) => setJurisdiction(e.target.value as JurisdictionEnum)}
+              onChange={(e) => setJurisdiction(e.target.value as JurisdictionDto)}
               className="w-full text-xs rounded border border-line bg-surface px-2.5 py-1.5 font-medium text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="GLOBAL">{strings['portfolio.construction.jurisdiction.global']}</option>

@@ -21,7 +21,7 @@ export function SettingsNav() {
         {strings['settings.ledger']}
       </NavLink>
       <NavLink to="/evidence" className={linkClass}>
-        Evidence Explorer
+        {strings['settings.evidence']}
       </NavLink>
       <NavLink to="/settings/ai" className={linkClass}>
         {strings['settings.ai']}

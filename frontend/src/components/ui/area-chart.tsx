@@ -11,7 +11,7 @@ export interface AreaChartPoint {
 export interface AreaChartProps {
   points: number[] | AreaChartPoint[];
   label: string;
-  currency?: Currency | string;
+  currency?: Currency;
   periodLabel?: string;
   insight?: string;
   timeframe?: '1W' | '1M' | '6M';
@@ -118,7 +118,7 @@ export function AreaChart({
           </span>
           {hoverIndex !== null ? (
             <span className="text-xs font-medium text-ink motion-safe:animate-fade-in">
-              {activePoint.label}: {formatMoney(Math.round(activePoint.value), currency as Currency)}
+              {activePoint.label}: {formatMoney(Math.round(activePoint.value), currency)}
             </span>
           ) : (
             <span className="text-[11px] text-subtle">

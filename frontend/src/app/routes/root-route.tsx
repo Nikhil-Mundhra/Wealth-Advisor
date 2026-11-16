@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router';
 import { ADMIN_ROLE, ADVISOR_ROLE } from '@wealth-advisor/rules';
 import { Spinner } from '../../components/ui/spinner.tsx';
-import { AppShell } from '../../components/layout/app-shell.tsx';
+import { AppShell } from '../app-shell.tsx';
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { getAdminActingSession } from '../../features/auth/session/acting-session.ts';
 import { useSessionStatus } from '../../features/auth/session/use-session.ts';

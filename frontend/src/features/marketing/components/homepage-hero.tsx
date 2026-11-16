@@ -86,7 +86,6 @@ export function HomepageHero({ onScrollTo }: HomepageHeroProps) {
 
             {/* 3-Step Pipeline Card Grid */}
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              {/* Step 1 */}
               <div className="rounded-control border border-line bg-surface-subtle p-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-600">
                   Layer 1 · Advisor OS
@@ -100,7 +99,6 @@ export function HomepageHero({ onScrollTo }: HomepageHeroProps) {
                 </div>
               </div>
 
-              {/* Step 2 */}
               <div className="rounded-control border border-line bg-surface-subtle p-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-gold">
                   Layer 2 · Knowledge Graph
@@ -114,7 +112,6 @@ export function HomepageHero({ onScrollTo }: HomepageHeroProps) {
                 </div>
               </div>
 
-              {/* Step 3 */}
               <div className="rounded-control border border-line bg-surface-subtle p-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-600">
                   Layer 3 · MIT Sloan Rigor

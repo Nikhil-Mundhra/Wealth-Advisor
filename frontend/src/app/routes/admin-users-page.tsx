@@ -29,10 +29,12 @@ import { AdminUsersTable } from '../../features/admin/components/user-management
 import { useMe } from '../../features/auth/api/use-me.ts';
 import { cn } from '../../lib/cn.ts';
 import { useStrings } from '../../lib/dictionaries.ts';
+import { useLaunchDemoSession } from './use-launch-demo-session.ts';
 
 export function AdminUsersPage() {
   const strings = useStrings();
   const queryClient = useQueryClient();
+  const launchDemoSession = useLaunchDemoSession();
   const me = useMe();
 
   const [activeTab, setActiveTab] = useState<'directory' | 'credentials'>('directory');
@@ -179,7 +181,7 @@ export function AdminUsersPage() {
       </div>
 
       {activeTab === 'credentials' ? (
-        <CredentialsTab />
+        <CredentialsTab onLaunchSession={launchDemoSession} />
       ) : (
         <>
           {/* Overview Stat Cards */}
@@ -207,7 +209,7 @@ export function AdminUsersPage() {
           ) : error ? (
             <div className="rounded-field border border-rose-300 bg-rose-50 p-6 text-center text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/50 dark:text-rose-200">
               <p className="font-semibold">Failed to load user accounts.</p>
-              <p className="mt-1 text-xs text-subtle">{(error as any)?.message || 'An error occurred while loading.'}</p>
+              <p className="mt-1 text-xs text-subtle">{error instanceof Error ? error.message : 'An error occurred while loading.'}</p>
               <Button variant="outline" onClick={() => refetch()} className="mt-4">
                 Retry
               </Button>

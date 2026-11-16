@@ -1,24 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
 import { ShieldCheck } from 'lucide-react';
-import type { AdvisorClientSummaryDto } from '@wealth-advisor/contracts';
+import type { AdvisorClientSummaryDto, PortfolioResponse } from '@wealth-advisor/contracts';
 import { Button } from '../../../components/ui/button.tsx';
 import { Dialog } from '../../../components/ui/dialog.tsx';
 import { Spinner } from '../../../components/ui/spinner.tsx';
-import { wealthApi } from '../../wealth/api/wealth-api.ts';
-import { formatMoney } from '../../../lib/format-money.ts';
+import { formatMinorMoney } from '../../../lib/format-money.ts';
 
 interface ClientPortfolioModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: AdvisorClientSummaryDto | null;
+  portfolio?: PortfolioResponse | null;
+  isLoading?: boolean;
 }
 
-export function ClientPortfolioModal({ open, onOpenChange, client }: ClientPortfolioModalProps) {
-  const { data: portfolio, isLoading } = useQuery({
-    queryKey: ['advisor', 'client-portfolio', client?.id],
-    queryFn: () => wealthApi.getPortfolio(client?.id),
-    enabled: open && !!client?.id,
-  });
+export function ClientPortfolioModal({
+  open,
+  onOpenChange,
+  client,
+  portfolio,
+  isLoading = false,
+}: ClientPortfolioModalProps) {
 
   return (
     <Dialog
@@ -45,7 +46,7 @@ export function ClientPortfolioModal({ open, onOpenChange, client }: ClientPortf
             <div>
               <p className="text-subtle">Total Valuation</p>
               <p className="font-serif text-base font-semibold text-ink">
-                {formatMoney(portfolio.totalValuationBase, portfolio.baseCurrency)}
+                {formatMinorMoney(portfolio.totalValuationBase, portfolio.baseCurrency)}
               </p>
             </div>
             <div>
@@ -57,7 +58,7 @@ export function ClientPortfolioModal({ open, onOpenChange, client }: ClientPortf
             <div>
               <p className="text-subtle">Liquid Runway</p>
               <p className="font-mono text-base font-semibold text-brand-600 dark:text-brand-400">
-                {client?.runwayMonths ?? 18.4} Months
+                {client?.runwayMonths ?? portfolio.burnRateRunwayMonths} Months
               </p>
             </div>
           </div>
@@ -75,7 +76,7 @@ export function ClientPortfolioModal({ open, onOpenChange, client }: ClientPortf
               </thead>
               <tbody className="divide-y divide-line text-ink">
                 {portfolio.holdings.map((h) => {
-                  const drift = h.targetWeight - h.currentWeight;
+                  const drift = h.currentWeight - h.targetWeight;
                   return (
                     <tr key={h.assetSymbol} className="hover:bg-surface-subtle/50">
                       <td className="px-3 py-2">
@@ -84,7 +85,7 @@ export function ClientPortfolioModal({ open, onOpenChange, client }: ClientPortf
                       </td>
                       <td className="px-3 py-2 text-subtle">{h.assetClass}</td>
                       <td className="px-3 py-2 font-mono tabular-nums text-right">
-                        {formatMoney(h.marketValueBase, portfolio.baseCurrency)}
+                        {formatMinorMoney(h.marketValueBase, portfolio.baseCurrency)}
                       </td>
                       <td className="px-3 py-2 font-mono tabular-nums text-right">
                         {(h.targetWeight * 100).toFixed(0)}%

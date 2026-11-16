@@ -2,8 +2,8 @@ import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { ApiError } from '../api-error.ts';
 import { type ErrorMessageMap, resolveError } from '../errors/resolve-error.ts';
 
-interface ApplyServerErrorInput<Values extends FieldValues> {
-  readonly form: UseFormReturn<Values, unknown, unknown>;
+interface ApplyServerErrorInput<Values extends FieldValues, Output = Values> {
+  readonly form: UseFormReturn<Values, unknown, Output>;
   readonly error: unknown;
   readonly fields: readonly string[];
   readonly messages: ErrorMessageMap<string>;
@@ -12,7 +12,13 @@ interface ApplyServerErrorInput<Values extends FieldValues> {
 
 // Puts a failed submit where the user will look: server field issues under their fields (focus on the first),
 // a code tied to a field under that field, everything else in the form-level alert.
-export function applyServerError<Values extends FieldValues>({ form, error, fields, messages, setFormError }: ApplyServerErrorInput<Values>): void {
+export function applyServerError<Values extends FieldValues, Output = Values>({
+  form,
+  error,
+  fields,
+  messages,
+  setFormError,
+}: ApplyServerErrorInput<Values, Output>): void {
   const fieldIssues = error instanceof ApiError ? error.issues.filter((issue) => fields.includes(issue.path[0] ?? '')) : [];
   if (fieldIssues.length > 0) {
     fieldIssues.forEach((issue, index) => {
