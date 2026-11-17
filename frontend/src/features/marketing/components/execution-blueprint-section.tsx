@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronRight, Cpu, FileText, GitPullRequest, Layers, Network, TestTube } from 'lucide-react';
+import { CheckCircle2, Layers } from 'lucide-react';
 
 export function ExecutionBlueprintSection() {
   const phases = [

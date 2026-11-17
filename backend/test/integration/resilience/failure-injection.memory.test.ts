@@ -31,6 +31,40 @@ import { createWealthApi } from '../../../src/modules/wealth/wealth.api.ts';
 import { createProcessedEvents } from '#core/events/processed-events.ts';
 import { postJson, startTestApp, type TestApp } from '../../support/test-app.ts';
 
+async function setupResilienceUserAccount(app: TestApp, email: string) {
+  const signup = await postJson(app.app, '/api/auth/signup', {
+    email,
+    password: 'Password123!',
+    displayName: 'Failure Injection User',
+  });
+  assert.equal(signup.status, 201);
+
+  const login = await postJson(app.app, '/api/auth/login', {
+    email,
+    password: 'Password123!',
+  });
+  assert.equal(login.status, 200);
+  const { accessToken } = (await login.json()) as { accessToken: string };
+  const headers = { authorization: `Bearer ${accessToken}` };
+
+  const accountRes = await postJson(
+    app.app,
+    '/api/finance/accounts',
+    {
+      householdMode: 'FAMILY_HOUSEHOLD',
+      institutionName: 'Resilience Vault Bank',
+      accountType: 'CHECKING',
+      currency: 'EUR',
+      balance: 2_000_000,
+      isPrimaryLiquidity: true,
+    },
+    headers,
+  );
+  assert.equal(accountRes.status, 201);
+  const account = (await accountRes.json()) as { id: string };
+  return { headers, accountId: account.id };
+}
+
 describe('Failure injection integration suite', () => {
   let app: TestApp;
 
@@ -153,49 +187,19 @@ describe('Failure injection integration suite', () => {
     assert.match(formatPrometheusMetrics(), /guardrail_triggers_total\{category="deterministic_fallback"\} 1/);
   });
 
-  it('handles HTTP idempotency replays, conflicts, externalId dedup, and out-of-order transaction timestamps', async () => {
-    const signup = await postJson(app.app, '/api/auth/signup', {
-      email: 'fi-resilience@example.com',
-      password: 'Password123!',
-      displayName: 'Failure Injection User',
-    });
-    assert.equal(signup.status, 201);
-
-    const login = await postJson(app.app, '/api/auth/login', {
-      email: 'fi-resilience@example.com',
-      password: 'Password123!',
-    });
-    assert.equal(login.status, 200);
-    const { accessToken } = (await login.json()) as { accessToken: string };
-    const headers = { authorization: `Bearer ${accessToken}` };
-
-    const accountRes = await postJson(
-      app.app,
-      '/api/finance/accounts',
-      {
-        householdMode: 'FAMILY_HOUSEHOLD',
-        institutionName: 'Resilience Vault Bank',
-        accountType: 'CHECKING',
-        currency: 'EUR',
-        balance: 2_000_000,
-        isPrimaryLiquidity: true,
-      },
-      headers,
-    );
-    assert.equal(accountRes.status, 201);
-    const account = (await accountRes.json()) as { id: string };
-
-    const txLaterPayload = {
-      accountId: account.id,
-      externalId: 'fi-tx-later',
+  it('replays identical idempotency keys and rejects mutated payloads with 409', async () => {
+    const { headers, accountId } = await setupResilienceUserAccount(app, 'fi-idem@example.com');
+    const payload = {
+      accountId,
+      externalId: 'fi-tx-idem',
       category: 'EXPENSE_DISCRETIONARY',
       amount: 120_000,
       currency: 'EUR',
-      description: 'Out-of-order newer event',
+      description: 'Idempotent expense event',
       timestamp: '2026-10-10T10:00:00Z',
     };
 
-    const firstRes = await postJson(app.app, '/api/finance/transactions', txLaterPayload, {
+    const firstRes = await postJson(app.app, '/api/finance/transactions', payload, {
       ...headers,
       'Idempotency-Key': 'idem-fi-order-1',
     });
@@ -203,8 +207,7 @@ describe('Failure injection integration suite', () => {
     const firstBody = (await firstRes.json()) as { transaction: { id: string }; deduplicated: boolean };
     assert.equal(firstBody.deduplicated, false);
 
-    // Exact replay returns cached response with replay header
-    const replayRes = await postJson(app.app, '/api/finance/transactions', txLaterPayload, {
+    const replayRes = await postJson(app.app, '/api/finance/transactions', payload, {
       ...headers,
       'Idempotency-Key': 'idem-fi-order-1',
     });
@@ -213,30 +216,46 @@ describe('Failure injection integration suite', () => {
     const replayBody = (await replayRes.json()) as { transaction: { id: string } };
     assert.equal(replayBody.transaction.id, firstBody.transaction.id);
 
-    // Mutated body reusing same Idempotency-Key returns 409 CORE_IDEMPOTENCY_CONFLICT
     const conflictRes = await postJson(
       app.app,
       '/api/finance/transactions',
-      { ...txLaterPayload, amount: 150_000 },
+      { ...payload, amount: 150_000 },
       { ...headers, 'Idempotency-Key': 'idem-fi-order-1' },
     );
     assert.equal(conflictRes.status, 409);
+  });
 
-    // Different Idempotency-Key with same externalId deduplicates cleanly
-    const dedupRes = await postJson(app.app, '/api/finance/transactions', txLaterPayload, {
+  it('deduplicates externalId across distinct idempotency keys and sorts out-of-order timestamps', async () => {
+    const { headers, accountId } = await setupResilienceUserAccount(app, 'fi-order@example.com');
+    const laterPayload = {
+      accountId,
+      externalId: 'fi-tx-later',
+      category: 'EXPENSE_DISCRETIONARY',
+      amount: 120_000,
+      currency: 'EUR',
+      description: 'Out-of-order newer event',
+      timestamp: '2026-10-10T10:00:00Z',
+    };
+
+    const firstRes = await postJson(app.app, '/api/finance/transactions', laterPayload, {
       ...headers,
-      'Idempotency-Key': 'idem-fi-order-2',
+      'Idempotency-Key': 'idem-fi-order-a',
+    });
+    assert.equal(firstRes.status, 201);
+
+    const dedupRes = await postJson(app.app, '/api/finance/transactions', laterPayload, {
+      ...headers,
+      'Idempotency-Key': 'idem-fi-order-b',
     });
     assert.equal(dedupRes.status, 201);
     const dedupBody = (await dedupRes.json()) as { deduplicated: boolean };
     assert.equal(dedupBody.deduplicated, true);
 
-    // Out-of-order earlier transaction arrives after newer transaction
     const earlierRes = await postJson(
       app.app,
       '/api/finance/transactions',
       {
-        accountId: account.id,
+        accountId,
         externalId: 'fi-tx-earlier',
         category: 'BILL_HOUSING',
         amount: 250_000,
@@ -244,15 +263,14 @@ describe('Failure injection integration suite', () => {
         description: 'Delayed settlement rent bill',
         timestamp: '2026-10-08T09:00:00Z',
       },
-      { ...headers, 'Idempotency-Key': 'idem-fi-order-3' },
+      { ...headers, 'Idempotency-Key': 'idem-fi-order-c' },
     );
     assert.equal(earlierRes.status, 201);
 
     const listRes = await app.app.request('/api/finance/transactions', { headers });
     assert.equal(listRes.status, 200);
     const listBody = (await listRes.json()) as { transactions: Array<{ externalId?: string }> };
-    const extIds = listBody.transactions.map((t) => t.externalId);
-    assert.deepEqual(extIds, ['fi-tx-later', 'fi-tx-earlier']);
+    assert.deepEqual(listBody.transactions.map((t) => t.externalId), ['fi-tx-later', 'fi-tx-earlier']);
   });
 
   it('quarantines poison outbox events into dead_letter_events after bounded retries', async () => {

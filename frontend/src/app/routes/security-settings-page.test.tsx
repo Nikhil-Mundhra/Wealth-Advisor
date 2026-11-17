@@ -29,16 +29,21 @@ describe('SecuritySettingsPage', () => {
     return new Response(JSON.stringify(me), { status: 200, headers: { 'content-type': 'application/json' } });
   });
 
-  it('shows the session, the tier ladder, and the passkey empty state', async () => {
-    setLocale('en');
-    vi.stubGlobal('fetch', mockFetch);
-    render(
-      <QueryClientProvider client={new QueryClient()}>
+  function renderSettings() {
+    const queryClient = new QueryClient();
+    return render(
+      <QueryClientProvider client={queryClient}>
         <MemoryRouter>
           <SecuritySettingsPage />
         </MemoryRouter>
       </QueryClientProvider>,
     );
+  }
+
+  it('shows the session, the tier ladder, and the passkey empty state', async () => {
+    setLocale('en');
+    vi.stubGlobal('fetch', mockFetch);
+    renderSettings();
 
     expect(await screen.findByText('elena@example.eu')).toBeVisible();
     for (const tier of ['TIER_0_READ', 'TIER_1_ADVISORY', 'TIER_2_SIMULATE', 'TIER_3_EXECUTE']) {
@@ -52,13 +57,7 @@ describe('SecuritySettingsPage', () => {
   it('allows configuring global reporting currency', async () => {
     setLocale('en');
     vi.stubGlobal('fetch', mockFetch);
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
-          <SecuritySettingsPage />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    renderSettings();
 
     const currencySelect = screen.getByLabelText('Reporting currency');
     expect(currencySelect).toBeVisible();
@@ -76,13 +75,7 @@ describe('SecuritySettingsPage', () => {
 
     vi.stubGlobal('fetch', mockFetch);
 
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
-          <SecuritySettingsPage />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    renderSettings();
 
     const deleteBtn = await screen.findByRole('button', { name: 'Delete account' });
     expect(deleteBtn).toBeVisible();

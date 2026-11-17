@@ -44,7 +44,12 @@ checkContains(
 
 // 3. Validate Observability configs exist & reference backend
 checkContains('infra/observability/prometheus.yml', ['/api/metrics', 'backend:3000'], 'Prometheus config');
-JSON.parse(readFileSync('infra/observability/grafana/dashboards/dewa-overview.json', 'utf8'));
+const dashboardFile = 'infra/observability/grafana/dashboards/dewa-overview.json';
+try {
+  JSON.parse(readFileSync(dashboardFile, 'utf8'));
+} catch (err) {
+  problems.push(`${dashboardFile}: invalid JSON (${err instanceof Error ? err.message : String(err)})`);
+}
 
 // 4. Scan tracked files for accidental private keys or cloud API tokens (ignoring test fixtures)
 const tracked = execSync('git ls-files', { encoding: 'utf8' })

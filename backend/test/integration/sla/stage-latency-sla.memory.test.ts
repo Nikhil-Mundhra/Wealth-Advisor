@@ -220,89 +220,90 @@ describe('L3 & L4 Stage Latency SLA Gates & Live Cross-Module E2E', () => {
     assert.ok(stats.p99Ms < 150, `Stage D P99 ${stats.p99Ms.toFixed(2)}ms exceeded 150ms budget`);
   });
 
+async function registerAndSignSlaPasskey(app: TestApp['app'], email: string) {
+  const signupRes = await postJson(app, '/api/auth/signup', {
+    email,
+    password: 'Password123!',
+    displayName: 'SLA Probe',
+  });
+  assert.equal(signupRes.status, 201);
+
+  const loginRes = await postJson(app, '/api/auth/login', {
+    email,
+    password: 'Password123!',
+  });
+  assert.equal(loginRes.status, 200);
+  const loginBody = (await loginRes.json()) as { accessToken: string };
+  const probeHeaders = { authorization: `Bearer ${loginBody.accessToken}` };
+
+  const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const spkiBase64 = publicKey.export({ format: 'der', type: 'spki' }).toString('base64');
+  const credentialId = 'cred_sla_gate_p256';
+
+  const regOptsRes = await postJson(app, '/api/auth/passkeys/register/options', {}, probeHeaders);
+  assert.equal(regOptsRes.status, 200);
+  const regOpts = (await regOptsRes.json()) as { challenge: string };
+
+  const regVerifyRes = await postJson(
+    app,
+    '/api/auth/passkeys/register/verify',
+    {
+      credentialId,
+      clientDataJson: Buffer.from(
+        JSON.stringify({ type: 'webauthn.create', challenge: regOpts.challenge, origin: ORIGIN }),
+      ).toString('base64url'),
+      attestationObject: spkiBase64,
+      publicKeySpki: spkiBase64,
+      deviceName: 'CI SLA Enclave',
+    },
+    probeHeaders,
+  );
+  assert.equal(regVerifyRes.status, 200);
+
+  const challengeRes = await postJson(app, '/api/auth/passkeys/step-up-challenge', {}, probeHeaders);
+  assert.equal(challengeRes.status, 200);
+  const { challenge } = (await challengeRes.json()) as { challenge: string };
+  assert.ok(challenge.length > 0);
+  const assertion = buildMockAssertion(privateKey, credentialId, challenge, 1);
+  assert.ok(assertion.signature.length > 0);
+  return assertion;
+}
+
+async function runSlaHttpPipelineIteration(app: TestApp['app'], demoHeaders: Record<string, string>): Promise<void> {
+  const cfRes = await app.request('/api/finance/cashflow?householdMode=FAMILY_HOUSEHOLD', { headers: demoHeaders });
+  assert.equal(cfRes.status, 200);
+
+  const optRes = await postJson(app, '/api/wealth/optimize', {}, demoHeaders);
+  assert.equal(optRes.status, 200);
+
+  const chatRes = await postJson(
+    app,
+    '/api/advisory/chat',
+    { message: 'Check FX drift', locale: 'en', householdMode: 'FAMILY_HOUSEHOLD' },
+    demoHeaders,
+  );
+  assert.equal(chatRes.status, 200);
+
+  const shareRes = await postJson(
+    app,
+    '/api/sharing/create',
+    { privacyMasked: true, ttlHours: 24, ownerDisplayName: 'SLA Probe' },
+    demoHeaders,
+  );
+  assert.equal(shareRes.status, 201);
+  const { shareToken } = (await shareRes.json()) as { shareToken: string };
+
+  const publicPlanRes = await app.request(`/api/sharing/${shareToken}`);
+  assert.equal(publicPlanRes.status, 200);
+}
+
   it('Stage E: Live HTTP end-to-end advisory, WebAuthn Tier 3 execution, sharing & <400ms P99 SLA gate', async () => {
-    const headers = { authorization: `Bearer ${demoToken}` };
-
-    // 1. Verify signup + login round-trip on live HTTP stack
-    const signupRes = await postJson(testApp.app, '/api/auth/signup', {
-      email: 'sla-probe@example.com',
-      password: 'Password123!',
-      displayName: 'SLA Probe',
-    });
-    assert.equal(signupRes.status, 201);
-
-    const loginRes = await postJson(testApp.app, '/api/auth/login', {
-      email: 'sla-probe@example.com',
-      password: 'Password123!',
-    });
-    assert.equal(loginRes.status, 200);
-    const loginBody = (await loginRes.json()) as { accessToken: string };
-    const probeHeaders = { authorization: `Bearer ${loginBody.accessToken}` };
+    const assertion = await registerAndSignSlaPasskey(testApp.app, 'sla-probe@example.com');
     const demoHeaders = { authorization: `Bearer ${demoToken}` };
 
-    // 2. Register WebAuthn ECDSA P-256 passkey and verify step-up assertion ceremony over HTTP
-    const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-    const spkiBase64 = publicKey.export({ format: 'der', type: 'spki' }).toString('base64');
-    const credentialId = 'cred_sla_gate_p256';
-
-    const regOptsRes = await postJson(testApp.app, '/api/auth/passkeys/register/options', {}, probeHeaders);
-    assert.equal(regOptsRes.status, 200);
-    const regOpts = (await regOptsRes.json()) as { challenge: string };
-
-    const regVerifyRes = await postJson(
-      testApp.app,
-      '/api/auth/passkeys/register/verify',
-      {
-        credentialId,
-        clientDataJson: Buffer.from(
-          JSON.stringify({ type: 'webauthn.create', challenge: regOpts.challenge, origin: ORIGIN }),
-        ).toString('base64url'),
-        attestationObject: spkiBase64,
-        publicKeySpki: spkiBase64,
-        deviceName: 'CI SLA Enclave',
-      },
-      probeHeaders,
-    );
-    assert.equal(regVerifyRes.status, 200);
-
-    const challengeRes = await postJson(testApp.app, '/api/auth/passkeys/step-up-challenge', {}, probeHeaders);
-    assert.equal(challengeRes.status, 200);
-    const { challenge } = (await challengeRes.json()) as { challenge: string };
-    assert.ok(challenge.length > 0);
-    const assertion = buildMockAssertion(privateKey, credentialId, challenge, 1);
-    assert.ok(assertion.signature.length > 0);
-
-    // 3. Benchmark the full HTTP advisory + optimize + share orchestration across 45 iterations
-    const httpStats = await measureP99(async () => {
-      const cfRes = await testApp.app.request('/api/finance/cashflow?householdMode=FAMILY_HOUSEHOLD', { headers: demoHeaders });
-      assert.equal(cfRes.status, 200);
-
-      const optRes = await postJson(testApp.app, '/api/wealth/optimize', {}, demoHeaders);
-      assert.equal(optRes.status, 200);
-
-      const chatRes = await postJson(
-        testApp.app,
-        '/api/advisory/chat',
-        { message: 'Check FX drift', locale: 'en', householdMode: 'FAMILY_HOUSEHOLD' },
-        demoHeaders,
-      );
-      assert.equal(chatRes.status, 200);
-
-      const shareRes = await postJson(
-        testApp.app,
-        '/api/sharing/create',
-        { privacyMasked: true, ttlHours: 24, ownerDisplayName: 'SLA Probe' },
-        demoHeaders,
-      );
-      assert.equal(shareRes.status, 201);
-      const { shareToken } = (await shareRes.json()) as { shareToken: string };
-
-      const publicPlanRes = await testApp.app.request(`/api/sharing/${shareToken}`);
-      assert.equal(publicPlanRes.status, 200);
-    });
+    const httpStats = await measureP99(() => runSlaHttpPipelineIteration(testApp.app, demoHeaders));
     assert.ok(httpStats.p99Ms < 400, `Stage E HTTP pipeline P99 ${httpStats.p99Ms.toFixed(2)}ms exceeded 400ms SLA`);
 
-    // 4. Verify Tier 3 passkey execution gate refuses unverified assertion on /api/wealth/execute (fail-closed)
     const unverifiedExecRes = await postJson(
       testApp.app,
       '/api/wealth/execute',
@@ -316,9 +317,5 @@ describe('L3 & L4 Stage Latency SLA Gates & Live Cross-Module E2E', () => {
     assert.equal(unverifiedExecRes.status, 403);
     const execBody = (await unverifiedExecRes.json()) as { code: string };
     assert.equal(execBody.code, 'WL_1004');
-
-    // Keep unused import guard satisfied by verifying bus event loop doesn't block
-    const bus = new InProcessEventBus();
-    assert.ok(bus);
   });
 });

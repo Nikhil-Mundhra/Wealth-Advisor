@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarCheck, CheckCircle2, Clock, FileSpreadsheet, FileText, MessageSquareQuote, ShieldCheck, Sparkles, UserCheck } from 'lucide-react';
+import { CalendarCheck, CheckCircle2, FileSpreadsheet, MessageSquareQuote, Sparkles } from 'lucide-react';
 import advisorMeetingImg from '../../../assets/advisor-meeting.jpg';
 
 export function AdvisorLifecycleSection() {

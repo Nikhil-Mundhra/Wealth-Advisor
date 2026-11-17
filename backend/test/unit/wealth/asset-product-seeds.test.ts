@@ -6,13 +6,17 @@ import {
 } from '../../../src/modules/wealth/infrastructure/db/seed/asset-product-seeds.ts';
 
 // Minimal stand-in for the Mongo collection: supports the $set + $setOnInsert shape the seeder uses.
-function fakeCollection(initial: Array<Record<string, any>> = []) {
-  const store = new Map<string, Record<string, any>>(initial.map((doc) => [doc.symbol, { ...doc }]));
+interface SeedRow extends Record<string, unknown> {
+  symbol: string;
+}
+
+function fakeCollection(initial: SeedRow[] = []) {
+  const store = new Map<string, Record<string, unknown>>(initial.map((doc) => [doc.symbol, { ...doc }]));
   return {
     store,
     async updateOne(
       filter: { symbol: string },
-      update: { $set: Record<string, any>; $setOnInsert: Record<string, any> },
+      update: { $set: Record<string, unknown>; $setOnInsert: Record<string, unknown> },
       opts: { upsert: boolean },
     ) {
       assert.equal(opts.upsert, true);

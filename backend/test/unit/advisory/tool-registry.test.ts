@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { DomainError } from '#core/domain/domain-error.ts';
 import { MemoryProcessedEvents } from '../../../src/core/events/memory-processed-events.ts';
 import { createAnalyticsApi } from '../../../src/modules/analytics/analytics.api.ts';
 import { MarketSnapshot } from '../../../src/modules/analytics/domain/market-snapshot.vo.ts';
@@ -158,15 +159,15 @@ describe('ToolRegistry', () => {
     assert.equal(canInvoke('get_currency_exposure', 'TIER_0_READ'), true);
     await assert.rejects(
       () => tools.dispatch('simulate_stress_test', scope, {}, 'TIER_1_ADVISORY'),
-      (err: any) => err.code === 'AV_1003',
+      (err: unknown) => err instanceof DomainError && err.code === 'AV_1003',
     );
     await assert.rejects(
       () => tools.dispatch('execute_sandbox_trade', scope, { trades: [], passkeyAssertion: {} }, 'TIER_2_SIMULATE'),
-      (err: any) => err.code === 'AV_1003',
+      (err: unknown) => err instanceof DomainError && err.code === 'AV_1003',
     );
     await assert.rejects(
       () => tools.dispatch('get_cashflow_and_runway', scope, {}, 'TIER_0_READ'),
-      (err: any) => err.code === 'AV_1003',
+      (err: unknown) => err instanceof DomainError && err.code === 'AV_1003',
     );
   });
 
@@ -174,7 +175,7 @@ describe('ToolRegistry', () => {
     const { tools } = await setup();
     await assert.rejects(
       () => (tools as any).dispatch('rebalance_everything', { tenantId: TENANT, userId: USER }, {}, 'TIER_3_EXECUTE'),
-      (err: any) => err.code === 'AV_1002',
+      (err: unknown) => err instanceof DomainError && err.code === 'AV_1002',
     );
   });
 
@@ -197,7 +198,7 @@ describe('ToolRegistry', () => {
           },
           'TIER_3_EXECUTE',
         ),
-      (err: any) => err.code === 'WL_1004',
+      (err: unknown) => err instanceof DomainError && err.code === 'WL_1004',
     );
   });
 });

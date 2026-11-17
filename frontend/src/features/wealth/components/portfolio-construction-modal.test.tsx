@@ -443,7 +443,7 @@ describe('PortfolioConstructionModal', () => {
     await vi.waitFor(() => expect(wealthApi.constructPortfolio).toHaveBeenLastCalledWith(expect.objectContaining({ shariaOnly: true })));
   });
 
-  it('closes from the header, footer, and backdrop controls', async () => {
+  it('closes from the header and footer controls', async () => {
     const { onClose } = renderModal();
     await screen.findByRole('dialog');
 

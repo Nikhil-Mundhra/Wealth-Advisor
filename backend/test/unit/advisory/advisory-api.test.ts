@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { DomainError } from '#core/domain/domain-error.ts';
 import { ProposalPayloadDto } from '@wealth-advisor/contracts';
 import { InProcessEventBus } from '../../../src/core/events/event-bus.ts';
 import { MemoryProcessedEvents } from '../../../src/core/events/memory-processed-events.ts';
@@ -150,7 +151,7 @@ describe('AdvisoryApi', () => {
             locale: 'en',
             householdMode: 'INDIVIDUAL',
           }),
-        (err: any) => err.code === 'AV_1001',
+          (err: unknown) => err instanceof DomainError && err.code === 'AV_1001',
       );
     } finally {
       globalThis.fetch = realFetch;
@@ -178,7 +179,10 @@ describe('AdvisoryApi', () => {
           locale: 'en',
           householdMode: 'INDIVIDUAL',
         }),
-      (err: any) => err.code === 'AV_1001' && err.message.includes('active provider could not be determined'),
+      (err: unknown) =>
+        err instanceof DomainError &&
+        err.code === 'AV_1001' &&
+        err.message.includes('active provider could not be determined'),
     );
   });
 
@@ -267,7 +271,7 @@ describe('AdvisoryApi', () => {
           ],
           totalValuationBase: 1000000,
           effectiveRiskScore: 3.0,
-          updatedAt: new Date().toISOString(),
+          updatedAt: '2026-10-06T12:00:00.000Z',
         } as any),
       },
       gateway: new LlmGateway(),
@@ -304,14 +308,14 @@ describe('AdvisoryApi', () => {
     assert.equal(notice.payload.code, 'PROPOSAL_UNAVAILABLE');
   });
 
-  it('routes to OpenRouter with Nemotron model when openrouter is the active provider', async () => {
+  it('routes to OpenRouter when openrouter is the active provider', async () => {
     const { finance, wealth, market, analytics } = setupApis();
     let requestedUrl = '';
-    let requestedBody: any = null;
+    let requestedBody: { model?: string } = {};
     let authHeader = '';
 
     const gateway = new LlmGateway({
-      openrouterApiKey: 'sk-or-v1-test-nemotron-key',
+      openrouterApiKey: 'openrouter-test-key',
     });
     const api = createAdvisoryApi({
       finance,
@@ -324,7 +328,7 @@ describe('AdvisoryApi', () => {
 
     const realFetch = globalThis.fetch;
     const modelOutput = {
-      reply: 'Nemotron reasoning verified under calculation shield.',
+      reply: 'OpenRouter reasoning verified under calculation shield.',
       personalFinance: 'Runway is protected.',
       crossBorder: 'Corridors hedged.',
       wealthStrategy: 'Portfolio balanced with high confidence.',
@@ -332,7 +336,7 @@ describe('AdvisoryApi', () => {
 
     globalThis.fetch = async (url: string | URL | Request, init?: RequestInit) => {
       requestedUrl = url.toString();
-      requestedBody = init?.body ? JSON.parse(init.body.toString()) : null;
+      requestedBody = init?.body ? (JSON.parse(init.body.toString()) as { model?: string }) : {};
       authHeader = (init?.headers as Record<string, string> | undefined)?.authorization ?? '';
       return new Response(
         JSON.stringify({
@@ -351,8 +355,8 @@ describe('AdvisoryApi', () => {
 
       assert.equal(requestedUrl, 'https://openrouter.ai/api/v1/chat/completions');
       assert.equal(requestedBody?.model, 'openrouter/free');
-      assert.equal(authHeader, 'Bearer sk-or-v1-test-nemotron-key');
-      assert.ok(res.reply.includes('Nemotron reasoning'));
+      assert.equal(authHeader, 'Bearer openrouter-test-key');
+      assert.ok(res.reply.includes('OpenRouter reasoning'));
     } finally {
       globalThis.fetch = realFetch;
     }

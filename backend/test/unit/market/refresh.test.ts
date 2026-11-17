@@ -129,7 +129,7 @@ describe('market refresh', () => {
     await api.refresh('2025-06-10');
     const fresh = new MemoryPriceRepository();
     await fresh.append((await prices.history(['VT'], '2000-01-01', '2100-01-01')));
-    const partial = createMarketApi({ prices: fresh, fxRates, priceSource, fxSource, events: new InProcessEventBus(), clock: new FakeClock(new Date()) });
+    const partial = createMarketApi({ prices: fresh, fxRates, priceSource, fxSource, events: new InProcessEventBus(), clock: new FakeClock(new Date('2025-06-12T12:00:00Z')) });
     await partial.refresh('2025-06-12');
     assert.deepEqual(priceSource.calls[1], { from: '2024-06-12', to: '2025-06-12' });
   });

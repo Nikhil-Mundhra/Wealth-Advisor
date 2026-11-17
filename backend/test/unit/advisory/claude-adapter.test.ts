@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { DomainError } from '#core/domain/domain-error.ts';
 import type { CashflowSummaryResponse, PortfolioResponse } from '@wealth-advisor/contracts';
 import type { HttpClient } from '../../../src/core/http-client/http-client.ts';
 import { ClaudeLlmAdapter, type LlmContext } from '../../../src/modules/advisory/domain/llm-gateway.ts';
@@ -87,7 +88,7 @@ describe('ClaudeLlmAdapter', () => {
 
   it('fails loudly without an API key', async () => {
     const adapter = new ClaudeLlmAdapter(undefined, undefined, stubHttp({}));
-    await assert.rejects(() => adapter.chat(context), (err: any) => err.code === 'AV_1001');
+    await assert.rejects(() => adapter.chat(context), (err: unknown) => err instanceof DomainError && err.code === 'AV_1001');
   });
 
   it('fails loudly when Claude fails', async () => {
@@ -98,6 +99,6 @@ describe('ClaudeLlmAdapter', () => {
       },
     };
     const adapter = new ClaudeLlmAdapter('test-anthropic-key', undefined, failing);
-    await assert.rejects(() => adapter.chat(context), (err: any) => err.code === 'AV_1001');
+    await assert.rejects(() => adapter.chat(context), (err: unknown) => err instanceof DomainError && err.code === 'AV_1001');
   });
 });

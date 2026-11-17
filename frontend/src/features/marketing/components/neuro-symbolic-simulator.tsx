@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, AlertTriangle, ArrowRight, Bot, CheckCircle2, ChevronRight, Cpu, HelpCircle, Layers, RefreshCcw, ShieldCheck, Sparkles, TrendingUp, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Cpu, XCircle } from 'lucide-react';
 
 interface Scenario {
   id: string;

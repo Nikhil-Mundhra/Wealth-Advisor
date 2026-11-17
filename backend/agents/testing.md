@@ -32,6 +32,7 @@ backend/test/integration/resilience/failure-injection.memory.test.ts : FX outage
 backend/test/integration/scoped-routes/route-guards.memory.test.ts : ADMIN role on the admin console, householdMode query validation, a signed-in caller for every write, share only a held portfolio
 backend/test/integration/scoped-routes/tenant-scope.memory.test.ts : demo scope for an anonymous caller, a tenant header ignored, an invalid token refused, a signed-up caller scoped to its own user
 backend/test/integration/sla/stage-latency-sla.memory.test.ts : 45-iteration P99 stage latency SLA gates (<400ms) and live cross-module HTTP E2E orchestration
+backend/test/integration/wealth/outbox-recalibration.memory.test.ts : cross-module finance transaction ingested event triggers wealth risk recalibration via DurableOutboxEventBus
 backend/test/integration/wealth/wealth-optimize-routes.memory.test.ts : optimize body reaches recalibration; FX mismatch penalty in the route response
 backend/test/integration/wealth/wealth-portfolio-access.memory.test.ts : cross-user portfolio and optimize reads refuse with 404 for clients and anonymous callers
 backend/test/support/auth-fixtures.ts : shared session/token fixtures
@@ -66,7 +67,7 @@ backend/test/unit/core/error-catalog.test.ts : code → status mapping, prefix a
 backend/test/unit/core/http-client/http-client.test.ts : status, network, timeout and body failures → transient or fatal; no query string in messages
 backend/test/unit/core/idempotency.test.ts : Idempotency-Key replay headers and 409 conflict on mutated payload
 backend/test/unit/core/migration-runner.test.ts : idempotent versioned database migration execution
-backend/test/unit/core/outbox-bus.test.ts : DurableOutboxEventBus retries, dead-letter routing, and async burn-rate spike recalibration
+backend/test/unit/core/outbox-bus.test.ts : DurableOutboxEventBus retries, dead-letter routing, and immediate auto-drain delivery
 backend/test/unit/core/read-json-body.test.ts : json body parsing, empty body handling, 1MB size limit and 413 CORE_PAYLOAD_TOO_LARGE
 backend/test/unit/core/require-bearer-secret.test.ts : exact bearer passes; wrong, missing, or unset secret → rejected
 backend/test/unit/core/resilient-caller.test.ts : circuit breaker state transitions, backoff/jitter retry, TTL cache, and stale/mock fallbacks

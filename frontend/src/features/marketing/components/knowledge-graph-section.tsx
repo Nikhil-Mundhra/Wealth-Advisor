@@ -1,4 +1,4 @@
-import { Activity, BellRing, Database, FileSpreadsheet, GitBranch, HeartHandshake, Layers, Network, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { Activity, BellRing, Database, GitBranch, Network, Zap } from 'lucide-react';
 
 export function KnowledgeGraphSection() {
   return (

@@ -2,13 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { AdminRoute, AdvisorRoute } from './route-guards.tsx';
+import { clearSession, setAccessToken } from '../features/auth/session/session-store.ts';
+import { AdminRoute, AdvisorRoute, GuestRoute, ProtectedRoute } from './route-guards.tsx';
 
 function renderAdmin(roles: string[]) {
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => new Response(JSON.stringify({ id: 'u', email: 'a@b.c', displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
   );
+  const queryClient = new QueryClient();
   const router = createMemoryRouter(
     [
       {
@@ -21,7 +23,7 @@ function renderAdmin(roles: string[]) {
     { initialEntries: ['/admin'] },
   );
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
@@ -32,6 +34,7 @@ function renderAdvisor(roles: string[]) {
     'fetch',
     vi.fn(async () => new Response(JSON.stringify({ id: 'u', email: 'adv@b.c', displayName: null, roles, emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z' }), { status: 200, headers: { 'content-type': 'application/json' } })),
   );
+  const queryClient = new QueryClient();
   const router = createMemoryRouter(
     [
       {
@@ -44,11 +47,91 @@ function renderAdvisor(roles: string[]) {
     { initialEntries: ['/advisor'] },
   );
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
 }
+
+describe('ProtectedRoute', () => {
+  afterEach(() => clearSession());
+
+  it('allows authenticated callers through', async () => {
+    setAccessToken('token');
+    const queryClient = new QueryClient();
+    const router = createMemoryRouter(
+      [
+        { element: <ProtectedRoute />, children: [{ path: '/portfolio', element: <p>Portfolio</p> }] },
+        { path: '/login', element: <p>Login</p> },
+      ],
+      { initialEntries: ['/portfolio'] },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('Portfolio')).toBeVisible();
+  });
+
+  it('redirects anonymous callers to login', async () => {
+    clearSession();
+    const queryClient = new QueryClient();
+    const router = createMemoryRouter(
+      [
+        { element: <ProtectedRoute />, children: [{ path: '/portfolio', element: <p>Portfolio</p> }] },
+        { path: '/login', element: <p>Login</p> },
+      ],
+      { initialEntries: ['/portfolio'] },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('Login')).toBeVisible();
+  });
+});
+
+describe('GuestRoute', () => {
+  afterEach(() => clearSession());
+
+  it('allows anonymous visitors through', async () => {
+    clearSession();
+    const queryClient = new QueryClient();
+    const router = createMemoryRouter(
+      [
+        { element: <GuestRoute />, children: [{ path: '/login', element: <p>Login Form</p> }] },
+        { path: '/', element: <p>Home</p> },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('Login Form')).toBeVisible();
+  });
+
+  it('redirects already signed-in visitors to home', async () => {
+    setAccessToken('token');
+    const queryClient = new QueryClient();
+    const router = createMemoryRouter(
+      [
+        { element: <GuestRoute />, children: [{ path: '/login', element: <p>Login Form</p> }] },
+        { path: '/', element: <p>Home</p> },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('Home')).toBeVisible();
+  });
+});
 
 describe('AdminRoute', () => {
   afterEach(() => vi.unstubAllGlobals());

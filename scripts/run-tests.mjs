@@ -25,13 +25,36 @@ function stripAnsi(str) {
 function runSuite({ name, command, args, cwd, logFile }) {
   return new Promise((res) => {
     const startTime = Date.now();
+    let settled = false;
     const logStream = createWriteStream(logFile, { flags: 'w' });
     let combinedOutput = '';
+
+    const finish = (code) => {
+      if (settled) return;
+      settled = true;
+      logStream.end();
+      const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
+      res({
+        name,
+        code: code ?? 1,
+        durationSec,
+        output: stripAnsi(combinedOutput),
+      });
+    };
+
+    logStream.on('error', (err) => {
+      combinedOutput += `\n[log-stream error] ${err.message}\n`;
+    });
 
     const proc = spawn(command, args, {
       cwd,
       env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
       stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    proc.on('error', (err) => {
+      combinedOutput += `\n[spawn error] ${err.message}\n`;
+      finish(1);
     });
 
     proc.stdout.on('data', (chunk) => {
@@ -47,14 +70,7 @@ function runSuite({ name, command, args, cwd, logFile }) {
     });
 
     proc.on('close', (code) => {
-      logStream.end();
-      const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
-      res({
-        name,
-        code: code ?? 1,
-        durationSec,
-        output: stripAnsi(combinedOutput),
-      });
+      finish(code);
     });
   });
 }

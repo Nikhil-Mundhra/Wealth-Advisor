@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Check, Scale, Shield, Sparkles, User, Users } from 'lucide-react';
+import { Building2, Check, Scale, Shield, User } from 'lucide-react';
 import { useState } from 'react';
 
 export function PositioningMatrixSection() {

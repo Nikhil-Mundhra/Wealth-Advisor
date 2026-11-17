@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter, Navigate, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import * as csvExport from '../../lib/csv-export.ts';
 import * as jsonExport from '../../lib/json-export.ts';
@@ -158,18 +158,20 @@ describe('SettingsLedgerPage', () => {
     vi.unstubAllGlobals();
   });
 
-  it('redirects /evidence to /settings/ledger', () => {
+  it('links to Evidence Explorer at /evidence via SettingsNav', () => {
     setLocale('en');
     stubLedger({ entries: [] });
     renderWithClient(
-      <MemoryRouter initialEntries={['/evidence']}>
+      <MemoryRouter initialEntries={['/settings/ledger']}>
         <Routes>
-          <Route path="/evidence" element={<Navigate to="/settings/ledger" replace />} />
           <Route path="/settings/ledger" element={<SettingsLedgerPage />} />
+          <Route path="/evidence" element={<p>Evidence Explorer Target</p>} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Sandbox ledger' })).toBeVisible();
+    const evidenceLink = screen.getByRole('link', { name: 'Evidence Explorer' });
+    expect(evidenceLink).toHaveAttribute('href', '/evidence');
+    vi.unstubAllGlobals();
   });
 });

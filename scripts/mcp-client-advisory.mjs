@@ -6,22 +6,41 @@
  * to authenticate with client credentials and interact with the Wealth Advisor AI pipeline.
  */
 
+import { createHash } from 'node:crypto';
 import readline from 'node:readline';
 
 const DEFAULT_BASE_URL = process.env.ADVISORY_URL || 'https://wealth-advisor-ai.vercel.app';
 const DEFAULT_EMAIL = process.env.CLIENT_EMAIL || 'testing@example.com';
 const DEFAULT_PASSWORD = process.env.CLIENT_PASSWORD || 'testing';
 
-// In-memory token cache for authenticated sessions
-let cachedToken = null;
-let cachedEmail = null;
+// Token cache keyed by normalized URL, email, and credential hash with JWT expiration tracking.
+const tokenCache = new Map();
+
+function jwtExpirationSec(token) {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return 0;
+    const payload = JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
+    return typeof payload?.exp === 'number' ? payload.exp : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function cacheKey(baseUrl, email, password) {
+  const passwordHash = createHash('sha256').update(String(password ?? '')).digest('hex');
+  return `${baseUrl}|${email}|${passwordHash}`;
+}
 
 async function authenticateClient(email, password, baseUrl) {
-  if (cachedToken && cachedEmail === email) {
-    return cachedToken;
+  const cleanUrl = baseUrl.replace(/\/+$/, '');
+  const key = cacheKey(cleanUrl, email, password);
+  const entry = tokenCache.get(key);
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (entry && (entry.exp === 0 || entry.exp - 30 > nowSec)) {
+    return entry.token;
   }
 
-  const cleanUrl = baseUrl.replace(/\/+$/, '');
   const res = await fetch(`${cleanUrl}/api/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -31,15 +50,16 @@ async function authenticateClient(email, password, baseUrl) {
   });
 
   if (!res.ok) {
-    // If client login fails, fallback to unauthenticated demo session
     return null;
   }
 
   const data = await res.json().catch(() => ({}));
   if (data?.accessToken) {
-    cachedToken = data.accessToken;
-    cachedEmail = email;
-    return cachedToken;
+    tokenCache.set(key, {
+      token: data.accessToken,
+      exp: jwtExpirationSec(data.accessToken),
+    });
+    return data.accessToken;
   }
 
   return null;
@@ -61,7 +81,7 @@ async function sendAdvisoryChat({
     try {
       activeToken = await authenticateClient(email, password, cleanUrl);
     } catch {
-      // Optional auth fallback
+      // Optional auth fallback when credentials cannot reach login endpoint
     }
   }
 
@@ -73,7 +93,7 @@ async function sendAdvisoryChat({
   }
 
   const chatUrl = `${cleanUrl}/api/advisory/chat`;
-  let res = await fetch(chatUrl, {
+  const res = await fetch(chatUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -84,19 +104,6 @@ async function sendAdvisoryChat({
   }).catch((err) => {
     throw new Error(`Connection to advisory AI failed (${chatUrl}): ${err.message}`);
   });
-
-  // If authenticated user has no portfolio record on remote db, fallback to client demo account
-  if (res.status === 404 && activeToken) {
-    res = await fetch(chatUrl, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        message,
-        locale,
-        householdMode,
-      }),
-    });
-  }
 
   if (!res.ok) {
     const errText = await res.text().catch(() => '');

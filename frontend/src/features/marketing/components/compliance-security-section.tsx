@@ -1,4 +1,4 @@
-import { CheckCircle2, EyeOff, FileKey, Fingerprint, Lock, ShieldCheck, UserX } from 'lucide-react';
+import { EyeOff, FileKey, Fingerprint, Lock, ShieldCheck, UserX } from 'lucide-react';
 
 export function ComplianceSecuritySection() {
   return (

@@ -11,7 +11,7 @@ after(async () => {
   await t.stop();
 });
 
-it('two concurrent refreshes of the same token: exactly one rotates, the other gets 409', async () => {
+it('five concurrent refreshes of the same token: exactly one rotates, the other four get 409', async () => {
   const login = (await (await postJson(t.app, '/api/auth/login', { email: 'racer@example.com', password: 'correct-horse-battery', clientType: 'IOS' })).json()) as {
     refreshToken: string;
   };

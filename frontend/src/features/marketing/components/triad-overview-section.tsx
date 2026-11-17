@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Cpu, Database, Network, ShieldAlert, Sparkles, Workflow } from 'lucide-react';
+import { ArrowRight, Cpu, Network, Workflow } from 'lucide-react';
 
 interface TriadOverviewSectionProps {
   onLearnMoreWorkflow?: () => void;

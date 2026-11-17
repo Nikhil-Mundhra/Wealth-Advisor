@@ -19,7 +19,7 @@ describe('tenant scope on scoped routes', () => {
     await app.stop();
   });
 
-  const accountEmails = async (headers: Record<string, string>) => {
+  const institutionNames = async (headers: Record<string, string>) => {
     const response = await app.app.request('/api/finance/accounts', { headers });
     assert.equal(response.status, 200);
     const body = await json(response);
@@ -27,14 +27,14 @@ describe('tenant scope on scoped routes', () => {
   };
 
   it('serves the demo scope to an anonymous caller', async () => {
-    const institutions = await accountEmails({});
+    const institutions = await institutionNames({});
     assert.ok(institutions.length > 0);
     assert.ok(institutions.includes('Deutsche Bank Germany'));
   });
 
   it('ignores a tenant header, so a caller cannot read another tenant', async () => {
-    const anonymous = await accountEmails({});
-    const spoofed = await accountEmails({ 'x-tenant-id': OTHER_TENANT });
+    const anonymous = await institutionNames({});
+    const spoofed = await institutionNames({ 'x-tenant-id': OTHER_TENANT });
     assert.deepEqual(spoofed, anonymous);
   });
 
@@ -52,15 +52,15 @@ describe('tenant scope on scoped routes', () => {
       await postJson(app.app, '/api/auth/login', { email, password, clientType: 'IOS' }),
     );
     const headers = { authorization: `Bearer ${String(login.accessToken)}` };
-    assert.deepEqual(await accountEmails(headers), []);
+    assert.deepEqual(await institutionNames(headers), []);
 
     // The token carries the tenant signup assigned; the header cannot override it.
     const payload = JSON.parse(Buffer.from(String(login.accessToken).split('.')[1] ?? '', 'base64url').toString()) as Record<string, unknown>;
     assert.equal(payload.tenant_id, DEFAULT_TENANT_ID);
-    assert.deepEqual(await accountEmails({ ...headers, 'x-tenant-id': OTHER_TENANT }), []);
+    assert.deepEqual(await institutionNames({ ...headers, 'x-tenant-id': OTHER_TENANT }), []);
   });
 
-  it('files a created account under the caller scope, and refuses an unusable scope id', async () => {
+  it('files a created account under the caller scope and isolates it from the demo scope', async () => {
     const email = 'writer@example.com';
     const password = 'correct-horse-battery';
     await postJson(app.app, '/api/auth/signup', { email, password, displayName: 'Writer' });
@@ -76,9 +76,9 @@ describe('tenant scope on scoped routes', () => {
     assert.equal(created.status, 201);
     const account = await json(created);
     assert.equal(account.userId, subjectOf(String(login.accessToken)));
-    assert.deepEqual(await accountEmails(headers), ['N26']);
+    assert.deepEqual(await institutionNames(headers), ['N26']);
     // The new row is invisible to the demo scope.
-    assert.ok((await accountEmails({})).includes('Deutsche Bank Germany'));
+    assert.ok((await institutionNames({})).includes('Deutsche Bank Germany'));
   });
 });
 

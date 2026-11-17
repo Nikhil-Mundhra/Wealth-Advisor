@@ -1,4 +1,4 @@
-import { ArrowRight, Lock, ShieldCheck } from 'lucide-react';
+import { Lock, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import logoImg from '../../../assets/logo.png';
 import logoDarkImg from '../../../assets/logo-dark.png';

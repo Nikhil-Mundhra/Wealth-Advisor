@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, ChevronRight, Cpu, Layers, Lock, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronRight, Cpu, Layers, Lock, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 
 interface HomepageHeroProps {

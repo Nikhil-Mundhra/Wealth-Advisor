@@ -1,4 +1,4 @@
-import { AlertOctagon, ArrowUpRight, BarChart3, Calculator, Check, ShieldAlert, TrendingDown, Users, X } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import marketShockImg from '../../../assets/market-shock.jpg';
 
 export function MITSloanShockSection() {

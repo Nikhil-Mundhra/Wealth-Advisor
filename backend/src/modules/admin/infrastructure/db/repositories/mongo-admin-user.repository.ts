@@ -1,4 +1,4 @@
-import { type Collection, ObjectId } from 'mongodb';
+import { type Collection, type Filter, ObjectId } from 'mongodb';
 import { toDocumentId, toScopeId, DEFAULT_TENANT_ID } from '#core/db/document-id.ts';
 import type {
   AdminUserFilters,
@@ -53,7 +53,7 @@ export class MongoAdminUserRepository implements AdminUserRepository {
   }
 
   async findAll(filters?: AdminUserFilters): Promise<AdminUserRecord[]> {
-    const query: Record<string, any> = {};
+    const query: Filter<UserDoc> = {};
 
     if (filters?.role && filters.role !== 'ALL') {
       query.roles = filters.role;
@@ -132,7 +132,7 @@ export class MongoAdminUserRepository implements AdminUserRepository {
     const docId = toDocumentId(id);
     if (!docId) return null;
 
-    const updates: Record<string, any> = { updatedAt: new Date() };
+    const updates: Partial<UserDoc> = { updatedAt: new Date() };
 
     if (input.displayName !== undefined) {
       updates.displayName = input.displayName;
