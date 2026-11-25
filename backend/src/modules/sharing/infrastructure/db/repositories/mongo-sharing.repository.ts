@@ -16,7 +16,7 @@ export class MongoSharedPlanRepository implements SharedPlanRepository {
   async create(plan: Omit<SharedPlanDocument, '_id'>): Promise<SharedPlanDocument> {
     const id = new ObjectId();
     const doc: SharedPlanDocument = { ...plan, _id: id };
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return doc;
   }
 

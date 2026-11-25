@@ -1,5 +1,14 @@
 import { type Collection, type Filter, ObjectId } from 'mongodb';
+import { DEFAULT_ROLES, ROLES, USER_STATUSES, type Role, type UserStatus } from '@wealth-advisor/rules';
 import { toDocumentId, toScopeId, DEFAULT_TENANT_ID } from '#core/db/document-id.ts';
+
+function isUserStatus(value: string): value is UserStatus {
+  return (USER_STATUSES as readonly string[]).includes(value);
+}
+
+function isRole(value: string): value is Role {
+  return (ROLES as readonly string[]).includes(value);
+}
 import type {
   AdminUserFilters,
   AdminUserRecord,
@@ -30,8 +39,8 @@ export function toAdminUserRecord(doc: UserDoc): AdminUserRecord {
     tenantId: doc.tenantId ? doc.tenantId.toHexString() : null,
     email: doc.email,
     displayName: doc.displayName,
-    status: (doc.status as any) ?? 'ACTIVE',
-    roles: (doc.roles as any) ?? ['USER'],
+    status: doc.status && isUserStatus(doc.status) ? doc.status : 'ACTIVE',
+    roles: doc.roles ? doc.roles.filter(isRole) : [...DEFAULT_ROLES],
     emailVerified: doc.emailVerifiedAt !== null,
     providers: (doc.providers ?? []).map((p) => ({
       type: p.type,
@@ -124,7 +133,7 @@ export class MongoAdminUserRepository implements AdminUserRepository {
       updatedAt: now,
     };
 
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return toAdminUserRecord(doc);
   }
 

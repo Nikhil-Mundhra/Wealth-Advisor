@@ -1,9 +1,11 @@
 import type { MiddlewareHandler } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { Db } from 'mongodb';
 import { CORE_ERROR_CODES } from '@wealth-advisor/rules';
 import { sha256Hex } from '#core/crypto/sha256.ts';
 import type { Clock } from '#core/time/clock.ts';
 import { systemClock } from '#core/time/clock.ts';
+import { IDEMPOTENCY_KEYS_COLLECTION, type IdempotencyKeyDocument } from './idempotency-keys.schema.ts';
 
 export interface IdempotencyRecord {
   readonly payloadHash: string;
@@ -13,9 +15,93 @@ export interface IdempotencyRecord {
   readonly expiresAtMs: number;
 }
 
+export interface IdempotencyScopeMeta {
+  readonly key: string;
+  readonly callerHash: string;
+  readonly method: string;
+  readonly path: string;
+  readonly createdAtMs?: number;
+}
+
 export interface IdempotencyStore {
-  get(scopeKey: string, nowMs: number): IdempotencyRecord | null;
-  set(scopeKey: string, record: IdempotencyRecord): void;
+  get(
+    scopeKey: string,
+    nowMs: number,
+    meta?: IdempotencyScopeMeta,
+  ): IdempotencyRecord | null | Promise<IdempotencyRecord | null>;
+  set(
+    scopeKey: string,
+    record: IdempotencyRecord,
+    meta?: IdempotencyScopeMeta,
+  ): void | Promise<void>;
+}
+
+function parseScopeKey(scopeKey: string, meta?: IdempotencyScopeMeta): IdempotencyScopeMeta {
+  if (meta) return meta;
+  const [callerHash = '', method = '', path = '', ...keyParts] = scopeKey.split(':');
+  return {
+    key: keyParts.join(':') || scopeKey,
+    callerHash: callerHash || 'anonymous',
+    method: method || 'POST',
+    path: path || '/',
+  };
+}
+
+function isDuplicateKeyError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && (err as { code?: number }).code === 11000;
+}
+
+/** Persistent MongoDB idempotency store backed by the TTL-indexed `idempotency_keys` collection. */
+export function createMongoIdempotencyStore(db: Db | (() => Promise<Db>)): IdempotencyStore {
+  const getDatabase = typeof db === 'function' ? db : async () => db;
+  const col = async () => (await getDatabase()).collection<IdempotencyKeyDocument>(IDEMPOTENCY_KEYS_COLLECTION);
+
+  return {
+    async get(scopeKey, nowMs, meta) {
+      const { key, callerHash, method, path } = parseScopeKey(scopeKey, meta);
+      const doc = await (await col()).findOne({
+        key,
+        callerHash,
+        method,
+        path,
+        expiresAt: { $gt: new Date(nowMs) },
+      });
+      if (!doc) return null;
+      return {
+        payloadHash: doc.payloadHash,
+        status: doc.status,
+        contentType: doc.contentType,
+        bodyText: doc.bodyText,
+        expiresAtMs: doc.expiresAt.getTime(),
+      };
+    },
+    async set(scopeKey, record, meta) {
+      const { key, callerHash, method, path } = parseScopeKey(scopeKey, meta);
+      const createdAt = new Date(meta?.createdAtMs ?? Date.now());
+      try {
+        await (await col()).updateOne(
+          { key, callerHash, method, path },
+          {
+            $set: {
+              key,
+              callerHash,
+              method,
+              path,
+              payloadHash: record.payloadHash,
+              status: record.status,
+              contentType: record.contentType || 'application/json; charset=UTF-8',
+              bodyText: record.bodyText,
+              createdAt,
+              expiresAt: new Date(record.expiresAtMs),
+            },
+          },
+          { upsert: true },
+        );
+      } catch (err) {
+        if (!isDuplicateKeyError(err)) throw err;
+      }
+    },
+  };
 }
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -82,10 +168,13 @@ export function createIdempotencyMiddleware(options?: IdempotencyMiddlewareOptio
     const callerHash = sha256Hex(authHeader);
     const rawBody = await c.req.raw.clone().text().catch(() => '');
     const payloadHash = sha256Hex(rawBody);
-    const scopeKey = `${callerHash}:${c.req.method.toUpperCase()}:${c.req.path}:${rawKey}`;
+    const method = c.req.method.toUpperCase();
+    const path = c.req.path;
+    const scopeKey = `${callerHash}:${method}:${path}:${rawKey}`;
+    const scopeMeta: IdempotencyScopeMeta = { key: rawKey, callerHash, method, path };
     const nowMs = clock.now().getTime();
 
-    const cached = store.get(scopeKey, nowMs);
+    const cached = await store.get(scopeKey, nowMs, scopeMeta);
     if (cached) {
       if (cached.payloadHash !== payloadHash) {
         return c.json(
@@ -108,13 +197,17 @@ export function createIdempotencyMiddleware(options?: IdempotencyMiddlewareOptio
       const cloned = c.res.clone();
       const bodyText = await cloned.text();
       const contentType = cloned.headers.get('content-type') ?? 'application/json; charset=UTF-8';
-      store.set(scopeKey, {
-        payloadHash,
-        status: c.res.status,
-        contentType,
-        bodyText,
-        expiresAtMs: nowMs + ttlMs,
-      });
+      await store.set(
+        scopeKey,
+        {
+          payloadHash,
+          status: c.res.status,
+          contentType,
+          bodyText,
+          expiresAtMs: nowMs + ttlMs,
+        },
+        { ...scopeMeta, createdAtMs: nowMs },
+      );
       c.res.headers.set('X-Idempotent-Replay', 'false');
     }
   };

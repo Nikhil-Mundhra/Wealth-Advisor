@@ -9,7 +9,7 @@ import { checkDatabase } from '#core/db/connection/database-health.ts';
 import { DurableOutboxEventBus, createMemoryOutboxStore, createMongoOutboxStore } from '#core/events/outbox-bus.ts';
 import { createHttpClient } from '#core/http-client/http-client.ts';
 import { createErrorHandler } from '#core/http/error-handler.ts';
-import { createIdempotencyMiddleware } from '#core/http/idempotency.ts';
+import { createIdempotencyMiddleware, createMongoIdempotencyStore } from '#core/http/idempotency.ts';
 import type { ModuleContext } from '#core/module/module-context.ts';
 import { ModuleRegistry } from '#core/module/module-registry.ts';
 import { getDb } from '#core/db/connection/mongo-client.ts';
@@ -132,7 +132,9 @@ export function createApp(context: ModuleContext): Hono {
       credentials: true,
     }),
   );
-  app.use('/api/*', createIdempotencyMiddleware({ clock: context.clock }));
+  const idempotencyStore =
+    resolveDataStore(env()) === 'mongo' ? createMongoIdempotencyStore(context.db) : undefined;
+  app.use('/api/*', createIdempotencyMiddleware({ clock: context.clock, store: idempotencyStore }));
   app.onError(errorHandler);
   app.route('/api', api);
   return app;

@@ -28,6 +28,19 @@ const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>;
 
+/** Environment variables required before serving live production traffic. */
+export const PRODUCTION_REQUIRED_ENV_KEYS = [
+  'MONGODB_URI',
+  'AUTH_JWT_PRIVATE_KEY',
+  'AUTH_JWT_PUBLIC_KEY',
+] as const;
+
+/** Lists required production env keys missing or blank in `config`; returns empty outside production. */
+export function missingProductionEnv(config: Env): string[] {
+  if (config.NODE_ENV !== 'production') return [];
+  return PRODUCTION_REQUIRED_ENV_KEYS.filter((key) => !config[key]);
+}
+
 let cached: Env | undefined;
 
 // Parsed on first use rather than at import, so a bad variable fails the request that needs it with a clear message.

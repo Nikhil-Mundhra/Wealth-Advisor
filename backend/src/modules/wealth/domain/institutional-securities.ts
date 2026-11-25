@@ -76,38 +76,13 @@ const emaarFundamental = calculateFundamentalScore({
   isSmallCap: false,
 });
 
-// Evaluates UAE Sovereign Sukuk 2029
-const uaeSukukEval = evaluateBondSecurity({
-  faceValue: 1000,
-  couponRate: 0.051,
-  yearsToMaturity: 5,
-  currentPrice: 1000,
-  benchmarkYield: 0.045,
-  bondType: 'UAE_SOVEREIGN_SUKUK',
-  isShariaCompliant: true,
-});
+const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+const MIN_MATURITY_YEARS = 0.25;
 
-// Evaluates First Abu Dhabi Bank Green Sukuk
-const fabSukukEval = evaluateBondSecurity({
-  faceValue: 1000,
-  couponRate: 0.0545,
-  yearsToMaturity: 6,
-  currentPrice: 995,
-  benchmarkYield: 0.045,
-  bondType: 'UAE_CORP_SUKUK',
-  isShariaCompliant: true,
-});
-
-// Evaluates Indian Government 7.18% GS 2033 Benchmark
-const inGsecEval = evaluateBondSecurity({
-  faceValue: 100,
-  couponRate: 0.0718,
-  yearsToMaturity: 9,
-  currentPrice: 100.8,
-  benchmarkYield: 0.070,
-  bondType: 'INDIAN_GSEC',
-  isShariaCompliant: false,
-});
+function yearsUntilMaturity(maturityIsoDate: string, referenceDate: Date): number {
+  const remainingYears = (Date.parse(maturityIsoDate) - referenceDate.getTime()) / MS_PER_YEAR;
+  return Math.max(MIN_MATURITY_YEARS, Number(remainingYears.toFixed(2)));
+}
 
 // Evaluates HDFC Top 100 Mutual Fund
 const hdfcFundEval = evaluateMutualFund({
@@ -126,10 +101,42 @@ const hdfcFundEval = evaluateMutualFund({
   isShariaCompliant: false,
 });
 
-// Curated institutional candidate securities across jurisdictions (India, UAE, US, Global, Sovereign Debt, Sukuk, MMF).
-// shortcut: NSE/DFM single names and all bonds carry reference prices (face value + evaluated yield), exempt from the
-// Marketstack snapshot path; wire live EOD once provider docs confirm NSE/DFM/bond identifier coverage.
-export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
+/** Builds the institutional candidate security catalog, evaluating bond durations relative to `referenceDate`. */
+export function buildInstitutionalCandidateSecurities(referenceDate: Date = new Date()): CandidateSecurity[] {
+  // Evaluates UAE Sovereign Sukuk 2029
+  const uaeSukukEval = evaluateBondSecurity({
+    faceValue: 1000,
+    couponRate: 0.051,
+    yearsToMaturity: yearsUntilMaturity('2029-10-15T00:00:00Z', referenceDate),
+    currentPrice: 1000,
+    benchmarkYield: 0.045,
+    bondType: 'UAE_SOVEREIGN_SUKUK',
+    isShariaCompliant: true,
+  });
+
+  // Evaluates First Abu Dhabi Bank Green Sukuk
+  const fabSukukEval = evaluateBondSecurity({
+    faceValue: 1000,
+    couponRate: 0.0545,
+    yearsToMaturity: yearsUntilMaturity('2030-06-15T00:00:00Z', referenceDate),
+    currentPrice: 995,
+    benchmarkYield: 0.045,
+    bondType: 'UAE_CORP_SUKUK',
+    isShariaCompliant: true,
+  });
+
+  // Evaluates Indian Government 7.18% GS 2033 Benchmark
+  const inGsecEval = evaluateBondSecurity({
+    faceValue: 100,
+    couponRate: 0.0718,
+    yearsToMaturity: yearsUntilMaturity('2033-08-15T00:00:00Z', referenceDate),
+    currentPrice: 100.8,
+    benchmarkYield: 0.070,
+    bondType: 'INDIAN_GSEC',
+    isShariaCompliant: false,
+  });
+
+  return [
   {
     symbol: 'INFY.NSE',
     name: 'Infosys Ltd (NSE)',
@@ -310,4 +317,10 @@ export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = [
     fundHouse: 'HDFC AMC',
     maxWeightCap: 0.15,
   },
-];
+  ];
+}
+
+// Curated institutional candidate securities across jurisdictions (India, UAE, US, Global, Sovereign Debt, Sukuk, MMF).
+// shortcut: NSE/DFM single names and all bonds carry reference prices (face value + evaluated yield), exempt from the
+// Marketstack snapshot path; wire live EOD once provider docs confirm NSE/DFM/bond identifier coverage.
+export const INSTITUTIONAL_CANDIDATE_SECURITIES: CandidateSecurity[] = buildInstitutionalCandidateSecurities();

@@ -1,4 +1,4 @@
-import type { AnyBulkWriteOperation, Collection, Filter } from 'mongodb';
+import type { AnyBulkWriteOperation, Collection, Filter, MatchKeysAndValues } from 'mongodb';
 
 // Shared append-only semantics for fact collections: an existing fact is left untouched and not
 // counted, and the server retries the duplicate-key race of two concurrent upserts on the unique index.
@@ -13,7 +13,7 @@ export async function appendFacts<TDomain, TDoc extends object>(
   const operations: AnyBulkWriteOperation<TDoc>[] = items.map((item) => ({
     updateOne: {
       filter: filterOf(item),
-      update: { $setOnInsert: toDocument(item, now) as any },
+      update: { $setOnInsert: toDocument(item, now) as MatchKeysAndValues<TDoc> },
       upsert: true,
     },
   }));

@@ -1,4 +1,4 @@
-import { type Collection, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import type { AssetProductDocument } from '../documents/asset-product.document.ts';
 
 // Canonical catalog: every symbol the optimizer can propose exists here, so the
@@ -191,11 +191,19 @@ export const ASSET_PRODUCT_SEEDS: Array<Omit<AssetProductDocument, '_id' | 'upda
   },
 ];
 
+export interface AssetProductUpsertTarget {
+  updateOne(
+    filter: { symbol: string },
+    update: { $set: Partial<AssetProductDocument>; $setOnInsert: { _id: ObjectId } },
+    options: { upsert: boolean },
+  ): Promise<{ upsertedCount: number }>;
+}
+
 // Insert-when-missing per symbol, then repair legacy rows in place: databases
 // seeded before the securityType column (or an assetClass rename) gain the current
 // catalog values on re-runs, while _id identity is preserved via $setOnInsert.
 export async function upsertAssetProducts(
-  col: Pick<Collection<AssetProductDocument>, 'updateOne'>,
+  col: AssetProductUpsertTarget,
   now: Date,
 ): Promise<{ inserted: number; kept: number }> {
   let inserted = 0;

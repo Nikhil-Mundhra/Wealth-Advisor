@@ -52,7 +52,7 @@ describe('asset-product seeds', () => {
     const col = fakeCollection(legacy);
     const now = new Date('2026-10-20T00:00:00Z');
 
-    const first = await upsertAssetProducts(col as any, now);
+    const first = await upsertAssetProducts(col, now);
     assert.equal(first.inserted, ASSET_PRODUCT_SEEDS.length - legacy.length);
     assert.equal(col.store.size, ASSET_PRODUCT_SEEDS.length);
     // Legacy rows keep their identity but are repaired to the current catalog values.
@@ -61,7 +61,7 @@ describe('asset-product seeds', () => {
     assert.equal(repaired.securityType, 'MUTUAL_FUND_ETF');
     assert.equal(repaired.updatedAt, now);
 
-    const second = await upsertAssetProducts(col as any, now);
+    const second = await upsertAssetProducts(col, now);
     assert.equal(second.inserted, 0);
     assert.equal(second.kept, ASSET_PRODUCT_SEEDS.length);
     assert.equal(col.store.size, ASSET_PRODUCT_SEEDS.length);

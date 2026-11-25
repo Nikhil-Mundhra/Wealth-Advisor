@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import type { Env } from '#core/config/env.ts';
+import { missingProductionEnv, type Env } from '#core/config/env.ts';
 import { resolveDataStore } from '#core/db/connection/data-store.ts';
 import { checkDatabase } from '#core/db/connection/database-health.ts';
 
@@ -23,5 +23,27 @@ describe('checkDatabase', () => {
   it('reports memory and unconfigured without touching a database', async () => {
     assert.equal(await checkDatabase(config({})), 'memory');
     assert.equal(await checkDatabase(config({ NODE_ENV: 'production' })), 'unconfigured');
+  });
+});
+
+describe('missingProductionEnv', () => {
+  it('flags missing required keys only when NODE_ENV is production', () => {
+    assert.deepEqual(missingProductionEnv(config({ NODE_ENV: 'development' })), []);
+    assert.deepEqual(missingProductionEnv(config({ NODE_ENV: 'production' })), [
+      'MONGODB_URI',
+      'AUTH_JWT_PRIVATE_KEY',
+      'AUTH_JWT_PUBLIC_KEY',
+    ]);
+    assert.deepEqual(
+      missingProductionEnv(
+        config({
+          NODE_ENV: 'production',
+          MONGODB_URI: 'mongodb://localhost/app',
+          AUTH_JWT_PRIVATE_KEY: 'priv',
+          AUTH_JWT_PUBLIC_KEY: 'pub',
+        }),
+      ),
+      [],
+    );
   });
 });

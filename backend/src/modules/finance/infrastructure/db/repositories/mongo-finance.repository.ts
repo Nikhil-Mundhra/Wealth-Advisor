@@ -27,7 +27,7 @@ export class MongoAccountRepository implements AccountRepository {
   async create(account: Omit<AccountDocument, '_id'>): Promise<AccountDocument> {
     const id = new ObjectId();
     const doc: AccountDocument = { ...account, _id: id };
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return doc;
   }
 }
@@ -59,7 +59,7 @@ export class MongoTransactionRepository implements TransactionRepository {
   async create(tx: Omit<TransactionDocument, '_id'>): Promise<TransactionDocument> {
     const id = new ObjectId();
     const doc: TransactionDocument = { ...tx, _id: id };
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return doc;
   }
 }

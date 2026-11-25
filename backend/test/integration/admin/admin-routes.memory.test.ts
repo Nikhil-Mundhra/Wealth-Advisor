@@ -3,7 +3,26 @@ import { after, before, describe, it } from 'node:test';
 import { exportPKCS8, exportSPKI, generateKeyPair, SignJWT } from 'jose';
 import { type TestApp, startTestApp } from '../../support/test-app.ts';
 
-const json = async (response: Response) => (await response.json()) as Record<string, any>;
+interface AdminUserResponse {
+  id: string;
+  email: string;
+  displayName: string;
+  roles: string[];
+}
+
+interface AdminUsersListResponse {
+  users: AdminUserResponse[];
+}
+
+interface ErrorResponse {
+  code: string;
+}
+
+interface HealthResponse {
+  providers: Array<{ provider: string; healthy: boolean }>;
+}
+
+const json = async <T = Record<string, unknown>>(response: Response): Promise<T> => (await response.json()) as T;
 
 describe('admin user routes', () => {
   let app: TestApp;
@@ -43,7 +62,7 @@ describe('admin user routes', () => {
       headers: { authorization: `Bearer ${userToken}` },
     });
     assert.equal(res.status, 403);
-    assert.equal((await json(res)).code, 'AD_1004');
+    assert.equal((await json<ErrorResponse>(res)).code, 'AD_1004');
   });
 
   it('lists users and creates a user via admin API', async () => {
@@ -52,7 +71,7 @@ describe('admin user routes', () => {
       headers: { authorization: `Bearer ${adminToken}` },
     });
     assert.equal(listRes.status, 200);
-    const listBody = await json(listRes);
+    const listBody = await json<AdminUsersListResponse>(listRes);
     assert.ok(Array.isArray(listBody.users));
 
     // Create user
@@ -70,7 +89,7 @@ describe('admin user routes', () => {
       }),
     });
     assert.equal(createRes.status, 201);
-    const createdUser = await json(createRes);
+    const createdUser = await json<AdminUserResponse>(createRes);
     assert.equal(createdUser.email, 'new.member@wealth.example');
     assert.equal(createdUser.displayName, 'New Member');
 
@@ -87,7 +106,7 @@ describe('admin user routes', () => {
       }),
     });
     assert.equal(updateRes.status, 200);
-    const updatedUser = await json(updateRes);
+    const updatedUser = await json<AdminUserResponse>(updateRes);
     assert.equal(updatedUser.displayName, 'Senior Member');
     assert.ok(updatedUser.roles.includes('ADMIN'));
 
@@ -130,7 +149,7 @@ describe('admin user routes', () => {
       },
     });
     assert.equal(deleteRes.status, 400);
-    assert.equal((await json(deleteRes)).code, 'AD_1008');
+    assert.equal((await json<ErrorResponse>(deleteRes)).code, 'AD_1008');
   });
 
   it('probes AI platform health via GET and POST /api/admin/models/health', async () => {
@@ -143,7 +162,7 @@ describe('admin user routes', () => {
       headers: { authorization: `Bearer ${adminToken}` },
     });
     assert.equal(getRes.status, 200);
-    const getBody = await json(getRes);
+    const getBody = await json<HealthResponse>(getRes);
     assert.equal(getBody.providers.length, 1);
     assert.equal(getBody.providers[0].provider, 'mock');
     assert.equal(getBody.providers[0].healthy, true);
@@ -157,7 +176,7 @@ describe('admin user routes', () => {
       body: JSON.stringify({ provider: 'mock' }),
     });
     assert.equal(postRes.status, 200);
-    const postBody = await json(postRes);
+    const postBody = await json<HealthResponse>(postRes);
     assert.equal(postBody.providers[0].provider, 'mock');
     assert.equal(postBody.providers[0].healthy, true);
   });

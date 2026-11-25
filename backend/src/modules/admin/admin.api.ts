@@ -59,7 +59,7 @@ function toTenantDto(doc: TenantDocument): TenantDto {
     plan: doc.plan,
     status: doc.status,
     settings: {
-      baselineCurrency: doc.settings.baselineCurrency as any,
+      baselineCurrency: doc.settings.baselineCurrency,
       allowedCorridors: doc.settings.allowedCorridors,
       defaultLlmProvider: doc.settings.defaultLlmProvider,
       maxMembers: doc.settings.maxMembers,

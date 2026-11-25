@@ -1,5 +1,5 @@
 import type { ObjectId } from 'mongodb';
-import type { LlmProvider, TenantPlan, TenantStatus } from '@wealth-advisor/rules';
+import type { Currency, LlmProvider, TenantPlan, TenantStatus } from '@wealth-advisor/rules';
 
 export const TENANTS_COLLECTION = 'tenants';
 
@@ -10,7 +10,7 @@ export interface TenantDocument {
   plan: TenantPlan;
   status: TenantStatus;
   settings: {
-    baselineCurrency: string;
+    baselineCurrency: Currency;
     allowedCorridors: string[];
     defaultLlmProvider: LlmProvider;
     maxMembers: number;

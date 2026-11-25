@@ -30,7 +30,7 @@ export class MongoTenantRepository implements TenantRepository {
   async create(tenant: Omit<TenantDocument, '_id'>): Promise<TenantDocument> {
     const id = new ObjectId();
     const doc: TenantDocument = { ...tenant, _id: id };
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return doc;
   }
 }
@@ -65,7 +65,7 @@ export class MongoApiKeyRepository implements ApiKeyRepository {
   async create(apiKey: Omit<ApiKeyDocument, '_id'>): Promise<ApiKeyDocument> {
     const id = new ObjectId();
     const doc: ApiKeyDocument = { ...apiKey, _id: id };
-    await (await this.col()).insertOne(doc as any);
+    await (await this.col()).insertOne(doc);
     return doc;
   }
 
