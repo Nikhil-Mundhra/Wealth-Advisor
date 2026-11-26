@@ -11,9 +11,29 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Stage topology: lint -> (unit | ui | invariants) in parallel -> gate. Detail: docs/testing-and-cicd.md
+# Runner is pinned: mongodb-memory-server needs a mongod build for the runner's distro, so the image moves deliberately.
 jobs:
-  check:
-    # Pinned: mongodb-memory-server needs a mongod build for the runner's distro, so the image moves deliberately.
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: make docs-lint
+      - run: make deps-lint
+      - run: make infra-lint
+      - run: make typecheck
+      - run: make audit
+
+  unit:
+    needs: lint
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -29,15 +49,50 @@ jobs:
           path: ~/.cache/mongodb-binaries
           key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - run: make docs-lint
-      - run: make deps-lint
-      - run: make infra-lint
-      - run: make typecheck
-      - run: make audit
+      - run: make test-coverage
+
+  ui:
+    needs: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: make test-ui
+      - run: make build
+
+  invariants:
+    needs: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
       - run: make test-property
       - run: make test-contracts
       - run: make test-sla
       - run: make eval
-      - run: make test
-      - run: make build
 
+  gate:
+    needs: [unit, ui, invariants]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - run: echo "All stages passed"

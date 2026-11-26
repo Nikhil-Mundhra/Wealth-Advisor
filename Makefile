@@ -110,6 +110,9 @@ lint: docs-lint deps-lint infra-lint typecheck audit  ## Stage 1: Docs graph, mo
 test-unit:  ## Stage 2A: Isolated backend unit and deterministic financial engine tests
 	npm run test:unit -w backend
 
+test-coverage:  ## Run backend tests with the coverage ratchet (lines 93, branches 83, functions 84)
+	npm run test:coverage -w backend
+
 test-property:  ## Run L1.5 property-based mathematical and regulatory invariant fuzzing
 	npm run test:property -w backend
 
@@ -122,7 +125,7 @@ test-sla:  ## Run L3 45-iteration P99 stage latency benchmark gates (<400ms SLA)
 test-ui:  ## Stage 2C: Frontend Vitest component, native <dialog>, and A11y tests
 	node scripts/run-tests.mjs --frontend
 
-test-e2e:  ## Stage 3: Live cross-module HTTP E2E orchestration and <400ms P99 SLA gate
+test-e2e:  ## Stage 3: Cross-module HTTP orchestration and <400ms P99 SLA gate (in-process memory-store app)
 	npm run test:sla -w backend
 
 eval:  ## Run versioned LLM guardrail and grounding evaluation suite
@@ -131,7 +134,7 @@ eval:  ## Run versioned LLM guardrail and grounding evaluation suite
 load-test:  ## Run staged live HTTP concurrency benchmark to measure RPS, latency percentiles, and saturation
 	npm run load-test -w backend
 
-ci: lint test-property test-contracts test-sla eval test build  ## Run the complete 3-stage guardrail pipeline locally (Lint -> Unit/Property/Contract/Eval -> Live E2E & SLA)
+ci: lint test-coverage test-property test-contracts test-sla eval test build  ## Run the complete 3-stage guardrail pipeline locally (Lint -> Unit/Property/Contract/Eval -> Live E2E & SLA)
 
 check-ai:  ## Check AI platform API health on deployed site or local (e.g. make check-ai ARGS="--provider openrouter")
 	@node scripts/check-ai-health.mjs $(ARGS)

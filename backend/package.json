@@ -7,6 +7,7 @@
     "start": "NODE_ENV=production node --env-file-if-exists=../.env src/node-server.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --test --test-concurrency=4 \"test/**/*.test.ts\"",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=93 --test-coverage-branches=83 --test-coverage-functions=84 \"test/**/*.test.ts\"",
     "test:unit": "node --test \"test/unit/**/*.test.ts\"",
     "test:property": "node --test test/unit/rules/property-invariants.test.ts",
     "test:contracts": "node --test test/unit/core/contract-parity.test.ts",
