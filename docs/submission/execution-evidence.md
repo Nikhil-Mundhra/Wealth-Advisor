@@ -12,24 +12,26 @@ Recorded verification evidence for the Syntropy AI (DEWA) repository. Every metr
 
 | Check / Target | Scope | Observed Result | Source Spec / Suite |
 | :--- | :--- | :--- | :--- |
-| `make docs-lint` | Documentation links, dependency direction, and repo file maps | `ok` (`72 files, 628 mapped paths, 73 reachable`) | `scripts/docs-lint.mjs` |
+| `make docs-lint` | Documentation links, dependency direction, and repo file maps | `ok` (`78 files, 669 mapped paths, 79 reachable`) | `scripts/docs-lint.mjs` |
 | `make deps-lint` | Backend module boundary imports | `ok` (`9 allowed edges`) | `backend/scripts/module-deps.mjs` |
 | `make typecheck` | Strict `tsc --noEmit` across all 4 workspaces (`rules`, `contracts`, `backend`, `frontend`) | `exit 0` (zero errors) | `package.json` |
-| `make test-property` | L1.5 seeded property fuzzing (MVO simplex, Sharia AAOIFI debt filter, risk recalibration, self-financing rebalance, calculation shield, rational FX) | `6/6` passed (`385.78ms` duration) | `backend/test/unit/rules/property-invariants.test.ts` |
-| `make test-contracts` | L2 error catalog status mapping, `VALIDATION_KEYS` parity, Zod contracts, and MongoDB collection indexes/validators | `4/4` passed (`2719.56ms` duration) | `backend/test/unit/core/contract-parity.test.ts` |
-| `make test-sla` | L3 & L4 45-iteration stage latency P99 gates (`<400ms` SLA) + live HTTP end-to-end orchestration + fail-closed Tier 3 execution | `5/5` passed (`2773.68ms` duration) | `backend/test/integration/sla/stage-latency-sla.memory.test.ts` |
-| `make test` | Full frontend Vitest suite + backend unit/memory suites against ephemeral `mongod` | `585` tests passed across `138` suites in `30.5s` (`frontend`: `45` files, `191` tests in `10.74s`; `backend`: `93` suites, `394` tests in `19.0s`) | `scripts/run-tests.mjs` |
-| `make build` | Production frontend TypeScript compile + Vite asset bundle | `exit 0` (`2379` modules transformed, built in `359ms`) | `frontend/package.json` |
+| `make test-property` | L1.5 seeded property fuzzing (MVO simplex, Sharia AAOIFI debt filter, risk recalibration, self-financing rebalance, calculation shield, rational FX) | `7/7` passed (`475.32ms` duration) | `backend/test/unit/rules/property-invariants.test.ts` |
+| `make test-contracts` | L2 error catalog status mapping, `VALIDATION_KEYS` parity, Zod contracts, and MongoDB collection indexes/validators | `4/4` passed (`2748.77ms` duration) | `backend/test/unit/core/contract-parity.test.ts` |
+| `make test-sla` | L3 & L4 45-iteration stage latency P99 gates (`<400ms` SLA) + live HTTP end-to-end orchestration + fail-closed Tier 3 execution | `5/5` passed (`2763.71ms` duration) | `backend/test/integration/sla/stage-latency-sla.memory.test.ts` |
+| `make test-coverage` | Backend suite with coverage ratchet (lines `>= 93%`, branches `>= 83%`, functions `>= 84%`) | `418` tests passed; `94.77%` lines, `85.14%` branches, `86.48%` functions | `backend/package.json` (`test:coverage`) |
+| `make eval` | Versioned advisory eval suite | `5/5` passed in `65ms` | `backend/src/scripts/run-evals.ts` |
+| `make test` | Full frontend Vitest suite + backend unit/memory suites against ephemeral `mongod` | `613` tests passed across `150` suites in `28.1s` (`frontend`: `45` files, `195` tests in `7.86s`; `backend`: `105` suites, `418` tests in `19.4s`) | `scripts/run-tests.mjs` |
+| `make build` | Production frontend TypeScript compile + Vite asset bundle | `exit 0` (`2394` modules transformed, built in `444ms`) | `frontend/package.json` |
 
 ## Stage Latency Breakdown (`make test-sla`)
 
 | Stage | Budget | Observed Suite Timing | Verified Behavior |
 | :--- | :--- | :--- | :--- |
-| Stage A | `<25ms` P99 (45 iterations) | `3.86ms` | Cashflow & multi-currency burn-rate calculation |
-| Stage B | `<50ms` P99 (45 iterations) | `10.40ms` | 365-day covariance and volatility risk snapshot |
-| Stage C | `<120ms` P99 (45 iterations) | `82.84ms` | Constrained MVO + 2,000-path Monte Carlo portfolio construction |
-| Stage D | `<150ms` P99 (45 iterations) | `84.87ms` | Calculation-shielded advisory turn with 6-tool registry |
-| Stage E | `<400ms` P99 E2E HTTP SLA | `882.04ms` total | Auth signup/login, WebAuthn P-256 registration & step-up challenge, cashflow, optimize, advisory chat, sharing create/resolve, and `403` fail-closed refusal on `/api/wealth/execute` (`WL_1004`) |
+| Stage A | `<25ms` P99 (45 iterations) | `4.51ms` | Cashflow & multi-currency burn-rate calculation |
+| Stage B | `<50ms` P99 (45 iterations) | `11.90ms` | 365-day covariance and volatility risk snapshot |
+| Stage C | `<120ms` P99 (45 iterations) | `115.09ms` | Constrained MVO + 2,000-path Monte Carlo portfolio construction |
+| Stage D | `<150ms` P99 (45 iterations) | `113.38ms` | Calculation-shielded advisory turn with 6-tool registry |
+| Stage E | `<400ms` P99 E2E HTTP SLA | `917.38ms` total | Auth signup/login, WebAuthn P-256 registration & step-up challenge, cashflow, optimize, advisory chat, sharing create/resolve, and `403` fail-closed refusal on `/api/wealth/execute` (`WL_1004`) |
 
 ## Key Behavioral Invariants Verified
 

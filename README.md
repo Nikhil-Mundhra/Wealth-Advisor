@@ -128,15 +128,16 @@ Full pipeline spec: [docs/architecture/testing-guardrails.md](docs/architecture/
 
 | Gate Command | Scope & What Passed | Observed Result |
 |---|---|---|
-| `make docs-lint` & `make deps-lint` | Doc-to-code reachability, CLAUDE/AGENTS parity, acyclic module DAG | `72 files, 664 mapped paths`; `9 allowed edges` |
+| `make docs-lint` & `make deps-lint` | Doc-to-code reachability, CLAUDE/AGENTS parity, acyclic module DAG | `78 files, 669 mapped paths`; `9 allowed edges` |
 | `make infra-lint` | Non-root/healthcheck Dockerfiles, Terraform Free Tier HCL checks, secret scan | Passed (`0` issues) |
 | `make typecheck` | Strict `tsc --noEmit` (`erasableSyntaxOnly`) across all 4 workspaces | Exit `0` |
-| `make test-property` | L1.5 mathematical & regulatory invariants (`50+` random cases per rule) | `7/7 passed` (`162.7ms`) |
-| `make test-contracts` | L2 error-code, validation-key, Zod enum, and Mongo index parity | `4/4 passed` (`15.1ms`) |
-| `make test-sla` | 45-iteration statistical P99 budgets (`<25ms`..`<400ms` end-to-end HTTP) | `5/5 passed` (`1573.3ms`) |
-| `make eval` | Versioned advisory eval suite `v1.0.0` (volatility, burn spike, Sharia, adversarial injection, model timeout) | `5/5 passed` in `63ms` |
-| `make test` | Ephemeral `mongod` + in-memory unit/integration + React 19 UI suites | `605 passed` across `148 suites` (`31.2s`: 191 FE, 414 BE) |
-| `make build` | Production Vite bundle + TypeScript verification | Built in `354ms` |
+| `make test-coverage` | Backend tests with coverage ratchet (lines 93, branches 83, functions 84) | `94.77%` lines, `85.14%` branches, `86.48%` functions |
+| `make test-property` | L1.5 mathematical & regulatory invariants (`50+` random cases per rule) | `7/7 passed` (`475.3ms`) |
+| `make test-contracts` | L2 error-code, validation-key, Zod enum, and Mongo index parity | `4/4 passed` (`2748.8ms`) |
+| `make test-sla` | 45-iteration statistical P99 budgets (`<25ms`..`<400ms` end-to-end HTTP) | `5/5 passed` (`2763.7ms`) |
+| `make eval` | Versioned advisory eval suite `v1.0.0` (volatility, burn spike, Sharia, adversarial injection, model timeout) | `5/5 passed` in `65ms` |
+| `make test` | Ephemeral `mongod` + in-memory unit/integration + React 19 UI suites | `613 passed` across `150 suites` (`28.1s`: 195 FE, 418 BE) |
+| `make build` | Production Vite bundle + TypeScript verification | Built in `444ms` |
 
 ### Staged HTTP Concurrency & Breaking Point (`make load-test`)
 
