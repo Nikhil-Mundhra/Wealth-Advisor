@@ -125,7 +125,7 @@ test-sla:  ## Run L3 45-iteration P99 stage latency benchmark gates (<400ms SLA)
 test-ui:  ## Stage 2C: Frontend Vitest component, native <dialog>, and A11y tests
 	node scripts/run-tests.mjs --frontend
 
-test-e2e:  ## Stage 3: Cross-module HTTP orchestration and <400ms P99 SLA gate (in-process memory-store app)
+test-e2e:  ## Stage 3: Cross-module HTTP orchestration and <400ms P99 SLA gate 
 	npm run test:sla -w backend
 
 eval:  ## Run versioned LLM guardrail and grounding evaluation suite

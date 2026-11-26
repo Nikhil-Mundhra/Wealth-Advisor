@@ -27,45 +27,28 @@ In a modular TypeScript monorepo (`rules` + `contracts` + `backend` + `frontend`
 
 The Execution Framework governs **stage ordering**, **parallel fan-out**, **MongoDB binary caching**, and **merge gates** in `.github/workflows/ci.yml` and the root `Makefile`.
 
-### Pipeline Execution DAG (`mermaid-ascii`)
+### Pipeline Execution DAG
 
-```text
-+---------------+     +-------------------------+     +-------------------------------+     +-----------------------------+     +--------------------------+
-|               |     |                         |     |                               |     |                             |     |                          |
-| Git Push / PR |---->| Stage 1: Lint and Types |---->| Stage 2A: Unit + Property Fuzz|---->| Stage 3: Live E2E + P99 SLA |---->| Merge Gate: Verified SAT |
-|               |     |                         |     |                               |     |                             |     |                          |
-+---------------+     +------------+------------+     +-------------------------------+     +-----------------------------+     +--------------------------+
-                                   |                                                                       ^
-                                   |                                                                       |
-                                   |                  +-------------------------------+                    |
-                                   |                  |                               |                    |
-                                   +----------------->| Stage 2B: Contract + MongoDB  |--------------------+
-                                   |                  |                               |                    |
-                                   |                  +-------------------------------+                    |
-                                   |                                                                       |
-                                   |                  +-------------------------------+                    |
-                                   |                  |                               |                    |
-                                   +----------------->| Stage 2C: Vitest + Vite Build |--------------------+
-                                                      |                               |
-                                                      +-------------------------------+
-```
+`.github/workflows/ci.yml` runs one `lint` job, then three parallel jobs, then a `gate` job that needs all of them. Branch protection should require `gate`. Jobs share the pinned `ubuntu-24.04` runner, the npm cache and the mongod binary cache; a new run on the same ref cancels the older one.
 
-<details>
-<summary>Mermaid Source</summary>
+| Job | Commands | Layers |
+| :--- | :--- | :--- |
+| `lint` | `docs-lint`, `deps-lint`, `infra-lint`, `typecheck`, `audit` | L0 |
+| `unit` | `test-coverage` (backend tests plus coverage ratchet) | L1, L1.5, L2, L3 and integration |
+| `ui` | `test-ui`, `build` | frontend L1 |
+| `invariants` | `test-property`, `test-contracts`, `test-sla`, `eval` | L1.5, L2, L3, eval |
+| `gate` | needs `unit`, `ui`, `invariants` | merge gate |
 
 ```mermaid
 graph LR
-  Commit[Git Push / PR] --> S1[Stage 1: Lint and Types]
-  S1 --> S2A[Stage 2A: Unit + Property Fuzz]
-  S1 --> S2B[Stage 2B: Contract + MongoDB]
-  S1 --> S2C[Stage 2C: Vitest + Vite Build]
-  S2A --> S3[Stage 3: Live E2E + P99 SLA]
-  S2B --> S3
-  S2C --> S3
-  S3 --> Gate[Merge Gate: Verified SAT]
+  Commit[Git Push / PR] --> Lint[lint]
+  Lint --> Unit[unit + coverage ratchet]
+  Lint --> UI[ui + build]
+  Lint --> Inv[invariants]
+  Unit --> Gate[gate]
+  UI --> Gate
+  Inv --> Gate
 ```
-
-</details>
 
 ---
 
@@ -78,6 +61,7 @@ Every commit and pull request is gated against both **structural invariants** an
 | **L0 Static, Docs & Dependency DAG** | `0` unmapped files, `0` illegal cross-module edges, `0` TS errors, `0` high CVEs | `66+` docs verified, `7` acyclic edges | `make lint` (`scripts/docs-lint.mjs`, `backend/scripts/module-deps.mjs`) |
 | **L1.5 Property-Based Fiduciary Fuzzing** | `100%` pass across `260+` randomized MVO, Sharia, risk, rebalance, shield & FX tuples | `~0.34s` total runtime | `backend/test/unit/rules/property-invariants.test.ts` |
 | **L2 Cross-Workspace Contract Parity** | `100%` parity across error catalog, validation keys, Zod enums & MongoDB schemas | `~2.7s` cold import + verify | `backend/test/unit/core/contract-parity.test.ts` |
+| **Backend coverage ratchet** | lines `>= 93%`, branches `>= 83%`, functions `>= 84%` (raise as the baseline rises, never lower) | `94.77%` / `85.14%` / `86.48%` | `make test-coverage` (`test:coverage` in `backend/package.json`) |
 | **Stage A · Cashflow & FX Burn-Rate** | `P99 < 25ms` across 45 iterations (`getCashflowSummary`) | `~3.2ms` total across 48 runs (`< 0.2ms` P99) | `backend/test/integration/sla/stage-latency-sla.memory.test.ts` |
 | **Stage B · 365-Day Covariance Snapshot** | `P99 < 50ms` across 45 iterations (`measureSnapshot` over 260 aligned trading days) | `~12.5ms` total across 48 runs (`< 0.5ms` P99) | `backend/test/integration/sla/stage-latency-sla.memory.test.ts` |
 | **Stage C · Constrained MVO & 2k Monte Carlo** | `P99 < 120ms` across 45 iterations (`constructPortfolio` with 2,000 simulated paths) | `~87.7ms` total across 48 runs (`~2ms` P99) | `backend/test/integration/sla/stage-latency-sla.memory.test.ts` |
@@ -89,13 +73,14 @@ Every commit and pull request is gated against both **structural invariants** an
 ## 4. Developer Command Reference
 
 ```bash
-make ci                 # Run the complete 3-stage pipeline locally (Lint -> Property/Contract/SLA -> Full Suite -> Build)
+make ci                 # Run the full pipeline locally (Lint -> Coverage -> Property/Contract/SLA/Eval -> Full Suite -> Build)
 make lint               # Stage 1: Docs graph, module dependency DAG, strict TypeScript, and npm audit
 make test               # Run all frontend Vitest and backend Node tests (with ephemeral mongod)
+make test-coverage      # Backend tests with the coverage ratchet (CI `unit` job)
 make test-unit          # Stage 2A: Isolated backend unit and deterministic financial engine tests
 make test-property      # Run L1.5 seeded property-based mathematical and regulatory invariant fuzzing
 make test-contracts     # Run L2 cross-workspace (rules <-> contracts <-> backend <-> frontend) schema parity checks
 make test-sla           # Run L3 45-iteration P99 stage latency benchmark gates (<400ms SLA)
 make test-ui            # Stage 2C: Frontend Vitest component, native <dialog>, and A11y tests
-make test-e2e           # Stage 3: Live cross-module HTTP E2E orchestration and <400ms P99 SLA gate
+make test-e2e           # Stage 3: In-process cross-module HTTP E2E orchestration and <400ms P99 SLA gate
 ```

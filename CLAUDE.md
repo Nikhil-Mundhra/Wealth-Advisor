@@ -40,7 +40,7 @@ Entry point. The root organizes a set of repos; it is not one source tree. Pick 
 ```
 .github/CODEOWNERS : code ownership for core backend, auth, infra, and ci workflows
 .github/dependabot.yml : weekly dependency update configuration for npm and github actions
-.github/workflows/ci.yml : on PRs and main, on a pinned ubuntu-24.04 runner: docs-lint, deps-lint, typecheck, tests, frontend build
+.github/workflows/ci.yml : on PRs and main, on a pinned ubuntu-24.04 runner: lint job, then parallel unit (coverage ratchet), ui (tests, build) and invariants (property, contracts, SLA, eval) jobs, then a gate job; see docs/architecture/testing-guardrails.md
 .nvmrc : Node major CI builds and local version managers use; change it and ci.yml `node-version` together
 docs/assets/logo-small.png : compressed README header logo (350px)
 docs/assets/ss0-small.jpg : compressed README landing hero (1200px)
